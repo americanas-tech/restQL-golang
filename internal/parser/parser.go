@@ -13,7 +13,7 @@ func Parse(queryStr string) (domain.Query, error) {
 		return domain.Query{}, err
 	}
 
-	statements := makeStatements(queryAst)
+	statements := mapToStatements(queryAst.Blocks)
 	query := domain.Query{Statements: statements}
 
 	if queryAst.Use != nil {
@@ -21,12 +21,6 @@ func Parse(queryStr string) (domain.Query, error) {
 	}
 
 	return query, nil
-}
-
-func makeStatements(queryAst *ast.Query) []domain.Statement {
-	fromBlocks := filterFromBlocks(queryAst)
-	statements := mapToStatements(fromBlocks)
-	return statements
 }
 
 func makeUse(queryAst *ast.Query) map[string]interface{} {
@@ -38,18 +32,6 @@ func makeUse(queryAst *ast.Query) map[string]interface{} {
 			result[use.Key] = *use.Value.Int
 		}
 	}
-	return result
-}
-
-func filterFromBlocks(queryAst *ast.Query) []ast.Block {
-	var result []ast.Block
-
-	for _, statement := range queryAst.Blocks {
-		if statement.Method == ast.FromMethod {
-			result = append(result, statement)
-		}
-	}
-
 	return result
 }
 
