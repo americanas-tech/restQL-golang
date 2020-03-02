@@ -7,7 +7,7 @@ import (
 
 func TestParseValidation(t *testing.T) {
 	t.Run("should have only one qualifier of each type (with, only, timeout, headers, etc)", func(t *testing.T) {
-		err := ValidateQuery(&ast.Query{
+		err := validateQuery(&ast.Query{
 			Blocks: []ast.Block{
 				{
 					Method:   "from",
@@ -34,7 +34,7 @@ func TestParseValidation(t *testing.T) {
 	})
 
 	t.Run("should not have only and hidden keywords in the same block", func(t *testing.T) {
-		err := ValidateQuery(&ast.Query{
+		err := validateQuery(&ast.Query{
 			Blocks: []ast.Block{
 				{
 					Method:   "from",

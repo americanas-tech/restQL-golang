@@ -10,7 +10,7 @@ var (
 	ErrInvalidOnlyAndHiddenKeywordsInSameStatement = errors.New("it is not allowed to use only and hidden keywords together")
 )
 
-func ValidateQuery(q *ast.Query) error {
+func validateQuery(q *ast.Query) error {
 	for _, block := range q.Blocks {
 		err := validateBlock(block)
 		if err != nil {
