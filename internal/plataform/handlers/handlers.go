@@ -14,13 +14,12 @@ func New() fasthttp.RequestHandler {
 	r := fasthttprouter.New()
 
 	r.POST("/validate-query", validateQuery)
-	r.GET("/resource-status", resourceStatus)
+
+	r.GET("/health", func(ctx *fasthttp.RequestCtx) { ctx.Response.SetBodyString("I'm healthy! :)") })
+	r.GET("/resource-status", func(ctx *fasthttp.RequestCtx) { ctx.Response.SetBodyString("Up and running! :)") })
+	r.NotFound = func(ctx *fasthttp.RequestCtx) { ctx.Response.SetBodyString("There is nothing here. =/") }
 
 	return r.Handler
-}
-
-func resourceStatus(ctx *fasthttp.RequestCtx) {
-	ctx.Response.SetBodyString("ok")
 }
 
 func validateQuery(ctx *fasthttp.RequestCtx) {
