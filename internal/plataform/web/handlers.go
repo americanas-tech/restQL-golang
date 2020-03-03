@@ -1,16 +1,18 @@
-package handlers
+package web
 
 import (
 	"bytes"
 	"encoding/json"
 	"github.com/b2wdigital/restQL-golang/internal/parser"
+	"github.com/b2wdigital/restQL-golang/internal/plataform/conf"
+	"github.com/b2wdigital/restQL-golang/internal/plataform/web/middleware"
 	"github.com/buaazp/fasthttprouter"
 	"github.com/valyala/fasthttp"
 	"log"
 	"net/http"
 )
 
-func New() fasthttp.RequestHandler {
+func New(config conf.Config) fasthttp.RequestHandler {
 	r := fasthttprouter.New()
 
 	r.POST("/validate-query", validateQuery)
@@ -19,7 +21,9 @@ func New() fasthttp.RequestHandler {
 	r.GET("/resource-status", func(ctx *fasthttp.RequestCtx) { ctx.Response.SetBodyString("Up and running! :)") })
 	r.NotFound = func(ctx *fasthttp.RequestCtx) { ctx.Response.SetBodyString("There is nothing here. =/") }
 
-	return r.Handler
+	handler := middleware.Apply(r.Handler, middleware.NewRequestId(config))
+
+	return handler
 }
 
 func validateQuery(ctx *fasthttp.RequestCtx) {

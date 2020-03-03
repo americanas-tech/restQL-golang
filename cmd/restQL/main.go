@@ -2,7 +2,7 @@ package main
 
 import (
 	"github.com/b2wdigital/restQL-golang/internal/plataform/conf"
-	"github.com/b2wdigital/restQL-golang/internal/plataform/handlers"
+	"github.com/b2wdigital/restQL-golang/internal/plataform/web"
 	"github.com/pkg/errors"
 	"github.com/valyala/fasthttp"
 	"log"
@@ -31,7 +31,7 @@ func start() error {
 	shutdown := make(chan os.Signal, 1)
 	signal.Notify(shutdown, os.Interrupt, syscall.SIGTERM)
 
-	api := fasthttp.Server{Handler: handlers.New()}
+	api := fasthttp.Server{Handler: web.New(config)}
 
 	serverErrors := make(chan error, 1)
 	go func() {

@@ -1,8 +1,8 @@
-package handlers_test
+package web_test
 
 import (
 	"context"
-	"github.com/b2wdigital/restQL-golang/internal/plataform/handlers"
+	"github.com/b2wdigital/restQL-golang/internal/plataform/web"
 	"github.com/valyala/fasthttp"
 	"github.com/valyala/fasthttp/fasthttputil"
 	"net"
@@ -15,7 +15,7 @@ func TestValidateQuery(t *testing.T) {
 	body := strings.NewReader("from cart")
 	request, _ := http.NewRequest(http.MethodPost, "http://localhost/validate-query", body)
 
-	h := setupHandler(handlers.New())
+	h := setupHandler(web.New())
 	defer h.Close()
 
 	response := h.ServeHttp(request)
@@ -26,7 +26,7 @@ func TestValidateQuery(t *testing.T) {
 }
 
 func BenchmarkValidateQuery(b *testing.B) {
-	h := setupHandler(handlers.New())
+	h := setupHandler(web.New())
 	defer h.Close()
 
 	b.Run("use fasthttp router", func(b *testing.B) {
