@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/b2wdigital/restQL-golang/internal/plataform/conf"
 	"github.com/b2wdigital/restQL-golang/internal/plataform/handlers"
 	"github.com/pkg/errors"
 	"github.com/valyala/fasthttp"
@@ -8,7 +9,6 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
-	"time"
 )
 
 func main() {
@@ -20,22 +20,23 @@ func main() {
 
 func start() error {
 	//// =========================================================================
+	//// Configuration
+	config := conf.New()
+	port := ":" + config.Env().GetString("PORT")
+
+	//// =========================================================================
 	//// Start API
 	log.Println("[INFO] initializing api")
 
 	shutdown := make(chan os.Signal, 1)
 	signal.Notify(shutdown, os.Interrupt, syscall.SIGTERM)
 
-	api := fasthttp.Server{
-		Handler:      handlers.New(),
-		ReadTimeout:  5 * time.Second,
-		WriteTimeout: 5 * time.Second,
-	}
+	api := fasthttp.Server{Handler: handlers.New()}
 
 	serverErrors := make(chan error, 1)
 	go func() {
-		log.Printf("[INFO] api listing on %s", ":9000")
-		serverErrors <- api.ListenAndServe(":9000")
+		log.Printf("[INFO] api listing on %s", port)
+		serverErrors <- api.ListenAndServe(port)
 	}()
 
 	//// =========================================================================
@@ -48,7 +49,7 @@ func start() error {
 
 		err := api.Shutdown()
 		if err != nil {
-			log.Printf("[WARN] graceful shutdown did not complete in %d : %v", 5000, err)
+			log.Printf("[WARN] graceful shutdown did not complete : %v", err)
 		}
 
 		switch {

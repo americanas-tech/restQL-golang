@@ -13,19 +13,19 @@ import (
 const configFileName = "restql.yml"
 
 var once sync.Once
-var fs FileSource
 
 type Config struct {
 	fs  *FileSource
 	env EnvSource
 }
 
-func New() (Config, error) {
+func New() Config {
+	var fs FileSource
 	once.Do(func() {
 		readConfigFile(&fs)
 	})
 
-	return Config{fs: &fs, env: EnvSource{}}, nil
+	return Config{fs: &fs, env: EnvSource{}}
 }
 
 func (c Config) File() *FileSource {
