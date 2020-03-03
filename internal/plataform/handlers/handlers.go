@@ -4,24 +4,23 @@ import (
 	"bytes"
 	"encoding/json"
 	"github.com/b2wdigital/restQL-golang/internal/parser"
+	"github.com/buaazp/fasthttprouter"
 	"github.com/valyala/fasthttp"
 	"log"
 	"net/http"
 )
 
 func New() fasthttp.RequestHandler {
-	return handle
+	r := fasthttprouter.New()
+
+	r.POST("/validate-query", validateQuery)
+	r.GET("/resource-status", resourceStatus)
+
+	return r.Handler
 }
 
-func handle(ctx *fasthttp.RequestCtx) {
-	switch string(ctx.Path()) {
-	case "/validate-query":
-		validateQuery(ctx)
-	case "/resource-status":
-		ctx.Response.SetBodyString("ok")
-	default:
-		ctx.NotFound()
-	}
+func resourceStatus(ctx *fasthttp.RequestCtx) {
+	ctx.Response.SetBodyString("ok")
 }
 
 func validateQuery(ctx *fasthttp.RequestCtx) {
