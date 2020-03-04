@@ -2,33 +2,16 @@ package middleware
 
 import (
 	"context"
-	"github.com/b2wdigital/restQL-golang/internal/plataform/conf"
 	"github.com/valyala/fasthttp"
 	"time"
 )
-
-type timeoutConf struct {
-	Web struct {
-		Middlewares struct {
-			Timeout struct {
-				Duration string `yaml:"duration"`
-			} `yaml:"timeout"`
-		} `yaml:"middlewares"`
-	} `yaml:"web"`
-}
 
 type Timeout struct {
 	duration time.Duration
 }
 
-func NewTimeout(config conf.Config) Middleware {
-	var tc timeoutConf
-	err := config.File().Unmarshal(&tc)
-	if err != nil {
-		return NoopMiddleware{}
-	}
-
-	d, parseErr := time.ParseDuration(tc.Web.Middlewares.Timeout.Duration)
+func NewTimeout(duration string) Middleware {
+	d, parseErr := time.ParseDuration(duration)
 	if parseErr != nil {
 		return NoopMiddleware{}
 	}

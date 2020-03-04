@@ -2,7 +2,6 @@ package middleware
 
 import (
 	"bytes"
-	"github.com/b2wdigital/restQL-golang/internal/plataform/conf"
 	"github.com/valyala/fasthttp"
 )
 
@@ -22,27 +21,10 @@ var strategyToGenerator = map[string]IdGenerator{
 	"uuid":   NewUuidIdGenerator(),
 }
 
-type requestIdConf struct {
-	Web struct {
-		Middlewares struct {
-			RequestId struct {
-				Header   string `yaml:"header"`
-				Strategy string `yaml:"strategy"`
-			} `yaml:"requestId"`
-		} `yaml:"middlewares"`
-	} `yaml:"web"`
-}
-
-func NewRequestId(config conf.Config) Middleware {
-	var rc requestIdConf
-	err := config.File().Unmarshal(&rc)
-	if err != nil {
-		return NoopMiddleware{}
-	}
-
+func NewRequestId(header string, strategy string) Middleware {
 	return RequestId{
-		header:    rc.Web.Middlewares.RequestId.Header,
-		generator: strategyToGenerator[rc.Web.Middlewares.RequestId.Strategy],
+		header:    header,
+		generator: strategyToGenerator[strategy],
 	}
 }
 
