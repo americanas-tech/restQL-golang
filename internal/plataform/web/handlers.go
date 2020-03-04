@@ -21,7 +21,7 @@ func New(config conf.Config) fasthttp.RequestHandler {
 	r.GET("/resource-status", func(ctx *fasthttp.RequestCtx) { ctx.Response.SetBodyString("Up and running! :)") })
 	r.NotFound = func(ctx *fasthttp.RequestCtx) { ctx.Response.SetBodyString("There is nothing here. =/") }
 
-	handler := middleware.Apply(r.Handler, middleware.NewRequestId(config), middleware.NewTimeout(config))
+	handler := middleware.Apply(r.Handler, middleware.NewRequestId(config), middleware.NewTimeout(config), middleware.NewRecover())
 
 	return handler
 }
