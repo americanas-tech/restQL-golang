@@ -8,10 +8,12 @@ func NewCheck() Check {
 	return Check{}
 }
 
-func (c Check) health(ctx *fasthttp.RequestCtx) {
+func (c Check) health(ctx *fasthttp.RequestCtx) error {
 	ctx.Response.SetBodyString("I'm healthy! :)")
+	return nil
 }
 
-func (c Check) resourceStatus(ctx *fasthttp.RequestCtx) {
+func (c Check) resourceStatus(ctx *fasthttp.RequestCtx) error {
 	ctx.Response.SetBodyString("Up and running! :)")
+	return nil
 }

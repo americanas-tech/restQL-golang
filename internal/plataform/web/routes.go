@@ -2,37 +2,25 @@ package web
 
 import (
 	"github.com/b2wdigital/restQL-golang/internal/plataform/conf"
-	"github.com/b2wdigital/restQL-golang/internal/plataform/web/middleware"
-	"github.com/buaazp/fasthttprouter"
 	"github.com/valyala/fasthttp"
+	"net/http"
 )
 
 func API(config conf.Config) fasthttp.RequestHandler {
-	r := fasthttprouter.New()
-
+	app := NewApp(config)
 	restQl := NewRestQl(config)
 
-	r.POST("/validate-query", restQl.validateQuery)
+	app.Handle(http.MethodPost, "/validate-query", restQl.validateQuery)
 
-	r.NotFound = func(ctx *fasthttp.RequestCtx) { ctx.Response.SetBodyString("There is nothing here. =/") }
-
-	mws := middleware.FetchEnabled(config)
-	handler := middleware.Apply(r.Handler, mws)
-
-	return handler
+	return app.RequestHandler()
 }
 
 func Health(config conf.Config) fasthttp.RequestHandler {
-	r := fasthttprouter.New()
+	app := NewApp(config)
 	check := NewCheck()
 
-	r.GET("/health", check.health)
-	r.GET("/resource-status", check.resourceStatus)
+	app.Handle(http.MethodGet, "/health", check.health)
+	app.Handle(http.MethodGet, "/resource-status", check.resourceStatus)
 
-	r.NotFound = func(ctx *fasthttp.RequestCtx) { ctx.Response.SetBodyString("There is nothing here. =/") }
-
-	mws := middleware.FetchEnabled(config)
-	handler := middleware.Apply(r.Handler, mws)
-
-	return handler
+	return app.RequestHandler()
 }

@@ -18,7 +18,7 @@ func NewRestQl(config conf.Config) RestQl {
 	return RestQl{config: config}
 }
 
-func (r RestQl) validateQuery(ctx *fasthttp.RequestCtx) {
+func (r RestQl) validateQuery(ctx *fasthttp.RequestCtx) error {
 	queryTxt := bytes.NewBuffer(ctx.PostBody()).String()
 	_, err := parser.Parse(queryTxt)
 	if err != nil {
@@ -29,10 +29,8 @@ func (r RestQl) validateQuery(ctx *fasthttp.RequestCtx) {
 			Status: http.StatusUnprocessableEntity,
 		}
 
-		RespondError(ctx, e)
-
-		return
+		return RespondError(ctx, e)
 	}
 
-	Respond(ctx, nil, http.StatusOK)
+	return Respond(ctx, nil, http.StatusOK)
 }
