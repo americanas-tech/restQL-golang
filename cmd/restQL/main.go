@@ -6,6 +6,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/valyala/fasthttp"
 	"log"
+	_ "net/http/pprof"
 	"os"
 	"os/signal"
 	"syscall"
@@ -43,8 +44,8 @@ func start() error {
 	signal.Notify(shutdown, os.Interrupt, syscall.SIGTERM)
 
 	api := fasthttp.Server{Handler: web.API(config)}
-
 	health := fasthttp.Server{Handler: web.Health(config)}
+	debug := fasthttp.Server{Handler: web.Debug(config)}
 
 	serverErrors := make(chan error, 1)
 	go func() {
@@ -55,6 +56,11 @@ func start() error {
 	go func() {
 		log.Printf("[INFO] api health listing on %s", apiHealthAddr)
 		serverErrors <- health.ListenAndServe(apiHealthAddr)
+	}()
+
+	go func() {
+		log.Printf("[INFO] api debug listing on %s", ":9002")
+		serverErrors <- debug.ListenAndServe(":9002")
 	}()
 
 	//// =========================================================================

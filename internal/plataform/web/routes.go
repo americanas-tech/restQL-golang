@@ -22,5 +22,20 @@ func Health(config conf.Config) fasthttp.RequestHandler {
 	app.Handle(http.MethodGet, "/health", check.health)
 	app.Handle(http.MethodGet, "/resource-status", check.resourceStatus)
 
-	return app.RequestHandler()
+	return app.RequestHandlerWithoutMiddlewares()
+}
+
+func Debug(config conf.Config) fasthttp.RequestHandler {
+	app := NewApp(config)
+	pprof := NewPprof()
+
+	app.Handle(http.MethodGet, "/debug/pprof/goroutine", pprof.Index)
+	app.Handle(http.MethodGet, "/debug/pprof/heap", pprof.Index)
+	app.Handle(http.MethodGet, "/debug/pprof/threadcreate", pprof.Index)
+	app.Handle(http.MethodGet, "/debug/pprof/block", pprof.Index)
+	app.Handle(http.MethodGet, "/debug/pprof/mutex", pprof.Index)
+
+	app.Handle(http.MethodGet, "/debug/pprof/profile", pprof.Profile)
+
+	return app.RequestHandlerWithoutMiddlewares()
 }

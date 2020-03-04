@@ -40,6 +40,10 @@ func (a App) Handle(method, url string, handler Handler) {
 
 func (a App) RequestHandler() fasthttp.RequestHandler {
 	mws := middleware.FetchEnabled(a.config)
-	handler := middleware.Apply(a.router.Handler, mws)
-	return handler
+	h := middleware.Apply(a.router.Handler, mws)
+	return h
+}
+
+func (a App) RequestHandlerWithoutMiddlewares() fasthttp.RequestHandler {
+	return a.router.Handler
 }
