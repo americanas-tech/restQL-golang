@@ -5,29 +5,20 @@ import (
 	"encoding/json"
 	"github.com/b2wdigital/restQL-golang/internal/parser"
 	"github.com/b2wdigital/restQL-golang/internal/plataform/conf"
-	"github.com/b2wdigital/restQL-golang/internal/plataform/web/middleware"
-	"github.com/buaazp/fasthttprouter"
 	"github.com/valyala/fasthttp"
 	"log"
 	"net/http"
 )
 
-func New(config conf.Config) fasthttp.RequestHandler {
-	r := fasthttprouter.New()
-
-	r.POST("/validate-query", validateQuery)
-
-	r.GET("/health", func(ctx *fasthttp.RequestCtx) { ctx.Response.SetBodyString("I'm healthy! :)") })
-	r.GET("/resource-status", func(ctx *fasthttp.RequestCtx) { ctx.Response.SetBodyString("Up and running! :)") })
-	r.NotFound = func(ctx *fasthttp.RequestCtx) { ctx.Response.SetBodyString("There is nothing here. =/") }
-
-	mws := middleware.FetchEnabled(config)
-	handler := middleware.Apply(r.Handler, mws)
-
-	return handler
+type RestQl struct {
+	config conf.Config
 }
 
-func validateQuery(ctx *fasthttp.RequestCtx) {
+func NewRestQl(config conf.Config) RestQl {
+	return RestQl{config: config}
+}
+
+func (r RestQl) validateQuery(ctx *fasthttp.RequestCtx) {
 	ctx.SetContentType("application/json")
 
 	encoder := json.NewEncoder(ctx.Response.BodyWriter())

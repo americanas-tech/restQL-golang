@@ -13,7 +13,7 @@ import (
 
 func main() {
 	if err := start(); err != nil {
-		log.Printf("[ERROR] failed to start api due to %v", err)
+		log.Printf("[ERROR] failed to start api : %v", err)
 		os.Exit(1)
 	}
 }
@@ -22,7 +22,18 @@ func start() error {
 	//// =========================================================================
 	//// Configuration
 	config := conf.New()
-	port := ":" + config.Env().GetString("PORT")
+
+	apiAddr := config.Env().GetString("PORT")
+	if apiAddr == "" {
+		return errors.New("no http port configured, please set PORT environment variable")
+	}
+	apiAddr = ":" + apiAddr
+
+	apiHealthAddr := config.Env().GetString("HEALTH_PORT")
+	if apiHealthAddr == "" {
+		return errors.New("no http port configured, please set HEALTH_PORT environment variable")
+	}
+	apiHealthAddr = ":" + apiHealthAddr
 
 	//// =========================================================================
 	//// Start API
@@ -31,12 +42,19 @@ func start() error {
 	shutdown := make(chan os.Signal, 1)
 	signal.Notify(shutdown, os.Interrupt, syscall.SIGTERM)
 
-	api := fasthttp.Server{Handler: web.New(config)}
+	api := fasthttp.Server{Handler: web.API(config)}
+
+	health := fasthttp.Server{Handler: web.Health(config)}
 
 	serverErrors := make(chan error, 1)
 	go func() {
-		log.Printf("[INFO] api listing on %s", port)
-		serverErrors <- api.ListenAndServe(port)
+		log.Printf("[INFO] api listing on %s", apiAddr)
+		serverErrors <- api.ListenAndServe(apiAddr)
+	}()
+
+	go func() {
+		log.Printf("[INFO] api health listing on %s", apiHealthAddr)
+		serverErrors <- health.ListenAndServe(apiHealthAddr)
 	}()
 
 	//// =========================================================================
@@ -49,7 +67,12 @@ func start() error {
 
 		err := api.Shutdown()
 		if err != nil {
-			log.Printf("[WARN] graceful shutdown did not complete : %v", err)
+			log.Printf("[WARN] api graceful shutdown did not complete : %v", err)
+		}
+
+		err = health.Shutdown()
+		if err != nil {
+			log.Printf("[WARN] api health graceful shutdown did not complete : %v", err)
 		}
 
 		switch {
