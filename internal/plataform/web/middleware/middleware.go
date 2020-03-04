@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"context"
 	"github.com/valyala/fasthttp"
 )
 
@@ -20,5 +21,13 @@ func Apply(h fasthttp.RequestHandler, mws ...Middleware) fasthttp.RequestHandler
 		handler = m.Apply(handler)
 	}
 
-	return handler
+	return contextMiddleware(handler)
+}
+
+func contextMiddleware(h fasthttp.RequestHandler) fasthttp.RequestHandler {
+	return func(ctx *fasthttp.RequestCtx) {
+		WithNativeContext(ctx, context.Background())
+
+		h(ctx)
+	}
 }
