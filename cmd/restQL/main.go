@@ -6,7 +6,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/valyala/fasthttp"
 	"log"
-	_ "net/http/pprof"
 	"os"
 	"os/signal"
 	"syscall"
@@ -23,18 +22,10 @@ func start() error {
 	//// =========================================================================
 	//// Configuration
 	config := conf.New()
-
-	apiAddr := config.Env().GetString("PORT")
-	if apiAddr == "" {
-		return errors.New("no http port configured, please set PORT environment variable")
+	startupConf, err := newStartupConfig(config)
+	if err != nil {
+		return err
 	}
-	apiAddr = ":" + apiAddr
-
-	apiHealthAddr := config.Env().GetString("HEALTH_PORT")
-	if apiHealthAddr == "" {
-		return errors.New("no http port configured, please set HEALTH_PORT environment variable")
-	}
-	apiHealthAddr = ":" + apiHealthAddr
 
 	//// =========================================================================
 	//// Start API
@@ -45,23 +36,25 @@ func start() error {
 
 	api := fasthttp.Server{Handler: web.API(config)}
 	health := fasthttp.Server{Handler: web.Health(config)}
-	debug := fasthttp.Server{Handler: web.Debug(config)}
 
 	serverErrors := make(chan error, 1)
 	go func() {
-		log.Printf("[INFO] api listing on %s", apiAddr)
-		serverErrors <- api.ListenAndServe(apiAddr)
+		log.Printf("[INFO] api listing on %s", startupConf.ApiAddr)
+		serverErrors <- api.ListenAndServe(startupConf.ApiAddr)
 	}()
 
 	go func() {
-		log.Printf("[INFO] api health listing on %s", apiHealthAddr)
-		serverErrors <- health.ListenAndServe(apiHealthAddr)
+		log.Printf("[INFO] api health listing on %s", startupConf.ApiHealthAddr)
+		serverErrors <- health.ListenAndServe(startupConf.ApiHealthAddr)
 	}()
 
-	go func() {
-		log.Printf("[INFO] api debug listing on %s", ":9002")
-		serverErrors <- debug.ListenAndServe(":9002")
-	}()
+	if startupConf.Env == "development" {
+		debug := fasthttp.Server{Handler: web.Debug(config)}
+		go func() {
+			log.Printf("[INFO] api debug listing on %s", startupConf.DebugAddr)
+			serverErrors <- debug.ListenAndServe(startupConf.DebugAddr)
+		}()
+	}
 
 	//// =========================================================================
 	//// Shutdown
@@ -90,4 +83,41 @@ func start() error {
 	}
 
 	return nil
+}
+
+type startupConfig struct {
+	Env           string
+	ApiAddr       string
+	ApiHealthAddr string
+	DebugAddr     string
+}
+
+func newStartupConfig(config conf.Config) (startupConfig, error) {
+	env := config.Env().GetString("ENV")
+
+	apiAddr := config.Env().GetString("PORT")
+	if apiAddr == "" {
+		return startupConfig{}, errors.New("no http port configured, please set PORT environment variable")
+	}
+	apiAddr = ":" + apiAddr
+
+	apiHealthAddr := config.Env().GetString("HEALTH_PORT")
+	if apiHealthAddr == "" {
+		return startupConfig{}, errors.New("no http port configured, please set HEALTH_PORT environment variable")
+	}
+	apiHealthAddr = ":" + apiHealthAddr
+
+	debugAddr := config.Env().GetString("DEBUG_PORT")
+	if debugAddr == "" && env == "development" {
+		return startupConfig{}, errors.New("no http port configured, please set DEBUG_PORT environment variable")
+	}
+	debugAddr = ":" + debugAddr
+
+	startupConf := startupConfig{
+		Env:           env,
+		ApiAddr:       apiAddr,
+		ApiHealthAddr: apiHealthAddr,
+		DebugAddr:     debugAddr,
+	}
+	return startupConf, nil
 }
