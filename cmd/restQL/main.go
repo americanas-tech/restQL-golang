@@ -1,11 +1,12 @@
 package main
 
 import (
+	"fmt"
 	"github.com/b2wdigital/restQL-golang/internal/plataform/conf"
+	"github.com/b2wdigital/restQL-golang/internal/plataform/logger"
 	"github.com/b2wdigital/restQL-golang/internal/plataform/web"
 	"github.com/pkg/errors"
 	"github.com/valyala/fasthttp"
-	"log"
 	"os"
 	"os/signal"
 	"syscall"
@@ -13,7 +14,7 @@ import (
 
 func main() {
 	if err := start(); err != nil {
-		log.Printf("[ERROR] failed to start api : %v", err)
+		fmt.Printf("[ERROR] failed to start api : %v", err)
 		os.Exit(1)
 	}
 }
@@ -27,31 +28,33 @@ func start() error {
 		return err
 	}
 
+	log := logger.New(os.Stdout, config)
+
 	//// =========================================================================
 	//// Start API
-	log.Println("[INFO] initializing api")
+	log.Info("initializing api")
 
 	shutdown := make(chan os.Signal, 1)
 	signal.Notify(shutdown, os.Interrupt, syscall.SIGTERM)
 
-	api := fasthttp.Server{Handler: web.API(config)}
-	health := fasthttp.Server{Handler: web.Health(config)}
+	api := fasthttp.Server{Handler: web.API(config, log)}
+	health := fasthttp.Server{Handler: web.Health(config, log)}
 
 	serverErrors := make(chan error, 1)
 	go func() {
-		log.Printf("[INFO] api listing on %s", startupConf.ApiAddr)
+		log.Info("api listing", "port", startupConf.ApiAddr)
 		serverErrors <- api.ListenAndServe(startupConf.ApiAddr)
 	}()
 
 	go func() {
-		log.Printf("[INFO] api health listing on %s", startupConf.ApiHealthAddr)
+		log.Info("api health listing", "port", startupConf.ApiHealthAddr)
 		serverErrors <- health.ListenAndServe(startupConf.ApiHealthAddr)
 	}()
 
 	if startupConf.Env == "development" {
-		debug := fasthttp.Server{Handler: web.Debug(config)}
+		debug := fasthttp.Server{Handler: web.Debug(config, log)}
 		go func() {
-			log.Printf("[INFO] api debug listing on %s", startupConf.DebugAddr)
+			log.Info("api debug listing", "port", startupConf.DebugAddr)
 			serverErrors <- debug.ListenAndServe(startupConf.DebugAddr)
 		}()
 	}
@@ -62,16 +65,16 @@ func start() error {
 	case err := <-serverErrors:
 		return errors.Wrap(err, "server error")
 	case sig := <-shutdown:
-		log.Printf("[INFO] starting shutdown : %v", sig)
+		log.Info("starting shutdown", "signal", sig)
 
 		err := api.Shutdown()
 		if err != nil {
-			log.Printf("[WARN] api graceful shutdown did not complete : %v", err)
+			log.Error("api graceful shutdown did not complete", err)
 		}
 
 		err = health.Shutdown()
 		if err != nil {
-			log.Printf("[WARN] api health graceful shutdown did not complete : %v", err)
+			log.Error("api health graceful shutdown did not complete", err)
 		}
 
 		switch {

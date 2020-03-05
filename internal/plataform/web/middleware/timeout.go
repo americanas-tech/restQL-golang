@@ -2,8 +2,8 @@ package middleware
 
 import (
 	"context"
+	"github.com/b2wdigital/restQL-golang/internal/plataform/logger"
 	"github.com/valyala/fasthttp"
-	"log"
 	"time"
 )
 
@@ -11,10 +11,10 @@ type Timeout struct {
 	duration time.Duration
 }
 
-func NewTimeout(duration string) Middleware {
+func NewTimeout(duration string, log logger.Logger) Middleware {
 	d, parseErr := time.ParseDuration(duration)
 	if parseErr != nil {
-		log.Printf("[WARN] failed to initialize timeout middleware : invalid duration : %s", duration)
+		log.Warn("failed to initialize timeout middleware : invalid duration", "duration", duration)
 		return NoopMiddleware{}
 	}
 

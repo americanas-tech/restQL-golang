@@ -3,7 +3,6 @@ package web
 import (
 	"encoding/json"
 	"github.com/valyala/fasthttp"
-	"log"
 	"net/http"
 )
 
@@ -35,7 +34,6 @@ func RespondError(ctx *fasthttp.RequestCtx, err error) error {
 		return nil
 	}
 
-	log.Print(err)
 	er := ErrorResponse{
 		Error: http.StatusText(http.StatusInternalServerError),
 	}

@@ -2,8 +2,8 @@ package middleware
 
 import (
 	"bytes"
+	"github.com/b2wdigital/restQL-golang/internal/plataform/logger"
 	"github.com/valyala/fasthttp"
-	"log"
 )
 
 var requestIdKey = []byte{0x1}
@@ -22,15 +22,15 @@ var strategyToGenerator = map[string]IdGenerator{
 	"uuid":   NewUuidIdGenerator(),
 }
 
-func NewRequestId(header string, strategy string) Middleware {
+func NewRequestId(header string, strategy string, log logger.Logger) Middleware {
 	if header == "" {
-		log.Printf("[WARN] failed to initialize request id middleware : empty header name")
+		log.Warn("failed to initialize request id middleware : empty header name")
 		return NoopMiddleware{}
 	}
 
 	generator, ok := strategyToGenerator[strategy]
 	if !ok {
-		log.Printf("[WARN] failed to initialize request id middleware : unknow strategy : %s", strategy)
+		log.Warn("failed to initialize request id middleware : unknow strategy", "strategy", strategy)
 		return NoopMiddleware{}
 	}
 

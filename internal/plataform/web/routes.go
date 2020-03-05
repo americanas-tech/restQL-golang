@@ -2,21 +2,22 @@ package web
 
 import (
 	"github.com/b2wdigital/restQL-golang/internal/plataform/conf"
+	"github.com/b2wdigital/restQL-golang/internal/plataform/logger"
 	"github.com/valyala/fasthttp"
 	"net/http"
 )
 
-func API(config conf.Config) fasthttp.RequestHandler {
-	app := NewApp(config)
-	restQl := NewRestQl(config)
+func API(config conf.Config, log logger.Logger) fasthttp.RequestHandler {
+	app := NewApp(config, log)
+	restQl := NewRestQl(config, log)
 
 	app.Handle(http.MethodPost, "/validate-query", restQl.validateQuery)
 
 	return app.RequestHandler()
 }
 
-func Health(config conf.Config) fasthttp.RequestHandler {
-	app := NewApp(config)
+func Health(config conf.Config, log logger.Logger) fasthttp.RequestHandler {
+	app := NewApp(config, log)
 	check := NewCheck()
 
 	app.Handle(http.MethodGet, "/health", check.health)
@@ -25,8 +26,8 @@ func Health(config conf.Config) fasthttp.RequestHandler {
 	return app.RequestHandlerWithoutMiddlewares()
 }
 
-func Debug(config conf.Config) fasthttp.RequestHandler {
-	app := NewApp(config)
+func Debug(config conf.Config, log logger.Logger) fasthttp.RequestHandler {
+	app := NewApp(config, log)
 	pprof := NewPprof()
 
 	app.Handle(http.MethodGet, "/debug/pprof/goroutine", pprof.Index)

@@ -1,9 +1,10 @@
 package middleware
 
 import (
+	"fmt"
 	"github.com/b2wdigital/restQL-golang/internal/plataform/conf"
+	"github.com/b2wdigital/restQL-golang/internal/plataform/logger"
 	"github.com/valyala/fasthttp"
-	"log"
 )
 
 type Middleware interface {
@@ -16,12 +17,12 @@ func (nm NoopMiddleware) Apply(h fasthttp.RequestHandler) fasthttp.RequestHandle
 	return h
 }
 
-func Apply(h fasthttp.RequestHandler, mws []Middleware) fasthttp.RequestHandler {
+func Apply(h fasthttp.RequestHandler, mws []Middleware, log logger.Logger) fasthttp.RequestHandler {
 	handler := h
 
 	for i := len(mws) - 1; i >= 0; i-- {
 		m := mws[i]
-		log.Printf("[DEBUG] applying middleware %T", m)
+		log.Debug(fmt.Sprintf("applying middleware %T", m))
 		handler = m.Apply(handler)
 	}
 
@@ -46,24 +47,24 @@ type middlewareConf struct {
 	} `yaml:"web"`
 }
 
-func FetchEnabled(config conf.Config) []Middleware {
-	mws := []Middleware{NewRecover(), NewNativeContext()}
+func FetchEnabled(config conf.Config, log logger.Logger) []Middleware {
+	mws := []Middleware{NewRecover(log), NewNativeContext()}
 
 	var mc middlewareConf
 	err := config.File().Unmarshal(&mc)
 	if err != nil {
-		log.Printf("[WARN] failed to unmarshal middleware configuration : %s", err)
+		log.Warn("failed to unmarshal middleware configuration", "error", err)
 		return mws
 	}
 
 	tc := mc.Web.Middlewares.Timeout
 	if tc != nil {
-		mws = append(mws, NewTimeout(tc.Duration))
+		mws = append(mws, NewTimeout(tc.Duration, log))
 	}
 
 	rc := mc.Web.Middlewares.RequestId
 	if rc != nil {
-		mws = append(mws, NewRequestId(rc.Header, rc.Strategy))
+		mws = append(mws, NewRequestId(rc.Header, rc.Strategy, log))
 	}
 
 	return mws
