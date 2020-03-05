@@ -3,6 +3,7 @@ package middleware
 import (
 	"bytes"
 	"github.com/valyala/fasthttp"
+	"log"
 )
 
 var requestIdKey = []byte{0x1}
@@ -22,9 +23,20 @@ var strategyToGenerator = map[string]IdGenerator{
 }
 
 func NewRequestId(header string, strategy string) Middleware {
+	if header == "" {
+		log.Printf("[WARN] failed to initialize request id middleware : empty header name")
+		return NoopMiddleware{}
+	}
+
+	generator, ok := strategyToGenerator[strategy]
+	if !ok {
+		log.Printf("[WARN] failed to initialize request id middleware : unknow strategy : %s", strategy)
+		return NoopMiddleware{}
+	}
+
 	return RequestId{
 		header:    header,
-		generator: strategyToGenerator[strategy],
+		generator: generator,
 	}
 }
 
