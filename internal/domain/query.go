@@ -25,7 +25,11 @@ type CacheControl struct {
 	SMaxAge interface{}
 }
 
-type Chain []string
+type Variable struct {
+	Target string
+}
+
+type Chain []interface{}
 
 type Flatten struct {
 	Target interface{}

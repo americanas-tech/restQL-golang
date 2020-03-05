@@ -30,14 +30,15 @@ func TestQueryParser(t *testing.T) {
 				Method:   "from",
 				Resource: "hero",
 				With: domain.Params{
-					"id":      1,
-					"name":    "batman",
-					"weapons": []interface{}{"belt", "hands"},
-					"family":  map[string]interface{}{"father": "Thomas Wayne"},
-					"height":  10.5,
+					"id":       1,
+					"name":     "batman",
+					"weapons":  []interface{}{"belt", "hands"},
+					"family":   map[string]interface{}{"father": "Thomas Wayne"},
+					"height":   10.5,
+					"universe": domain.Variable{"universe"},
 				},
 			}}},
-			`from hero with id = 1, name = "batman", weapons = ["belt", "hands"], family = { "father": "Thomas Wayne" }, height = 10.5`,
+			`from hero with id = 1, name = "batman", weapons = ["belt", "hands"], family = { "father": "Thomas Wayne" }, height = 10.5, universe = $universe`,
 		},
 		{
 			"Unique from statement and chained with parameters",
@@ -48,6 +49,11 @@ func TestQueryParser(t *testing.T) {
 			"Unique from statement and list of chained with parameters",
 			domain.Query{Statements: []domain.Statement{{Method: "from", Resource: "hero", With: domain.Params{"id": []interface{}{domain.Chain{"done-resource", "id"}}}}}},
 			"from hero with id = [done-resource.id]",
+		},
+		{
+			"Unique from statement and parameterized chained with parameters",
+			domain.Query{Statements: []domain.Statement{{Method: "from", Resource: "hero", With: domain.Params{"id": domain.Chain{"done-resource", domain.Variable{"field"}, "id"}}}}},
+			"from hero with id = done-resource.$field.id",
 		},
 		{
 			"Unique from statement and only filters",

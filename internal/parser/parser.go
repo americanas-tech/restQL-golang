@@ -186,7 +186,7 @@ func makeMaxAge(qualifier ast.Qualifier) interface{} {
 
 func getValue(value ast.Value) interface{} {
 	if value.Variable != nil {
-		return value.Variable
+		return domain.Variable{Target: *value.Variable}
 	}
 
 	if value.Primitive != nil {
@@ -249,7 +249,7 @@ func makeChain(primitive *ast.Primitive) domain.Chain {
 	result := make(domain.Chain, len(primitive.Chain))
 	for i, chained := range primitive.Chain {
 		if chained.PathVariable != "" {
-			result[i] = chained.PathVariable
+			result[i] = domain.Variable{Target: chained.PathVariable}
 		}
 
 		if chained.PathItem != "" {
