@@ -7,8 +7,11 @@ import (
 
 func Parse(queryStr string) (domain.Query, error) {
 	queryAst, err := ast.Parse(queryStr)
+	if err != nil {
+		return domain.Query{}, err
+	}
 
-	err = ValidateQuery(queryAst)
+	err = validateQuery(queryAst)
 	if err != nil {
 		return domain.Query{}, err
 	}
