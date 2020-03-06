@@ -1,9 +1,20 @@
 package eval
 
+import (
+	"errors"
+	"github.com/b2wdigital/restQL-golang/internal/domain"
+	"github.com/b2wdigital/restQL-golang/internal/parser"
+)
+
 type QueryOptions struct {
 	Namespace string
 	Id        string
 	Revision  int
+}
+
+type QueryInput struct {
+	Params  map[string]string
+	Headers map[string]string
 }
 
 type namespace string
@@ -22,18 +33,48 @@ func NewEvaluator(config Configuration, log Logger) Evaluator {
 	return Evaluator{config: config, log: log}
 }
 
-func (e Evaluator) SavedQuery(queryOpts QueryOptions) (interface{}, error) {
-	var queryConf queryConfig
-	err := e.config.File().Unmarshal(&queryConf)
+var ErrInvalidRevision = errors.New("revision must be greater than 0")
+var ErrInvalidQueryId = errors.New("query id must be not empty")
+var ErrInvalidNamespace = errors.New("namespace must be not empty")
+
+func (e Evaluator) SavedQuery(queryOpts QueryOptions, queryInput QueryInput) (domain.Query, error) {
+	err := validateQueryOptions(queryOpts)
 	if err != nil {
-		return nil, err
+		return domain.Query{}, err
 	}
 
-	e.log.Debug("queries in yaml", "queries", queryConf)
+	var queryConf queryConfig
+	err = e.config.File().Unmarshal(&queryConf)
+	if err != nil {
+		e.log.Debug("failed to load queries from config file", "error", err)
+		return domain.Query{}, err
+	}
 
 	queriesInNamespace := queryConf.Queries[namespace(queryOpts.Namespace)]
 	queriesByRevision := queriesInNamespace[queryOpts.Id]
 	queryTxt := queriesByRevision[queryOpts.Revision-1]
 
-	return queryTxt, nil
+	query, err := parser.Parse(queryTxt)
+	if err != nil {
+		e.log.Debug("failed to parse query", "error", err)
+		return domain.Query{}, err
+	}
+
+	return query, nil
+}
+
+func validateQueryOptions(queryOpts QueryOptions) error {
+	if queryOpts.Revision <= 0 {
+		return ErrInvalidRevision
+	}
+
+	if queryOpts.Id == "" {
+		return ErrInvalidQueryId
+	}
+
+	if queryOpts.Namespace == "" {
+		return ErrInvalidNamespace
+	}
+
+	return nil
 }
