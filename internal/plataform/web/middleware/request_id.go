@@ -22,7 +22,7 @@ var strategyToGenerator = map[string]IdGenerator{
 	"uuid":   NewUuidIdGenerator(),
 }
 
-func NewRequestId(header string, strategy string, log logger.Logger) Middleware {
+func NewRequestId(header string, strategy string, log *logger.Logger) Middleware {
 	if header == "" {
 		log.Warn("failed to initialize request id middleware : empty header name")
 		return NoopMiddleware{}

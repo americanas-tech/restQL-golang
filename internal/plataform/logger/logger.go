@@ -20,16 +20,7 @@ type configFile struct {
 
 var defaultConfig = configFile{Logging: logConf{Enable: true, Timestamp: true, Level: "info", Format: "json"}}
 
-type Logger interface {
-	Panic(msg string, fields ...interface{})
-	Fatal(msg string, fields ...interface{})
-	Error(msg string, err error, fields ...interface{})
-	Warn(msg string, fields ...interface{})
-	Info(msg string, fields ...interface{})
-	Debug(msg string, fields ...interface{})
-}
-
-func New(w io.Writer, config conf.Config) Logger {
+func New(w io.Writer, config conf.Config) *Logger {
 	lc := defaultConfig
 	config.File().Unmarshal(&lc)
 
@@ -54,48 +45,48 @@ func New(w io.Writer, config conf.Config) Logger {
 		zerolog.SetGlobalLevel(zerolog.Disabled)
 	}
 
-	return &ZerologLogger{logger: logger}
+	return &Logger{zLogger: logger}
 }
 
-type ZerologLogger struct {
-	logger zerolog.Logger
+type Logger struct {
+	zLogger zerolog.Logger
 }
 
-func (z *ZerologLogger) Panic(msg string, fields ...interface{}) {
-	entry := z.logger.Panic()
+func (l *Logger) Panic(msg string, fields ...interface{}) {
+	entry := l.zLogger.Panic()
 	fieldMap := makeFieldMap(fields)
 
 	entry.Fields(fieldMap).Msg(msg)
 }
 
-func (z *ZerologLogger) Fatal(msg string, fields ...interface{}) {
+func (l *Logger) Fatal(msg string, fields ...interface{}) {
 	fieldMap := makeFieldMap(fields)
 
-	z.logger.Fatal().Fields(fieldMap).Msg(msg)
+	l.zLogger.Fatal().Fields(fieldMap).Msg(msg)
 }
 
-func (z *ZerologLogger) Error(msg string, err error, fields ...interface{}) {
+func (l *Logger) Error(msg string, err error, fields ...interface{}) {
 	fieldMap := makeFieldMap(fields)
 
-	z.logger.Error().Err(err).Fields(fieldMap).Msg(msg)
+	l.zLogger.Error().Err(err).Fields(fieldMap).Msg(msg)
 }
 
-func (z *ZerologLogger) Warn(msg string, fields ...interface{}) {
+func (l *Logger) Warn(msg string, fields ...interface{}) {
 	fieldMap := makeFieldMap(fields)
 
-	z.logger.Warn().Fields(fieldMap).Msg(msg)
+	l.zLogger.Warn().Fields(fieldMap).Msg(msg)
 }
 
-func (z *ZerologLogger) Info(msg string, fields ...interface{}) {
+func (l *Logger) Info(msg string, fields ...interface{}) {
 	fieldMap := makeFieldMap(fields)
 
-	z.logger.Info().Fields(fieldMap).Msg(msg)
+	l.zLogger.Info().Fields(fieldMap).Msg(msg)
 }
 
-func (z *ZerologLogger) Debug(msg string, fields ...interface{}) {
+func (l *Logger) Debug(msg string, fields ...interface{}) {
 	fieldMap := makeFieldMap(fields)
 
-	z.logger.Debug().Fields(fieldMap).Msg(msg)
+	l.zLogger.Debug().Fields(fieldMap).Msg(msg)
 }
 
 func makeFieldMap(fields []interface{}) map[string]interface{} {

@@ -1,32 +1,36 @@
 package web
 
 import (
+	"github.com/b2wdigital/restQL-golang/internal/eval"
 	"github.com/b2wdigital/restQL-golang/internal/plataform/conf"
 	"github.com/b2wdigital/restQL-golang/internal/plataform/logger"
 	"github.com/valyala/fasthttp"
 	"net/http"
 )
 
-func API(config conf.Config, log logger.Logger) fasthttp.RequestHandler {
+func API(config conf.Config, log *logger.Logger) fasthttp.RequestHandler {
 	app := NewApp(config, log)
-	restQl := NewRestQl(config, log)
+	e := eval.NewEvaluator(config, log)
 
-	app.Handle(http.MethodPost, "/validate-query", restQl.validateQuery)
+	restQl := NewRestQl(config, log, e)
+
+	app.Handle(http.MethodPost, "/validate-query", restQl.ValidateQuery)
+	app.Handle(http.MethodGet, "/run-query/:namespace/:queryId/:revision", restQl.RunSavedQuery)
 
 	return app.RequestHandler()
 }
 
-func Health(config conf.Config, log logger.Logger) fasthttp.RequestHandler {
+func Health(config conf.Config, log *logger.Logger) fasthttp.RequestHandler {
 	app := NewApp(config, log)
 	check := NewCheck(config.Build())
 
-	app.Handle(http.MethodGet, "/health", check.health)
-	app.Handle(http.MethodGet, "/resource-status", check.resourceStatus)
+	app.Handle(http.MethodGet, "/Health", check.Health)
+	app.Handle(http.MethodGet, "/resource-status", check.ResourceStatus)
 
 	return app.RequestHandlerWithoutMiddlewares()
 }
 
-func Debug(config conf.Config, log logger.Logger) fasthttp.RequestHandler {
+func Debug(config conf.Config, log *logger.Logger) fasthttp.RequestHandler {
 	app := NewApp(config, log)
 	pprof := NewPprof()
 

@@ -11,7 +11,7 @@ type Timeout struct {
 	duration time.Duration
 }
 
-func NewTimeout(duration string, log logger.Logger) Middleware {
+func NewTimeout(duration string, log *logger.Logger) Middleware {
 	d, parseErr := time.ParseDuration(duration)
 	if parseErr != nil {
 		log.Warn("failed to initialize timeout middleware : invalid duration", "duration", duration)
