@@ -17,7 +17,7 @@ func (nm NoopMiddleware) Apply(h fasthttp.RequestHandler) fasthttp.RequestHandle
 	return h
 }
 
-func Apply(h fasthttp.RequestHandler, mws []Middleware, log logger.Logger) fasthttp.RequestHandler {
+func Apply(h fasthttp.RequestHandler, mws []Middleware, log *logger.Logger) fasthttp.RequestHandler {
 	handler := h
 
 	for i := len(mws) - 1; i >= 0; i-- {
@@ -47,7 +47,7 @@ type middlewareConf struct {
 	} `yaml:"web"`
 }
 
-func FetchEnabled(config conf.Config, log logger.Logger) []Middleware {
+func FetchEnabled(config conf.Config, log *logger.Logger) []Middleware {
 	mws := []Middleware{NewRecover(log), NewNativeContext()}
 
 	var mc middlewareConf

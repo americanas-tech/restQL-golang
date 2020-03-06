@@ -9,10 +9,10 @@ import (
 )
 
 type Recover struct {
-	log logger.Logger
+	log *logger.Logger
 }
 
-func NewRecover(log logger.Logger) Middleware {
+func NewRecover(log *logger.Logger) Middleware {
 	return Recover{log: log}
 }
 
