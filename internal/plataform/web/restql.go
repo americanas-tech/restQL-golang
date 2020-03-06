@@ -46,12 +46,14 @@ func (r RestQl) ValidateQuery(ctx *fasthttp.RequestCtx) error {
 }
 
 func (r RestQl) RunSavedQuery(ctx *fasthttp.RequestCtx) error {
-	qo, err := r.makeQueryOptions(ctx)
+	options, err := r.makeQueryOptions(ctx)
 	if err != nil {
 		return RespondError(ctx, err)
 	}
 
-	query, err := r.evaluator.SavedQuery(qo)
+	input := r.makeQueryInput(ctx)
+
+	query, err := r.evaluator.SavedQuery(options, input)
 	if err != nil {
 		return RespondError(ctx, err)
 	}
@@ -93,6 +95,23 @@ func (r RestQl) makeQueryOptions(ctx *fasthttp.RequestCtx) (eval.QueryOptions, e
 	}
 
 	return qo, nil
+}
+
+func (r RestQl) makeQueryInput(ctx *fasthttp.RequestCtx) eval.QueryInput {
+	params := make(map[string]string)
+	ctx.Request.URI().QueryArgs().VisitAll(func(key, value []byte) {
+		params[string(key)] = string(value)
+	})
+
+	headers := make(map[string]string)
+	ctx.Request.Header.VisitAll(func(key, value []byte) {
+		headers[string(key)] = string(value)
+	})
+
+	return eval.QueryInput{
+		Params:  params,
+		Headers: headers,
+	}
 }
 
 var paramNameToError = map[string]error{
