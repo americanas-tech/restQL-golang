@@ -138,7 +138,7 @@ func makeHeaders(qualifier ast.Qualifier) map[string]interface{} {
 		}
 
 		if v.Variable != nil {
-			result[k] = v.Variable
+			result[k] = domain.Variable{Target: *v.Variable}
 		}
 	}
 
@@ -152,7 +152,7 @@ func makeTimeout(qualifier ast.Qualifier) interface{} {
 	}
 
 	if v.Variable != nil {
-		return *v.Variable
+		return domain.Variable{Target: *v.Variable}
 	}
 
 	return nil
@@ -165,7 +165,7 @@ func makeSMaxAge(qualifier ast.Qualifier) interface{} {
 	}
 
 	if v.Variable != nil {
-		return v.Variable
+		return domain.Variable{Target: *v.Variable}
 	}
 
 	return nil
@@ -178,7 +178,7 @@ func makeMaxAge(qualifier ast.Qualifier) interface{} {
 	}
 
 	if v.Variable != nil {
-		return v.Variable
+		return domain.Variable{Target: *v.Variable}
 	}
 
 	return nil
