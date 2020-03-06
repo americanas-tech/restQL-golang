@@ -18,7 +18,7 @@ func API(config conf.Config, log logger.Logger) fasthttp.RequestHandler {
 
 func Health(config conf.Config, log logger.Logger) fasthttp.RequestHandler {
 	app := NewApp(config, log)
-	check := NewCheck()
+	check := NewCheck(config.Build())
 
 	app.Handle(http.MethodGet, "/health", check.health)
 	app.Handle(http.MethodGet, "/resource-status", check.resourceStatus)

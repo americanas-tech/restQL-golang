@@ -19,10 +19,12 @@ func main() {
 	}
 }
 
+var build string
+
 func start() error {
 	//// =========================================================================
 	//// Configuration
-	config := conf.New()
+	config := conf.New(build)
 	startupConf, err := newStartupConfig(config)
 	if err != nil {
 		return err
