@@ -77,7 +77,7 @@ func TestQueryParser(t *testing.T) {
 		},
 		{
 			"Unique from statement and variable timeout",
-			domain.Query{Statements: []domain.Statement{{Method: "from", Resource: "hero", Timeout: "some-time"}}},
+			domain.Query{Statements: []domain.Statement{{Method: "from", Resource: "hero", Timeout: domain.Variable{"some-time"}}}},
 			"from hero timeout $some-time",
 		},
 		{
@@ -86,9 +86,19 @@ func TestQueryParser(t *testing.T) {
 			`from hero headers X-Trace-Id = "12345"`,
 		},
 		{
+			"Unique from statement and variable header",
+			domain.Query{Statements: []domain.Statement{{Method: "from", Resource: "hero", Headers: map[string]interface{}{"X-Trace-Id": domain.Variable{"traceId"}}}}},
+			`from hero headers X-Trace-Id = $traceId`,
+		},
+		{
 			"Unique from statement and max age",
 			domain.Query{Statements: []domain.Statement{{Method: "from", Resource: "hero", CacheControl: domain.CacheControl{MaxAge: 2000, SMaxAge: 4000}}}},
 			"from hero max-age = 2000 s-max-age = 4000",
+		},
+		{
+			"Unique from statement and variable max age",
+			domain.Query{Statements: []domain.Statement{{Method: "from", Resource: "hero", CacheControl: domain.CacheControl{MaxAge: domain.Variable{"maxAge"}, SMaxAge: domain.Variable{"sMaxAge"}}}}},
+			"from hero max-age = $maxAge s-max-age = $sMaxAge",
 		},
 		{
 			"Unique from statement and flattened list parameters",
