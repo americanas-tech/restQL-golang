@@ -6,6 +6,12 @@ import (
 	"github.com/b2wdigital/restQL-golang/internal/parser"
 )
 
+var (
+	ErrInvalidRevision  = errors.New("revision must be greater than 0")
+	ErrInvalidQueryId   = errors.New("query id must be not empty")
+	ErrInvalidNamespace = errors.New("namespace must be not empty")
+)
+
 type QueryOptions struct {
 	Namespace string
 	Id        string
@@ -13,7 +19,7 @@ type QueryOptions struct {
 }
 
 type QueryInput struct {
-	Params  map[string]string
+	Params  map[string]interface{}
 	Headers map[string]string
 }
 
@@ -32,10 +38,6 @@ type Evaluator struct {
 func NewEvaluator(config Configuration, log Logger) Evaluator {
 	return Evaluator{config: config, log: log}
 }
-
-var ErrInvalidRevision = errors.New("revision must be greater than 0")
-var ErrInvalidQueryId = errors.New("query id must be not empty")
-var ErrInvalidNamespace = errors.New("namespace must be not empty")
 
 func (e Evaluator) SavedQuery(queryOpts QueryOptions, queryInput QueryInput) (domain.Query, error) {
 	err := validateQueryOptions(queryOpts)
@@ -59,6 +61,8 @@ func (e Evaluator) SavedQuery(queryOpts QueryOptions, queryInput QueryInput) (do
 		e.log.Debug("failed to parse query", "error", err)
 		return domain.Query{}, err
 	}
+
+	query = ResolveVariables(query, queryInput)
 
 	return query, nil
 }

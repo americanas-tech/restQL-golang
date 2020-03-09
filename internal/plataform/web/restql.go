@@ -98,9 +98,26 @@ func (r RestQl) makeQueryOptions(ctx *fasthttp.RequestCtx) (eval.QueryOptions, e
 }
 
 func (r RestQl) makeQueryInput(ctx *fasthttp.RequestCtx) eval.QueryInput {
-	params := make(map[string]string)
-	ctx.Request.URI().QueryArgs().VisitAll(func(key, value []byte) {
-		params[string(key)] = string(value)
+	params := make(map[string]interface{})
+	ctx.Request.URI().QueryArgs().VisitAll(func(keyByte, valueByte []byte) {
+		key := string(keyByte)
+		value := string(valueByte)
+
+		if currentValue, ok := params[key]; ok {
+			var newValue []string
+
+			switch currentValue := currentValue.(type) {
+			case []string:
+				newValue = append(currentValue, value)
+			default:
+				newValue = []string{fmt.Sprintf("%v", currentValue), value}
+			}
+
+			params[key] = newValue
+		} else {
+			params[key] = value
+		}
+
 	})
 
 	headers := make(map[string]string)

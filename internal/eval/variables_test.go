@@ -19,7 +19,7 @@ func TestResolveVariables(t *testing.T) {
 			domain.Query{Statements: []domain.Statement{
 				{Method: "from", Resource: "hero", Timeout: domain.Variable{"duration"}},
 			}},
-			eval.QueryInput{Params: map[string]string{"duration": "1000"}},
+			eval.QueryInput{Params: map[string]interface{}{"duration": "1000"}},
 			domain.Query{Statements: []domain.Statement{
 				{Method: "from", Resource: "hero", Timeout: 1000},
 			}},
@@ -37,7 +37,7 @@ func TestResolveVariables(t *testing.T) {
 					},
 				},
 			}},
-			eval.QueryInput{Params: map[string]string{"name": "batman", "field": "weapon"}},
+			eval.QueryInput{Params: map[string]interface{}{"name": "batman", "field": "weapon"}},
 			domain.Query{Statements: []domain.Statement{
 				{Method: "from", Resource: "hero", With: map[string]interface{}{
 					"id":      "1234567890",
@@ -51,7 +51,7 @@ func TestResolveVariables(t *testing.T) {
 			domain.Query{Statements: []domain.Statement{
 				{Method: "from", Resource: "hero", CacheControl: domain.CacheControl{MaxAge: domain.Variable{"cache-control"}, SMaxAge: domain.Variable{"s-cache-control"}}},
 			}},
-			eval.QueryInput{Params: map[string]string{"cache-control": "200", "s-cache-control": "400"}},
+			eval.QueryInput{Params: map[string]interface{}{"cache-control": "200", "s-cache-control": "400"}},
 			domain.Query{Statements: []domain.Statement{
 				{Method: "from", Resource: "hero", CacheControl: domain.CacheControl{MaxAge: 200, SMaxAge: 400}},
 			}},
@@ -69,7 +69,7 @@ func TestResolveVariables(t *testing.T) {
 					},
 				},
 			}},
-			eval.QueryInput{Params: map[string]string{"auth": "abcdef0987", "some-param": "abc"}},
+			eval.QueryInput{Params: map[string]interface{}{"auth": "abcdef0987", "some-param": "abc"}},
 			domain.Query{Statements: []domain.Statement{
 				{Method: "from", Resource: "hero", Headers: map[string]interface{}{"Authorization": "abcdef0987", "X-Id": "1234567890", "X-Some-Header": "abc"}},
 			}},
