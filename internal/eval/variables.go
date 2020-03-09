@@ -54,7 +54,7 @@ func resolveChain(chain domain.Chain, input QueryInput) domain.Chain {
 	for i, pathItem := range chain {
 		switch pathItem := pathItem.(type) {
 		case domain.Variable:
-			paramValue, ok := input.Params[pathItem.Target]
+			paramValue, ok := getUniqueParamValue(pathItem.Target, input.Params)
 			if !ok {
 				continue
 			}
@@ -73,7 +73,7 @@ func resolveCacheControl(cacheControl domain.CacheControl, input QueryInput) dom
 
 	switch value := cacheControl.MaxAge.(type) {
 	case domain.Variable:
-		paramValue, ok := input.Params[value.Target]
+		paramValue, ok := getUniqueParamValue(value.Target, input.Params)
 		if !ok {
 			result.MaxAge = nil
 		}
@@ -90,7 +90,7 @@ func resolveCacheControl(cacheControl domain.CacheControl, input QueryInput) dom
 
 	switch value := cacheControl.SMaxAge.(type) {
 	case domain.Variable:
-		paramValue, ok := input.Params[value.Target]
+		paramValue, ok := getUniqueParamValue(value.Target, input.Params)
 		if !ok {
 			result.SMaxAge = nil
 		}
@@ -118,7 +118,7 @@ func resolveHeaders(headers map[string]interface{}, input QueryInput) map[string
 	for key, value := range headers {
 		switch value := value.(type) {
 		case domain.Variable:
-			paramValue, ok := input.Params[value.Target]
+			paramValue, ok := getUniqueParamValue(value.Target, input.Params)
 			if !ok {
 				continue
 			}
@@ -133,10 +133,9 @@ func resolveHeaders(headers map[string]interface{}, input QueryInput) map[string
 }
 
 func resolveTimeout(timeout interface{}, input QueryInput) interface{} {
-	switch timeout.(type) {
+	switch timeout := timeout.(type) {
 	case domain.Variable:
-		variable := timeout.(domain.Variable)
-		paramValue, ok := input.Params[variable.Target]
+		paramValue, ok := getUniqueParamValue(timeout.Target, input.Params)
 		if !ok {
 			return nil
 		}
@@ -151,5 +150,21 @@ func resolveTimeout(timeout interface{}, input QueryInput) interface{} {
 		return timeout
 	default:
 		return nil
+	}
+}
+
+func getUniqueParamValue(name string, params map[string]interface{}) (string, bool) {
+	value, ok := params[name]
+	if !ok {
+		return "", false
+	}
+
+	switch value := value.(type) {
+	case []string:
+		return value[0], true
+	case string:
+		return value, true
+	default:
+		return "", false
 	}
 }
