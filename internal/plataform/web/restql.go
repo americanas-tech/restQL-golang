@@ -1,7 +1,6 @@
 package web
 
 import (
-	"bytes"
 	"fmt"
 	"github.com/b2wdigital/restQL-golang/internal/eval"
 	"github.com/b2wdigital/restQL-golang/internal/parser"
@@ -29,7 +28,7 @@ func NewRestQl(c conf.Config, l *logger.Logger, e eval.Evaluator) RestQl {
 }
 
 func (r RestQl) ValidateQuery(ctx *fasthttp.RequestCtx) error {
-	queryTxt := bytes.NewBuffer(ctx.PostBody()).String()
+	queryTxt := string(ctx.PostBody())
 	_, err := parser.Parse(queryTxt)
 	if err != nil {
 		r.log.Error("an error occurred when parsing query", err)

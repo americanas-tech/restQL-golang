@@ -1,7 +1,6 @@
 package middleware
 
 import (
-	"bytes"
 	"github.com/b2wdigital/restQL-golang/internal/plataform/logger"
 	"github.com/valyala/fasthttp"
 )
@@ -49,7 +48,7 @@ func (r RequestId) Apply(h fasthttp.RequestHandler) fasthttp.RequestHandler {
 		if len(currentRequestId) == 0 {
 			requestId = r.generator.Run()
 		} else {
-			requestId = bytes.NewBuffer(currentRequestId).String()
+			requestId = string(currentRequestId)
 		}
 
 		ctx.SetUserValueBytes(requestIdKey, requestId)
