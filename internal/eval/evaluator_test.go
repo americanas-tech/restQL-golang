@@ -22,7 +22,7 @@ func TestEvaluateSavedQuery(t *testing.T) {
 
 	mr := eval.NewMappingReader(config, NoOpLogger{})
 	qr := eval.NewQueryReader(config, NoOpLogger{})
-	evaluator := eval.NewEvaluator(NoOpLogger{}, mr, qr)
+	evaluator := eval.NewEvaluator(mr, qr, NoOpLogger{})
 
 	t.Run("eval query found with no variables", func(t *testing.T) {
 		options := eval.QueryOptions{
