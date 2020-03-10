@@ -1,15 +1,18 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"github.com/b2wdigital/restQL-golang/internal/plataform/conf"
 	"github.com/b2wdigital/restQL-golang/internal/plataform/logger"
 	"github.com/b2wdigital/restQL-golang/internal/plataform/web"
 	"github.com/pkg/errors"
 	"github.com/valyala/fasthttp"
+	"golang.org/x/sync/errgroup"
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 )
 
 func main() {
@@ -25,22 +28,22 @@ func start() error {
 	//// =========================================================================
 	//// Configuration
 	config := conf.New(build)
-	startupConf, err := newStartupConfig(config)
+	log := logger.New(os.Stdout, config)
+
+	startupConf, err := newStartupConfig(config, log)
 	if err != nil {
 		return err
 	}
-
-	log := logger.New(os.Stdout, config)
 
 	//// =========================================================================
 	//// Start API
 	log.Info("initializing api")
 
-	shutdown := make(chan os.Signal, 1)
-	signal.Notify(shutdown, os.Interrupt, syscall.SIGTERM)
+	shutdownSignal := make(chan os.Signal, 1)
+	signal.Notify(shutdownSignal, os.Interrupt, syscall.SIGTERM)
 
-	api := fasthttp.Server{Handler: web.API(config, log)}
-	health := fasthttp.Server{Handler: web.Health(config, log)}
+	api := &fasthttp.Server{Name: "api", Handler: web.API(config, log)}
+	health := &fasthttp.Server{Name: "health", Handler: web.Health(config, log)}
 
 	serverErrors := make(chan error, 1)
 	go func() {
@@ -49,12 +52,13 @@ func start() error {
 	}()
 
 	go func() {
+		defer log.Info("stopping health")
 		log.Info("api health listing", "port", startupConf.ApiHealthAddr)
 		serverErrors <- health.ListenAndServe(startupConf.ApiHealthAddr)
 	}()
 
 	if startupConf.Env == "development" {
-		debug := fasthttp.Server{Handler: web.Debug(config, log)}
+		debug := &fasthttp.Server{Name: "debug", Handler: web.Debug(config, log)}
 		go func() {
 			log.Info("api debug listing", "port", startupConf.DebugAddr)
 			serverErrors <- debug.ListenAndServe(startupConf.DebugAddr)
@@ -66,18 +70,12 @@ func start() error {
 	select {
 	case err := <-serverErrors:
 		return errors.Wrap(err, "server error")
-	case sig := <-shutdown:
+	case sig := <-shutdownSignal:
 		log.Info("starting shutdown", "signal", sig)
 
-		err := api.Shutdown()
-		if err != nil {
-			log.Error("api graceful shutdown did not complete", err)
-		}
-
-		err = health.Shutdown()
-		if err != nil {
-			log.Error("api health graceful shutdown did not complete", err)
-		}
+		timeout, cancel := context.WithTimeout(context.Background(), startupConf.GracefulShutdownTimeout)
+		defer cancel()
+		err := shutdown(timeout, log, api, health)
 
 		switch {
 		case sig == syscall.SIGSTOP:
@@ -90,14 +88,46 @@ func start() error {
 	return nil
 }
 
-type startupConfig struct {
-	Env           string
-	ApiAddr       string
-	ApiHealthAddr string
-	DebugAddr     string
+func shutdown(ctx context.Context, log *logger.Logger, servers ...*fasthttp.Server) error {
+	var groupErr error
+	var g errgroup.Group
+	done := make(chan struct{})
+
+	go func() {
+		groupErr = g.Wait()
+		done <- struct{}{}
+	}()
+
+	for _, s := range servers {
+		s := s
+		g.Go(func() error {
+			log.Debug("starting shutdown", "server", s.Name)
+			err := s.Shutdown()
+			if err != nil {
+				log.Error(fmt.Sprintf("%s graceful shutdown did not complete", s.Name), err)
+			}
+			log.Debug("shutdown finished", "server", s.Name)
+			return err
+		})
+	}
+
+	select {
+	case <-ctx.Done():
+		return errors.New("graceful shutdown did not complete")
+	case <-done:
+		return groupErr
+	}
 }
 
-func newStartupConfig(config conf.Config) (startupConfig, error) {
+type startupConfig struct {
+	Env                     string
+	ApiAddr                 string
+	ApiHealthAddr           string
+	DebugAddr               string
+	GracefulShutdownTimeout time.Duration
+}
+
+func newStartupConfig(config conf.Config, log *logger.Logger) (startupConfig, error) {
 	env := config.Env().GetString("ENV")
 
 	apiAddr := config.Env().GetString("PORT")
@@ -119,10 +149,40 @@ func newStartupConfig(config conf.Config) (startupConfig, error) {
 	debugAddr = ":" + debugAddr
 
 	startupConf := startupConfig{
-		Env:           env,
-		ApiAddr:       apiAddr,
-		ApiHealthAddr: apiHealthAddr,
-		DebugAddr:     debugAddr,
+		Env:                     env,
+		ApiAddr:                 apiAddr,
+		ApiHealthAddr:           apiHealthAddr,
+		DebugAddr:               debugAddr,
+		GracefulShutdownTimeout: 5 * time.Second,
 	}
+
+	gracefulShutdownTimeout, err := getGracefulShutdownTimeout(config)
+	if err != nil {
+		log.Debug("graceful shutdown timeout configuration failed", "error", err)
+	} else {
+		log.Debug("custom graceful shutdown timeout", "timeout", gracefulShutdownTimeout.String())
+		startupConf.GracefulShutdownTimeout = gracefulShutdownTimeout
+	}
+
 	return startupConf, nil
+}
+
+func getGracefulShutdownTimeout(config conf.Config) (time.Duration, error) {
+	fileConf := struct {
+		Web struct {
+			GracefulShutdownTimeout string `yaml:"gracefulShutdownTimeout"`
+		} `yaml:"web"`
+	}{}
+	err := config.File().Unmarshal(&fileConf)
+	if err != nil {
+		return 0, errors.Wrap(err, "failed to load file configuration on startup config parsing")
+	}
+
+	gracefulShutdownTimeout := fileConf.Web.GracefulShutdownTimeout
+	duration, err := time.ParseDuration(gracefulShutdownTimeout)
+	if err != nil {
+		return 0, errors.Wrap(err, "duration parsing failed")
+	}
+
+	return duration, nil
 }
