@@ -14,10 +14,15 @@ func TestEvaluateSavedQuery(t *testing.T) {
 			"queries": map[string]interface{}{
 				"restQL": map[string][]string{"my-query": {"from hero"}},
 			},
+			"mappings": map[string]string{
+				"hero": "http://heroes.com",
+			},
 		},
 	}
 
-	evaluator := eval.NewEvaluator(config, NoOpLogger{})
+	mr := eval.NewMappingReader(config, NoOpLogger{})
+	qr := eval.NewQueryReader(config, NoOpLogger{})
+	evaluator := eval.NewEvaluator(NoOpLogger{}, mr, qr)
 
 	t.Run("eval query found with no variables", func(t *testing.T) {
 		options := eval.QueryOptions{
