@@ -42,8 +42,18 @@ func start() error {
 	shutdownSignal := make(chan os.Signal, 1)
 	signal.Notify(shutdownSignal, os.Interrupt, syscall.SIGTERM)
 
-	api := &fasthttp.Server{Name: "api", Handler: web.API(config, log)}
-	health := &fasthttp.Server{Name: "health", Handler: web.Health(config, log)}
+	api := &fasthttp.Server{
+		Name:         "api",
+		Handler:      web.API(config, log),
+		TCPKeepalive: false,
+		ReadTimeout:  startupConf.ReadTimeout,
+	}
+	health := &fasthttp.Server{
+		Name:         "health",
+		Handler:      web.Health(config, log),
+		TCPKeepalive: false,
+		ReadTimeout:  startupConf.ReadTimeout,
+	}
 
 	serverErrors := make(chan error, 1)
 	go func() {
@@ -125,6 +135,7 @@ type startupConfig struct {
 	ApiHealthAddr           string
 	DebugAddr               string
 	GracefulShutdownTimeout time.Duration
+	ReadTimeout             time.Duration
 }
 
 func newStartupConfig(config conf.Config, log *logger.Logger) (startupConfig, error) {
@@ -154,35 +165,42 @@ func newStartupConfig(config conf.Config, log *logger.Logger) (startupConfig, er
 		ApiHealthAddr:           apiHealthAddr,
 		DebugAddr:               debugAddr,
 		GracefulShutdownTimeout: 5 * time.Second,
+		ReadTimeout:             2 * time.Second,
 	}
 
-	gracefulShutdownTimeout, err := getGracefulShutdownTimeout(config)
-	if err != nil {
-		log.Debug("graceful shutdown timeout configuration failed", "error", err)
-	} else {
-		log.Debug("custom graceful shutdown timeout", "timeout", gracefulShutdownTimeout.String())
-		startupConf.GracefulShutdownTimeout = gracefulShutdownTimeout
-	}
+	setWebTimeouts(config, &startupConf, log)
 
 	return startupConf, nil
 }
 
-func getGracefulShutdownTimeout(config conf.Config) (time.Duration, error) {
+func setWebTimeouts(config conf.Config, startupConf *startupConfig, log *logger.Logger) {
 	fileConf := struct {
 		Web struct {
 			GracefulShutdownTimeout string `yaml:"gracefulShutdownTimeout"`
+			ReadTimeout             string `yaml:"readTimeout"`
 		} `yaml:"web"`
 	}{}
 	err := config.File().Unmarshal(&fileConf)
 	if err != nil {
-		return 0, errors.Wrap(err, "failed to load file configuration on startup config parsing")
+		log.Error("failed to load file configuration on startup config parsing", err)
+		return
 	}
 
 	gracefulShutdownTimeout := fileConf.Web.GracefulShutdownTimeout
-	duration, err := time.ParseDuration(gracefulShutdownTimeout)
-	if err != nil {
-		return 0, errors.Wrap(err, "duration parsing failed")
+	if gracefulShutdownTimeout != "" {
+		if gst, err := time.ParseDuration(gracefulShutdownTimeout); err != nil {
+			log.Error("graceful shutdown timeout parsing failed", err)
+		} else {
+			startupConf.GracefulShutdownTimeout = gst
+		}
 	}
 
-	return duration, nil
+	readTimeout := fileConf.Web.ReadTimeout
+	if readTimeout != "" {
+		if rt, err := time.ParseDuration(readTimeout); err != nil {
+			log.Error("read timeout parsing failed", err)
+		} else {
+			startupConf.ReadTimeout = rt
+		}
+	}
 }
