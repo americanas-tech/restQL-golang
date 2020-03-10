@@ -10,7 +10,9 @@ import (
 
 func API(config conf.Config, log *logger.Logger) fasthttp.RequestHandler {
 	app := NewApp(config, log)
-	e := eval.NewEvaluator(config, log)
+	mr := eval.NewMappingReader(config, log)
+	qr := eval.NewQueryReader(config, log)
+	e := eval.NewEvaluator(log, mr, qr)
 
 	restQl := NewRestQl(config, log, e)
 

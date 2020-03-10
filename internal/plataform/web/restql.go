@@ -47,14 +47,25 @@ func (r RestQl) ValidateQuery(ctx *fasthttp.RequestCtx) error {
 func (r RestQl) RunSavedQuery(ctx *fasthttp.RequestCtx) error {
 	options, err := r.makeQueryOptions(ctx)
 	if err != nil {
-		return RespondError(ctx, err)
+		return RespondError(ctx, NewRequestError(err, http.StatusUnprocessableEntity))
 	}
 
 	input := r.makeQueryInput(ctx)
 
 	query, err := r.evaluator.SavedQuery(options, input)
 	if err != nil {
-		return RespondError(ctx, err)
+		r.log.Debug("failed to evaluated saved query", "error", err)
+
+		switch err := err.(type) {
+		case eval.ValidationError:
+			return RespondError(ctx, NewRequestError(err, http.StatusUnprocessableEntity))
+		case eval.NotFoundError:
+			return RespondError(ctx, NewRequestError(err, http.StatusNotFound))
+		case eval.ParserError:
+			return RespondError(ctx, NewRequestError(err, http.StatusInternalServerError))
+		default:
+			return RespondError(ctx, err)
+		}
 	}
 
 	return Respond(ctx, query, http.StatusOK)

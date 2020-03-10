@@ -1,9 +1,9 @@
 package eval
 
 import (
-	"errors"
 	"github.com/b2wdigital/restQL-golang/internal/domain"
 	"github.com/b2wdigital/restQL-golang/internal/parser"
+	"github.com/pkg/errors"
 )
 
 var (
@@ -12,31 +12,14 @@ var (
 	ErrInvalidNamespace = errors.New("namespace must be not empty")
 )
 
-type QueryOptions struct {
-	Namespace string
-	Id        string
-	Revision  int
-}
-
-type QueryInput struct {
-	Params  map[string]interface{}
-	Headers map[string]string
-}
-
-type namespace string
-type savedQueries map[string][]string
-
-type queryConfig struct {
-	Queries map[namespace]savedQueries
-}
-
 type Evaluator struct {
-	config Configuration
-	log    Logger
+	log            Logger
+	mappingsReader MappingsReader
+	queryReader    QueryReader
 }
 
-func NewEvaluator(config Configuration, log Logger) Evaluator {
-	return Evaluator{config: config, log: log}
+func NewEvaluator(log Logger, mr MappingsReader, qr QueryReader) Evaluator {
+	return Evaluator{log: log, mappingsReader: mr, queryReader: qr}
 }
 
 func (e Evaluator) SavedQuery(queryOpts QueryOptions, queryInput QueryInput) (domain.Query, error) {
@@ -45,20 +28,19 @@ func (e Evaluator) SavedQuery(queryOpts QueryOptions, queryInput QueryInput) (do
 		return domain.Query{}, err
 	}
 
-	var queryConf queryConfig
-	err = e.config.File().Unmarshal(&queryConf)
+	queryTxt, err := e.queryReader.GetQuery(queryOpts.Namespace, queryOpts.Id, queryOpts.Revision)
 	if err != nil {
-		e.log.Debug("failed to load queries from config file", "error", err)
 		return domain.Query{}, err
 	}
-
-	queriesInNamespace := queryConf.Queries[namespace(queryOpts.Namespace)]
-	queriesByRevision := queriesInNamespace[queryOpts.Id]
-	queryTxt := queriesByRevision[queryOpts.Revision-1]
 
 	query, err := parser.Parse(queryTxt)
 	if err != nil {
 		e.log.Debug("failed to parse query", "error", err)
+		return domain.Query{}, ParserError{errors.Wrap(err, "invalid query syntax")}
+	}
+
+	_, err = e.fetchMappings(query)
+	if err != nil {
 		return domain.Query{}, err
 	}
 
@@ -67,17 +49,33 @@ func (e Evaluator) SavedQuery(queryOpts QueryOptions, queryInput QueryInput) (do
 	return query, nil
 }
 
+func (e Evaluator) fetchMappings(query domain.Query) (map[string]string, error) {
+	mappings := make(map[string]string)
+
+	for _, stmt := range query.Statements {
+		url, err := e.mappingsReader.GetUrl(stmt.Resource)
+		if err != nil {
+			return nil, err
+		}
+
+		mappings[stmt.Resource] = url
+	}
+
+	return mappings, nil
+
+}
+
 func validateQueryOptions(queryOpts QueryOptions) error {
 	if queryOpts.Revision <= 0 {
-		return ErrInvalidRevision
+		return ValidationError{ErrInvalidRevision}
 	}
 
 	if queryOpts.Id == "" {
-		return ErrInvalidQueryId
+		return ValidationError{ErrInvalidQueryId}
 	}
 
 	if queryOpts.Namespace == "" {
-		return ErrInvalidNamespace
+		return ValidationError{ErrInvalidNamespace}
 	}
 
 	return nil
