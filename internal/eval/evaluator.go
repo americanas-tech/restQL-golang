@@ -18,7 +18,7 @@ type Evaluator struct {
 	queryReader    QueryReader
 }
 
-func NewEvaluator(log Logger, mr MappingsReader, qr QueryReader) Evaluator {
+func NewEvaluator(mr MappingsReader, qr QueryReader, log Logger) Evaluator {
 	return Evaluator{log: log, mappingsReader: mr, queryReader: qr}
 }
 
