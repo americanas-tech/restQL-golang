@@ -26,7 +26,7 @@ func Health(config conf.Config, log *logger.Logger) fasthttp.RequestHandler {
 	app := NewApp(config, log)
 	check := NewCheck(config.Build())
 
-	app.Handle(http.MethodGet, "/Health", check.Health)
+	app.Handle(http.MethodGet, "/health", check.Health)
 	app.Handle(http.MethodGet, "/resource-status", check.ResourceStatus)
 
 	return app.RequestHandlerWithoutMiddlewares()
