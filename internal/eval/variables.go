@@ -5,7 +5,7 @@ import (
 	"strconv"
 )
 
-func ResolveVariables(query domain.Query, input QueryInput) domain.Query {
+func ResolveVariables(query domain.Query, input domain.QueryInput) domain.Query {
 	result := domain.Query{
 		Use:        query.Use,
 		Statements: make([]domain.Statement, len(query.Statements)),
@@ -23,7 +23,7 @@ func ResolveVariables(query domain.Query, input QueryInput) domain.Query {
 	return result
 }
 
-func resolveWith(with domain.Params, input QueryInput) domain.Params {
+func resolveWith(with domain.Params, input domain.QueryInput) domain.Params {
 	if with == nil {
 		return nil
 	}
@@ -49,7 +49,7 @@ func resolveWith(with domain.Params, input QueryInput) domain.Params {
 	return result
 }
 
-func resolveChain(chain domain.Chain, input QueryInput) domain.Chain {
+func resolveChain(chain domain.Chain, input domain.QueryInput) domain.Chain {
 	result := make(domain.Chain, len(chain))
 	for i, pathItem := range chain {
 		switch pathItem := pathItem.(type) {
@@ -68,7 +68,7 @@ func resolveChain(chain domain.Chain, input QueryInput) domain.Chain {
 	return result
 }
 
-func resolveCacheControl(cacheControl domain.CacheControl, input QueryInput) domain.CacheControl {
+func resolveCacheControl(cacheControl domain.CacheControl, input domain.QueryInput) domain.CacheControl {
 	var result domain.CacheControl
 
 	switch value := cacheControl.MaxAge.(type) {
@@ -108,7 +108,7 @@ func resolveCacheControl(cacheControl domain.CacheControl, input QueryInput) dom
 	return result
 }
 
-func resolveHeaders(headers map[string]interface{}, input QueryInput) map[string]interface{} {
+func resolveHeaders(headers map[string]interface{}, input domain.QueryInput) map[string]interface{} {
 	if headers == nil {
 		return nil
 	}
@@ -132,7 +132,7 @@ func resolveHeaders(headers map[string]interface{}, input QueryInput) map[string
 	return result
 }
 
-func resolveTimeout(timeout interface{}, input QueryInput) interface{} {
+func resolveTimeout(timeout interface{}, input domain.QueryInput) interface{} {
 	switch timeout := timeout.(type) {
 	case domain.Variable:
 		paramValue, ok := getUniqueParamValue(timeout.Target, input.Params)
