@@ -3,6 +3,7 @@ package eval
 import (
 	"context"
 	"github.com/b2wdigital/restQL-golang/internal/domain"
+	"github.com/b2wdigital/restQL-golang/internal/eval/runner"
 	"github.com/b2wdigital/restQL-golang/internal/parser"
 	"github.com/pkg/errors"
 )
@@ -17,13 +18,14 @@ type Evaluator struct {
 	log            domain.Logger
 	mappingsReader MappingsReader
 	queryReader    QueryReader
+	run            runner.Runner
 }
 
-func NewEvaluator(mr MappingsReader, qr QueryReader, log domain.Logger) Evaluator {
-	return Evaluator{log: log, mappingsReader: mr, queryReader: qr}
+func NewEvaluator(mr MappingsReader, qr QueryReader, r runner.Runner, log domain.Logger) Evaluator {
+	return Evaluator{log: log, mappingsReader: mr, queryReader: qr, run: r}
 }
 
-func (e Evaluator) SavedQuery(ctx context.Context, queryOpts QueryOptions, queryInput QueryInput) (domain.Query, error) {
+func (e Evaluator) SavedQuery(ctx context.Context, queryOpts domain.QueryOptions, queryInput domain.QueryInput) (interface{}, error) {
 	err := validateQueryOptions(queryOpts)
 	if err != nil {
 		return domain.Query{}, err
@@ -40,7 +42,7 @@ func (e Evaluator) SavedQuery(ctx context.Context, queryOpts QueryOptions, query
 		return domain.Query{}, ParserError{errors.Wrap(err, "invalid query syntax")}
 	}
 
-	_, err = e.fetchMappings(query)
+	mappings, err := e.fetchMappings(query)
 	if err != nil {
 		return domain.Query{}, err
 	}
@@ -48,7 +50,9 @@ func (e Evaluator) SavedQuery(ctx context.Context, queryOpts QueryOptions, query
 	query = ResolveVariables(query, queryInput)
 	query = MultiplexStatements(query)
 
-	return query, nil
+	r := e.run.ExecuteQuery(ctx, query, mappings)
+
+	return r, nil
 }
 
 func (e Evaluator) fetchMappings(query domain.Query) (map[string]string, error) {
@@ -67,7 +71,7 @@ func (e Evaluator) fetchMappings(query domain.Query) (map[string]string, error) 
 
 }
 
-func validateQueryOptions(queryOpts QueryOptions) error {
+func validateQueryOptions(queryOpts domain.QueryOptions) error {
 	if queryOpts.Revision <= 0 {
 		return ValidationError{ErrInvalidRevision}
 	}
