@@ -13,10 +13,13 @@ import (
 	"strconv"
 )
 
-var ErrInvalidNamespace = errors.New("invalid namespace")
-var ErrInvalidQueryId = errors.New("invalid query id")
-var ErrInvalidRevision = errors.New("invalid revision")
-var ErrInvalidRevisionType = errors.New("invalid revision : must be an integer")
+var (
+	ErrInvalidNamespace    = errors.New("invalid namespace")
+	ErrInvalidQueryId      = errors.New("invalid query id")
+	ErrInvalidRevision     = errors.New("invalid revision")
+	ErrInvalidRevisionType = errors.New("invalid revision : must be an integer")
+	ErrInvalidTenant       = errors.New("invalid tenant : no value provided")
+)
 
 type RestQl struct {
 	config    conf.Config
@@ -95,15 +98,27 @@ func (r RestQl) makeQueryOptions(ctx *fasthttp.RequestCtx) (eval.QueryOptions, e
 	revision, err := strconv.Atoi(revisionStr)
 	if err != nil {
 		r.log.Debug("failed to convert revision to integer")
-		e := &Error{Err: ErrInvalidRevisionType, Status: http.StatusBadRequest}
+		return eval.QueryOptions{}, ErrInvalidRevisionType
+	}
 
-		return eval.QueryOptions{}, e
+	var tenant string
+
+	envTenant := r.config.Env().GetString("TENANT")
+	if envTenant != "" {
+		tenant = envTenant
+	} else {
+		tenant = string(ctx.QueryArgs().Peek("tenant"))
+	}
+
+	if tenant == "" {
+		return eval.QueryOptions{}, ErrInvalidTenant
 	}
 
 	qo := eval.QueryOptions{
 		Namespace: namespace,
 		Id:        queryId,
 		Revision:  revision,
+		Tenant:    tenant,
 	}
 
 	return qo, nil

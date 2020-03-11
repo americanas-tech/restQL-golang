@@ -30,6 +30,7 @@ type QueryOptions struct {
 	Namespace string
 	Id        string
 	Revision  int
+	Tenant    string
 }
 
 type QueryInput struct {
