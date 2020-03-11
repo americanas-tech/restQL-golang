@@ -1,6 +1,7 @@
 package eval
 
 import (
+	"context"
 	"github.com/b2wdigital/restQL-golang/internal/domain"
 	"github.com/b2wdigital/restQL-golang/internal/parser"
 	"github.com/pkg/errors"
@@ -13,16 +14,16 @@ var (
 )
 
 type Evaluator struct {
-	log            Logger
+	log            domain.Logger
 	mappingsReader MappingsReader
 	queryReader    QueryReader
 }
 
-func NewEvaluator(mr MappingsReader, qr QueryReader, log Logger) Evaluator {
+func NewEvaluator(mr MappingsReader, qr QueryReader, log domain.Logger) Evaluator {
 	return Evaluator{log: log, mappingsReader: mr, queryReader: qr}
 }
 
-func (e Evaluator) SavedQuery(queryOpts QueryOptions, queryInput QueryInput) (domain.Query, error) {
+func (e Evaluator) SavedQuery(ctx context.Context, queryOpts QueryOptions, queryInput QueryInput) (domain.Query, error) {
 	err := validateQueryOptions(queryOpts)
 	if err != nil {
 		return domain.Query{}, err

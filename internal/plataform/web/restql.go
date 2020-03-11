@@ -6,6 +6,7 @@ import (
 	"github.com/b2wdigital/restQL-golang/internal/parser"
 	"github.com/b2wdigital/restQL-golang/internal/plataform/conf"
 	"github.com/b2wdigital/restQL-golang/internal/plataform/logger"
+	"github.com/b2wdigital/restQL-golang/internal/plataform/web/middleware"
 	"github.com/pkg/errors"
 	"github.com/valyala/fasthttp"
 	"net/http"
@@ -51,8 +52,9 @@ func (r RestQl) RunSavedQuery(ctx *fasthttp.RequestCtx) error {
 	}
 
 	input := r.makeQueryInput(ctx)
+	context := middleware.GetNativeContext(ctx)
 
-	query, err := r.evaluator.SavedQuery(options, input)
+	query, err := r.evaluator.SavedQuery(context, options, input)
 	if err != nil {
 		r.log.Debug("failed to evaluated saved query", "error", err)
 

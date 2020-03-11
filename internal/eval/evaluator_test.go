@@ -32,7 +32,7 @@ func TestEvaluateSavedQuery(t *testing.T) {
 		}
 		input := eval.QueryInput{}
 
-		query, err := evaluator.SavedQuery(options, input)
+		query, err := evaluator.SavedQuery(nil, options, input)
 		if err != nil {
 			t.Fatalf("evaluate.SavedQuery return an error : %v", err)
 		}
@@ -79,7 +79,7 @@ func (sfc stubFileSource) Unmarshal(target interface{}) error {
 	return nil
 }
 
-func (sc stubConfig) File() eval.FileSource {
+func (sc stubConfig) File() domain.FileSource {
 	return stubFileSource{sc.UnmarshalResult}
 }
 
@@ -91,6 +91,6 @@ func (sec stubEnvSource) GetString(key string) string {
 	return sec.envResult
 }
 
-func (sc stubConfig) Env() eval.EnvSource {
+func (sc stubConfig) Env() domain.EnvSource {
 	return stubEnvSource{sc.EnvResult}
 }

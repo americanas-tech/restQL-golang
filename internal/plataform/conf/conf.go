@@ -1,7 +1,7 @@
 package conf
 
 import (
-	"github.com/b2wdigital/restQL-golang/internal/eval"
+	"github.com/b2wdigital/restQL-golang/internal/domain"
 	"sync"
 )
 
@@ -24,11 +24,11 @@ func New(build string) Config {
 	return Config{fs: &fs, env: EnvSource{}, build: build}
 }
 
-func (c Config) File() eval.FileSource {
+func (c Config) File() domain.FileSource {
 	return c.fs
 }
 
-func (c Config) Env() eval.EnvSource {
+func (c Config) Env() domain.EnvSource {
 	return c.env
 }
 
