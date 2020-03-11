@@ -1,26 +1,20 @@
-package runner
+package httpclient
 
 import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"github.com/b2wdigital/restQL-golang/internal/eval"
 	"github.com/pkg/errors"
 	"github.com/valyala/fasthttp"
 	"time"
 )
 
-type Request struct {
-	Host    string
-	Query   map[string]string
-	Body    interface{}
-	Headers map[string]string
-}
-
 type HttpClient struct {
 	client *fasthttp.Client
 }
 
-func NewHttpClient() HttpClient {
+func New() HttpClient {
 	c := &fasthttp.Client{
 		NoDefaultUserAgentHeader: false,
 		ReadTimeout:              3 * time.Second,
@@ -30,7 +24,7 @@ func NewHttpClient() HttpClient {
 	return HttpClient{client: c}
 }
 
-func (hc HttpClient) Do(ctx context.Context, request Request) (interface{}, error) {
+func (hc HttpClient) Do(ctx context.Context, request eval.Request) (eval.Response, error) {
 	req := fasthttp.AcquireRequest()
 	res := fasthttp.AcquireResponse()
 	defer func() {
@@ -46,7 +40,7 @@ func (hc HttpClient) Do(ctx context.Context, request Request) (interface{}, erro
 
 	err := hc.client.Do(req, res)
 	if err != nil {
-		return nil, errors.Wrap(err, "request execution failed")
+		return eval.Response{}, errors.Wrap(err, "request execution failed")
 	}
 
 	buf := bytes.NewBuffer(res.Body())
@@ -55,13 +49,19 @@ func (hc HttpClient) Do(ctx context.Context, request Request) (interface{}, erro
 	responseBody := make(map[string]interface{})
 	err = encoder.Decode(&responseBody)
 	if err != nil {
-		return nil, errors.Wrap(err, "response body decode failed")
+		return eval.Response{}, errors.Wrap(err, "response body decode failed")
 	}
 
-	return responseBody, nil
+	response := eval.Response{
+		StatusCode: res.StatusCode(),
+		Body:       responseBody,
+		Headers:    nil,
+	}
+
+	return response, nil
 }
 
-func makeQueryArgs(request Request) []byte {
+func makeQueryArgs(request eval.Request) []byte {
 	var buf bytes.Buffer
 	for key, value := range request.Query {
 		buf.WriteString("&")
