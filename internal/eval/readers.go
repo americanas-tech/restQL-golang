@@ -2,7 +2,31 @@ package eval
 
 import (
 	"github.com/pkg/errors"
+	"regexp"
 )
+
+type Mapping struct {
+	ResourceName string
+	Url          string
+	PathParams   []string
+}
+
+var pathParamRegex, _ = regexp.Compile("/:(\\w+)")
+
+func newMapping(resource, url string) Mapping {
+	matches := pathParamRegex.FindAllStringSubmatch(url, -1)
+
+	pathParams := make([]string, len(matches))
+	for i, m := range matches {
+		pathParams[i] = m[1]
+	}
+
+	return Mapping{
+		ResourceName: resource,
+		Url:          url,
+		PathParams:   pathParams,
+	}
+}
 
 type MappingsReader struct {
 	env  EnvSource
@@ -26,14 +50,14 @@ func NewMappingReader(config Configuration, log Logger) MappingsReader {
 	return mr
 }
 
-func (mr MappingsReader) GetUrl(tenant string, resource string) (string, error) {
+func (mr MappingsReader) GetMapping(tenant, resource string) (Mapping, error) {
 	switch {
 	case mr.env.GetString(resource) != "":
-		return mr.env.GetString(resource), nil
+		return newMapping(resource, mr.env.GetString(resource)), nil
 	case mr.file[resource] != "":
-		return mr.file[resource], nil
+		return newMapping(resource, mr.file[resource]), nil
 	default:
-		return "", NotFoundError{errors.Errorf("resource `%s` not found on mappings", resource)}
+		return Mapping{}, NotFoundError{errors.Errorf("resource `%s` not found on mappings", resource)}
 	}
 }
 

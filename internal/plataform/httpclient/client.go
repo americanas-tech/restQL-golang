@@ -33,7 +33,7 @@ func (hc HttpClient) Do(ctx context.Context, request eval.Request) (eval.Respons
 	}()
 
 	uri := fasthttp.URI{}
-	uri.SetHost(request.Host)
+	uri.SetHost(request.Url)
 	uri.SetQueryStringBytes(makeQueryArgs(request))
 
 	req.SetRequestURI(uri.String())

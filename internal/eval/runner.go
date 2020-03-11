@@ -21,33 +21,13 @@ func NewRunner(config Configuration, httpClient HttpClient, log Logger) Runner {
 	}
 }
 
-func (r Runner) ExecuteQuery(ctx context.Context, query domain.Query, mappings map[string]string) interface{} {
+func (r Runner) ExecuteQuery(ctx context.Context, query domain.Query, mappings map[string]Mapping) interface{} {
 	responses := make([]interface{}, len(query.Statements))
 
 	for i, statement := range query.Statements {
-		resource := mappings[statement.Resource]
-		resource = strings.Replace(resource, ":id", fmt.Sprintf("%v", statement.With["id"]), 1)
+		request := r.makeRequest(mappings, statement)
 
-		r.log.Debug("resource url done", "url", resource)
-
-		queryArgs := make(map[string]string)
-		for key, value := range statement.With {
-			queryArgs[key] = fmt.Sprintf("%v", value)
-		}
-
-		headers := make(map[string]string)
-		for key, value := range statement.Headers {
-			headers[key] = fmt.Sprintf("%v", value)
-		}
-
-		req := Request{
-			Host:    resource,
-			Query:   queryArgs,
-			Body:    nil,
-			Headers: headers,
-		}
-
-		response, err := r.client.Do(ctx, req)
+		response, err := r.client.Do(ctx, request)
 		if err != nil {
 			r.log.Debug("request failed", "error", err)
 			return nil
@@ -57,4 +37,60 @@ func (r Runner) ExecuteQuery(ctx context.Context, query domain.Query, mappings m
 	}
 
 	return responses
+}
+
+func (r Runner) makeRequest(mappings map[string]Mapping, statement domain.Statement) Request {
+	mapping := mappings[statement.Resource]
+	url := makeUrl(mapping, statement)
+
+	queryArgs := make(map[string]string)
+	for key, value := range statement.With {
+		if contains(mapping.PathParams, key) {
+			continue
+		}
+
+		str, ok := value.(string)
+
+		if !ok {
+			r.log.Debug("skipping query param on request build for failing string casting", "param-key", key, "param-value", value)
+			continue
+		}
+		queryArgs[key] = str
+	}
+
+	headers := make(map[string]string)
+	for key, value := range statement.Headers {
+		str, ok := value.(string)
+		if !ok {
+			r.log.Debug("skipping header on request build for failing string casting", "header-name", key, "header-value", value)
+			continue
+		}
+		headers[key] = str
+	}
+
+	return Request{
+		Url:     url,
+		Query:   queryArgs,
+		Body:    nil,
+		Headers: headers,
+	}
+}
+
+func contains(list []string, item string) bool {
+	for _, el := range list {
+		if el == item {
+			return true
+		}
+	}
+
+	return false
+}
+
+func makeUrl(mapping Mapping, statement domain.Statement) string {
+	resource := mapping.Url
+	for _, pathParam := range mapping.PathParams {
+		resource = strings.Replace(resource, fmt.Sprintf(":%v", pathParam), fmt.Sprintf("%v", statement.With[pathParam]), 1)
+	}
+
+	return resource
 }

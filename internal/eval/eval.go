@@ -69,7 +69,7 @@ type Headers map[string]string
 type Body interface{}
 
 type Request struct {
-	Host    string
+	Url     string
 	Query   map[string]string
 	Body    Body
 	Headers Headers

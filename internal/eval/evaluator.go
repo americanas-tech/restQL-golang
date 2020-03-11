@@ -55,11 +55,11 @@ func (e Evaluator) SavedQuery(ctx context.Context, queryOpts QueryOptions, query
 	return r, nil
 }
 
-func (e Evaluator) fetchMappings(tenant string, query domain.Query) (map[string]string, error) {
-	mappings := make(map[string]string)
+func (e Evaluator) fetchMappings(tenant string, query domain.Query) (map[string]Mapping, error) {
+	mappings := make(map[string]Mapping)
 
 	for _, stmt := range query.Statements {
-		url, err := e.mappingsReader.GetUrl(tenant, stmt.Resource)
+		url, err := e.mappingsReader.GetMapping(tenant, stmt.Resource)
 		if err != nil {
 			return nil, err
 		}
