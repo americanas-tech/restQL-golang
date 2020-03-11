@@ -38,18 +38,18 @@ func (hc HttpClient) Do(ctx context.Context, request eval.Request) (eval.Respons
 
 	req.SetRequestURI(uri.String())
 
+	for key, value := range request.Headers {
+		req.Header.Set(key, value)
+	}
+
 	err := hc.client.Do(req, res)
 	if err != nil {
 		return eval.Response{}, errors.Wrap(err, "request execution failed")
 	}
 
-	buf := bytes.NewBuffer(res.Body())
-	encoder := json.NewDecoder(buf)
-
-	responseBody := make(map[string]interface{})
-	err = encoder.Decode(&responseBody)
+	responseBody, err := unmarshalBody(res)
 	if err != nil {
-		return eval.Response{}, errors.Wrap(err, "response body decode failed")
+		return eval.Response{}, err
 	}
 
 	response := eval.Response{
@@ -61,12 +61,26 @@ func (hc HttpClient) Do(ctx context.Context, request eval.Request) (eval.Respons
 	return response, nil
 }
 
+func unmarshalBody(res *fasthttp.Response) (interface{}, error) {
+	var responseBody interface{}
+	err := json.Unmarshal(res.Body(), &responseBody)
+	if err != nil {
+		return nil, errors.Wrap(err, "response body decode failed")
+	}
+	return responseBody, nil
+}
+
+var (
+	ampersand = []byte("&")
+	equal     = []byte("=")
+)
+
 func makeQueryArgs(request eval.Request) []byte {
 	var buf bytes.Buffer
 	for key, value := range request.Query {
-		buf.WriteString("&")
+		buf.Write(ampersand)
 		buf.WriteString(key)
-		buf.WriteString("=")
+		buf.Write(equal)
 		buf.WriteString(value)
 	}
 
