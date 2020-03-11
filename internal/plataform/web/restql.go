@@ -2,7 +2,6 @@ package web
 
 import (
 	"fmt"
-	"github.com/b2wdigital/restQL-golang/internal/domain"
 	"github.com/b2wdigital/restQL-golang/internal/eval"
 	"github.com/b2wdigital/restQL-golang/internal/parser"
 	"github.com/b2wdigital/restQL-golang/internal/plataform/conf"
@@ -74,23 +73,23 @@ func (r RestQl) RunSavedQuery(ctx *fasthttp.RequestCtx) error {
 	return Respond(ctx, result, http.StatusOK)
 }
 
-func (r RestQl) makeQueryOptions(ctx *fasthttp.RequestCtx) (domain.QueryOptions, error) {
+func (r RestQl) makeQueryOptions(ctx *fasthttp.RequestCtx) (eval.QueryOptions, error) {
 	namespace, err := pathParamString(ctx, "namespace")
 	if err != nil {
 		r.log.Error("failed to load namespace path param", err)
-		return domain.QueryOptions{}, err
+		return eval.QueryOptions{}, err
 	}
 
 	queryId, err := pathParamString(ctx, "queryId")
 	if err != nil {
 		r.log.Error("failed to load query id path param", err)
-		return domain.QueryOptions{}, err
+		return eval.QueryOptions{}, err
 	}
 
 	revisionStr, err := pathParamString(ctx, "revision")
 	if err != nil {
 		r.log.Error("failed to load revision path param", err)
-		return domain.QueryOptions{}, err
+		return eval.QueryOptions{}, err
 	}
 
 	revision, err := strconv.Atoi(revisionStr)
@@ -98,10 +97,10 @@ func (r RestQl) makeQueryOptions(ctx *fasthttp.RequestCtx) (domain.QueryOptions,
 		r.log.Debug("failed to convert revision to integer")
 		e := &Error{Err: ErrInvalidRevisionType, Status: http.StatusBadRequest}
 
-		return domain.QueryOptions{}, e
+		return eval.QueryOptions{}, e
 	}
 
-	qo := domain.QueryOptions{
+	qo := eval.QueryOptions{
 		Namespace: namespace,
 		Id:        queryId,
 		Revision:  revision,
@@ -110,7 +109,7 @@ func (r RestQl) makeQueryOptions(ctx *fasthttp.RequestCtx) (domain.QueryOptions,
 	return qo, nil
 }
 
-func (r RestQl) makeQueryInput(ctx *fasthttp.RequestCtx) domain.QueryInput {
+func (r RestQl) makeQueryInput(ctx *fasthttp.RequestCtx) eval.QueryInput {
 	params := make(map[string]interface{})
 	ctx.Request.URI().QueryArgs().VisitAll(func(keyByte, valueByte []byte) {
 		key := string(keyByte)
@@ -138,7 +137,7 @@ func (r RestQl) makeQueryInput(ctx *fasthttp.RequestCtx) domain.QueryInput {
 		headers[string(key)] = string(value)
 	})
 
-	return domain.QueryInput{
+	return eval.QueryInput{
 		Params:  params,
 		Headers: headers,
 	}

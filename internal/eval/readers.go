@@ -1,16 +1,15 @@
 package eval
 
 import (
-	"github.com/b2wdigital/restQL-golang/internal/domain"
 	"github.com/pkg/errors"
 )
 
 type MappingsReader struct {
-	env  domain.EnvSource
+	env  EnvSource
 	file map[string]string
 }
 
-func NewMappingReader(config domain.Configuration, log domain.Logger) MappingsReader {
+func NewMappingReader(config Configuration, log Logger) MappingsReader {
 	mr := MappingsReader{env: config.Env()}
 
 	mappingsConf := struct {
@@ -44,7 +43,7 @@ type QueryReader struct {
 	file map[string]savedQueries
 }
 
-func NewQueryReader(config domain.Configuration, log domain.Logger) QueryReader {
+func NewQueryReader(config Configuration, log Logger) QueryReader {
 	queryConf := struct {
 		Queries map[string]savedQueries
 	}{}

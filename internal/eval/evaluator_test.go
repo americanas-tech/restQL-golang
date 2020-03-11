@@ -25,12 +25,12 @@ func TestEvaluateSavedQuery(t *testing.T) {
 	evaluator := eval.NewEvaluator(mr, qr,, NoOpLogger{})
 
 	t.Run("eval query found with no variables", func(t *testing.T) {
-		options := domain.QueryOptions{
+		options := eval.QueryOptions{
 			Namespace: "restQL",
 			Id:        "my-query",
 			Revision:  1,
 		}
-		input := domain.QueryInput{}
+		input := eval.QueryInput{}
 
 		query, err := evaluator.SavedQuery(nil, options, input)
 		if err != nil {
@@ -79,7 +79,7 @@ func (sfc stubFileSource) Unmarshal(target interface{}) error {
 	return nil
 }
 
-func (sc stubConfig) File() domain.FileSource {
+func (sc stubConfig) File() eval.FileSource {
 	return stubFileSource{sc.UnmarshalResult}
 }
 
@@ -91,6 +91,6 @@ func (sec stubEnvSource) GetString(key string) string {
 	return sec.envResult
 }
 
-func (sc stubConfig) Env() domain.EnvSource {
+func (sc stubConfig) Env() eval.EnvSource {
 	return stubEnvSource{sc.EnvResult}
 }

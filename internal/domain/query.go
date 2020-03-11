@@ -47,14 +47,3 @@ type Match struct {
 	Target interface{}
 	Arg    string
 }
-
-type QueryOptions struct {
-	Namespace string
-	Id        string
-	Revision  int
-}
-
-type QueryInput struct {
-	Params  map[string]interface{}
-	Headers map[string]string
-}
