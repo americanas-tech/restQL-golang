@@ -22,15 +22,15 @@ func TestEvaluateSavedQuery(t *testing.T) {
 
 	mr := eval.NewMappingReader(config, NoOpLogger{})
 	qr := eval.NewQueryReader(config, NoOpLogger{})
-	evaluator := eval.NewEvaluator(mr, qr, NoOpLogger{})
+	evaluator := eval.NewEvaluator(mr, qr,, NoOpLogger{})
 
 	t.Run("eval query found with no variables", func(t *testing.T) {
-		options := eval.QueryOptions{
+		options := domain.QueryOptions{
 			Namespace: "restQL",
 			Id:        "my-query",
 			Revision:  1,
 		}
-		input := eval.QueryInput{}
+		input := domain.QueryInput{}
 
 		query, err := evaluator.SavedQuery(nil, options, input)
 		if err != nil {
