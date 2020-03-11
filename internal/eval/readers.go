@@ -26,7 +26,7 @@ func NewMappingReader(config Configuration, log Logger) MappingsReader {
 	return mr
 }
 
-func (mr MappingsReader) GetUrl(resource string) (string, error) {
+func (mr MappingsReader) GetUrl(tenant string, resource string) (string, error) {
 	switch {
 	case mr.env.GetString(resource) != "":
 		return mr.env.GetString(resource), nil
