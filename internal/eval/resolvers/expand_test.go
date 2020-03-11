@@ -1,8 +1,8 @@
-package eval_test
+package resolvers_test
 
 import (
 	"github.com/b2wdigital/restQL-golang/internal/domain"
-	"github.com/b2wdigital/restQL-golang/internal/eval"
+	"github.com/b2wdigital/restQL-golang/internal/eval/resolvers"
 	"reflect"
 	"testing"
 )
@@ -181,7 +181,7 @@ func TestMultiplexStatements(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := eval.MultiplexStatements(tt.input)
+			got := resolvers.MultiplexStatements(tt.input)
 			if !reflect.DeepEqual(got, tt.expected) {
 				t.Errorf("MultiplexStatements = %#+v, want = %#+v", got, tt.expected)
 			}
@@ -193,6 +193,6 @@ func BenchmarkMultiplexStatements(b *testing.B) {
 	input := domain.Query{Statements: []domain.Statement{{Method: "from", Resource: "hero", With: map[string]interface{}{"id": []interface{}{"12345", "67890"}, "name": "batman", "age": 45}}}}
 
 	for i := 0; i < b.N; i++ {
-		eval.MultiplexStatements(input)
+		resolvers.MultiplexStatements(input)
 	}
 }
