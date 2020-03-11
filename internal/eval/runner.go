@@ -1,20 +1,21 @@
-package runner
+package eval
 
 import (
 	"context"
 	"fmt"
 	"github.com/b2wdigital/restQL-golang/internal/domain"
+	"github.com/b2wdigital/restQL-golang/internal/eval/runner"
 	"strings"
 )
 
 type Runner struct {
-	config domain.Configuration
-	log    domain.Logger
-	client HttpClient
+	config Configuration
+	log    Logger
+	client runner.HttpClient
 }
 
-func New(config domain.Configuration, log domain.Logger) Runner {
-	c := NewHttpClient()
+func New(config Configuration, log Logger) Runner {
+	c := runner.NewHttpClient()
 
 	return Runner{
 		config: config,
@@ -42,7 +43,7 @@ func (r Runner) ExecuteQuery(ctx context.Context, query domain.Query, mappings m
 			headers[key] = fmt.Sprintf("%v", value)
 		}
 
-		req := Request{
+		req := runner.Request{
 			Host:    resource,
 			Query:   queryArgs,
 			Body:    nil,

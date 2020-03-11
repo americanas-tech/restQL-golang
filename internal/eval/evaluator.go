@@ -4,7 +4,6 @@ import (
 	"context"
 	"github.com/b2wdigital/restQL-golang/internal/domain"
 	"github.com/b2wdigital/restQL-golang/internal/eval/resolvers"
-	"github.com/b2wdigital/restQL-golang/internal/eval/runner"
 	"github.com/b2wdigital/restQL-golang/internal/parser"
 	"github.com/pkg/errors"
 )
@@ -16,17 +15,17 @@ var (
 )
 
 type Evaluator struct {
-	log            domain.Logger
+	log            Logger
 	mappingsReader MappingsReader
 	queryReader    QueryReader
-	run            runner.Runner
+	run            Runner
 }
 
-func NewEvaluator(mr MappingsReader, qr QueryReader, r runner.Runner, log domain.Logger) Evaluator {
+func NewEvaluator(mr MappingsReader, qr QueryReader, r Runner, log Logger) Evaluator {
 	return Evaluator{log: log, mappingsReader: mr, queryReader: qr, run: r}
 }
 
-func (e Evaluator) SavedQuery(ctx context.Context, queryOpts domain.QueryOptions, queryInput domain.QueryInput) (interface{}, error) {
+func (e Evaluator) SavedQuery(ctx context.Context, queryOpts QueryOptions, queryInput QueryInput) (interface{}, error) {
 	err := validateQueryOptions(queryOpts)
 	if err != nil {
 		return domain.Query{}, err
@@ -48,7 +47,7 @@ func (e Evaluator) SavedQuery(ctx context.Context, queryOpts domain.QueryOptions
 		return domain.Query{}, err
 	}
 
-	query = resolvers.ResolveVariables(query, queryInput)
+	query = resolvers.ResolveVariables(query, queryInput.Params)
 	query = resolvers.MultiplexStatements(query)
 
 	r := e.run.ExecuteQuery(ctx, query, mappings)
@@ -72,7 +71,7 @@ func (e Evaluator) fetchMappings(query domain.Query) (map[string]string, error) 
 
 }
 
-func validateQueryOptions(queryOpts domain.QueryOptions) error {
+func validateQueryOptions(queryOpts QueryOptions) error {
 	if queryOpts.Revision <= 0 {
 		return ValidationError{ErrInvalidRevision}
 	}
