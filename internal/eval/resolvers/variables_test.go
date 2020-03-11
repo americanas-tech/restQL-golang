@@ -11,7 +11,7 @@ func TestResolveVariables(t *testing.T) {
 	tests := []struct {
 		name     string
 		query    domain.Query
-		input    domain.QueryInput
+		input    map[string]interface{}
 		expected domain.Query
 	}{
 		{
@@ -19,7 +19,7 @@ func TestResolveVariables(t *testing.T) {
 			domain.Query{Statements: []domain.Statement{
 				{Method: "from", Resource: "hero", Timeout: domain.Variable{"duration"}},
 			}},
-			domain.QueryInput{Params: map[string]interface{}{"duration": "1000"}},
+			map[string]interface{}{"duration": "1000"},
 			domain.Query{Statements: []domain.Statement{
 				{Method: "from", Resource: "hero", Timeout: 1000},
 			}},
@@ -37,7 +37,7 @@ func TestResolveVariables(t *testing.T) {
 					},
 				},
 			}},
-			domain.QueryInput{Params: map[string]interface{}{"name": "batman", "field": "weapon"}},
+			map[string]interface{}{"name": "batman", "field": "weapon"},
 			domain.Query{Statements: []domain.Statement{
 				{Method: "from", Resource: "hero", With: map[string]interface{}{
 					"id":      "1234567890",
@@ -51,7 +51,7 @@ func TestResolveVariables(t *testing.T) {
 			domain.Query{Statements: []domain.Statement{
 				{Method: "from", Resource: "hero", CacheControl: domain.CacheControl{MaxAge: domain.Variable{"cache-control"}, SMaxAge: domain.Variable{"s-cache-control"}}},
 			}},
-			domain.QueryInput{Params: map[string]interface{}{"cache-control": "200", "s-cache-control": "400"}},
+			map[string]interface{}{"cache-control": "200", "s-cache-control": "400"},
 			domain.Query{Statements: []domain.Statement{
 				{Method: "from", Resource: "hero", CacheControl: domain.CacheControl{MaxAge: 200, SMaxAge: 400}},
 			}},
@@ -69,7 +69,7 @@ func TestResolveVariables(t *testing.T) {
 					},
 				},
 			}},
-			domain.QueryInput{Params: map[string]interface{}{"auth": "abcdef0987", "some-param": "abc"}},
+			map[string]interface{}{"auth": "abcdef0987", "some-param": "abc"},
 			domain.Query{Statements: []domain.Statement{
 				{Method: "from", Resource: "hero", Headers: map[string]interface{}{"Authorization": "abcdef0987", "X-Id": "1234567890", "X-Some-Header": "abc"}},
 			}},
