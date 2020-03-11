@@ -1,5 +1,7 @@
 package eval
 
+import "context"
+
 type ValidationError struct {
 	Err error
 }
@@ -56,4 +58,24 @@ type Logger interface {
 	Warn(msg string, fields ...interface{})
 	Info(msg string, fields ...interface{})
 	Debug(msg string, fields ...interface{})
+}
+
+type HttpClient interface {
+	Do(ctx context.Context, request Request) (Response, error)
+}
+
+type Headers map[string]string
+type Body interface{}
+
+type Request struct {
+	Host    string
+	Query   map[string]string
+	Body    Body
+	Headers Headers
+}
+
+type Response struct {
+	StatusCode int
+	Body       Body
+	Headers    Headers
 }

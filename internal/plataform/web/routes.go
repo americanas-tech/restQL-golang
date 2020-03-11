@@ -3,6 +3,7 @@ package web
 import (
 	"github.com/b2wdigital/restQL-golang/internal/eval"
 	"github.com/b2wdigital/restQL-golang/internal/plataform/conf"
+	"github.com/b2wdigital/restQL-golang/internal/plataform/httpclient"
 	"github.com/b2wdigital/restQL-golang/internal/plataform/logger"
 	"github.com/valyala/fasthttp"
 	"net/http"
@@ -12,7 +13,8 @@ func API(config conf.Config, log *logger.Logger) fasthttp.RequestHandler {
 	app := NewApp(config, log)
 	mr := eval.NewMappingReader(config, log)
 	qr := eval.NewQueryReader(config, log)
-	r := eval.New(config, log)
+	client := httpclient.New()
+	r := eval.NewRunner(config, client, log)
 	e := eval.NewEvaluator(mr, qr, r, log)
 
 	restQl := NewRestQl(config, log, e)
