@@ -114,13 +114,13 @@ func (r RestQl) makeQueryInput(ctx *fasthttp.RequestCtx) eval.QueryInput {
 		value := string(valueByte)
 
 		if currentValue, ok := params[key]; ok {
-			var newValue []string
+			var newValue []interface{}
 
 			switch currentValue := currentValue.(type) {
-			case []string:
+			case []interface{}:
 				newValue = append(currentValue, value)
 			default:
-				newValue = []string{fmt.Sprintf("%v", currentValue), value}
+				newValue = []interface{}{currentValue, value}
 			}
 
 			params[key] = newValue

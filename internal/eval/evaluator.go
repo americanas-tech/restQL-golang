@@ -45,6 +45,7 @@ func (e Evaluator) SavedQuery(queryOpts QueryOptions, queryInput QueryInput) (do
 	}
 
 	query = ResolveVariables(query, queryInput)
+	query = MultiplexStatements(query)
 
 	return query, nil
 }
