@@ -3,6 +3,7 @@ package eval
 import (
 	"context"
 	"github.com/b2wdigital/restQL-golang/internal/domain"
+	"github.com/b2wdigital/restQL-golang/internal/eval/resolvers"
 	"github.com/b2wdigital/restQL-golang/internal/eval/runner"
 	"github.com/b2wdigital/restQL-golang/internal/parser"
 	"github.com/pkg/errors"
@@ -47,8 +48,8 @@ func (e Evaluator) SavedQuery(ctx context.Context, queryOpts domain.QueryOptions
 		return domain.Query{}, err
 	}
 
-	query = ResolveVariables(query, queryInput)
-	query = MultiplexStatements(query)
+	query = resolvers.ResolveVariables(query, queryInput)
+	query = resolvers.MultiplexStatements(query)
 
 	r := e.run.ExecuteQuery(ctx, query, mappings)
 

@@ -1,4 +1,4 @@
-package eval
+package resolvers
 
 import (
 	"github.com/b2wdigital/restQL-golang/internal/domain"
