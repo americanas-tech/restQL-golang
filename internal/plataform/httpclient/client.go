@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"github.com/b2wdigital/restQL-golang/internal/eval"
+	"github.com/b2wdigital/restQL-golang/internal/domain"
 	"github.com/pkg/errors"
 	"github.com/valyala/fasthttp"
 	"time"
@@ -24,7 +24,7 @@ func New() HttpClient {
 	return HttpClient{client: c}
 }
 
-func (hc HttpClient) Do(ctx context.Context, request eval.Request) (eval.Response, error) {
+func (hc HttpClient) Do(ctx context.Context, request domain.Request) (domain.Response, error) {
 	req := fasthttp.AcquireRequest()
 	res := fasthttp.AcquireResponse()
 	defer func() {
@@ -44,15 +44,15 @@ func (hc HttpClient) Do(ctx context.Context, request eval.Request) (eval.Respons
 
 	err := hc.client.Do(req, res)
 	if err != nil {
-		return eval.Response{}, errors.Wrap(err, "request execution failed")
+		return domain.Response{}, errors.Wrap(err, "request execution failed")
 	}
 
 	responseBody, err := unmarshalBody(res)
 	if err != nil {
-		return eval.Response{}, err
+		return domain.Response{}, err
 	}
 
-	response := eval.Response{
+	response := domain.Response{
 		StatusCode: res.StatusCode(),
 		Body:       responseBody,
 		Headers:    nil,
@@ -75,7 +75,7 @@ var (
 	equal     = []byte("=")
 )
 
-func makeQueryArgs(request eval.Request) []byte {
+func makeQueryArgs(request domain.Request) []byte {
 	var buf bytes.Buffer
 	for key, value := range request.Query {
 		buf.Write(ampersand)

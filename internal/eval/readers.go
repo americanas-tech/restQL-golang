@@ -1,19 +1,14 @@
 package eval
 
 import (
+	"github.com/b2wdigital/restQL-golang/internal/domain"
 	"github.com/pkg/errors"
 	"regexp"
 )
 
-type Mapping struct {
-	ResourceName string
-	Url          string
-	PathParams   []string
-}
-
 var pathParamRegex, _ = regexp.Compile("/:(\\w+)")
 
-func newMapping(resource, url string) Mapping {
+func newMapping(resource, url string) domain.Mapping {
 	matches := pathParamRegex.FindAllStringSubmatch(url, -1)
 
 	pathParams := make([]string, len(matches))
@@ -21,7 +16,7 @@ func newMapping(resource, url string) Mapping {
 		pathParams[i] = m[1]
 	}
 
-	return Mapping{
+	return domain.Mapping{
 		ResourceName: resource,
 		Url:          url,
 		PathParams:   pathParams,
@@ -29,11 +24,11 @@ func newMapping(resource, url string) Mapping {
 }
 
 type MappingsReader struct {
-	env  EnvSource
+	env  domain.EnvSource
 	file map[string]string
 }
 
-func NewMappingReader(config Configuration, log Logger) MappingsReader {
+func NewMappingReader(config domain.Configuration, log domain.Logger) MappingsReader {
 	mr := MappingsReader{env: config.Env()}
 
 	mappingsConf := struct {
@@ -50,14 +45,14 @@ func NewMappingReader(config Configuration, log Logger) MappingsReader {
 	return mr
 }
 
-func (mr MappingsReader) GetMapping(tenant, resource string) (Mapping, error) {
+func (mr MappingsReader) GetMapping(tenant, resource string) (domain.Mapping, error) {
 	switch {
 	case mr.env.GetString(resource) != "":
 		return newMapping(resource, mr.env.GetString(resource)), nil
 	case mr.file[resource] != "":
 		return newMapping(resource, mr.file[resource]), nil
 	default:
-		return Mapping{}, NotFoundError{errors.Errorf("resource `%s` not found on mappings", resource)}
+		return domain.Mapping{}, NotFoundError{errors.Errorf("resource `%s` not found on mappings", resource)}
 	}
 }
 
@@ -67,7 +62,7 @@ type QueryReader struct {
 	file map[string]savedQueries
 }
 
-func NewQueryReader(config Configuration, log Logger) QueryReader {
+func NewQueryReader(config domain.Configuration, log domain.Logger) QueryReader {
 	queryConf := struct {
 		Queries map[string]savedQueries
 	}{}

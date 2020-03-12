@@ -3,8 +3,9 @@ package eval
 import (
 	"context"
 	"github.com/b2wdigital/restQL-golang/internal/domain"
-	"github.com/b2wdigital/restQL-golang/internal/eval/resolvers"
+	"github.com/b2wdigital/restQL-golang/internal/domain/resolvers"
 	"github.com/b2wdigital/restQL-golang/internal/parser"
+	"github.com/b2wdigital/restQL-golang/internal/runner"
 	"github.com/pkg/errors"
 )
 
@@ -15,13 +16,13 @@ var (
 )
 
 type Evaluator struct {
-	log            Logger
+	log            domain.Logger
 	mappingsReader MappingsReader
 	queryReader    QueryReader
-	run            Runner
+	run            runner.Runner
 }
 
-func NewEvaluator(mr MappingsReader, qr QueryReader, r Runner, log Logger) Evaluator {
+func NewEvaluator(mr MappingsReader, qr QueryReader, r runner.Runner, log domain.Logger) Evaluator {
 	return Evaluator{log: log, mappingsReader: mr, queryReader: qr, run: r}
 }
 
@@ -55,8 +56,8 @@ func (e Evaluator) SavedQuery(ctx context.Context, queryOpts QueryOptions, query
 	return r, nil
 }
 
-func (e Evaluator) fetchMappings(tenant string, query domain.Query) (map[string]Mapping, error) {
-	mappings := make(map[string]Mapping)
+func (e Evaluator) fetchMappings(tenant string, query domain.Query) (map[string]domain.Mapping, error) {
+	mappings := make(map[string]domain.Mapping)
 
 	for _, stmt := range query.Statements {
 		url, err := e.mappingsReader.GetMapping(tenant, stmt.Resource)
