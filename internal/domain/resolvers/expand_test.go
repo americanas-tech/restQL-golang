@@ -2,7 +2,7 @@ package resolvers_test
 
 import (
 	"github.com/b2wdigital/restQL-golang/internal/domain"
-	"github.com/b2wdigital/restQL-golang/internal/eval/resolvers"
+	"github.com/b2wdigital/restQL-golang/internal/domain/resolvers"
 	"reflect"
 	"testing"
 )

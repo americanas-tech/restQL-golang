@@ -47,3 +47,9 @@ type Match struct {
 	Target interface{}
 	Arg    string
 }
+
+type Mapping struct {
+	ResourceName string
+	Url          string
+	PathParams   []string
+}

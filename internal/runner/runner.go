@@ -1,4 +1,4 @@
-package eval
+package runner
 
 import (
 	"context"
@@ -8,12 +8,12 @@ import (
 )
 
 type Runner struct {
-	config Configuration
-	log    Logger
-	client HttpClient
+	config domain.Configuration
+	log    domain.Logger
+	client domain.HttpClient
 }
 
-func NewRunner(config Configuration, httpClient HttpClient, log Logger) Runner {
+func NewRunner(config domain.Configuration, httpClient domain.HttpClient, log domain.Logger) Runner {
 	return Runner{
 		config: config,
 		log:    log,
@@ -21,7 +21,7 @@ func NewRunner(config Configuration, httpClient HttpClient, log Logger) Runner {
 	}
 }
 
-func (r Runner) ExecuteQuery(ctx context.Context, query domain.Query, mappings map[string]Mapping) interface{} {
+func (r Runner) ExecuteQuery(ctx context.Context, query domain.Query, mappings map[string]domain.Mapping) interface{} {
 	responses := make([]interface{}, len(query.Statements))
 
 	for i, statement := range query.Statements {
@@ -39,7 +39,7 @@ func (r Runner) ExecuteQuery(ctx context.Context, query domain.Query, mappings m
 	return responses
 }
 
-func (r Runner) makeRequest(mappings map[string]Mapping, statement domain.Statement) Request {
+func (r Runner) makeRequest(mappings map[string]domain.Mapping, statement domain.Statement) domain.Request {
 	mapping := mappings[statement.Resource]
 	url := makeUrl(mapping, statement)
 
@@ -68,12 +68,21 @@ func (r Runner) makeRequest(mappings map[string]Mapping, statement domain.Statem
 		headers[key] = str
 	}
 
-	return Request{
+	return domain.Request{
 		Url:     url,
 		Query:   queryArgs,
 		Body:    nil,
 		Headers: headers,
 	}
+}
+
+func makeUrl(mapping domain.Mapping, statement domain.Statement) string {
+	resource := mapping.Url
+	for _, pathParam := range mapping.PathParams {
+		resource = strings.Replace(resource, fmt.Sprintf(":%v", pathParam), fmt.Sprintf("%v", statement.With[pathParam]), 1)
+	}
+
+	return resource
 }
 
 func contains(list []string, item string) bool {
@@ -84,13 +93,4 @@ func contains(list []string, item string) bool {
 	}
 
 	return false
-}
-
-func makeUrl(mapping Mapping, statement domain.Statement) string {
-	resource := mapping.Url
-	for _, pathParam := range mapping.PathParams {
-		resource = strings.Replace(resource, fmt.Sprintf(":%v", pathParam), fmt.Sprintf("%v", statement.With[pathParam]), 1)
-	}
-
-	return resource
 }
