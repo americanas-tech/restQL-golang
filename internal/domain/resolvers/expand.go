@@ -15,17 +15,14 @@ type listParameters struct {
 	value []interface{}
 }
 
-func MultiplexStatements(query domain.Query) domain.Query {
+func MultiplexStatements(statements []domain.Statement) []domain.Statement {
 	var multiplexed []domain.Statement
-	for _, stmt := range query.Statements {
+	for _, stmt := range statements {
 		s := multiplex(stmt)
 		multiplexed = append(multiplexed, s...)
 	}
 
-	q := query
-	q.Statements = multiplexed
-
-	return q
+	return multiplexed
 }
 
 func multiplex(statement domain.Statement) []domain.Statement {
