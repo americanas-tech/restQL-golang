@@ -23,15 +23,3 @@ type ParserError struct {
 func (pe ParserError) Error() string {
 	return pe.Err.Error()
 }
-
-type QueryOptions struct {
-	Namespace string
-	Id        string
-	Revision  int
-	Tenant    string
-}
-
-type QueryInput struct {
-	Params  map[string]interface{}
-	Headers map[string]string
-}
