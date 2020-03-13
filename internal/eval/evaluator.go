@@ -49,7 +49,7 @@ func (e Evaluator) SavedQuery(ctx context.Context, queryOpts QueryOptions, query
 	}
 
 	query = resolvers.ResolveVariables(query, queryInput.Params)
-	query = resolvers.MultiplexStatements(query)
+	query.Statements = resolvers.MultiplexStatements(query.Statements)
 
 	r := e.run.ExecuteQuery(ctx, query, mappings)
 
