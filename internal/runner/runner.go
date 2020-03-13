@@ -3,7 +3,26 @@ package runner
 import (
 	"context"
 	"github.com/b2wdigital/restQL-golang/internal/domain"
+	"github.com/b2wdigital/restQL-golang/internal/runner/resolvers"
 )
+
+type QueryOptions struct {
+	Namespace string
+	Id        string
+	Revision  int
+	Tenant    string
+}
+
+type QueryInput struct {
+	Params  map[string]interface{}
+	Headers map[string]string
+}
+
+type QueryContext struct {
+	Mappings map[string]domain.Mapping
+	Options  QueryOptions
+	Input    QueryInput
+}
 
 type Runner struct {
 	config domain.Configuration
@@ -19,8 +38,11 @@ func NewRunner(config domain.Configuration, httpClient domain.HttpClient, log do
 	}
 }
 
-func (r Runner) ExecuteQuery(ctx context.Context, query domain.Query, mappings map[string]domain.Mapping) interface{} {
-	executor := Executor{mappings: mappings, client: r.client, log: r.log}
+func (r Runner) ExecuteQuery(ctx context.Context, query domain.Query, queryCtx QueryContext) interface{} {
+	query = resolvers.ResolveVariables(query, queryCtx.Input.Params)
+	query.Statements = resolvers.MultiplexStatements(query.Statements)
+
+	executor := Executor{mappings: queryCtx.Mappings, client: r.client, log: r.log}
 
 	state := NewState(query)
 
