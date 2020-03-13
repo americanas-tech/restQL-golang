@@ -10,7 +10,7 @@ type RequestedResources map[ResourceId]interface{}
 type DoneResources map[ResourceId]interface{}
 
 type DoneRequest domain.Response
-type DoneRequests []DoneRequest
+type DoneRequests []domain.Response
 
 type State struct {
 	todo      map[ResourceId]interface{}
@@ -99,6 +99,10 @@ func (s *State) SetAsRequest(resourceId ResourceId) {
 
 func (s *State) Requested() RequestedResources {
 	return s.requested
+}
+
+func (s *State) HasFinished() bool {
+	return len(s.todo) == 0 && len(s.requested) == 0
 }
 
 func getResourceId(statement domain.Statement) ResourceId {
