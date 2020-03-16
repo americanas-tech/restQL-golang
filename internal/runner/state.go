@@ -4,45 +4,21 @@ import (
 	"github.com/b2wdigital/restQL-golang/internal/domain"
 )
 
-type ResourceId string
-type AvailableResources map[ResourceId]interface{}
-type RequestedResources map[ResourceId]interface{}
-type DoneResources map[ResourceId]interface{}
+type AvailableResources Resources
+type RequestedResources Resources
+type DoneResources Resources
 
 type DoneRequest domain.Response
 type DoneRequests []domain.Response
 
 type State struct {
-	todo      map[ResourceId]interface{}
+	todo      Resources
 	requested RequestedResources
 	done      DoneResources
 }
 
-func NewState(query domain.Query) *State {
-	todo := makeTodoResources(query)
-
+func NewState(todo Resources) *State {
 	return &State{todo: todo, requested: make(RequestedResources), done: make(DoneResources)}
-}
-
-func makeTodoResources(query domain.Query) map[ResourceId]interface{} {
-	todo := make(map[ResourceId]interface{})
-	for _, stmt := range query.Statements {
-		index := getResourceId(stmt)
-		current := todo[index]
-
-		switch current := current.(type) {
-		case []domain.Statement:
-			todo[index] = append(current, stmt)
-		case domain.Statement:
-			list := []domain.Statement{current, stmt}
-			todo[index] = list
-		default:
-			todo[index] = stmt
-		}
-
-	}
-
-	return todo
 }
 
 func (s *State) Available() AvailableResources {
@@ -53,14 +29,28 @@ func (s *State) Available() AvailableResources {
 			if s.canRequest(stmt) {
 				available[key] = stmt
 			}
-		case []domain.Statement:
-			if s.canRequest(stmt[0]) {
+		case []interface{}:
+			if s.canRequestMultiplexedGroup(stmt) {
 				available[key] = stmt
 			}
 		}
 	}
 
 	return available
+}
+
+func (s *State) canRequestMultiplexedGroup(statements []interface{}) bool {
+	can := false
+	for _, stmt := range statements {
+		switch stmt := stmt.(type) {
+		case domain.Statement:
+			can = s.canRequest(stmt)
+		case []interface{}:
+			can = s.canRequestMultiplexedGroup(stmt)
+		}
+	}
+
+	return can
 }
 
 func (s *State) canRequest(statement domain.Statement) bool {
@@ -103,12 +93,4 @@ func (s *State) Requested() RequestedResources {
 
 func (s *State) HasFinished() bool {
 	return len(s.todo) == 0 && len(s.requested) == 0
-}
-
-func getResourceId(statement domain.Statement) ResourceId {
-	if statement.Alias != "" {
-		return ResourceId(statement.Alias)
-	}
-
-	return ResourceId(statement.Resource)
 }

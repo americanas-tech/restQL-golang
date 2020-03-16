@@ -1,4 +1,4 @@
-package resolvers
+package runner
 
 import (
 	"github.com/b2wdigital/restQL-golang/internal/domain"
@@ -15,37 +15,40 @@ type listParameters struct {
 	value []interface{}
 }
 
-func MultiplexStatements(statements []domain.Statement) []domain.Statement {
-	var multiplexed []domain.Statement
-	for _, stmt := range statements {
-		s := multiplex(stmt)
-		multiplexed = append(multiplexed, s...)
+func MultiplexStatements(resources Resources) Resources {
+	for resourceId, stmt := range resources {
+		switch stmt := stmt.(type) {
+		case domain.Statement:
+			resources[resourceId] = multiplex(stmt)
+		default:
+			resources[resourceId] = stmt
+		}
 	}
 
-	return multiplexed
+	return resources
 }
 
-func multiplex(statement domain.Statement) []domain.Statement {
+func multiplex(statement domain.Statement) interface{} {
 	params := statement.With
 	if params == nil {
-		return []domain.Statement{statement}
+		return statement
 	}
 
 	listParams := getListParams(params)
 	if len(listParams) == 0 {
-		return []domain.Statement{statement}
+		return statement
 	}
 
 	statementsParameters := zipListParams(listParams)
 
-	result := make([]domain.Statement, len(statementsParameters))
+	result := make([]interface{}, len(statementsParameters))
 	for i, parameters := range statementsParameters {
 		newStmt := copyStatement(statement)
 		for _, p := range parameters {
 			newStmt.With[p.key] = p.value
 		}
 
-		result[i] = newStmt
+		result[i] = multiplex(newStmt)
 	}
 
 	return result

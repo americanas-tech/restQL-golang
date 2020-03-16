@@ -24,18 +24,23 @@ func (e Executor) DoStatement(ctx context.Context, statement domain.Statement) d
 	return response
 }
 
-func (e Executor) DoMultiplexedStatement(ctx context.Context, statements []domain.Statement) []domain.Response {
-	responses := make([]domain.Response, len(statements))
+func (e Executor) DoMultiplexedStatement(ctx context.Context, statements []interface{}) []interface{} {
+	responses := make([]interface{}, len(statements))
 
 	for i, stmt := range statements {
-		req := e.makeRequest(e.mappings, stmt)
-		response, err := e.client.Do(ctx, req)
-		if err != nil {
-			e.log.Debug("request failed", "error", err)
-			return nil
+		switch stmt := stmt.(type) {
+		case domain.Statement:
+			e.log.Debug("do statement")
+			req := e.makeRequest(e.mappings, stmt)
+			response, err := e.client.Do(ctx, req)
+			if err != nil {
+				e.log.Debug("request failed", "error", err)
+				continue
+			}
+			responses[i] = response
+		case []interface{}:
+			responses[i] = e.DoMultiplexedStatement(ctx, stmt)
 		}
-
-		responses[i] = response
 	}
 
 	return responses
