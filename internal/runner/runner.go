@@ -31,16 +31,18 @@ func (r Runner) ExecuteQuery(ctx context.Context, query domain.Query, queryCtx Q
 
 	for !state.HasFinished() {
 		availableResources := state.Available()
-
 		for resourceId := range availableResources {
 			state.SetAsRequest(resourceId)
 		}
+
+		availableResources = ResolveChainedValues(availableResources, state.Done())
+		availableResources = MultiplexStatements(availableResources)
 
 		for resourceId, statement := range availableResources {
 			switch statement := statement.(type) {
 			case domain.Statement:
 				response := executor.DoStatement(ctx, statement)
-				state.UpdateDone(resourceId, DoneRequest(response))
+				state.UpdateDone(resourceId, response)
 			case []interface{}:
 				responses := executor.DoMultiplexedStatement(ctx, statement)
 				state.UpdateDone(resourceId, responses)

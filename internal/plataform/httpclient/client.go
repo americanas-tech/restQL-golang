@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"github.com/b2wdigital/restQL-golang/internal/domain"
+	"github.com/b2wdigital/restQL-golang/internal/plataform/logger"
 	"github.com/pkg/errors"
 	"github.com/valyala/fasthttp"
 	"time"
@@ -12,16 +13,17 @@ import (
 
 type HttpClient struct {
 	client *fasthttp.Client
+	log    *logger.Logger
 }
 
-func New() HttpClient {
+func New(log *logger.Logger) HttpClient {
 	c := &fasthttp.Client{
 		NoDefaultUserAgentHeader: false,
 		ReadTimeout:              3 * time.Second,
 		WriteTimeout:             1 * time.Second,
 	}
 
-	return HttpClient{client: c}
+	return HttpClient{client: c, log: log}
 }
 
 func (hc HttpClient) Do(ctx context.Context, request domain.Request) (domain.Response, error) {
@@ -32,11 +34,13 @@ func (hc HttpClient) Do(ctx context.Context, request domain.Request) (domain.Res
 		fasthttp.ReleaseResponse(res)
 	}()
 
-	uri := fasthttp.URI{}
+	uri := fasthttp.URI{DisablePathNormalizing: true}
 	uri.SetHost(request.Url)
 	uri.SetQueryStringBytes(makeQueryArgs(request))
 
-	req.SetRequestURI(uri.String())
+	uriStr := uri.String()
+	hc.log.Debug("request uri build", "uri", uriStr)
+	req.SetRequestURI(uriStr)
 
 	for key, value := range request.Headers {
 		req.Header.Set(key, value)
@@ -47,7 +51,7 @@ func (hc HttpClient) Do(ctx context.Context, request domain.Request) (domain.Res
 		return domain.Response{}, errors.Wrap(err, "request execution failed")
 	}
 
-	responseBody, err := unmarshalBody(res)
+	responseBody, err := hc.unmarshalBody(res)
 	if err != nil {
 		return domain.Response{}, err
 	}
@@ -61,10 +65,11 @@ func (hc HttpClient) Do(ctx context.Context, request domain.Request) (domain.Res
 	return response, nil
 }
 
-func unmarshalBody(res *fasthttp.Response) (interface{}, error) {
+func (hc HttpClient) unmarshalBody(res *fasthttp.Response) (interface{}, error) {
 	var responseBody interface{}
 	err := json.Unmarshal(res.Body(), &responseBody)
 	if err != nil {
+		hc.log.Debug("failed to unmarshal response", "error", err, "response", string(res.Body()))
 		return nil, errors.Wrap(err, "response body decode failed")
 	}
 	return responseBody, nil

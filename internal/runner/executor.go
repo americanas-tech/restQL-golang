@@ -13,31 +13,24 @@ type Executor struct {
 	log      domain.Logger
 }
 
-func (e Executor) DoStatement(ctx context.Context, statement domain.Statement) domain.Response {
+func (e Executor) DoStatement(ctx context.Context, statement domain.Statement) DoneRequest {
 	req := e.makeRequest(e.mappings, statement)
 	response, err := e.client.Do(ctx, req)
 	if err != nil {
 		e.log.Debug("request failed", "error", err)
-		return domain.Response{}
+		return DoneRequest{}
 	}
 
-	return response
+	return DoneRequest(response)
 }
 
-func (e Executor) DoMultiplexedStatement(ctx context.Context, statements []interface{}) []interface{} {
-	responses := make([]interface{}, len(statements))
+func (e Executor) DoMultiplexedStatement(ctx context.Context, statements []interface{}) DoneRequests {
+	responses := make(DoneRequests, len(statements))
 
 	for i, stmt := range statements {
 		switch stmt := stmt.(type) {
 		case domain.Statement:
-			e.log.Debug("do statement")
-			req := e.makeRequest(e.mappings, stmt)
-			response, err := e.client.Do(ctx, req)
-			if err != nil {
-				e.log.Debug("request failed", "error", err)
-				continue
-			}
-			responses[i] = response
+			responses[i] = e.DoStatement(ctx, stmt)
 		case []interface{}:
 			responses[i] = e.DoMultiplexedStatement(ctx, stmt)
 		}

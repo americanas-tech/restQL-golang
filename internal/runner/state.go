@@ -9,7 +9,7 @@ type RequestedResources Resources
 type DoneResources Resources
 
 type DoneRequest domain.Response
-type DoneRequests []domain.Response
+type DoneRequests []interface{}
 
 type State struct {
 	todo      Resources
@@ -21,8 +21,8 @@ func NewState(todo Resources) *State {
 	return &State{todo: todo, requested: make(RequestedResources), done: make(DoneResources)}
 }
 
-func (s *State) Available() AvailableResources {
-	available := make(AvailableResources)
+func (s *State) Available() Resources {
+	available := make(Resources)
 	for key, stmt := range s.todo {
 		switch stmt := stmt.(type) {
 		case domain.Statement:
