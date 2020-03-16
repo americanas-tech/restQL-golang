@@ -55,21 +55,41 @@ func (s *State) canRequestMultiplexedGroup(statements []interface{}) bool {
 
 func (s *State) canRequest(statement domain.Statement) bool {
 	for _, v := range statement.With {
-		switch v := v.(type) {
-		case domain.Chain:
-			resourceTarget, ok := v[0].(string)
-			if !ok {
-				return false
-			}
-
-			_, found := s.done[ResourceId(resourceTarget)]
-			return found
-		default:
-			continue
+		if !s.isValueResolved(v) {
+			return false
 		}
 	}
 
 	return true
+}
+
+func (s *State) isValueResolved(value interface{}) bool {
+	switch value := value.(type) {
+	case domain.Chain:
+		resourceTarget, ok := value[0].(string)
+		if !ok {
+			return false
+		}
+
+		_, found := s.done[ResourceId(resourceTarget)]
+		return found
+	case map[string]interface{}:
+		for _, v := range value {
+			if !s.isValueResolved(v) {
+				return false
+			}
+		}
+		return true
+	case []interface{}:
+		for _, v := range value {
+			if !s.isValueResolved(v) {
+				return false
+			}
+		}
+		return true
+	default:
+		return true
+	}
 }
 
 func (s *State) UpdateDone(resourceId ResourceId, response interface{}) {
