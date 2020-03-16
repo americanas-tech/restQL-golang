@@ -6,7 +6,7 @@ const (
 	EmptyChained = "__EMPTY_CHAINED__"
 )
 
-func ResolveChainedValues(resources Resources, doneResources DoneResources) Resources {
+func ResolveChainedValues(resources Resources, doneResources Resources) Resources {
 	for resourceId, stmt := range resources {
 		resources[resourceId] = resolveStatement(stmt, doneResources)
 	}
@@ -14,7 +14,7 @@ func ResolveChainedValues(resources Resources, doneResources DoneResources) Reso
 	return resources
 }
 
-func resolveStatement(stmt interface{}, doneResources DoneResources) interface{} {
+func resolveStatement(stmt interface{}, doneResources Resources) interface{} {
 	switch stmt := stmt.(type) {
 	case domain.Statement:
 		params := stmt.With
@@ -33,7 +33,7 @@ func resolveStatement(stmt interface{}, doneResources DoneResources) interface{}
 	return stmt
 }
 
-func resolveChainParam(chain domain.Chain, doneResources DoneResources) interface{} {
+func resolveChainParam(chain domain.Chain, doneResources Resources) interface{} {
 	path := toPath(chain)
 	resourceId := ResourceId(path[0])
 
@@ -77,7 +77,7 @@ func toPath(chain domain.Chain) []string {
 	return r
 }
 
-func resolveObjectParam(objectParam map[string]interface{}, doneResources DoneResources) map[string]interface{} {
+func resolveObjectParam(objectParam map[string]interface{}, doneResources Resources) map[string]interface{} {
 	result := make(map[string]interface{})
 
 	for key, value := range objectParam {
@@ -92,7 +92,7 @@ func resolveObjectParam(objectParam map[string]interface{}, doneResources DoneRe
 	return result
 }
 
-func resolveListParam(listParam []interface{}, doneResources DoneResources) []interface{} {
+func resolveListParam(listParam []interface{}, doneResources Resources) []interface{} {
 	result := make([]interface{}, len(listParam))
 	copy(result, listParam)
 

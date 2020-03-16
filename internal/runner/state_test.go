@@ -108,7 +108,7 @@ func TestSetAsRequested(t *testing.T) {
 		state := runner.NewState(input)
 
 		expectedInitialAvailable := runner.Resources{"hero": heroStatement, "sidekick": sidekickStatement}
-		expectedInitialRequested := runner.RequestedResources{}
+		expectedInitialRequested := runner.Resources{}
 
 		initialAvailable := state.Available()
 		initialRequested := state.Requested()
@@ -127,7 +127,7 @@ func TestSetAsRequested(t *testing.T) {
 			"sidekick": sidekickStatement,
 		}
 
-		expectedFinalRequested := runner.RequestedResources{"hero": heroStatement}
+		expectedFinalRequested := runner.Resources{"hero": heroStatement}
 
 		finalAvailable := state.Available()
 		finalRequested := state.Requested()
@@ -147,10 +147,10 @@ func TestUpdateDone(t *testing.T) {
 		doneStatement := domain.Statement{Method: "from", Resource: "hero", With: map[string]interface{}{"id": "123456"}}
 		input := runner.Resources{"hero": doneStatement}
 
-		expectedDoneRequests := runner.DoneResources{
+		expectedDoneRequests := runner.Resources{
 			"hero": runner.DoneRequest{StatusCode: 200, Body: []byte{}},
 		}
-		expectedRequestedStatements := runner.RequestedResources{}
+		expectedRequestedStatements := runner.Resources{}
 
 		state := runner.NewState(input)
 

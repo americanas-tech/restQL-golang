@@ -4,21 +4,14 @@ import (
 	"github.com/b2wdigital/restQL-golang/internal/domain"
 )
 
-type AvailableResources Resources
-type RequestedResources Resources
-type DoneResources Resources
-
-type DoneRequest domain.Response
-type DoneRequests []interface{}
-
 type State struct {
 	todo      Resources
-	requested RequestedResources
-	done      DoneResources
+	requested Resources
+	done      Resources
 }
 
 func NewState(todo Resources) *State {
-	return &State{todo: todo, requested: make(RequestedResources), done: make(DoneResources)}
+	return &State{todo: todo, requested: make(Resources), done: make(Resources)}
 }
 
 func (s *State) Available() Resources {
@@ -97,7 +90,7 @@ func (s *State) UpdateDone(resourceId ResourceId, response interface{}) {
 	delete(s.requested, resourceId)
 }
 
-func (s *State) Done() DoneResources {
+func (s *State) Done() Resources {
 	return s.done
 }
 
@@ -107,7 +100,7 @@ func (s *State) SetAsRequest(resourceId ResourceId) {
 	delete(s.todo, resourceId)
 }
 
-func (s *State) Requested() RequestedResources {
+func (s *State) Requested() Resources {
 	return s.requested
 }
 
