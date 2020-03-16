@@ -43,16 +43,53 @@ func TestAvailableResources(t *testing.T) {
 	})
 
 	t.Run("should not return resource with unresolved dependency", func(t *testing.T) {
-		staticStatement := domain.Statement{Method: "from", Resource: "hero", With: map[string]interface{}{"id": "123456"}}
-		unresolvedStatement := domain.Statement{Method: "from", Resource: "sidekick", With: map[string]interface{}{"id": domain.Chain{"hero", "sidekick", "id"}}}
+		heroStatement := domain.Statement{Method: "from", Resource: "hero", With: map[string]interface{}{"id": "123456"}}
+		sidekickStatement := domain.Statement{Method: "from", Resource: "sidekick", With: map[string]interface{}{"id": domain.Chain{"hero", "sidekick", "id"}}}
+		villainStatement := domain.Statement{Method: "from", Resource: "villain", With: map[string]interface{}{"id": []interface{}{domain.Chain{"hero", "villain", "id"}}}}
+		crossoverStatement := domain.Statement{Method: "from", Resource: "crossover", With: map[string]interface{}{"id": map[string]interface{}{"heroes": domain.Chain{"hero", "id"}}}}
 
-		input := runner.Resources{"hero": staticStatement, "sidekick": unresolvedStatement}
+		input := runner.Resources{
+			"hero":      heroStatement,
+			"sidekick":  sidekickStatement,
+			"villain":   villainStatement,
+			"crossover": crossoverStatement,
+		}
 
 		expected := runner.Resources{
-			"hero": staticStatement,
+			"hero": heroStatement,
 		}
 
 		state := runner.NewState(input)
+		got := state.Available()
+
+		if !reflect.DeepEqual(got, expected) {
+			t.Fatalf("Available = %#+v, want = %#+v", got, expected)
+		}
+	})
+
+	t.Run("should return resource with resolved dependency inside complex param", func(t *testing.T) {
+		heroStatement := domain.Statement{Method: "from", Resource: "hero", With: map[string]interface{}{"id": "123456"}}
+		sidekickStatement := domain.Statement{Method: "from", Resource: "sidekick", With: map[string]interface{}{"id": domain.Chain{"hero", "sidekick", "id"}}}
+		villainStatement := domain.Statement{Method: "from", Resource: "villain", With: map[string]interface{}{"id": []interface{}{domain.Chain{"hero", "villain", "id"}}}}
+		crossoverStatement := domain.Statement{Method: "from", Resource: "crossover", With: map[string]interface{}{"id": map[string]interface{}{"heroes": domain.Chain{"hero", "id"}}}}
+
+		input := runner.Resources{
+			"hero":      heroStatement,
+			"sidekick":  sidekickStatement,
+			"villain":   villainStatement,
+			"crossover": crossoverStatement,
+		}
+
+		expected := runner.Resources{
+			"sidekick":  sidekickStatement,
+			"villain":   villainStatement,
+			"crossover": crossoverStatement,
+		}
+
+		state := runner.NewState(input)
+		state.SetAsRequest("hero")
+		state.UpdateDone("hero", nil)
+
 		got := state.Available()
 
 		if !reflect.DeepEqual(got, expected) {
