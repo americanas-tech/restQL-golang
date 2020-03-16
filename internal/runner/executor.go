@@ -7,6 +7,9 @@ import (
 	"strings"
 )
 
+type DoneRequest domain.Response
+type DoneRequests []interface{}
+
 type Executor struct {
 	mappings map[string]domain.Mapping
 	client   domain.HttpClient
