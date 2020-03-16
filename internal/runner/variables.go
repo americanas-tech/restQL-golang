@@ -41,12 +41,54 @@ func resolveWith(with domain.Params, params map[string]interface{}) domain.Param
 			result[key] = paramValue
 		case domain.Chain:
 			result[key] = resolveChain(value, params)
+		case map[string]interface{}:
+			result[key] = resolveComplexWithParam(value, params)
+		case []interface{}:
+			result[key] = resolveListWithParam(value, params)
 		default:
 			result[key] = value
 		}
 	}
 
 	return result
+}
+
+func resolveListWithParam(list []interface{}, parameters map[string]interface{}) interface{} {
+	l := make([]interface{}, len(list))
+	for i, val := range list {
+		switch val := val.(type) {
+		case domain.Variable:
+			paramValue, ok := parameters[val.Target]
+			if !ok {
+				continue
+			}
+
+			l[i] = paramValue
+		default:
+			l[i] = val
+		}
+	}
+
+	return l
+}
+
+func resolveComplexWithParam(object map[string]interface{}, parameters map[string]interface{}) interface{} {
+	m := make(map[string]interface{})
+	for key, val := range object {
+		switch val := val.(type) {
+		case domain.Variable:
+			paramValue, ok := parameters[val.Target]
+			if !ok {
+				continue
+			}
+
+			m[key] = paramValue
+		default:
+			m[key] = val
+		}
+	}
+
+	return m
 }
 
 func resolveChain(chain domain.Chain, params map[string]interface{}) domain.Chain {
