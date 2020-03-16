@@ -11,13 +11,13 @@ func TestAvailableResources(t *testing.T) {
 	t.Run("should return resource with no parameter or static parameters", func(t *testing.T) {
 		statement := domain.Statement{Method: "from", Resource: "hero", With: map[string]interface{}{"id": "123456"}}
 
-		query := domain.Query{Statements: []domain.Statement{statement}}
+		input := runner.Resources{"hero": statement}
 
-		expected := runner.AvailableResources{
+		expected := runner.Resources{
 			"hero": statement,
 		}
 
-		state := runner.NewState(query)
+		state := runner.NewState(input)
 		got := state.Available()
 
 		if !reflect.DeepEqual(got, expected) {
@@ -28,13 +28,13 @@ func TestAvailableResources(t *testing.T) {
 	t.Run("should return resource with no parameter or static parameters using alias as resource id", func(t *testing.T) {
 		statement := domain.Statement{Method: "from", Resource: "hero", Alias: "h", With: map[string]interface{}{"id": "123456"}}
 
-		query := domain.Query{Statements: []domain.Statement{statement}}
+		input := runner.Resources{"h": statement}
 
-		expected := runner.AvailableResources{
+		expected := runner.Resources{
 			"h": statement,
 		}
 
-		state := runner.NewState(query)
+		state := runner.NewState(input)
 		got := state.Available()
 
 		if !reflect.DeepEqual(got, expected) {
@@ -46,31 +46,13 @@ func TestAvailableResources(t *testing.T) {
 		staticStatement := domain.Statement{Method: "from", Resource: "hero", With: map[string]interface{}{"id": "123456"}}
 		unresolvedStatement := domain.Statement{Method: "from", Resource: "sidekick", With: map[string]interface{}{"id": domain.Chain{"hero", "sidekick", "id"}}}
 
-		query := domain.Query{Statements: []domain.Statement{staticStatement, unresolvedStatement}}
+		input := runner.Resources{"hero": staticStatement, "sidekick": unresolvedStatement}
 
-		expected := runner.AvailableResources{
+		expected := runner.Resources{
 			"hero": staticStatement,
 		}
 
-		state := runner.NewState(query)
-		got := state.Available()
-
-		if !reflect.DeepEqual(got, expected) {
-			t.Fatalf("Available = %#+v, want = %#+v", got, expected)
-		}
-	})
-
-	t.Run("should return multiplexed resource grouped", func(t *testing.T) {
-		firstStatement := domain.Statement{Method: "from", Resource: "hero", With: map[string]interface{}{"id": "123456"}}
-		secondStatement := domain.Statement{Method: "from", Resource: "hero", With: map[string]interface{}{"id": "987654"}}
-
-		query := domain.Query{Statements: []domain.Statement{firstStatement, secondStatement}}
-
-		expected := runner.AvailableResources{
-			"hero": []domain.Statement{firstStatement, secondStatement},
-		}
-
-		state := runner.NewState(query)
+		state := runner.NewState(input)
 		got := state.Available()
 
 		if !reflect.DeepEqual(got, expected) {
@@ -81,30 +63,30 @@ func TestAvailableResources(t *testing.T) {
 
 func TestSetAsRequested(t *testing.T) {
 	t.Run("should add resource to requested and remove from available", func(t *testing.T) {
-		sidekickStatement := domain.Statement{Method: "from", Resource: "sidekick", With: map[string]interface{}{"id": "123456"}}
 		heroStatement := domain.Statement{Method: "from", Resource: "hero", With: map[string]interface{}{"id": "987654"}}
+		sidekickStatement := domain.Statement{Method: "from", Resource: "sidekick", With: map[string]interface{}{"id": "123456"}}
 
-		query := domain.Query{Statements: []domain.Statement{sidekickStatement, heroStatement}}
+		input := runner.Resources{"hero": heroStatement, "sidekick": sidekickStatement}
 
-		state := runner.NewState(query)
+		state := runner.NewState(input)
 
-		expectedInitialAvailable := runner.AvailableResources{"sidekick": sidekickStatement, "hero": heroStatement}
+		expectedInitialAvailable := runner.Resources{"hero": heroStatement, "sidekick": sidekickStatement}
 		expectedInitialRequested := runner.RequestedResources{}
 
 		initialAvailable := state.Available()
 		initialRequested := state.Requested()
 
 		if !reflect.DeepEqual(initialAvailable, expectedInitialAvailable) {
-			t.Fatalf("Available = %#+v, want = %#+v", initialAvailable, expectedInitialAvailable)
+			t.Fatalf("Initial Available = %#+v, want = %#+v", initialAvailable, expectedInitialAvailable)
 		}
 
 		if !reflect.DeepEqual(initialRequested, expectedInitialRequested) {
-			t.Fatalf("Available = %#+v, want = %#+v", initialRequested, expectedInitialRequested)
+			t.Fatalf(" Initial Requested = %#+v, want = %#+v", initialRequested, expectedInitialRequested)
 		}
 
 		state.SetAsRequest("hero")
 
-		expectedFinalAvailable := runner.AvailableResources{
+		expectedFinalAvailable := runner.Resources{
 			"sidekick": sidekickStatement,
 		}
 
@@ -114,11 +96,11 @@ func TestSetAsRequested(t *testing.T) {
 		finalRequested := state.Requested()
 
 		if !reflect.DeepEqual(finalAvailable, expectedFinalAvailable) {
-			t.Fatalf("Available = %#+v, want = %#+v", finalAvailable, expectedFinalAvailable)
+			t.Fatalf("Final Available = %#+v, want = %#+v", finalAvailable, expectedFinalAvailable)
 		}
 
 		if !reflect.DeepEqual(finalRequested, expectedFinalRequested) {
-			t.Fatalf("Available = %#+v, want = %#+v", finalRequested, expectedFinalRequested)
+			t.Fatalf("Final Requested = %#+v, want = %#+v", finalRequested, expectedFinalRequested)
 		}
 	})
 }
@@ -126,14 +108,14 @@ func TestSetAsRequested(t *testing.T) {
 func TestUpdateDone(t *testing.T) {
 	t.Run("should add completed resource to done and remove from requested", func(t *testing.T) {
 		doneStatement := domain.Statement{Method: "from", Resource: "hero", With: map[string]interface{}{"id": "123456"}}
-		query := domain.Query{Statements: []domain.Statement{doneStatement}}
+		input := runner.Resources{"hero": doneStatement}
 
 		expectedDoneRequests := runner.DoneResources{
 			"hero": runner.DoneRequest{StatusCode: 200, Body: []byte{}},
 		}
 		expectedRequestedStatements := runner.RequestedResources{}
 
-		state := runner.NewState(query)
+		state := runner.NewState(input)
 
 		response := runner.DoneRequest{StatusCode: 200, Body: []byte{}}
 

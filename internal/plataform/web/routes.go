@@ -14,7 +14,7 @@ func API(config conf.Config, log *logger.Logger) fasthttp.RequestHandler {
 	app := NewApp(config, log)
 	mr := eval.NewMappingReader(config, log)
 	qr := eval.NewQueryReader(config, log)
-	client := httpclient.New()
+	client := httpclient.New(log)
 	r := runner.NewRunner(config, client, log)
 	e := eval.NewEvaluator(mr, qr, r, log)
 

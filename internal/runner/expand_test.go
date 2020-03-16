@@ -10,18 +10,18 @@ import (
 func TestMultiplexStatements(t *testing.T) {
 	tests := []struct {
 		name     string
-		input    []domain.Statement
-		expected []interface{}
+		input    runner.Resources
+		expected runner.Resources
 	}{
 		{
 			"should change nothing if there is no with params",
-			[]domain.Statement{{Method: "from", Resource: "hero"}},
-			[]interface{}{domain.Statement{Method: "from", Resource: "hero"}},
+			runner.Resources{"hero": domain.Statement{Method: "from", Resource: "hero"}},
+			runner.Resources{"hero": domain.Statement{Method: "from", Resource: "hero"}},
 		},
 		{
 			"should change nothing if there is no list parameter",
-			[]domain.Statement{
-				{
+			runner.Resources{
+				"h": domain.Statement{
 					Method:   "from",
 					Resource: "hero",
 					Alias:    "h",
@@ -34,7 +34,7 @@ func TestMultiplexStatements(t *testing.T) {
 					},
 					Only: []interface{}{"id", "name"},
 				},
-				{
+				"s": domain.Statement{
 					Method:   "from",
 					Resource: "sidekick",
 					Alias:    "s",
@@ -48,14 +48,14 @@ func TestMultiplexStatements(t *testing.T) {
 					Hidden:       true,
 					IgnoreErrors: true,
 				},
-				{
+				"v": domain.Statement{
 					Method:   "from",
 					Resource: "villain",
 					Alias:    "v",
 				},
 			},
-			[]interface{}{
-				domain.Statement{
+			runner.Resources{
+				"h": domain.Statement{
 					Method:   "from",
 					Resource: "hero",
 					Alias:    "h",
@@ -68,7 +68,7 @@ func TestMultiplexStatements(t *testing.T) {
 					},
 					Only: []interface{}{"id", "name"},
 				},
-				domain.Statement{
+				"s": domain.Statement{
 					Method:   "from",
 					Resource: "sidekick",
 					Alias:    "s",
@@ -82,7 +82,7 @@ func TestMultiplexStatements(t *testing.T) {
 					Hidden:       true,
 					IgnoreErrors: true,
 				},
-				domain.Statement{
+				"v": domain.Statement{
 					Method:   "from",
 					Resource: "villain",
 					Alias:    "v",
@@ -91,9 +91,11 @@ func TestMultiplexStatements(t *testing.T) {
 		},
 		{
 			"should make nested new statements for each list value",
-			[]domain.Statement{{Method: "from", Resource: "hero", With: map[string]interface{}{"id": []interface{}{"12345", "67890"}}}},
-			[]interface{}{
-				[]interface{}{
+			runner.Resources{
+				"hero": domain.Statement{Method: "from", Resource: "hero", With: map[string]interface{}{"id": []interface{}{"12345", "67890"}}},
+			},
+			runner.Resources{
+				"hero": []interface{}{
 					domain.Statement{Method: "from", Resource: "hero", With: map[string]interface{}{"id": "12345"}},
 					domain.Statement{Method: "from", Resource: "hero", With: map[string]interface{}{"id": "67890"}},
 				},
@@ -101,9 +103,15 @@ func TestMultiplexStatements(t *testing.T) {
 		},
 		{
 			"should make deep nested new statements for each list value",
-			[]domain.Statement{{Method: "from", Resource: "hero", With: map[string]interface{}{"id": []interface{}{[]interface{}{"12345"}, []interface{}{"67890"}}}}},
-			[]interface{}{
-				[]interface{}{
+			runner.Resources{
+				"hero": domain.Statement{
+					Method:   "from",
+					Resource: "hero",
+					With:     map[string]interface{}{"id": []interface{}{[]interface{}{"12345"}, []interface{}{"67890"}}},
+				},
+			},
+			runner.Resources{
+				"hero": []interface{}{
 					[]interface{}{domain.Statement{Method: "from", Resource: "hero", With: map[string]interface{}{"id": "12345"}}},
 					[]interface{}{domain.Statement{Method: "from", Resource: "hero", With: map[string]interface{}{"id": "67890"}}},
 				},
@@ -111,9 +119,11 @@ func TestMultiplexStatements(t *testing.T) {
 		},
 		{
 			"should make a new statement for each list value",
-			[]domain.Statement{{Method: "from", Resource: "hero", With: map[string]interface{}{"id": []interface{}{"12345", "67890", "19283"}}}},
-			[]interface{}{
-				[]interface{}{
+			runner.Resources{
+				"hero": domain.Statement{Method: "from", Resource: "hero", With: map[string]interface{}{"id": []interface{}{"12345", "67890", "19283"}}},
+			},
+			runner.Resources{
+				"hero": []interface{}{
 					domain.Statement{Method: "from", Resource: "hero", With: map[string]interface{}{"id": "12345"}},
 					domain.Statement{Method: "from", Resource: "hero", With: map[string]interface{}{"id": "67890"}},
 					domain.Statement{Method: "from", Resource: "hero", With: map[string]interface{}{"id": "19283"}},
@@ -122,9 +132,15 @@ func TestMultiplexStatements(t *testing.T) {
 		},
 		{
 			"should make a new statement for each list value and keep other params",
-			[]domain.Statement{{Method: "from", Resource: "hero", With: map[string]interface{}{"id": []interface{}{"12345", "67890"}, "name": "batman", "age": 45}}},
-			[]interface{}{
-				[]interface{}{
+			runner.Resources{
+				"hero": domain.Statement{
+					Method:   "from",
+					Resource: "hero",
+					With:     map[string]interface{}{"id": []interface{}{"12345", "67890"}, "name": "batman", "age": 45},
+				},
+			},
+			runner.Resources{
+				"hero": []interface{}{
 					domain.Statement{Method: "from", Resource: "hero", With: map[string]interface{}{"id": "12345", "name": "batman", "age": 45}},
 					domain.Statement{Method: "from", Resource: "hero", With: map[string]interface{}{"id": "67890", "name": "batman", "age": 45}},
 				},
@@ -132,13 +148,13 @@ func TestMultiplexStatements(t *testing.T) {
 		},
 		{
 			"should make a new statement for each list value only on statement with list param",
-			[]domain.Statement{
-				{Method: "from", Resource: "hero", With: map[string]interface{}{"id": "12345"}},
-				{Method: "from", Resource: "villain", With: map[string]interface{}{"id": []interface{}{"abcdef", "ghijkl"}}},
+			runner.Resources{
+				"hero":    domain.Statement{Method: "from", Resource: "hero", With: map[string]interface{}{"id": "12345"}},
+				"villain": domain.Statement{Method: "from", Resource: "villain", With: map[string]interface{}{"id": []interface{}{"abcdef", "ghijkl"}}},
 			},
-			[]interface{}{
-				domain.Statement{Method: "from", Resource: "hero", With: map[string]interface{}{"id": "12345"}},
-				[]interface{}{
+			runner.Resources{
+				"hero": domain.Statement{Method: "from", Resource: "hero", With: map[string]interface{}{"id": "12345"}},
+				"villain": []interface{}{
 					domain.Statement{Method: "from", Resource: "villain", With: map[string]interface{}{"id": "abcdef"}},
 					domain.Statement{Method: "from", Resource: "villain", With: map[string]interface{}{"id": "ghijkl"}},
 				},
@@ -146,16 +162,16 @@ func TestMultiplexStatements(t *testing.T) {
 		},
 		{
 			"should make a new statement for each list value in each statement",
-			[]domain.Statement{
-				{Method: "from", Resource: "hero", With: map[string]interface{}{"id": []interface{}{"12345", "67890"}}},
-				{Method: "from", Resource: "villain", With: map[string]interface{}{"id": []interface{}{"abcdef", "ghijkl"}}},
+			runner.Resources{
+				"hero":    domain.Statement{Method: "from", Resource: "hero", With: map[string]interface{}{"id": []interface{}{"12345", "67890"}}},
+				"villain": domain.Statement{Method: "from", Resource: "villain", With: map[string]interface{}{"id": []interface{}{"abcdef", "ghijkl"}}},
 			},
-			[]interface{}{
-				[]interface{}{
+			runner.Resources{
+				"hero": []interface{}{
 					domain.Statement{Method: "from", Resource: "hero", With: map[string]interface{}{"id": "12345"}},
 					domain.Statement{Method: "from", Resource: "hero", With: map[string]interface{}{"id": "67890"}},
 				},
-				[]interface{}{
+				"villain": []interface{}{
 					domain.Statement{Method: "from", Resource: "villain", With: map[string]interface{}{"id": "abcdef"}},
 					domain.Statement{Method: "from", Resource: "villain", With: map[string]interface{}{"id": "ghijkl"}},
 				},
@@ -163,13 +179,13 @@ func TestMultiplexStatements(t *testing.T) {
 		},
 		{
 			"should not make a new statement if list is flattened",
-			[]domain.Statement{
-				{Method: "from", Resource: "hero", With: map[string]interface{}{"id": domain.Flatten{[]interface{}{"12345", "67890"}}}},
-				{Method: "from", Resource: "villain", With: map[string]interface{}{"id": []interface{}{"abcdef", "ghijkl"}}},
+			runner.Resources{
+				"hero":    domain.Statement{Method: "from", Resource: "hero", With: map[string]interface{}{"id": domain.Flatten{[]interface{}{"12345", "67890"}}}},
+				"villain": domain.Statement{Method: "from", Resource: "villain", With: map[string]interface{}{"id": []interface{}{"abcdef", "ghijkl"}}},
 			},
-			[]interface{}{
-				domain.Statement{Method: "from", Resource: "hero", With: map[string]interface{}{"id": domain.Flatten{[]interface{}{"12345", "67890"}}}},
-				[]interface{}{
+			runner.Resources{
+				"hero": domain.Statement{Method: "from", Resource: "hero", With: map[string]interface{}{"id": domain.Flatten{[]interface{}{"12345", "67890"}}}},
+				"villain": []interface{}{
 					domain.Statement{Method: "from", Resource: "villain", With: map[string]interface{}{"id": "abcdef"}},
 					domain.Statement{Method: "from", Resource: "villain", With: map[string]interface{}{"id": "ghijkl"}},
 				},
@@ -177,9 +193,15 @@ func TestMultiplexStatements(t *testing.T) {
 		},
 		{
 			"should make a new statement for each value of the cartesian product of list params",
-			[]domain.Statement{{Method: "from", Resource: "hero", With: map[string]interface{}{"id": []interface{}{"12345", "67890"}, "name": []interface{}{"batman", "superman"}}}},
-			[]interface{}{
-				[]interface{}{
+			runner.Resources{
+				"hero": domain.Statement{
+					Method:   "from",
+					Resource: "hero",
+					With:     map[string]interface{}{"id": []interface{}{"12345", "67890"}, "name": []interface{}{"batman", "superman"}},
+				},
+			},
+			runner.Resources{
+				"hero": []interface{}{
 					domain.Statement{Method: "from", Resource: "hero", With: map[string]interface{}{"id": "12345", "name": "batman"}},
 					domain.Statement{Method: "from", Resource: "hero", With: map[string]interface{}{"id": "67890", "name": "superman"}},
 				},
@@ -187,9 +209,15 @@ func TestMultiplexStatements(t *testing.T) {
 		},
 		{
 			"should make a new statement for each value of the cartesian product of list params",
-			[]domain.Statement{{Method: "from", Resource: "hero", With: map[string]interface{}{"id": []interface{}{"12345", "67890"}, "name": []interface{}{"batman", "superman"}, "age": []interface{}{45, 38}}}},
-			[]interface{}{
-				[]interface{}{
+			runner.Resources{
+				"hero": domain.Statement{
+					Method:   "from",
+					Resource: "hero",
+					With:     map[string]interface{}{"id": []interface{}{"12345", "67890"}, "name": []interface{}{"batman", "superman"}, "age": []interface{}{45, 38}},
+				},
+			},
+			runner.Resources{
+				"hero": []interface{}{
 					domain.Statement{Method: "from", Resource: "hero", With: map[string]interface{}{"id": "12345", "name": "batman", "age": 45}},
 					domain.Statement{Method: "from", Resource: "hero", With: map[string]interface{}{"id": "67890", "name": "superman", "age": 38}},
 				},
@@ -197,9 +225,15 @@ func TestMultiplexStatements(t *testing.T) {
 		},
 		{
 			"should make a new statement for each value of the cartesian product of list params",
-			[]domain.Statement{{Method: "from", Resource: "hero", With: map[string]interface{}{"id": []interface{}{"12345", "67890"}, "name": []interface{}{"wonder woman", "batman", "superman"}}}},
-			[]interface{}{
-				[]interface{}{
+			runner.Resources{
+				"hero": domain.Statement{
+					Method:   "from",
+					Resource: "hero",
+					With:     map[string]interface{}{"id": []interface{}{"12345", "67890"}, "name": []interface{}{"wonder woman", "batman", "superman"}},
+				},
+			},
+			runner.Resources{
+				"hero": []interface{}{
 					domain.Statement{Method: "from", Resource: "hero", With: map[string]interface{}{"id": "12345", "name": "wonder woman"}},
 					domain.Statement{Method: "from", Resource: "hero", With: map[string]interface{}{"id": "67890", "name": "batman"}},
 				},
@@ -207,9 +241,15 @@ func TestMultiplexStatements(t *testing.T) {
 		},
 		{
 			"should make a new statement for each value of the cartesian product of list params and keep other params",
-			[]domain.Statement{{Method: "from", Resource: "hero", With: map[string]interface{}{"id": []interface{}{"12345", "67890"}, "name": []interface{}{"batman", "superman"}, "universe": "dc"}}},
-			[]interface{}{
-				[]interface{}{
+			runner.Resources{
+				"hero": domain.Statement{
+					Method:   "from",
+					Resource: "hero",
+					With:     map[string]interface{}{"id": []interface{}{"12345", "67890"}, "name": []interface{}{"batman", "superman"}, "universe": "dc"},
+				},
+			},
+			runner.Resources{
+				"hero": []interface{}{
 					domain.Statement{Method: "from", Resource: "hero", With: map[string]interface{}{"id": "12345", "name": "batman", "universe": "dc"}},
 					domain.Statement{Method: "from", Resource: "hero", With: map[string]interface{}{"id": "67890", "name": "superman", "universe": "dc"}},
 				},
@@ -224,13 +264,5 @@ func TestMultiplexStatements(t *testing.T) {
 				t.Errorf("MultiplexStatements = %#+v, want = %#+v", got, tt.expected)
 			}
 		})
-	}
-}
-
-func BenchmarkMultiplexStatements(b *testing.B) {
-	input := []domain.Statement{{Method: "from", Resource: "hero", With: map[string]interface{}{"id": []interface{}{"12345", "67890"}, "name": "batman", "age": 45}}}
-
-	for i := 0; i < b.N; i++ {
-		runner.MultiplexStatements(input)
 	}
 }
