@@ -33,7 +33,8 @@ type Headers map[string]string
 type Body interface{}
 
 type Request struct {
-	Url     string
+	Schema  string
+	Uri     string
 	Query   map[string]string
 	Body    Body
 	Headers Headers

@@ -35,7 +35,8 @@ func (hc HttpClient) Do(ctx context.Context, request domain.Request) (domain.Res
 	}()
 
 	uri := fasthttp.URI{DisablePathNormalizing: true}
-	uri.SetHost(request.Url)
+	uri.SetScheme(request.Schema)
+	uri.SetHost(request.Uri)
 	uri.SetQueryStringBytes(makeQueryArgs(request))
 
 	uriStr := uri.String()
