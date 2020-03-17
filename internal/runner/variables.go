@@ -5,22 +5,19 @@ import (
 	"strconv"
 )
 
-func ResolveVariables(query domain.Query, params map[string]interface{}) domain.Query {
-	result := domain.Query{
-		Use:        query.Use,
-		Statements: make([]domain.Statement, len(query.Statements)),
+func ResolveVariables(resources Resources, params map[string]interface{}) Resources {
+	for key, statement := range resources {
+		if statement, ok := statement.(domain.Statement); ok {
+			statement.With = resolveWith(statement.With, params)
+			statement.Timeout = resolveTimeout(statement.Timeout, params)
+			statement.Headers = resolveHeaders(statement.Headers, params)
+			statement.CacheControl = resolveCacheControl(statement.CacheControl, params)
+
+			resources[key] = statement
+		}
 	}
 
-	for i, statement := range query.Statements {
-		statement.With = resolveWith(statement.With, params)
-		statement.Timeout = resolveTimeout(statement.Timeout, params)
-		statement.Headers = resolveHeaders(statement.Headers, params)
-		statement.CacheControl = resolveCacheControl(statement.CacheControl, params)
-
-		result.Statements[i] = statement
-	}
-
-	return result
+	return resources
 }
 
 func resolveWith(with domain.Params, params map[string]interface{}) domain.Params {

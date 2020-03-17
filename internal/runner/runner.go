@@ -22,9 +22,8 @@ func NewRunner(config domain.Configuration, httpClient domain.HttpClient, log do
 func (r Runner) ExecuteQuery(ctx context.Context, query domain.Query, queryCtx QueryContext) interface{} {
 	executor := Executor{mappings: queryCtx.Mappings, client: r.client, log: r.log}
 
-	query = ResolveVariables(query, queryCtx.Input.Params)
-
 	resources := NewResources(query.Statements)
+	resources = ResolveVariables(resources, queryCtx.Input.Params)
 	resources = MultiplexStatements(resources)
 
 	state := NewState(resources)
