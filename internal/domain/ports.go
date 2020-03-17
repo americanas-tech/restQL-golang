@@ -26,13 +26,13 @@ type Logger interface {
 }
 
 type HttpClient interface {
-	Do(ctx context.Context, request Request) (Response, error)
+	Do(ctx context.Context, request HttpRequest) (HttpResponse, error)
 }
 
 type Headers map[string]string
 type Body interface{}
 
-type Request struct {
+type HttpRequest struct {
 	Schema  string
 	Uri     string
 	Query   map[string]string
@@ -40,7 +40,7 @@ type Request struct {
 	Headers Headers
 }
 
-type Response struct {
+type HttpResponse struct {
 	StatusCode int
 	Body       Body
 	Headers    Headers
