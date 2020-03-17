@@ -4,45 +4,91 @@ import (
 	"context"
 	"fmt"
 	"github.com/b2wdigital/restQL-golang/internal/domain"
+	"strconv"
 	"strings"
 )
 
-type DoneRequest domain.Response
+const debugParamName = "_debug"
+
+type DoneRequest Response
 type DoneRequests []interface{}
 
 type Executor struct {
-	mappings map[string]domain.Mapping
-	client   domain.HttpClient
-	log      domain.Logger
+	client domain.HttpClient
+	log    domain.Logger
 }
 
-func (e Executor) DoStatement(ctx context.Context, statement domain.Statement) DoneRequest {
-	req := e.makeRequest(e.mappings, statement)
-	response, err := e.client.Do(ctx, req)
+func (e Executor) DoStatement(ctx context.Context, statement domain.Statement, queryCtx QueryContext) DoneRequest {
+	request := e.makeRequest(queryCtx.Mappings, statement)
+	response, err := e.client.Do(ctx, request)
 	if err != nil {
 		e.log.Debug("request failed", "error", err)
 		return DoneRequest{}
 	}
 
-	return DoneRequest(response)
+	dr := newDoneRequest(queryCtx, request, response)
+
+	return dr
 }
 
-func (e Executor) DoMultiplexedStatement(ctx context.Context, statements []interface{}) DoneRequests {
+func newDoneRequest(queryCtx QueryContext, request domain.HttpRequest, response domain.HttpResponse) DoneRequest {
+	dr := DoneRequest{
+		Details: Details{
+			Status:  response.StatusCode,
+			Success: response.StatusCode >= 200 && response.StatusCode < 400,
+		},
+		Result: response.Body,
+	}
+
+	debug := getDebug(queryCtx)
+
+	if debug {
+		dr.Details.Debug = &Debugging{
+			Url:             request.Schema + "://" + request.Uri,
+			Params:          request.Query,
+			RequestHeaders:  request.Headers,
+			ResponseHeaders: response.Headers,
+		}
+	}
+
+	return dr
+}
+
+func getDebug(queryCtx QueryContext) bool {
+	param, found := queryCtx.Input.Params[debugParamName]
+	if !found {
+		return false
+	}
+
+	debug, ok := param.(string)
+	if !ok {
+		return false
+	}
+
+	d, err := strconv.ParseBool(debug)
+	if err != nil {
+		return false
+	}
+
+	return d
+}
+
+func (e Executor) DoMultiplexedStatement(ctx context.Context, statements []interface{}, queryCtx QueryContext) DoneRequests {
 	responses := make(DoneRequests, len(statements))
 
 	for i, stmt := range statements {
 		switch stmt := stmt.(type) {
 		case domain.Statement:
-			responses[i] = e.DoStatement(ctx, stmt)
+			responses[i] = e.DoStatement(ctx, stmt, queryCtx)
 		case []interface{}:
-			responses[i] = e.DoMultiplexedStatement(ctx, stmt)
+			responses[i] = e.DoMultiplexedStatement(ctx, stmt, queryCtx)
 		}
 	}
 
 	return responses
 }
 
-func (e Executor) makeRequest(mappings map[string]domain.Mapping, statement domain.Statement) domain.Request {
+func (e Executor) makeRequest(mappings map[string]domain.Mapping, statement domain.Statement) domain.HttpRequest {
 	mapping := mappings[statement.Resource]
 	url := makeUrl(mapping, statement)
 
@@ -71,7 +117,7 @@ func (e Executor) makeRequest(mappings map[string]domain.Mapping, statement doma
 		headers[key] = str
 	}
 
-	return domain.Request{
+	return domain.HttpRequest{
 		Schema:  mapping.Schema,
 		Uri:     url,
 		Query:   queryArgs,

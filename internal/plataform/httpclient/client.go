@@ -26,7 +26,7 @@ func New(log *logger.Logger) HttpClient {
 	return HttpClient{client: c, log: log}
 }
 
-func (hc HttpClient) Do(ctx context.Context, request domain.Request) (domain.Response, error) {
+func (hc HttpClient) Do(ctx context.Context, request domain.HttpRequest) (domain.HttpResponse, error) {
 	req := fasthttp.AcquireRequest()
 	res := fasthttp.AcquireResponse()
 	defer func() {
@@ -49,17 +49,17 @@ func (hc HttpClient) Do(ctx context.Context, request domain.Request) (domain.Res
 
 	err := hc.client.Do(req, res)
 	if err != nil {
-		return domain.Response{}, errors.Wrap(err, "request execution failed")
+		return domain.HttpResponse{}, errors.Wrap(err, "request execution failed")
 	}
 
 	responseBody, err := hc.unmarshalBody(res)
 	if err != nil {
-		return domain.Response{}, err
+		return domain.HttpResponse{}, err
 	}
 
 	headers := readHeaders(res)
 
-	response := domain.Response{
+	response := domain.HttpResponse{
 		StatusCode: res.StatusCode(),
 		Body:       responseBody,
 		Headers:    headers,
@@ -92,7 +92,7 @@ var (
 	equal     = []byte("=")
 )
 
-func makeQueryArgs(request domain.Request) []byte {
+func makeQueryArgs(request domain.HttpRequest) []byte {
 	var buf bytes.Buffer
 	for key, value := range request.Query {
 		buf.Write(ampersand)
