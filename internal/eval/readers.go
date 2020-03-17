@@ -7,18 +7,24 @@ import (
 )
 
 var pathParamRegex, _ = regexp.Compile("/:(\\w+)")
+var schemaRegex, _ = regexp.Compile("^(\\w+)://(.+)$")
 
 func newMapping(resource, url string) domain.Mapping {
-	matches := pathParamRegex.FindAllStringSubmatch(url, -1)
+	paramsMatches := pathParamRegex.FindAllStringSubmatch(url, -1)
 
-	pathParams := make([]string, len(matches))
-	for i, m := range matches {
+	pathParams := make([]string, len(paramsMatches))
+	for i, m := range paramsMatches {
 		pathParams[i] = m[1]
 	}
 
+	schemaMatches := schemaRegex.FindAllStringSubmatch(url, -1)
+	schema := schemaMatches[0][1]
+	uri := schemaMatches[0][2]
+
 	return domain.Mapping{
 		ResourceName: resource,
-		Url:          url,
+		Uri:          uri,
+		Schema:       schema,
 		PathParams:   pathParams,
 	}
 }

@@ -72,7 +72,8 @@ func (e Executor) makeRequest(mappings map[string]domain.Mapping, statement doma
 	}
 
 	return domain.Request{
-		Url:     url,
+		Schema:  mapping.Schema,
+		Uri:     url,
 		Query:   queryArgs,
 		Body:    nil,
 		Headers: headers,
@@ -80,7 +81,7 @@ func (e Executor) makeRequest(mappings map[string]domain.Mapping, statement doma
 }
 
 func makeUrl(mapping domain.Mapping, statement domain.Statement) string {
-	resource := mapping.Url
+	resource := mapping.Uri
 	for _, pathParam := range mapping.PathParams {
 		resource = strings.Replace(resource, fmt.Sprintf(":%v", pathParam), fmt.Sprintf("%v", statement.With[pathParam]), 1)
 	}

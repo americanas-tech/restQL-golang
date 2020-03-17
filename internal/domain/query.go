@@ -50,6 +50,7 @@ type Match struct {
 
 type Mapping struct {
 	ResourceName string
-	Url          string
+	Schema       string
+	Uri          string
 	PathParams   []string
 }
