@@ -57,13 +57,24 @@ func (hc HttpClient) Do(ctx context.Context, request domain.Request) (domain.Res
 		return domain.Response{}, err
 	}
 
+	headers := readHeaders(res)
+
 	response := domain.Response{
 		StatusCode: res.StatusCode(),
 		Body:       responseBody,
-		Headers:    nil,
+		Headers:    headers,
 	}
 
 	return response, nil
+}
+
+func readHeaders(res *fasthttp.Response) domain.Headers {
+	h := make(domain.Headers)
+	res.Header.VisitAll(func(key, value []byte) {
+		h[string(key)] = string(value)
+	})
+
+	return h
 }
 
 func (hc HttpClient) unmarshalBody(res *fasthttp.Response) (interface{}, error) {
