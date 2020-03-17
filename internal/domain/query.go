@@ -1,9 +1,11 @@
 package domain
 
 type Query struct {
-	Use        map[string]interface{}
+	Use        Modifiers
 	Statements []Statement
 }
+
+type Modifiers map[string]interface{}
 
 type Statement struct {
 	Method       string
