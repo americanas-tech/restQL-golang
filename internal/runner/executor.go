@@ -55,7 +55,7 @@ func (e Executor) makeRequest(mappings map[string]domain.Mapping, statement doma
 		str, ok := value.(string)
 
 		if !ok {
-			e.log.Debug("skipping query param on request build for failing string casting", "param-key", key, "param-value", value)
+			e.log.Debug("skipping resources param on request build for failing string casting", "param-key", key, "param-value", value)
 			continue
 		}
 		queryArgs[key] = str
