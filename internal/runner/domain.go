@@ -43,10 +43,10 @@ func NewResources(statements []domain.Statement) Resources {
 }
 
 type Debugging struct {
-	Url             string            `json:"url,omitempty"`
-	RequestHeaders  map[string]string `json:"request-headers,omitempty"`
-	ResponseHeaders map[string]string `json:"response-headers,omitempty"`
-	Params          map[string]string `json:"params,omitempty"`
+	Url             string                 `json:"url,omitempty"`
+	RequestHeaders  map[string]string      `json:"request-headers,omitempty"`
+	ResponseHeaders map[string]string      `json:"response-headers,omitempty"`
+	Params          map[string]interface{} `json:"params,omitempty"`
 }
 
 type Details struct {

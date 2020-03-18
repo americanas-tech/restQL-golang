@@ -10,6 +10,15 @@ import (
 
 const debugParamName = "_debug"
 
+var disallowedHeaders = map[string]struct{}{
+	"host":            {},
+	"content-type":    {},
+	"content-length":  {},
+	"connection":      {},
+	"origin":          {},
+	"accept-encoding": {},
+}
+
 type DoneRequest Response
 type DoneRequests []interface{}
 
@@ -19,7 +28,7 @@ type Executor struct {
 }
 
 func (e Executor) DoStatement(ctx context.Context, statement domain.Statement, queryCtx QueryContext) DoneRequest {
-	request := e.makeRequest(queryCtx.Mappings, statement)
+	request := e.makeRequest(statement, queryCtx)
 	response, err := e.client.Do(ctx, request)
 	if err != nil {
 		e.log.Debug("request failed", "error", err)
@@ -88,11 +97,48 @@ func (e Executor) DoMultiplexedStatement(ctx context.Context, statements []inter
 	return responses
 }
 
-func (e Executor) makeRequest(mappings map[string]domain.Mapping, statement domain.Statement) domain.HttpRequest {
-	mapping := mappings[statement.Resource]
+func (e Executor) makeRequest(statement domain.Statement, queryCtx QueryContext) domain.HttpRequest {
+	mapping := queryCtx.Mappings[statement.Resource]
 	url := makeUrl(mapping, statement)
 
-	queryArgs := make(map[string]string)
+	queryParams := e.makeQueryParams(statement, mapping, queryCtx)
+
+	headers := e.makeHeaders(statement, queryCtx)
+
+	return domain.HttpRequest{
+		Schema:  mapping.Schema,
+		Uri:     url,
+		Query:   queryParams,
+		Body:    nil,
+		Headers: headers,
+	}
+}
+
+func (e Executor) makeHeaders(statement domain.Statement, queryCtx QueryContext) map[string]string {
+	headers := getForwardHeaders(queryCtx)
+	for key, value := range statement.Headers {
+		str, ok := value.(string)
+		if !ok {
+			e.log.Debug("skipping header on request build for failing string casting", "header-name", key, "header-value", value)
+			continue
+		}
+		headers[key] = str
+	}
+	return headers
+}
+
+func getForwardHeaders(queryCtx QueryContext) map[string]string {
+	r := make(map[string]string)
+	for k, v := range queryCtx.Input.Headers {
+		if _, found := disallowedHeaders[k]; !found {
+			r[k] = v
+		}
+	}
+	return r
+}
+
+func (e Executor) makeQueryParams(statement domain.Statement, mapping domain.Mapping, queryCtx QueryContext) map[string]interface{} {
+	queryArgs := getForwardParams(queryCtx)
 	for key, value := range statement.With {
 		if contains(mapping.PathParams, key) {
 			continue
@@ -106,24 +152,18 @@ func (e Executor) makeRequest(mappings map[string]domain.Mapping, statement doma
 		}
 		queryArgs[key] = str
 	}
+	return queryArgs
+}
 
-	headers := make(map[string]string)
-	for key, value := range statement.Headers {
-		str, ok := value.(string)
-		if !ok {
-			e.log.Debug("skipping header on request build for failing string casting", "header-name", key, "header-value", value)
-			continue
+func getForwardParams(queryCtx QueryContext) map[string]interface{} {
+	r := make(map[string]interface{})
+	for k, v := range queryCtx.Input.Params {
+		if strings.HasPrefix(k, "c_") {
+			r[k] = v
 		}
-		headers[key] = str
 	}
 
-	return domain.HttpRequest{
-		Schema:  mapping.Schema,
-		Uri:     url,
-		Query:   queryArgs,
-		Body:    nil,
-		Headers: headers,
-	}
+	return r
 }
 
 func makeUrl(mapping domain.Mapping, statement domain.Statement) string {
