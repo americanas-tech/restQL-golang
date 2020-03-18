@@ -6,11 +6,23 @@ func ApplyModifiers(modifiers domain.Modifiers, resources Resources) Resources {
 	for resourceId, stmt := range resources {
 		if stmt, ok := stmt.(domain.Statement); ok {
 			stmt.CacheControl = applyCacheModifiers(modifiers, stmt)
+			stmt.Timeout = applyTimeoutModifier(modifiers, stmt)
 			resources[resourceId] = stmt
 		}
 	}
 
 	return resources
+}
+
+func applyTimeoutModifier(modifiers domain.Modifiers, statement domain.Statement) interface{} {
+	timeout := modifiers["timeout"]
+	currentTimeout := statement.Timeout
+
+	if currentTimeout == nil {
+		return timeout
+	}
+
+	return currentTimeout
 }
 
 func applyCacheModifiers(modifiers domain.Modifiers, statement domain.Statement) domain.CacheControl {

@@ -44,8 +44,8 @@ func TestAstParser(t *testing.T) {
 		},
 		{
 			"Simple from resource query with use modifier",
-			Query{Use: []Use{{Key: "max-age", Value: UseValue{Int: Int(600)}}, {Key: "Agent", Value: UseValue{String: String("restql")}}}, Blocks: []Block{{Method: "from", Resource: "cart"}}},
-			`use max-age = 600 use Agent = "restql" from cart`,
+			Query{Use: []Use{{Key: "max-age", Value: UseValue{Int: Int(600)}}, {Key: "s-max-age", Value: UseValue{Int: Int(400)}}, {Key: "timeout", Value: UseValue{Int: Int(8000)}}}, Blocks: []Block{{Method: "from", Resource: "cart"}}},
+			`use max-age = 600 use s-max-age = 400 use timeout = 8000 from cart`,
 		},
 		{
 			"Simple from resource query with resource name with hyphen",
@@ -287,8 +287,8 @@ func TestAstParser(t *testing.T) {
 					}},
 				},
 			}}},
-			`from hero 
-					only 
+			`from hero
+					only
 						name -> matches("^Super")
 						weapons`,
 		},
