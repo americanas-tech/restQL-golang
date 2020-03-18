@@ -1,6 +1,7 @@
 package runner
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"github.com/b2wdigital/restQL-golang/internal/domain"
@@ -32,6 +33,11 @@ type Executor struct {
 }
 
 func (e Executor) DoStatement(ctx context.Context, statement domain.Statement, queryCtx QueryContext) DoneRequest {
+	emptyChainedParams := getEmptyChainedParams(statement)
+	if len(emptyChainedParams) > 0 {
+		return newEmptyChainedResponse(emptyChainedParams)
+	}
+
 	e.log.Debug("executing request for statement", "resource", statement.Resource, "method", statement.Method)
 
 	request := e.makeRequest(statement, queryCtx)
@@ -56,6 +62,31 @@ func (e Executor) DoStatement(ctx context.Context, statement domain.Statement, q
 	e.log.Debug("request execution done", "resource", statement.Resource, "method", statement.Method, "response", dr)
 
 	return dr
+}
+
+func newEmptyChainedResponse(params []string) DoneRequest {
+	var buf bytes.Buffer
+
+	buf.WriteString("The request was skipped due to missing { ")
+	for _, p := range params {
+		buf.WriteString(":")
+		buf.WriteString(p)
+		buf.WriteString(" ")
+	}
+	buf.WriteString(" } param value")
+
+	return DoneRequest{Details: Details{Status: 400, Success: false}, Result: buf.String()}
+}
+
+func getEmptyChainedParams(statement domain.Statement) []string {
+	var r []string
+	for key, value := range statement.With {
+		if value == EmptyChained {
+			r = append(r, key)
+		}
+	}
+
+	return r
 }
 
 func newDoneRequest(queryCtx QueryContext, request domain.HttpRequest, response domain.HttpResponse) DoneRequest {

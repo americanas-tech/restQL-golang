@@ -50,8 +50,8 @@ type Debugging struct {
 }
 
 type Details struct {
-	Status  int        `json:"status,omitempty"`
-	Success bool       `json:"success,omitempty"`
+	Status  int        `json:"status"`
+	Success bool       `json:"success"`
 	Debug   *Debugging `json:"debug,omitempty"`
 }
 
