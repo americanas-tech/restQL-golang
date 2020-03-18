@@ -7,7 +7,7 @@ import (
 	"github.com/valyala/fasthttp"
 )
 
-func makeResponse(res *fasthttp.Response) (domain.HttpResponse, error) {
+func makeResponse(req *fasthttp.Request, res *fasthttp.Response) (domain.HttpResponse, error) {
 	responseBody, err := unmarshalBody(res)
 	if err != nil {
 		return domain.HttpResponse{}, err
@@ -16,6 +16,7 @@ func makeResponse(res *fasthttp.Response) (domain.HttpResponse, error) {
 	headers := readHeaders(res)
 
 	response := domain.HttpResponse{
+		Url:        req.URI().String(),
 		StatusCode: res.StatusCode(),
 		Body:       responseBody,
 		Headers:    headers,

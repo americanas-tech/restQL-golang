@@ -43,7 +43,7 @@ func (hc HttpClient) Do(ctx context.Context, request domain.HttpRequest) (domain
 		return domain.HttpResponse{}, errors.Wrap(err, "request execution failed")
 	}
 
-	response, err := makeResponse(res)
+	response, err := makeResponse(req, res)
 	if err != nil {
 		return domain.HttpResponse{}, err
 	}

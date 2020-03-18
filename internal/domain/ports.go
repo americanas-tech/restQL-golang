@@ -46,6 +46,7 @@ type HttpRequest struct {
 }
 
 type HttpResponse struct {
+	Url        string
 	StatusCode int
 	Body       Body
 	Headers    Headers

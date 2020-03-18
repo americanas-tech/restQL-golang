@@ -67,49 +67,6 @@ func (e Executor) DoStatement(ctx context.Context, statement domain.Statement, q
 	return dr
 }
 
-func newTimeoutResponse(err error, request domain.HttpRequest, response domain.HttpResponse, queryCtx QueryContext) DoneRequest {
-	dr := DoneRequest{
-		Details: Details{
-			Status:  408,
-			Success: false,
-		},
-		Result: err.Error(),
-	}
-
-	debug := getDebug(queryCtx)
-
-	if debug {
-		dr.Details.Debug = newDebugging(request, response)
-	}
-
-	return dr
-}
-
-func newEmptyChainedResponse(params []string) DoneRequest {
-	var buf bytes.Buffer
-
-	buf.WriteString("The request was skipped due to missing { ")
-	for _, p := range params {
-		buf.WriteString(":")
-		buf.WriteString(p)
-		buf.WriteString(" ")
-	}
-	buf.WriteString(" } param value")
-
-	return DoneRequest{Details: Details{Status: 400, Success: false}, Result: buf.String()}
-}
-
-func getEmptyChainedParams(statement domain.Statement) []string {
-	var r []string
-	for key, value := range statement.With {
-		if value == EmptyChained {
-			r = append(r, key)
-		}
-	}
-
-	return r
-}
-
 func newDoneRequest(request domain.HttpRequest, response domain.HttpResponse, queryCtx QueryContext) DoneRequest {
 	dr := DoneRequest{
 		Details: Details{
@@ -130,7 +87,7 @@ func newDoneRequest(request domain.HttpRequest, response domain.HttpResponse, qu
 
 func newDebugging(request domain.HttpRequest, response domain.HttpResponse) *Debugging {
 	return &Debugging{
-		Url:             request.Schema + "://" + request.Uri,
+		Url:             response.Url,
 		Params:          request.Query,
 		RequestHeaders:  request.Headers,
 		ResponseHeaders: response.Headers,
@@ -261,4 +218,47 @@ func parseTimeout(statement domain.Statement) (time.Duration, error) {
 	}
 
 	return time.Millisecond * time.Duration(duration), nil
+}
+
+func newTimeoutResponse(err error, request domain.HttpRequest, response domain.HttpResponse, queryCtx QueryContext) DoneRequest {
+	dr := DoneRequest{
+		Details: Details{
+			Status:  408,
+			Success: false,
+		},
+		Result: err.Error(),
+	}
+
+	debug := getDebug(queryCtx)
+
+	if debug {
+		dr.Details.Debug = newDebugging(request, response)
+	}
+
+	return dr
+}
+
+func newEmptyChainedResponse(params []string) DoneRequest {
+	var buf bytes.Buffer
+
+	buf.WriteString("The request was skipped due to missing { ")
+	for _, p := range params {
+		buf.WriteString(":")
+		buf.WriteString(p)
+		buf.WriteString(" ")
+	}
+	buf.WriteString(" } param value")
+
+	return DoneRequest{Details: Details{Status: 400, Success: false}, Result: buf.String()}
+}
+
+func getEmptyChainedParams(statement domain.Statement) []string {
+	var r []string
+	for key, value := range statement.With {
+		if value == EmptyChained {
+			r = append(r, key)
+		}
+	}
+
+	return r
 }
