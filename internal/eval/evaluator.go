@@ -6,7 +6,6 @@ import (
 	"github.com/b2wdigital/restQL-golang/internal/parser"
 	"github.com/b2wdigital/restQL-golang/internal/runner"
 	"github.com/pkg/errors"
-	"time"
 )
 
 var (
@@ -54,10 +53,13 @@ func (e Evaluator) SavedQuery(ctx context.Context, queryOpts runner.QueryOptions
 		Input:    queryInput,
 	}
 
-	timeout, cancel := context.WithTimeout(ctx, 5*time.Second)
-	defer cancel()
-
-	r := e.run.ExecuteQuery(timeout, query, queryCtx)
+	r, err := e.run.ExecuteQuery(ctx, query, queryCtx)
+	switch {
+	case err == runner.ErrQueryTimedOut:
+		return nil, TimeoutError{Err: err}
+	case err != nil:
+		return nil, err
+	}
 
 	return r, nil
 }

@@ -3,7 +3,11 @@ package runner
 import (
 	"context"
 	"github.com/b2wdigital/restQL-golang/internal/domain"
+	"github.com/pkg/errors"
+	"time"
 )
+
+var ErrQueryTimedOut = errors.New("query timed out")
 
 type Runner struct {
 	config   domain.Configuration
@@ -21,12 +25,12 @@ func NewRunner(config domain.Configuration, httpClient domain.HttpClient, log do
 	}
 }
 
-func (r Runner) ExecuteQuery(ctx context.Context, query domain.Query, queryCtx QueryContext) interface{} {
-	resources := NewResources(query.Statements)
+func (r Runner) ExecuteQuery(ctx context.Context, query domain.Query, queryCtx QueryContext) (interface{}, error) {
+	queryTimeout := parseQueryTimeout(query)
+	ctx, cancel := context.WithTimeout(ctx, queryTimeout)
+	defer cancel()
 
-	resources = ApplyModifiers(query.Use, resources)
-	resources = ResolveVariables(resources, queryCtx.Input.Params)
-	resources = MultiplexStatements(resources)
+	resources := initializeResources(query, queryCtx)
 
 	state := NewState(resources)
 
@@ -38,6 +42,7 @@ func (r Runner) ExecuteQuery(ctx context.Context, query domain.Query, queryCtx Q
 		requestCh: requestCh,
 		resultCh:  resultCh,
 		outputCh:  outputCh,
+		ctx:       ctx,
 		state:     state,
 	}
 
@@ -54,11 +59,37 @@ func (r Runner) ExecuteQuery(ctx context.Context, query domain.Query, queryCtx Q
 
 	select {
 	case output := <-outputCh:
-		return output
+		return output, nil
 	case <-ctx.Done():
 		r.log.Debug("query timed out")
-		return nil
+		return nil, ErrQueryTimedOut
 	}
+}
+
+func parseQueryTimeout(query domain.Query) time.Duration {
+	defaultQueryTimeout := 5 * time.Second
+
+	timeout, found := query.Use["timeout"]
+	if !found {
+		return defaultQueryTimeout
+	}
+
+	duration, ok := timeout.(int)
+	if !ok {
+		return defaultQueryTimeout
+	}
+
+	return time.Millisecond * time.Duration(duration)
+}
+
+func initializeResources(query domain.Query, queryCtx QueryContext) Resources {
+	resources := NewResources(query.Statements)
+
+	resources = ApplyModifiers(query.Use, resources)
+	resources = ResolveVariables(resources, queryCtx.Input.Params)
+	resources = MultiplexStatements(resources)
+
+	return resources
 }
 
 type request struct {
@@ -75,6 +106,7 @@ type stateWorker struct {
 	requestCh chan request
 	resultCh  chan result
 	outputCh  chan Resources
+	ctx       context.Context
 	state     *State
 }
 
@@ -95,8 +127,12 @@ func (sw *stateWorker) Run() {
 			}()
 		}
 
-		result := <-sw.resultCh
-		sw.state.UpdateDone(result.ResourceIdentifier, result.Response)
+		select {
+		case result := <-sw.resultCh:
+			sw.state.UpdateDone(result.ResourceIdentifier, result.Response)
+		case <-sw.ctx.Done():
+			return
+		}
 	}
 
 	sw.outputCh <- sw.state.Done()
@@ -111,21 +147,26 @@ type requestWorker struct {
 }
 
 func (rw *requestWorker) Run() {
-	for req := range rw.requestCh {
-		resourceId := req.ResourceIdentifier
-		statement := req.Statement
+	for {
+		select {
+		case req := <-rw.requestCh:
+			resourceId := req.ResourceIdentifier
+			statement := req.Statement
 
-		switch statement := statement.(type) {
-		case domain.Statement:
-			go func() {
-				response := rw.executor.DoStatement(rw.ctx, statement, rw.queryCtx)
-				rw.resultCh <- result{ResourceIdentifier: resourceId, Response: response}
-			}()
-		case []interface{}:
-			go func() {
-				responses := rw.executor.DoMultiplexedStatement(rw.ctx, statement, rw.queryCtx)
-				rw.resultCh <- result{ResourceIdentifier: resourceId, Response: responses}
-			}()
+			switch statement := statement.(type) {
+			case domain.Statement:
+				go func() {
+					response := rw.executor.DoStatement(rw.ctx, statement, rw.queryCtx)
+					rw.resultCh <- result{ResourceIdentifier: resourceId, Response: response}
+				}()
+			case []interface{}:
+				go func() {
+					responses := rw.executor.DoMultiplexedStatement(rw.ctx, statement, rw.queryCtx)
+					rw.resultCh <- result{ResourceIdentifier: resourceId, Response: responses}
+				}()
+			}
+		case <-rw.ctx.Done():
+			return
 		}
 	}
 }
