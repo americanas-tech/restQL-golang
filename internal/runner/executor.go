@@ -52,14 +52,35 @@ func (e Executor) DoStatement(ctx context.Context, statement domain.Statement, q
 	}
 
 	response, err := e.client.Do(ctx, request)
-	if err != nil {
+	switch {
+	case err == domain.ErrRequestTimeout:
+		return newTimeoutResponse(err, request, response, queryCtx)
+	case err != nil:
 		e.log.Debug("request failed", "error", err)
 		return DoneRequest{}
 	}
 
-	dr := newDoneRequest(queryCtx, request, response)
+	dr := newDoneRequest(request, response, queryCtx)
 
 	e.log.Debug("request execution done", "resource", statement.Resource, "method", statement.Method, "response", dr)
+
+	return dr
+}
+
+func newTimeoutResponse(err error, request domain.HttpRequest, response domain.HttpResponse, queryCtx QueryContext) DoneRequest {
+	dr := DoneRequest{
+		Details: Details{
+			Status:  408,
+			Success: false,
+		},
+		Result: err.Error(),
+	}
+
+	debug := getDebug(queryCtx)
+
+	if debug {
+		dr.Details.Debug = newDebugging(request, response)
+	}
 
 	return dr
 }
@@ -89,7 +110,7 @@ func getEmptyChainedParams(statement domain.Statement) []string {
 	return r
 }
 
-func newDoneRequest(queryCtx QueryContext, request domain.HttpRequest, response domain.HttpResponse) DoneRequest {
+func newDoneRequest(request domain.HttpRequest, response domain.HttpResponse, queryCtx QueryContext) DoneRequest {
 	dr := DoneRequest{
 		Details: Details{
 			Status:  response.StatusCode,
@@ -101,15 +122,19 @@ func newDoneRequest(queryCtx QueryContext, request domain.HttpRequest, response 
 	debug := getDebug(queryCtx)
 
 	if debug {
-		dr.Details.Debug = &Debugging{
-			Url:             request.Schema + "://" + request.Uri,
-			Params:          request.Query,
-			RequestHeaders:  request.Headers,
-			ResponseHeaders: response.Headers,
-		}
+		dr.Details.Debug = newDebugging(request, response)
 	}
 
 	return dr
+}
+
+func newDebugging(request domain.HttpRequest, response domain.HttpResponse) *Debugging {
+	return &Debugging{
+		Url:             request.Schema + "://" + request.Uri,
+		Params:          request.Query,
+		RequestHeaders:  request.Headers,
+		ResponseHeaders: response.Headers,
+	}
 }
 
 func getDebug(queryCtx QueryContext) bool {
