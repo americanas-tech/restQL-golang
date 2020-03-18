@@ -35,7 +35,7 @@ type Body interface{}
 type HttpRequest struct {
 	Schema  string
 	Uri     string
-	Query   map[string]string
+	Query   map[string]interface{}
 	Body    Body
 	Headers Headers
 }
