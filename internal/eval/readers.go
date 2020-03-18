@@ -3,31 +3,7 @@ package eval
 import (
 	"github.com/b2wdigital/restQL-golang/internal/domain"
 	"github.com/pkg/errors"
-	"regexp"
 )
-
-var pathParamRegex, _ = regexp.Compile("/:(\\w+)")
-var schemaRegex, _ = regexp.Compile("^(\\w+)://(.+)$")
-
-func newMapping(resource, url string) domain.Mapping {
-	paramsMatches := pathParamRegex.FindAllStringSubmatch(url, -1)
-
-	pathParams := make([]string, len(paramsMatches))
-	for i, m := range paramsMatches {
-		pathParams[i] = m[1]
-	}
-
-	schemaMatches := schemaRegex.FindAllStringSubmatch(url, -1)
-	schema := schemaMatches[0][1]
-	uri := schemaMatches[0][2]
-
-	return domain.Mapping{
-		ResourceName: resource,
-		Uri:          uri,
-		Schema:       schema,
-		PathParams:   pathParams,
-	}
-}
 
 type MappingsReader struct {
 	env  domain.EnvSource
@@ -54,9 +30,9 @@ func NewMappingReader(config domain.Configuration, log domain.Logger) MappingsRe
 func (mr MappingsReader) GetMapping(tenant, resource string) (domain.Mapping, error) {
 	switch {
 	case mr.env.GetString(resource) != "":
-		return newMapping(resource, mr.env.GetString(resource)), nil
+		return domain.NewMapping(resource, mr.env.GetString(resource)), nil
 	case mr.file[resource] != "":
-		return newMapping(resource, mr.file[resource]), nil
+		return domain.NewMapping(resource, mr.file[resource]), nil
 	default:
 		return domain.Mapping{}, NotFoundError{errors.Errorf("resource `%s` not found on mappings", resource)}
 	}
