@@ -89,6 +89,44 @@ func TestApplyModifiers(t *testing.T) {
 				CacheControl: domain.CacheControl{MaxAge: 400},
 			}},
 		},
+		{
+			"should apply timeout modifier to statement",
+			domain.Modifiers{"timeout": 600},
+			runner.Resources{"hero": domain.Statement{Resource: "hero"}},
+			runner.Resources{"hero": domain.Statement{
+				Resource: "hero",
+				Timeout:  600,
+			}},
+		},
+		{
+			"should not overwrite already define timeout qualifier",
+			domain.Modifiers{"timeout": 600},
+			runner.Resources{"hero": domain.Statement{
+				Resource: "hero",
+				Timeout:  400,
+			}},
+			runner.Resources{"hero": domain.Statement{
+				Resource: "hero",
+				Timeout:  400,
+			}},
+		},
+		{
+			"should apply modifiers to all statements",
+			domain.Modifiers{"max-age": 600, "s-max-age": 800, "timeout": 1000},
+			runner.Resources{"hero": domain.Statement{Resource: "hero"}, "sidekick": domain.Statement{Resource: "sidekick"}},
+			runner.Resources{
+				"hero": domain.Statement{
+					Resource:     "hero",
+					CacheControl: domain.CacheControl{MaxAge: 600, SMaxAge: 800},
+					Timeout:      1000,
+				},
+				"sidekick": domain.Statement{
+					Resource:     "sidekick",
+					CacheControl: domain.CacheControl{MaxAge: 600, SMaxAge: 800},
+					Timeout:      1000,
+				},
+			},
+		},
 	}
 
 	for _, tt := range tests {

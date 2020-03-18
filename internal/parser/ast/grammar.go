@@ -66,7 +66,7 @@ type Query struct {
 }
 
 type Use struct {
-	Key   string   `(@Ident | @MaxAge | @CacheControl | @SMaxAge) Equal`
+	Key   string   `(@MaxAge | @CacheControl | @SMaxAge | @Timeout) Equal`
 	Value UseValue `@@`
 }
 
