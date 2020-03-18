@@ -23,3 +23,11 @@ type ParserError struct {
 func (pe ParserError) Error() string {
 	return pe.Err.Error()
 }
+
+type TimeoutError struct {
+	Err error
+}
+
+func (te TimeoutError) Error() string {
+	return te.Err.Error()
+}
