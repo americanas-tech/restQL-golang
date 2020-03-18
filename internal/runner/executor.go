@@ -140,7 +140,7 @@ func getForwardHeaders(queryCtx QueryContext) map[string]string {
 func (e Executor) makeQueryParams(statement domain.Statement, mapping domain.Mapping, queryCtx QueryContext) map[string]interface{} {
 	queryArgs := getForwardParams(queryCtx)
 	for key, value := range statement.With {
-		if contains(mapping.PathParams, key) {
+		if mapping.HasParam(key) {
 			continue
 		}
 
@@ -173,14 +173,4 @@ func makeUrl(mapping domain.Mapping, statement domain.Statement) string {
 	}
 
 	return resource
-}
-
-func contains(list []string, item string) bool {
-	for _, el := range list {
-		if el == item {
-			return true
-		}
-	}
-
-	return false
 }

@@ -49,10 +49,3 @@ type Match struct {
 	Target interface{}
 	Arg    string
 }
-
-type Mapping struct {
-	ResourceName string
-	Schema       string
-	Uri          string
-	PathParams   []string
-}
