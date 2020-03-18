@@ -4,8 +4,10 @@ import (
 	"context"
 	"fmt"
 	"github.com/b2wdigital/restQL-golang/internal/domain"
+	"github.com/pkg/errors"
 	"strconv"
 	"strings"
+	"time"
 )
 
 const debugParamName = "_debug"
@@ -29,6 +31,16 @@ type Executor struct {
 
 func (e Executor) DoStatement(ctx context.Context, statement domain.Statement, queryCtx QueryContext) DoneRequest {
 	request := e.makeRequest(statement, queryCtx)
+
+	timeout, err := parseTimeout(statement)
+	if err == nil {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, timeout)
+		defer cancel()
+	} else {
+		e.log.Debug("failed to set timeout for statement", "error", err)
+	}
+
 	response, err := e.client.Do(ctx, request)
 	if err != nil {
 		e.log.Debug("request failed", "error", err)
@@ -173,4 +185,18 @@ func makeUrl(mapping domain.Mapping, statement domain.Statement) string {
 	}
 
 	return resource
+}
+
+func parseTimeout(statement domain.Statement) (time.Duration, error) {
+	timeout := statement.Timeout
+	if timeout == nil {
+		return 0, errors.New("no timeout provided")
+	}
+
+	duration, ok := timeout.(int)
+	if !ok {
+		return 0, errors.Errorf("statement timeout is not an int, got %T", timeout)
+	}
+
+	return time.Millisecond * time.Duration(duration), nil
 }
