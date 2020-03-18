@@ -1,6 +1,9 @@
 package domain
 
-import "context"
+import (
+	"context"
+	"github.com/pkg/errors"
+)
 
 type EnvSource interface {
 	GetString(key string) string
@@ -28,6 +31,8 @@ type Logger interface {
 type HttpClient interface {
 	Do(ctx context.Context, request HttpRequest) (HttpResponse, error)
 }
+
+var ErrRequestTimeout = errors.New("request timed out")
 
 type Headers map[string]string
 type Body interface{}

@@ -9,8 +9,6 @@ import (
 	"time"
 )
 
-var errExecuteRequestTimeout = errors.New("request timed out")
-
 type HttpClient struct {
 	client *fasthttp.Client
 	log    *logger.Logger
@@ -38,9 +36,9 @@ func (hc HttpClient) Do(ctx context.Context, request domain.HttpRequest) (domain
 
 	err := hc.executeWithContext(ctx, req, res)
 	switch {
-	case err == errExecuteRequestTimeout:
+	case err == domain.ErrRequestTimeout:
 		hc.log.Debug("request execution did not complete on time", "request", request)
-		return domain.HttpResponse{}, errors.Wrap(err, "request execution failed")
+		return domain.HttpResponse{}, err
 	case err != nil:
 		return domain.HttpResponse{}, errors.Wrap(err, "request execution failed")
 	}
@@ -63,6 +61,6 @@ func (hc HttpClient) executeWithContext(ctx context.Context, req *fasthttp.Reque
 	case e := <-errCh:
 		return e
 	case <-ctx.Done():
-		return errExecuteRequestTimeout
+		return domain.ErrRequestTimeout
 	}
 }
