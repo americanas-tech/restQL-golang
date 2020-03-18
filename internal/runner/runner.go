@@ -30,26 +30,102 @@ func (r Runner) ExecuteQuery(ctx context.Context, query domain.Query, queryCtx Q
 
 	state := NewState(resources)
 
-	for !state.HasFinished() {
-		availableResources := state.Available()
-		for resourceId := range availableResources {
-			state.SetAsRequest(resourceId)
-		}
+	requestCh := make(chan request)
+	outputCh := make(chan Resources)
+	resultCh := make(chan result)
 
-		availableResources = ResolveChainedValues(availableResources, state.Done())
-		availableResources = MultiplexStatements(availableResources)
-
-		for resourceId, statement := range availableResources {
-			switch statement := statement.(type) {
-			case domain.Statement:
-				response := r.executor.DoStatement(ctx, statement, queryCtx)
-				state.UpdateDone(resourceId, response)
-			case []interface{}:
-				responses := r.executor.DoMultiplexedStatement(ctx, statement, queryCtx)
-				state.UpdateDone(resourceId, responses)
-			}
-		}
+	stateWorker := &stateWorker{
+		requestCh: requestCh,
+		resultCh:  resultCh,
+		outputCh:  outputCh,
+		state:     state,
 	}
 
-	return state.Done()
+	requestWorker := &requestWorker{
+		requestCh: requestCh,
+		resultCh:  resultCh,
+		executor:  r.executor,
+		ctx:       ctx,
+		queryCtx:  queryCtx,
+	}
+
+	go stateWorker.Run()
+	go requestWorker.Run()
+
+	select {
+	case output := <-outputCh:
+		return output
+	case <-ctx.Done():
+		r.log.Debug("query timed out")
+		return nil
+	}
+}
+
+type request struct {
+	ResourceIdentifier ResourceId
+	Statement          interface{}
+}
+
+type result struct {
+	ResourceIdentifier ResourceId
+	Response           interface{}
+}
+
+type stateWorker struct {
+	requestCh chan request
+	resultCh  chan result
+	outputCh  chan Resources
+	state     *State
+}
+
+func (sw *stateWorker) Run() {
+	for !sw.state.HasFinished() {
+		availableResources := sw.state.Available()
+		for resourceId := range availableResources {
+			sw.state.SetAsRequest(resourceId)
+		}
+
+		availableResources = ResolveChainedValues(availableResources, sw.state.Done())
+		availableResources = MultiplexStatements(availableResources)
+
+		for resourceId, stmt := range availableResources {
+			resourceId, stmt := resourceId, stmt
+			go func() {
+				sw.requestCh <- request{ResourceIdentifier: resourceId, Statement: stmt}
+			}()
+		}
+
+		result := <-sw.resultCh
+		sw.state.UpdateDone(result.ResourceIdentifier, result.Response)
+	}
+
+	sw.outputCh <- sw.state.Done()
+}
+
+type requestWorker struct {
+	requestCh chan request
+	resultCh  chan result
+	executor  Executor
+	ctx       context.Context
+	queryCtx  QueryContext
+}
+
+func (rw *requestWorker) Run() {
+	for req := range rw.requestCh {
+		resourceId := req.ResourceIdentifier
+		statement := req.Statement
+
+		switch statement := statement.(type) {
+		case domain.Statement:
+			go func() {
+				response := rw.executor.DoStatement(rw.ctx, statement, rw.queryCtx)
+				rw.resultCh <- result{ResourceIdentifier: resourceId, Response: response}
+			}()
+		case []interface{}:
+			go func() {
+				responses := rw.executor.DoMultiplexedStatement(rw.ctx, statement, rw.queryCtx)
+				rw.resultCh <- result{ResourceIdentifier: resourceId, Response: responses}
+			}()
+		}
+	}
 }

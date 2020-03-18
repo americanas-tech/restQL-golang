@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-const debugParamName = "_debug"
+var errNoTimeoutProvided = errors.New("no timeout provided")
 
 var disallowedHeaders = map[string]struct{}{
 	"host":            {},
@@ -21,6 +21,8 @@ var disallowedHeaders = map[string]struct{}{
 	"accept-encoding": {},
 }
 
+const debugParamName = "_debug"
+
 type DoneRequest Response
 type DoneRequests []interface{}
 
@@ -30,6 +32,8 @@ type Executor struct {
 }
 
 func (e Executor) DoStatement(ctx context.Context, statement domain.Statement, queryCtx QueryContext) DoneRequest {
+	e.log.Debug("executing request for statement", "resource", statement.Resource, "method", statement.Method)
+
 	request := e.makeRequest(statement, queryCtx)
 
 	timeout, err := parseTimeout(statement)
@@ -37,7 +41,7 @@ func (e Executor) DoStatement(ctx context.Context, statement domain.Statement, q
 		var cancel context.CancelFunc
 		ctx, cancel = context.WithTimeout(ctx, timeout)
 		defer cancel()
-	} else {
+	} else if err != errNoTimeoutProvided {
 		e.log.Debug("failed to set timeout for statement", "error", err)
 	}
 
@@ -48,6 +52,8 @@ func (e Executor) DoStatement(ctx context.Context, statement domain.Statement, q
 	}
 
 	dr := newDoneRequest(queryCtx, request, response)
+
+	e.log.Debug("request execution done", "resource", statement.Resource, "method", statement.Method, "response", dr)
 
 	return dr
 }
@@ -190,7 +196,7 @@ func makeUrl(mapping domain.Mapping, statement domain.Statement) string {
 func parseTimeout(statement domain.Statement) (time.Duration, error) {
 	timeout := statement.Timeout
 	if timeout == nil {
-		return 0, errors.New("no timeout provided")
+		return 0, errNoTimeoutProvided
 	}
 
 	duration, ok := timeout.(int)

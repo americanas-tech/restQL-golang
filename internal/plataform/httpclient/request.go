@@ -39,16 +39,16 @@ func makeQueryArgs(request domain.HttpRequest) []byte {
 	for key, value := range request.Query {
 		switch value := value.(type) {
 		case string:
-			appendStringParam(buf, key, value)
+			appendStringParam(&buf, key, value)
 		case []interface{}:
-			appendListParam(buf, key, value)
+			appendListParam(&buf, key, value)
 		}
 	}
 
 	return buf.Bytes()
 }
 
-func appendListParam(buf bytes.Buffer, key string, value []interface{}) {
+func appendListParam(buf *bytes.Buffer, key string, value []interface{}) {
 	for _, v := range value {
 		s, ok := v.(string)
 		if !ok {
@@ -62,7 +62,7 @@ func appendListParam(buf bytes.Buffer, key string, value []interface{}) {
 	}
 }
 
-func appendStringParam(buf bytes.Buffer, key string, value string) {
+func appendStringParam(buf *bytes.Buffer, key string, value string) {
 	buf.Write(ampersand)
 	buf.WriteString(key)
 	buf.Write(equal)
