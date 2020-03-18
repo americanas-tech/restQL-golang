@@ -2,7 +2,7 @@ package domain
 
 import "regexp"
 
-var pathParamRegex, _ = regexp.Compile("/:(\\w+)")
+var pathParamRegex, _ = regexp.Compile("/:(.+)")
 var schemaRegex, _ = regexp.Compile("^(\\w+)://(.+)$")
 
 type Mapping struct {
