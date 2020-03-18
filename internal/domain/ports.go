@@ -3,6 +3,7 @@ package domain
 import (
 	"context"
 	"github.com/pkg/errors"
+	"time"
 )
 
 type EnvSource interface {
@@ -50,4 +51,5 @@ type HttpResponse struct {
 	StatusCode int
 	Body       Body
 	Headers    Headers
+	Duration   time.Duration
 }

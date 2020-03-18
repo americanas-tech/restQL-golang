@@ -1,6 +1,8 @@
 package runner
 
-import "github.com/b2wdigital/restQL-golang/internal/domain"
+import (
+	"github.com/b2wdigital/restQL-golang/internal/domain"
+)
 
 type QueryOptions struct {
 	Namespace string
@@ -47,6 +49,7 @@ type Debugging struct {
 	RequestHeaders  map[string]string      `json:"request-headers,omitempty"`
 	ResponseHeaders map[string]string      `json:"response-headers,omitempty"`
 	Params          map[string]interface{} `json:"params,omitempty"`
+	ResponseTime    int64                  `json:"response-time,omitempty"`
 }
 
 type Details struct {
