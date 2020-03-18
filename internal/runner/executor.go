@@ -67,6 +67,21 @@ func (e Executor) DoStatement(ctx context.Context, statement domain.Statement, q
 	return dr
 }
 
+func (e Executor) DoMultiplexedStatement(ctx context.Context, statements []interface{}, queryCtx QueryContext) DoneRequests {
+	responses := make(DoneRequests, len(statements))
+
+	for i, stmt := range statements {
+		switch stmt := stmt.(type) {
+		case domain.Statement:
+			responses[i] = e.DoStatement(ctx, stmt, queryCtx)
+		case []interface{}:
+			responses[i] = e.DoMultiplexedStatement(ctx, stmt, queryCtx)
+		}
+	}
+
+	return responses
+}
+
 func newDoneRequest(request domain.HttpRequest, response domain.HttpResponse, queryCtx QueryContext) DoneRequest {
 	dr := DoneRequest{
 		Details: Details{
@@ -91,6 +106,7 @@ func newDebugging(request domain.HttpRequest, response domain.HttpResponse) *Deb
 		Params:          request.Query,
 		RequestHeaders:  request.Headers,
 		ResponseHeaders: response.Headers,
+		ResponseTime:    response.Duration.Milliseconds(),
 	}
 }
 
@@ -111,21 +127,6 @@ func getDebug(queryCtx QueryContext) bool {
 	}
 
 	return d
-}
-
-func (e Executor) DoMultiplexedStatement(ctx context.Context, statements []interface{}, queryCtx QueryContext) DoneRequests {
-	responses := make(DoneRequests, len(statements))
-
-	for i, stmt := range statements {
-		switch stmt := stmt.(type) {
-		case domain.Statement:
-			responses[i] = e.DoStatement(ctx, stmt, queryCtx)
-		case []interface{}:
-			responses[i] = e.DoMultiplexedStatement(ctx, stmt, queryCtx)
-		}
-	}
-
-	return responses
 }
 
 func (e Executor) makeRequest(statement domain.Statement, queryCtx QueryContext) domain.HttpRequest {

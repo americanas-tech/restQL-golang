@@ -5,9 +5,10 @@ import (
 	"github.com/b2wdigital/restQL-golang/internal/domain"
 	"github.com/pkg/errors"
 	"github.com/valyala/fasthttp"
+	"time"
 )
 
-func makeResponse(req *fasthttp.Request, res *fasthttp.Response) (domain.HttpResponse, error) {
+func makeResponse(req *fasthttp.Request, res *fasthttp.Response, responseTime time.Duration) (domain.HttpResponse, error) {
 	responseBody, err := unmarshalBody(res)
 	if err != nil {
 		return domain.HttpResponse{}, err
@@ -20,6 +21,7 @@ func makeResponse(req *fasthttp.Request, res *fasthttp.Response) (domain.HttpRes
 		StatusCode: res.StatusCode(),
 		Body:       responseBody,
 		Headers:    headers,
+		Duration:   responseTime,
 	}
 	return response, nil
 }

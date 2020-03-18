@@ -34,7 +34,7 @@ func (hc HttpClient) Do(ctx context.Context, request domain.HttpRequest) (domain
 
 	setupRequest(request, req)
 
-	err := hc.executeWithContext(ctx, req, res)
+	duration, err := hc.executeWithContext(ctx, req, res)
 	switch {
 	case err == domain.ErrRequestTimeout:
 		hc.log.Debug("request execution did not complete on time", "request", request)
@@ -43,7 +43,7 @@ func (hc HttpClient) Do(ctx context.Context, request domain.HttpRequest) (domain
 		return domain.HttpResponse{}, errors.Wrap(err, "request execution failed")
 	}
 
-	response, err := makeResponse(req, res)
+	response, err := makeResponse(req, res, duration)
 	if err != nil {
 		return domain.HttpResponse{}, err
 	}
@@ -51,16 +51,21 @@ func (hc HttpClient) Do(ctx context.Context, request domain.HttpRequest) (domain
 	return response, nil
 }
 
-func (hc HttpClient) executeWithContext(ctx context.Context, req *fasthttp.Request, res *fasthttp.Response) error {
+func (hc HttpClient) executeWithContext(ctx context.Context, req *fasthttp.Request, res *fasthttp.Response) (time.Duration, error) {
+	var start time.Time
+
 	errCh := make(chan error)
 	go func() {
+		start = time.Now()
 		errCh <- hc.client.Do(req, res)
 	}()
 
 	select {
 	case e := <-errCh:
-		return e
+		finish := time.Since(start)
+		return finish, e
 	case <-ctx.Done():
-		return domain.ErrRequestTimeout
+		finish := time.Since(start)
+		return finish, domain.ErrRequestTimeout
 	}
 }
