@@ -30,6 +30,21 @@ func TestMakeQueryResponse(t *testing.T) {
 			},
 		},
 		{
+			"should make response with metadata",
+			domain.Resources{
+				"hero": domain.DoneResource{
+					Details: domain.Details{Status: 200, Success: true, IgnoreErrors: true},
+					Result:  unmarshal(`{"id": "12345abcde"}`),
+				},
+			},
+			web.QueryResponse{
+				"hero": web.StatementResult{
+					Details: web.StatementDetails{Status: 200, Success: true, Metadata: web.StatementMetadata{IgnoreErrors: "ignore"}},
+					Result:  unmarshal(`{"id": "12345abcde"}`),
+				},
+			},
+		},
+		{
 			"should make response with debugging",
 			domain.Resources{
 				"hero": domain.DoneResource{
@@ -128,6 +143,15 @@ func TestCalculateStatusCode(t *testing.T) {
 				"villain":  domain.DoneResource{Details: domain.Details{Status: 400}},
 			},
 			408,
+		},
+		{
+			"should return max status code expect for result marked with ignore",
+			domain.Resources{
+				"hero":     domain.DoneResource{Details: domain.Details{Status: 200}},
+				"sidekick": domain.DoneResource{Details: domain.Details{Status: 500, IgnoreErrors: true}},
+				"villain":  domain.DoneResource{Details: domain.Details{Status: 400, IgnoreErrors: true}},
+			},
+			200,
 		},
 	}
 

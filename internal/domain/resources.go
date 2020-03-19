@@ -31,9 +31,10 @@ type Debugging struct {
 }
 
 type Details struct {
-	Status  int
-	Success bool
-	Debug   *Debugging
+	Status       int
+	Success      bool
+	IgnoreErrors bool
+	Debug        *Debugging
 }
 
 type DoneResource struct {

@@ -52,10 +52,15 @@ type StatementDebugging struct {
 	ResponseTime    int64                  `json:"response-time,omitempty"`
 }
 
+type StatementMetadata struct {
+	IgnoreErrors string `json:"ignore-errors,omitempty"`
+}
+
 type StatementDetails struct {
-	Status  int                 `json:"status"`
-	Success bool                `json:"success"`
-	Debug   *StatementDebugging `json:"debug,omitempty"`
+	Status   int                 `json:"status"`
+	Success  bool                `json:"success"`
+	Metadata StatementMetadata   `json:"metadata"`
+	Debug    *StatementDebugging `json:"debug,omitempty"`
 }
 
 type StatementResult struct {
@@ -95,10 +100,16 @@ func parseResponse(response interface{}) StatementResult {
 }
 
 func parseDetails(details domain.Details) StatementDetails {
+	var metadata StatementMetadata
+	if details.IgnoreErrors {
+		metadata.IgnoreErrors = "ignore"
+	}
+
 	return StatementDetails{
-		Status:  details.Status,
-		Success: details.Success,
-		Debug:   parseDebug(details.Debug),
+		Status:   details.Status,
+		Success:  details.Success,
+		Metadata: metadata,
+		Debug:    parseDebug(details.Debug),
 	}
 }
 
@@ -149,6 +160,10 @@ var statusNormalization = map[int]int{0: 500, 204: 200, 201: 200}
 func calculateResultStatusCode(result interface{}) int {
 	switch r := result.(type) {
 	case domain.DoneResource:
+		if r.Details.IgnoreErrors {
+			return 200
+		}
+
 		status := r.Details.Status
 		normalizedStatus, found := statusNormalization[status]
 		if found {
