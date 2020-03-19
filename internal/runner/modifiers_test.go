@@ -11,26 +11,26 @@ func TestApplyModifiers(t *testing.T) {
 	tests := []struct {
 		name      string
 		modifiers domain.Modifiers
-		resources runner.Resources
-		expected  runner.Resources
+		resources domain.Resources
+		expected  domain.Resources
 	}{
 		{
 			"should do nothing if there is no modifiers",
 			domain.Modifiers{},
-			runner.Resources{"hero": domain.Statement{Resource: "hero"}},
-			runner.Resources{"hero": domain.Statement{Resource: "hero"}},
+			domain.Resources{"hero": domain.Statement{Resource: "hero"}},
+			domain.Resources{"hero": domain.Statement{Resource: "hero"}},
 		},
 		{
 			"should do nothing if there is no modifiers",
 			nil,
-			runner.Resources{"hero": domain.Statement{Resource: "hero"}},
-			runner.Resources{"hero": domain.Statement{Resource: "hero"}},
+			domain.Resources{"hero": domain.Statement{Resource: "hero"}},
+			domain.Resources{"hero": domain.Statement{Resource: "hero"}},
 		},
 		{
 			"should apply max-age modifier to statement",
 			domain.Modifiers{"max-age": 600},
-			runner.Resources{"hero": domain.Statement{Resource: "hero"}},
-			runner.Resources{"hero": domain.Statement{
+			domain.Resources{"hero": domain.Statement{Resource: "hero"}},
+			domain.Resources{"hero": domain.Statement{
 				Resource:     "hero",
 				CacheControl: domain.CacheControl{MaxAge: 600},
 			}},
@@ -38,11 +38,11 @@ func TestApplyModifiers(t *testing.T) {
 		{
 			"should not overwrite already define max-age cache qualifier",
 			domain.Modifiers{"max-age": 600},
-			runner.Resources{"hero": domain.Statement{
+			domain.Resources{"hero": domain.Statement{
 				Resource:     "hero",
 				CacheControl: domain.CacheControl{MaxAge: 400},
 			}},
-			runner.Resources{"hero": domain.Statement{
+			domain.Resources{"hero": domain.Statement{
 				Resource:     "hero",
 				CacheControl: domain.CacheControl{MaxAge: 400},
 			}},
@@ -50,8 +50,8 @@ func TestApplyModifiers(t *testing.T) {
 		{
 			"should apply s-max-age modifier to statement",
 			domain.Modifiers{"s-max-age": 600},
-			runner.Resources{"hero": domain.Statement{Resource: "hero"}},
-			runner.Resources{"hero": domain.Statement{
+			domain.Resources{"hero": domain.Statement{Resource: "hero"}},
+			domain.Resources{"hero": domain.Statement{
 				Resource:     "hero",
 				CacheControl: domain.CacheControl{SMaxAge: 600},
 			}},
@@ -59,11 +59,11 @@ func TestApplyModifiers(t *testing.T) {
 		{
 			"should not overwrite already define smax-age cache qualifier",
 			domain.Modifiers{"s-max-age": 600},
-			runner.Resources{"hero": domain.Statement{
+			domain.Resources{"hero": domain.Statement{
 				Resource:     "hero",
 				CacheControl: domain.CacheControl{SMaxAge: 400},
 			}},
-			runner.Resources{"hero": domain.Statement{
+			domain.Resources{"hero": domain.Statement{
 				Resource:     "hero",
 				CacheControl: domain.CacheControl{SMaxAge: 400},
 			}},
@@ -71,8 +71,8 @@ func TestApplyModifiers(t *testing.T) {
 		{
 			"should apply cache-control modifier to statement",
 			domain.Modifiers{"cache-control": 600},
-			runner.Resources{"hero": domain.Statement{Resource: "hero"}},
-			runner.Resources{"hero": domain.Statement{
+			domain.Resources{"hero": domain.Statement{Resource: "hero"}},
+			domain.Resources{"hero": domain.Statement{
 				Resource:     "hero",
 				CacheControl: domain.CacheControl{MaxAge: 600},
 			}},
@@ -80,11 +80,11 @@ func TestApplyModifiers(t *testing.T) {
 		{
 			"should not overwrite already define max-age cache qualifier",
 			domain.Modifiers{"cache-control": 600},
-			runner.Resources{"hero": domain.Statement{
+			domain.Resources{"hero": domain.Statement{
 				Resource:     "hero",
 				CacheControl: domain.CacheControl{MaxAge: 400},
 			}},
-			runner.Resources{"hero": domain.Statement{
+			domain.Resources{"hero": domain.Statement{
 				Resource:     "hero",
 				CacheControl: domain.CacheControl{MaxAge: 400},
 			}},
@@ -92,8 +92,8 @@ func TestApplyModifiers(t *testing.T) {
 		{
 			"should apply modifiers to all statements",
 			domain.Modifiers{"max-age": 600, "s-max-age": 800},
-			runner.Resources{"hero": domain.Statement{Resource: "hero"}, "sidekick": domain.Statement{Resource: "sidekick"}},
-			runner.Resources{
+			domain.Resources{"hero": domain.Statement{Resource: "hero"}, "sidekick": domain.Statement{Resource: "sidekick"}},
+			domain.Resources{
 				"hero": domain.Statement{
 					Resource:     "hero",
 					CacheControl: domain.CacheControl{MaxAge: 600, SMaxAge: 800},

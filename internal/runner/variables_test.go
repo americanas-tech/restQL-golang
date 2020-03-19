@@ -10,19 +10,19 @@ import (
 func TestResolveVariables(t *testing.T) {
 	tests := []struct {
 		name      string
-		resources runner.Resources
+		resources domain.Resources
 		input     map[string]interface{}
-		expected  runner.Resources
+		expected  domain.Resources
 	}{
 		{
 			"resolve variable in timeout",
-			runner.Resources{"hero": domain.Statement{Method: "from", Resource: "hero", Timeout: domain.Variable{"duration"}}},
+			domain.Resources{"hero": domain.Statement{Method: "from", Resource: "hero", Timeout: domain.Variable{"duration"}}},
 			map[string]interface{}{"duration": "1000"},
-			runner.Resources{"hero": domain.Statement{Method: "from", Resource: "hero", Timeout: 1000}},
+			domain.Resources{"hero": domain.Statement{Method: "from", Resource: "hero", Timeout: 1000}},
 		},
 		{
 			"resolve variable in with",
-			runner.Resources{
+			domain.Resources{
 				"hero": domain.Statement{
 					Method:   "from",
 					Resource: "hero",
@@ -35,7 +35,7 @@ func TestResolveVariables(t *testing.T) {
 					},
 				}},
 			map[string]interface{}{"name": "batman", "field": "weapon", "sidekick": "robbin", "city": "Gotham"},
-			runner.Resources{
+			domain.Resources{
 				"hero": domain.Statement{
 					Method:   "from",
 					Resource: "hero",
@@ -51,17 +51,17 @@ func TestResolveVariables(t *testing.T) {
 		},
 		{
 			"resolve variable in max-age/s-max-age",
-			runner.Resources{
+			domain.Resources{
 				"hero": domain.Statement{Method: "from", Resource: "hero", CacheControl: domain.CacheControl{MaxAge: domain.Variable{"cache-control"}, SMaxAge: domain.Variable{"s-cache-control"}}},
 			},
 			map[string]interface{}{"cache-control": "200", "s-cache-control": "400"},
-			runner.Resources{
+			domain.Resources{
 				"hero": domain.Statement{Method: "from", Resource: "hero", CacheControl: domain.CacheControl{MaxAge: 200, SMaxAge: 400}},
 			},
 		},
 		{
 			"resolve variable in headers",
-			runner.Resources{
+			domain.Resources{
 				"hero": domain.Statement{
 					Method:   "from",
 					Resource: "hero",
@@ -73,7 +73,7 @@ func TestResolveVariables(t *testing.T) {
 				},
 			},
 			map[string]interface{}{"auth": "abcdef0987", "some-param": "abc"},
-			runner.Resources{
+			domain.Resources{
 				"hero": domain.Statement{Method: "from", Resource: "hero", Headers: map[string]interface{}{"Authorization": "abcdef0987", "X-Id": "1234567890", "X-Some-Header": "abc"}},
 			},
 		},

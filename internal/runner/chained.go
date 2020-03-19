@@ -6,7 +6,7 @@ const (
 	EmptyChained = "__EMPTY_CHAINED__"
 )
 
-func ResolveChainedValues(resources Resources, doneResources Resources) Resources {
+func ResolveChainedValues(resources domain.Resources, doneResources domain.Resources) domain.Resources {
 	for resourceId, stmt := range resources {
 		resources[resourceId] = resolveStatement(stmt, doneResources)
 	}
@@ -14,7 +14,7 @@ func ResolveChainedValues(resources Resources, doneResources Resources) Resource
 	return resources
 }
 
-func resolveStatement(stmt interface{}, doneResources Resources) interface{} {
+func resolveStatement(stmt interface{}, doneResources domain.Resources) interface{} {
 	switch stmt := stmt.(type) {
 	case domain.Statement:
 		params := stmt.With
@@ -33,28 +33,28 @@ func resolveStatement(stmt interface{}, doneResources Resources) interface{} {
 	return stmt
 }
 
-func resolveChainParam(chain domain.Chain, doneResources Resources) interface{} {
+func resolveChainParam(chain domain.Chain, doneResources domain.Resources) interface{} {
 	path := toPath(chain)
-	resourceId := ResourceId(path[0])
+	resourceId := domain.ResourceId(path[0])
 
 	switch done := doneResources[resourceId].(type) {
-	case DoneRequests:
+	case domain.DoneResources:
 		return resolveWithMultiplexedRequests(path[1:], done)
-	case DoneRequest:
+	case domain.DoneResource:
 		return resolveWithSingleRequest(path[1:], done)
 	default:
 		return nil
 	}
 }
 
-func resolveWithMultiplexedRequests(path []string, doneRequests DoneRequests) []interface{} {
+func resolveWithMultiplexedRequests(path []string, doneRequests domain.DoneResources) []interface{} {
 	var result []interface{}
 
 	for _, request := range doneRequests {
 		switch request := request.(type) {
-		case DoneRequest:
+		case domain.DoneResource:
 			result = append(result, resolveWithSingleRequest(path, request))
-		case DoneRequests:
+		case domain.DoneResources:
 			result = append(result, resolveWithMultiplexedRequests(path, request))
 		}
 	}
@@ -62,7 +62,7 @@ func resolveWithMultiplexedRequests(path []string, doneRequests DoneRequests) []
 	return result
 }
 
-func resolveWithSingleRequest(path []string, done DoneRequest) interface{} {
+func resolveWithSingleRequest(path []string, done domain.DoneResource) interface{} {
 	if done.Details.Status > 199 && done.Details.Status < 400 {
 		return getValue(path, done.Result)
 	}
@@ -77,7 +77,7 @@ func toPath(chain domain.Chain) []string {
 	return r
 }
 
-func resolveObjectParam(objectParam map[string]interface{}, doneResources Resources) map[string]interface{} {
+func resolveObjectParam(objectParam map[string]interface{}, doneResources domain.Resources) map[string]interface{} {
 	result := make(map[string]interface{})
 
 	for key, value := range objectParam {
@@ -92,7 +92,7 @@ func resolveObjectParam(objectParam map[string]interface{}, doneResources Resour
 	return result
 }
 
-func resolveListParam(listParam []interface{}, doneResources Resources) []interface{} {
+func resolveListParam(listParam []interface{}, doneResources domain.Resources) []interface{} {
 	result := make([]interface{}, len(listParam))
 	copy(result, listParam)
 

@@ -25,29 +25,29 @@ func NewEvaluator(mr MappingsReader, qr QueryReader, r runner.Runner, log domain
 	return Evaluator{log: log, mappingsReader: mr, queryReader: qr, run: r}
 }
 
-func (e Evaluator) SavedQuery(ctx context.Context, queryOpts runner.QueryOptions, queryInput runner.QueryInput) (interface{}, error) {
+func (e Evaluator) SavedQuery(ctx context.Context, queryOpts domain.QueryOptions, queryInput domain.QueryInput) (domain.Resources, error) {
 	err := validateQueryOptions(queryOpts)
 	if err != nil {
-		return domain.Query{}, err
+		return nil, err
 	}
 
 	queryTxt, err := e.queryReader.GetQuery(queryOpts.Namespace, queryOpts.Id, queryOpts.Revision)
 	if err != nil {
-		return domain.Query{}, err
+		return nil, err
 	}
 
 	query, err := parser.Parse(queryTxt)
 	if err != nil {
 		e.log.Debug("failed to parse query", "error", err)
-		return domain.Query{}, ParserError{errors.Wrap(err, "invalid query syntax")}
+		return nil, ParserError{errors.Wrap(err, "invalid query syntax")}
 	}
 
 	mappings, err := e.fetchMappings(queryOpts.Tenant, query)
 	if err != nil {
-		return domain.Query{}, err
+		return nil, err
 	}
 
-	queryCtx := runner.QueryContext{
+	queryCtx := domain.QueryContext{
 		Mappings: mappings,
 		Options:  queryOpts,
 		Input:    queryInput,
@@ -80,7 +80,7 @@ func (e Evaluator) fetchMappings(tenant string, query domain.Query) (map[string]
 
 }
 
-func validateQueryOptions(queryOpts runner.QueryOptions) error {
+func validateQueryOptions(queryOpts domain.QueryOptions) error {
 	if queryOpts.Revision <= 0 {
 		return ValidationError{ErrInvalidRevision}
 	}
