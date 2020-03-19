@@ -10,7 +10,7 @@ type Mapping struct {
 	Schema        string
 	Uri           string
 	PathParams    []string
-	pathParamsSet map[string]struct{}
+	PathParamsSet map[string]struct{}
 }
 
 func NewMapping(resource, url string) Mapping {
@@ -33,11 +33,11 @@ func NewMapping(resource, url string) Mapping {
 		Uri:           uri,
 		Schema:        schema,
 		PathParams:    pathParams,
-		pathParamsSet: pathParamsSet,
+		PathParamsSet: pathParamsSet,
 	}
 }
 
 func (m Mapping) HasParam(name string) bool {
-	_, found := m.pathParamsSet[name]
+	_, found := m.PathParamsSet[name]
 	return found
 }
