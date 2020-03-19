@@ -77,7 +77,8 @@ func (r RestQl) RunSavedQuery(ctx *fasthttp.RequestCtx) error {
 	}
 
 	response := MakeQueryResponse(result)
-	return Respond(ctx, response, http.StatusOK)
+	statusCode := CalculateStatusCode(result)
+	return Respond(ctx, response, statusCode)
 }
 
 func (r RestQl) makeQueryOptions(ctx *fasthttp.RequestCtx) (domain.QueryOptions, error) {
