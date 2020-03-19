@@ -30,9 +30,15 @@ type Executor struct {
 }
 
 func (e Executor) DoStatement(ctx context.Context, statement domain.Statement, queryCtx domain.QueryContext) (domain.DoneResource, error) {
+	ignoreErrors := statement.IgnoreErrors
+	debug := isDebugEnabled(queryCtx)
+	drOptions := doneResourceOptions{Debugging: debug, IgnoreErrors: ignoreErrors}
+
 	emptyChainedParams := getEmptyChainedParams(statement)
 	if len(emptyChainedParams) > 0 {
-		return newEmptyChainedResponse(emptyChainedParams), nil
+		emptyChainedResponse := newEmptyChainedResponse(emptyChainedParams, drOptions)
+		e.log.Debug("request execution skipped due to empty chained parameters", "resource", statement.Resource, "method", statement.Method)
+		return emptyChainedResponse, nil
 	}
 
 	e.log.Debug("executing request for statement", "resource", statement.Resource, "method", statement.Method)
@@ -51,13 +57,13 @@ func (e Executor) DoStatement(ctx context.Context, statement domain.Statement, q
 	response, err := e.client.Do(ctx, request)
 	switch {
 	case err == domain.ErrRequestTimeout:
-		return newTimeoutResponse(err, request, response, queryCtx), nil
+		return newTimeoutResponse(err, request, response, drOptions), nil
 	case err != nil:
 		e.log.Debug("request failed", "error", err)
 		return domain.DoneResource{}, err
 	}
 
-	dr := newDoneRequest(request, response, queryCtx)
+	dr := newDoneResource(request, response, drOptions)
 
 	e.log.Debug("request execution done", "resource", statement.Resource, "method", statement.Method, "response", dr)
 
@@ -87,18 +93,22 @@ func (e Executor) DoMultiplexedStatement(ctx context.Context, statements []inter
 	return responses, nil
 }
 
-func newDoneRequest(request domain.HttpRequest, response domain.HttpResponse, queryCtx domain.QueryContext) domain.DoneResource {
+type doneResourceOptions struct {
+	Debugging    bool
+	IgnoreErrors bool
+}
+
+func newDoneResource(request domain.HttpRequest, response domain.HttpResponse, options doneResourceOptions) domain.DoneResource {
 	dr := domain.DoneResource{
 		Details: domain.Details{
-			Status:  response.StatusCode,
-			Success: response.StatusCode >= 200 && response.StatusCode < 400,
+			Status:       response.StatusCode,
+			Success:      response.StatusCode >= 200 && response.StatusCode < 400,
+			IgnoreErrors: options.IgnoreErrors,
 		},
 		Result: response.Body,
 	}
 
-	debug := getDebug(queryCtx)
-
-	if debug {
+	if options.Debugging {
 		dr.Details.Debug = newDebugging(request, response)
 	}
 
@@ -115,7 +125,7 @@ func newDebugging(request domain.HttpRequest, response domain.HttpResponse) *dom
 	}
 }
 
-func getDebug(queryCtx domain.QueryContext) bool {
+func isDebugEnabled(queryCtx domain.QueryContext) bool {
 	param, found := queryCtx.Input.Params[debugParamName]
 	if !found {
 		return false
@@ -226,25 +236,24 @@ func parseTimeout(statement domain.Statement) (time.Duration, error) {
 	return time.Millisecond * time.Duration(duration), nil
 }
 
-func newTimeoutResponse(err error, request domain.HttpRequest, response domain.HttpResponse, queryCtx domain.QueryContext) domain.DoneResource {
+func newTimeoutResponse(err error, request domain.HttpRequest, response domain.HttpResponse, options doneResourceOptions) domain.DoneResource {
 	dr := domain.DoneResource{
 		Details: domain.Details{
-			Status:  408,
-			Success: false,
+			Status:       408,
+			Success:      false,
+			IgnoreErrors: options.IgnoreErrors,
 		},
 		Result: err.Error(),
 	}
 
-	debug := getDebug(queryCtx)
-
-	if debug {
+	if options.Debugging {
 		dr.Details.Debug = newDebugging(request, response)
 	}
 
 	return dr
 }
 
-func newEmptyChainedResponse(params []string) domain.DoneResource {
+func newEmptyChainedResponse(params []string, options doneResourceOptions) domain.DoneResource {
 	var buf bytes.Buffer
 
 	buf.WriteString("The request was skipped due to missing { ")
@@ -253,9 +262,12 @@ func newEmptyChainedResponse(params []string) domain.DoneResource {
 		buf.WriteString(p)
 		buf.WriteString(" ")
 	}
-	buf.WriteString(" } param value")
+	buf.WriteString("} param value")
 
-	return domain.DoneResource{Details: domain.Details{Status: 400, Success: false}, Result: buf.String()}
+	return domain.DoneResource{
+		Details: domain.Details{Status: 400, Success: false, IgnoreErrors: options.IgnoreErrors},
+		Result:  buf.String(),
+	}
 }
 
 func getEmptyChainedParams(statement domain.Statement) []string {
