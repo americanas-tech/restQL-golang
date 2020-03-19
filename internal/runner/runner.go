@@ -136,6 +136,7 @@ func (sw *stateWorker) Run() {
 		case result := <-sw.resultCh:
 			sw.state.UpdateDone(result.ResourceIdentifier, result.Response)
 		case <-sw.ctx.Done():
+			close(sw.requestCh)
 			return
 		}
 	}
@@ -178,6 +179,8 @@ func (rw *requestWorker) Run() {
 				}()
 			}
 		case <-rw.ctx.Done():
+			close(rw.resultCh)
+			close(rw.errorCh)
 			return
 		}
 	}
