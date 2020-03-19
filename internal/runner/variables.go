@@ -5,7 +5,7 @@ import (
 	"strconv"
 )
 
-func ResolveVariables(resources Resources, params map[string]interface{}) Resources {
+func ResolveVariables(resources domain.Resources, params map[string]interface{}) domain.Resources {
 	for key, statement := range resources {
 		if statement, ok := statement.(domain.Statement); ok {
 			statement.With = resolveWith(statement.With, params)

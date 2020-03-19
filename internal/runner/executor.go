@@ -24,15 +24,12 @@ var disallowedHeaders = map[string]struct{}{
 
 const debugParamName = "_debug"
 
-type DoneRequest Response
-type DoneRequests []interface{}
-
 type Executor struct {
 	client domain.HttpClient
 	log    domain.Logger
 }
 
-func (e Executor) DoStatement(ctx context.Context, statement domain.Statement, queryCtx QueryContext) (DoneRequest, error) {
+func (e Executor) DoStatement(ctx context.Context, statement domain.Statement, queryCtx domain.QueryContext) (domain.DoneResource, error) {
 	emptyChainedParams := getEmptyChainedParams(statement)
 	if len(emptyChainedParams) > 0 {
 		return newEmptyChainedResponse(emptyChainedParams), nil
@@ -57,7 +54,7 @@ func (e Executor) DoStatement(ctx context.Context, statement domain.Statement, q
 		return newTimeoutResponse(err, request, response, queryCtx), nil
 	case err != nil:
 		e.log.Debug("request failed", "error", err)
-		return DoneRequest{}, err
+		return domain.DoneResource{}, err
 	}
 
 	dr := newDoneRequest(request, response, queryCtx)
@@ -67,8 +64,8 @@ func (e Executor) DoStatement(ctx context.Context, statement domain.Statement, q
 	return dr, nil
 }
 
-func (e Executor) DoMultiplexedStatement(ctx context.Context, statements []interface{}, queryCtx QueryContext) (DoneRequests, error) {
-	responses := make(DoneRequests, len(statements))
+func (e Executor) DoMultiplexedStatement(ctx context.Context, statements []interface{}, queryCtx domain.QueryContext) (domain.DoneResources, error) {
+	responses := make(domain.DoneResources, len(statements))
 
 	for i, stmt := range statements {
 		switch stmt := stmt.(type) {
@@ -90,9 +87,9 @@ func (e Executor) DoMultiplexedStatement(ctx context.Context, statements []inter
 	return responses, nil
 }
 
-func newDoneRequest(request domain.HttpRequest, response domain.HttpResponse, queryCtx QueryContext) DoneRequest {
-	dr := DoneRequest{
-		Details: Details{
+func newDoneRequest(request domain.HttpRequest, response domain.HttpResponse, queryCtx domain.QueryContext) domain.DoneResource {
+	dr := domain.DoneResource{
+		Details: domain.Details{
 			Status:  response.StatusCode,
 			Success: response.StatusCode >= 200 && response.StatusCode < 400,
 		},
@@ -108,8 +105,8 @@ func newDoneRequest(request domain.HttpRequest, response domain.HttpResponse, qu
 	return dr
 }
 
-func newDebugging(request domain.HttpRequest, response domain.HttpResponse) *Debugging {
-	return &Debugging{
+func newDebugging(request domain.HttpRequest, response domain.HttpResponse) *domain.Debugging {
+	return &domain.Debugging{
 		Url:             response.Url,
 		Params:          request.Query,
 		RequestHeaders:  request.Headers,
@@ -118,7 +115,7 @@ func newDebugging(request domain.HttpRequest, response domain.HttpResponse) *Deb
 	}
 }
 
-func getDebug(queryCtx QueryContext) bool {
+func getDebug(queryCtx domain.QueryContext) bool {
 	param, found := queryCtx.Input.Params[debugParamName]
 	if !found {
 		return false
@@ -137,7 +134,7 @@ func getDebug(queryCtx QueryContext) bool {
 	return d
 }
 
-func (e Executor) makeRequest(statement domain.Statement, queryCtx QueryContext) domain.HttpRequest {
+func (e Executor) makeRequest(statement domain.Statement, queryCtx domain.QueryContext) domain.HttpRequest {
 	mapping := queryCtx.Mappings[statement.Resource]
 	url := makeUrl(mapping, statement)
 
@@ -154,7 +151,7 @@ func (e Executor) makeRequest(statement domain.Statement, queryCtx QueryContext)
 	}
 }
 
-func (e Executor) makeHeaders(statement domain.Statement, queryCtx QueryContext) map[string]string {
+func (e Executor) makeHeaders(statement domain.Statement, queryCtx domain.QueryContext) map[string]string {
 	headers := getForwardHeaders(queryCtx)
 	for key, value := range statement.Headers {
 		str, ok := value.(string)
@@ -167,7 +164,7 @@ func (e Executor) makeHeaders(statement domain.Statement, queryCtx QueryContext)
 	return headers
 }
 
-func getForwardHeaders(queryCtx QueryContext) map[string]string {
+func getForwardHeaders(queryCtx domain.QueryContext) map[string]string {
 	r := make(map[string]string)
 	for k, v := range queryCtx.Input.Headers {
 		if _, found := disallowedHeaders[k]; !found {
@@ -177,7 +174,7 @@ func getForwardHeaders(queryCtx QueryContext) map[string]string {
 	return r
 }
 
-func (e Executor) makeQueryParams(statement domain.Statement, mapping domain.Mapping, queryCtx QueryContext) map[string]interface{} {
+func (e Executor) makeQueryParams(statement domain.Statement, mapping domain.Mapping, queryCtx domain.QueryContext) map[string]interface{} {
 	queryArgs := getForwardParams(queryCtx)
 	for key, value := range statement.With {
 		if mapping.HasParam(key) {
@@ -195,7 +192,7 @@ func (e Executor) makeQueryParams(statement domain.Statement, mapping domain.Map
 	return queryArgs
 }
 
-func getForwardParams(queryCtx QueryContext) map[string]interface{} {
+func getForwardParams(queryCtx domain.QueryContext) map[string]interface{} {
 	r := make(map[string]interface{})
 	for k, v := range queryCtx.Input.Params {
 		if strings.HasPrefix(k, "c_") {
@@ -229,9 +226,9 @@ func parseTimeout(statement domain.Statement) (time.Duration, error) {
 	return time.Millisecond * time.Duration(duration), nil
 }
 
-func newTimeoutResponse(err error, request domain.HttpRequest, response domain.HttpResponse, queryCtx QueryContext) DoneRequest {
-	dr := DoneRequest{
-		Details: Details{
+func newTimeoutResponse(err error, request domain.HttpRequest, response domain.HttpResponse, queryCtx domain.QueryContext) domain.DoneResource {
+	dr := domain.DoneResource{
+		Details: domain.Details{
 			Status:  408,
 			Success: false,
 		},
@@ -247,7 +244,7 @@ func newTimeoutResponse(err error, request domain.HttpRequest, response domain.H
 	return dr
 }
 
-func newEmptyChainedResponse(params []string) DoneRequest {
+func newEmptyChainedResponse(params []string) domain.DoneResource {
 	var buf bytes.Buffer
 
 	buf.WriteString("The request was skipped due to missing { ")
@@ -258,7 +255,7 @@ func newEmptyChainedResponse(params []string) DoneRequest {
 	}
 	buf.WriteString(" } param value")
 
-	return DoneRequest{Details: Details{Status: 400, Success: false}, Result: buf.String()}
+	return domain.DoneResource{Details: domain.Details{Status: 400, Success: false}, Result: buf.String()}
 }
 
 func getEmptyChainedParams(statement domain.Statement) []string {

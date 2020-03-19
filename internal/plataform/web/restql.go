@@ -2,12 +2,12 @@ package web
 
 import (
 	"fmt"
+	"github.com/b2wdigital/restQL-golang/internal/domain"
 	"github.com/b2wdigital/restQL-golang/internal/eval"
 	"github.com/b2wdigital/restQL-golang/internal/parser"
 	"github.com/b2wdigital/restQL-golang/internal/plataform/conf"
 	"github.com/b2wdigital/restQL-golang/internal/plataform/logger"
 	"github.com/b2wdigital/restQL-golang/internal/plataform/web/middleware"
-	"github.com/b2wdigital/restQL-golang/internal/runner"
 	"github.com/pkg/errors"
 	"github.com/valyala/fasthttp"
 	"net/http"
@@ -76,32 +76,33 @@ func (r RestQl) RunSavedQuery(ctx *fasthttp.RequestCtx) error {
 		}
 	}
 
-	return Respond(ctx, result, http.StatusOK)
+	response := MakeQueryResponse(result)
+	return Respond(ctx, response, http.StatusOK)
 }
 
-func (r RestQl) makeQueryOptions(ctx *fasthttp.RequestCtx) (runner.QueryOptions, error) {
+func (r RestQl) makeQueryOptions(ctx *fasthttp.RequestCtx) (domain.QueryOptions, error) {
 	namespace, err := pathParamString(ctx, "namespace")
 	if err != nil {
 		r.log.Error("failed to load namespace path param", err)
-		return runner.QueryOptions{}, err
+		return domain.QueryOptions{}, err
 	}
 
 	queryId, err := pathParamString(ctx, "queryId")
 	if err != nil {
 		r.log.Error("failed to load query id path param", err)
-		return runner.QueryOptions{}, err
+		return domain.QueryOptions{}, err
 	}
 
 	revisionStr, err := pathParamString(ctx, "revision")
 	if err != nil {
 		r.log.Error("failed to load revision path param", err)
-		return runner.QueryOptions{}, err
+		return domain.QueryOptions{}, err
 	}
 
 	revision, err := strconv.Atoi(revisionStr)
 	if err != nil {
 		r.log.Debug("failed to convert revision to integer")
-		return runner.QueryOptions{}, ErrInvalidRevisionType
+		return domain.QueryOptions{}, ErrInvalidRevisionType
 	}
 
 	var tenant string
@@ -114,10 +115,10 @@ func (r RestQl) makeQueryOptions(ctx *fasthttp.RequestCtx) (runner.QueryOptions,
 	}
 
 	if tenant == "" {
-		return runner.QueryOptions{}, ErrInvalidTenant
+		return domain.QueryOptions{}, ErrInvalidTenant
 	}
 
-	qo := runner.QueryOptions{
+	qo := domain.QueryOptions{
 		Namespace: namespace,
 		Id:        queryId,
 		Revision:  revision,
@@ -127,7 +128,7 @@ func (r RestQl) makeQueryOptions(ctx *fasthttp.RequestCtx) (runner.QueryOptions,
 	return qo, nil
 }
 
-func (r RestQl) makeQueryInput(ctx *fasthttp.RequestCtx) runner.QueryInput {
+func (r RestQl) makeQueryInput(ctx *fasthttp.RequestCtx) domain.QueryInput {
 	params := make(map[string]interface{})
 	ctx.Request.URI().QueryArgs().VisitAll(func(keyByte, valueByte []byte) {
 		key := string(keyByte)
@@ -155,7 +156,7 @@ func (r RestQl) makeQueryInput(ctx *fasthttp.RequestCtx) runner.QueryInput {
 		headers[string(key)] = string(value)
 	})
 
-	return runner.QueryInput{
+	return domain.QueryInput{
 		Params:  params,
 		Headers: headers,
 	}

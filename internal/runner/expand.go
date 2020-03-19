@@ -15,7 +15,7 @@ type listParameters struct {
 	value []interface{}
 }
 
-func MultiplexStatements(resources Resources) Resources {
+func MultiplexStatements(resources domain.Resources) domain.Resources {
 	for resourceId, stmt := range resources {
 		switch stmt := stmt.(type) {
 		case domain.Statement:

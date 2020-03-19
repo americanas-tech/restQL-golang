@@ -49,3 +49,21 @@ type Match struct {
 	Target interface{}
 	Arg    string
 }
+
+type QueryOptions struct {
+	Namespace string
+	Id        string
+	Revision  int
+	Tenant    string
+}
+
+type QueryInput struct {
+	Params  map[string]interface{}
+	Headers map[string]string
+}
+
+type QueryContext struct {
+	Mappings map[string]Mapping
+	Options  QueryOptions
+	Input    QueryInput
+}

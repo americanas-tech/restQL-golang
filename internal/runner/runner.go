@@ -25,7 +25,7 @@ func NewRunner(config domain.Configuration, httpClient domain.HttpClient, log do
 	}
 }
 
-func (r Runner) ExecuteQuery(ctx context.Context, query domain.Query, queryCtx QueryContext) (interface{}, error) {
+func (r Runner) ExecuteQuery(ctx context.Context, query domain.Query, queryCtx domain.QueryContext) (domain.Resources, error) {
 	queryTimeout := parseQueryTimeout(query)
 	ctx, cancel := context.WithTimeout(ctx, queryTimeout)
 	defer cancel()
@@ -35,7 +35,7 @@ func (r Runner) ExecuteQuery(ctx context.Context, query domain.Query, queryCtx Q
 	state := NewState(resources)
 
 	requestCh := make(chan request)
-	outputCh := make(chan Resources)
+	outputCh := make(chan domain.Resources)
 	errorCh := make(chan error)
 	resultCh := make(chan result)
 
@@ -87,8 +87,8 @@ func parseQueryTimeout(query domain.Query) time.Duration {
 	return time.Millisecond * time.Duration(duration)
 }
 
-func initializeResources(query domain.Query, queryCtx QueryContext) Resources {
-	resources := NewResources(query.Statements)
+func initializeResources(query domain.Query, queryCtx domain.QueryContext) domain.Resources {
+	resources := domain.NewResources(query.Statements)
 
 	resources = ApplyModifiers(query.Use, resources)
 	resources = ResolveVariables(resources, queryCtx.Input.Params)
@@ -98,19 +98,19 @@ func initializeResources(query domain.Query, queryCtx QueryContext) Resources {
 }
 
 type request struct {
-	ResourceIdentifier ResourceId
+	ResourceIdentifier domain.ResourceId
 	Statement          interface{}
 }
 
 type result struct {
-	ResourceIdentifier ResourceId
+	ResourceIdentifier domain.ResourceId
 	Response           interface{}
 }
 
 type stateWorker struct {
 	requestCh chan request
 	resultCh  chan result
-	outputCh  chan Resources
+	outputCh  chan domain.Resources
 	state     *State
 	ctx       context.Context
 }
@@ -148,7 +148,7 @@ type requestWorker struct {
 	resultCh  chan result
 	errorCh   chan error
 	executor  Executor
-	queryCtx  QueryContext
+	queryCtx  domain.QueryContext
 	ctx       context.Context
 }
 

@@ -5,17 +5,17 @@ import (
 )
 
 type State struct {
-	todo      Resources
-	requested Resources
-	done      Resources
+	todo      domain.Resources
+	requested domain.Resources
+	done      domain.Resources
 }
 
-func NewState(todo Resources) *State {
-	return &State{todo: todo, requested: make(Resources), done: make(Resources)}
+func NewState(todo domain.Resources) *State {
+	return &State{todo: todo, requested: make(domain.Resources), done: make(domain.Resources)}
 }
 
-func (s *State) Available() Resources {
-	available := make(Resources)
+func (s *State) Available() domain.Resources {
+	available := make(domain.Resources)
 	for key, stmt := range s.todo {
 		switch stmt := stmt.(type) {
 		case domain.Statement:
@@ -64,7 +64,7 @@ func (s *State) isValueResolved(value interface{}) bool {
 			return false
 		}
 
-		_, found := s.done[ResourceId(resourceTarget)]
+		_, found := s.done[domain.ResourceId(resourceTarget)]
 		return found
 	case map[string]interface{}:
 		for _, v := range value {
@@ -85,22 +85,22 @@ func (s *State) isValueResolved(value interface{}) bool {
 	}
 }
 
-func (s *State) UpdateDone(resourceId ResourceId, response interface{}) {
+func (s *State) UpdateDone(resourceId domain.ResourceId, response interface{}) {
 	s.done[resourceId] = response
 	delete(s.requested, resourceId)
 }
 
-func (s *State) Done() Resources {
+func (s *State) Done() domain.Resources {
 	return s.done
 }
 
-func (s *State) SetAsRequest(resourceId ResourceId) {
+func (s *State) SetAsRequest(resourceId domain.ResourceId) {
 	statement := s.todo[resourceId]
 	s.requested[resourceId] = statement
 	delete(s.todo, resourceId)
 }
 
-func (s *State) Requested() Resources {
+func (s *State) Requested() domain.Resources {
 	return s.requested
 }
 

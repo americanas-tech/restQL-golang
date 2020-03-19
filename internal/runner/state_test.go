@@ -11,9 +11,9 @@ func TestAvailableResources(t *testing.T) {
 	t.Run("should return resource with no parameter or static parameters", func(t *testing.T) {
 		statement := domain.Statement{Method: "from", Resource: "hero", With: map[string]interface{}{"id": "123456"}}
 
-		input := runner.Resources{"hero": statement}
+		input := domain.Resources{"hero": statement}
 
-		expected := runner.Resources{
+		expected := domain.Resources{
 			"hero": statement,
 		}
 
@@ -28,9 +28,9 @@ func TestAvailableResources(t *testing.T) {
 	t.Run("should return resource with no parameter or static parameters using alias as resource id", func(t *testing.T) {
 		statement := domain.Statement{Method: "from", Resource: "hero", Alias: "h", With: map[string]interface{}{"id": "123456"}}
 
-		input := runner.Resources{"h": statement}
+		input := domain.Resources{"h": statement}
 
-		expected := runner.Resources{
+		expected := domain.Resources{
 			"h": statement,
 		}
 
@@ -48,14 +48,14 @@ func TestAvailableResources(t *testing.T) {
 		villainStatement := domain.Statement{Method: "from", Resource: "villain", With: map[string]interface{}{"id": []interface{}{domain.Chain{"hero", "villain", "id"}}}}
 		crossoverStatement := domain.Statement{Method: "from", Resource: "crossover", With: map[string]interface{}{"id": map[string]interface{}{"heroes": domain.Chain{"hero", "id"}}}}
 
-		input := runner.Resources{
+		input := domain.Resources{
 			"hero":      heroStatement,
 			"sidekick":  sidekickStatement,
 			"villain":   villainStatement,
 			"crossover": crossoverStatement,
 		}
 
-		expected := runner.Resources{
+		expected := domain.Resources{
 			"hero": heroStatement,
 		}
 
@@ -73,14 +73,14 @@ func TestAvailableResources(t *testing.T) {
 		villainStatement := domain.Statement{Method: "from", Resource: "villain", With: map[string]interface{}{"id": []interface{}{domain.Chain{"hero", "villain", "id"}}}}
 		crossoverStatement := domain.Statement{Method: "from", Resource: "crossover", With: map[string]interface{}{"id": map[string]interface{}{"heroes": domain.Chain{"hero", "id"}}}}
 
-		input := runner.Resources{
+		input := domain.Resources{
 			"hero":      heroStatement,
 			"sidekick":  sidekickStatement,
 			"villain":   villainStatement,
 			"crossover": crossoverStatement,
 		}
 
-		expected := runner.Resources{
+		expected := domain.Resources{
 			"sidekick":  sidekickStatement,
 			"villain":   villainStatement,
 			"crossover": crossoverStatement,
@@ -103,12 +103,12 @@ func TestSetAsRequested(t *testing.T) {
 		heroStatement := domain.Statement{Method: "from", Resource: "hero", With: map[string]interface{}{"id": "987654"}}
 		sidekickStatement := domain.Statement{Method: "from", Resource: "sidekick", With: map[string]interface{}{"id": "123456"}}
 
-		input := runner.Resources{"hero": heroStatement, "sidekick": sidekickStatement}
+		input := domain.Resources{"hero": heroStatement, "sidekick": sidekickStatement}
 
 		state := runner.NewState(input)
 
-		expectedInitialAvailable := runner.Resources{"hero": heroStatement, "sidekick": sidekickStatement}
-		expectedInitialRequested := runner.Resources{}
+		expectedInitialAvailable := domain.Resources{"hero": heroStatement, "sidekick": sidekickStatement}
+		expectedInitialRequested := domain.Resources{}
 
 		initialAvailable := state.Available()
 		initialRequested := state.Requested()
@@ -123,11 +123,11 @@ func TestSetAsRequested(t *testing.T) {
 
 		state.SetAsRequest("hero")
 
-		expectedFinalAvailable := runner.Resources{
+		expectedFinalAvailable := domain.Resources{
 			"sidekick": sidekickStatement,
 		}
 
-		expectedFinalRequested := runner.Resources{"hero": heroStatement}
+		expectedFinalRequested := domain.Resources{"hero": heroStatement}
 
 		finalAvailable := state.Available()
 		finalRequested := state.Requested()
@@ -145,16 +145,16 @@ func TestSetAsRequested(t *testing.T) {
 func TestUpdateDone(t *testing.T) {
 	t.Run("should add completed resource to done and remove from requested", func(t *testing.T) {
 		doneStatement := domain.Statement{Method: "from", Resource: "hero", With: map[string]interface{}{"id": "123456"}}
-		input := runner.Resources{"hero": doneStatement}
+		input := domain.Resources{"hero": doneStatement}
 
-		expectedDoneRequests := runner.Resources{
-			"hero": runner.DoneRequest{Details: runner.Details{Status: 200}, Result: []byte{}},
+		expectedDoneRequests := domain.Resources{
+			"hero": domain.DoneResource{Details: domain.Details{Status: 200}, Result: []byte{}},
 		}
-		expectedRequestedStatements := runner.Resources{}
+		expectedRequestedStatements := domain.Resources{}
 
 		state := runner.NewState(input)
 
-		response := runner.DoneRequest{Details: runner.Details{Status: 200}, Result: []byte{}}
+		response := domain.DoneResource{Details: domain.Details{Status: 200}, Result: []byte{}}
 
 		state.UpdateDone("hero", response)
 
