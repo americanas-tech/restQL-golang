@@ -90,6 +90,57 @@ func TestMakeQueryResponse(t *testing.T) {
 
 }
 
+func TestCalculateStatusCode(t *testing.T) {
+	tests := []struct {
+		name        string
+		queryResult domain.Resources
+		expected    int
+	}{
+		{
+			"should return 200 when resources are successful",
+			domain.Resources{
+				"hero":     domain.DoneResource{Details: domain.Details{Status: 200}},
+				"sidekick": domain.DoneResource{Details: domain.Details{Status: 204}},
+				"villain":  domain.DoneResource{Details: domain.Details{Status: 201}},
+			},
+			200,
+		},
+		{
+			"should return max status code",
+			domain.Resources{
+				"hero":     domain.DoneResource{Details: domain.Details{Status: 200}},
+				"sidekick": domain.DoneResource{Details: domain.Details{Status: 500}},
+				"villain":  domain.DoneResource{Details: domain.Details{Status: 408}},
+			},
+			500,
+		},
+		{
+			"should return max status code",
+			domain.Resources{
+				"hero": domain.DoneResources{
+					domain.DoneResources{
+						domain.DoneResource{Details: domain.Details{Status: 200}},
+						domain.DoneResource{Details: domain.Details{Status: 200}},
+						domain.DoneResource{Details: domain.Details{Status: 408}},
+					},
+				},
+				"sidekick": domain.DoneResource{Details: domain.Details{Status: 204}},
+				"villain":  domain.DoneResource{Details: domain.Details{Status: 400}},
+			},
+			408,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := web.CalculateStatusCode(tt.queryResult)
+			if !reflect.DeepEqual(got, tt.expected) {
+				t.Errorf("CalculateStatusCode = %#+v, want = %#+v", got, tt.expected)
+			}
+		})
+	}
+}
+
 func unmarshal(body string) interface{} {
 	var f interface{}
 	err := json.Unmarshal([]byte(body), &f)

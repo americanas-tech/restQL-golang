@@ -115,3 +115,50 @@ func parseDebug(debug *domain.Debugging) *StatementDebugging {
 		ResponseTime:    debug.ResponseTime,
 	}
 }
+
+func CalculateStatusCode(queryResult domain.Resources) int {
+	results := make([]interface{}, len(queryResult))
+	index := 0
+	for _, r := range queryResult {
+		results[index] = r
+		index++
+	}
+
+	maxStatusCode := findMaxStatusCode(results)
+
+	return maxStatusCode
+}
+
+func findMaxStatusCode(results []interface{}) int {
+	resourceStatuses := make([]int, len(results))
+	for i, result := range results {
+		resourceStatuses[i] = calculateResultStatusCode(result)
+	}
+
+	maxStatusCode := 200
+	for _, status := range resourceStatuses {
+		if status > maxStatusCode {
+			maxStatusCode = status
+		}
+	}
+	return maxStatusCode
+}
+
+var statusNormalization = map[int]int{0: 500, 204: 200, 201: 200}
+
+func calculateResultStatusCode(result interface{}) int {
+	switch r := result.(type) {
+	case domain.DoneResource:
+		status := r.Details.Status
+		normalizedStatus, found := statusNormalization[status]
+		if found {
+			return normalizedStatus
+		}
+
+		return status
+	case domain.DoneResources:
+		return findMaxStatusCode(r)
+	default:
+		return 500
+	}
+}
