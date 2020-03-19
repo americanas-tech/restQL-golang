@@ -14,12 +14,12 @@ import (
 var errNoTimeoutProvided = errors.New("no timeout provided")
 
 var disallowedHeaders = map[string]struct{}{
-	"host":            {},
-	"content-type":    {},
-	"content-length":  {},
-	"connection":      {},
-	"origin":          {},
-	"accept-encoding": {},
+	"Host":            {},
+	"Content-Type":    {},
+	"Content-Length":  {},
+	"Connection":      {},
+	"Origin":          {},
+	"Accept-Encoding": {},
 }
 
 const debugParamName = "_debug"
