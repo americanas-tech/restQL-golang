@@ -61,6 +61,8 @@ func resolveListWithParam(list []interface{}, parameters map[string]interface{})
 			}
 
 			l[i] = paramValue
+		case []interface{}:
+			l[i] = resolveListWithParam(val, parameters)
 		default:
 			l[i] = val
 		}
@@ -80,6 +82,8 @@ func resolveComplexWithParam(object map[string]interface{}, parameters map[strin
 			}
 
 			m[key] = paramValue
+		case map[string]interface{}:
+			m[key] = resolveComplexWithParam(val, parameters)
 		default:
 			m[key] = val
 		}

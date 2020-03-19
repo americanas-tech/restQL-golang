@@ -50,8 +50,8 @@ func (r Runner) ExecuteQuery(ctx context.Context, query domain.Query, queryCtx d
 	requestWorker := &requestWorker{
 		requestCh: requestCh,
 		resultCh:  resultCh,
-		executor:  r.executor,
 		errorCh:   errorCh,
+		executor:  r.executor,
 		queryCtx:  queryCtx,
 		ctx:       ctx,
 	}
