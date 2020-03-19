@@ -36,22 +36,24 @@ func (r Runner) ExecuteQuery(ctx context.Context, query domain.Query, queryCtx Q
 
 	requestCh := make(chan request)
 	outputCh := make(chan Resources)
+	errorCh := make(chan error)
 	resultCh := make(chan result)
 
 	stateWorker := &stateWorker{
 		requestCh: requestCh,
 		resultCh:  resultCh,
 		outputCh:  outputCh,
-		ctx:       ctx,
 		state:     state,
+		ctx:       ctx,
 	}
 
 	requestWorker := &requestWorker{
 		requestCh: requestCh,
 		resultCh:  resultCh,
 		executor:  r.executor,
-		ctx:       ctx,
+		errorCh:   errorCh,
 		queryCtx:  queryCtx,
+		ctx:       ctx,
 	}
 
 	go stateWorker.Run()
@@ -60,6 +62,9 @@ func (r Runner) ExecuteQuery(ctx context.Context, query domain.Query, queryCtx Q
 	select {
 	case output := <-outputCh:
 		return output, nil
+	case err := <-errorCh:
+		cancel()
+		return nil, err
 	case <-ctx.Done():
 		r.log.Debug("query timed out")
 		return nil, ErrQueryTimedOut
@@ -106,8 +111,8 @@ type stateWorker struct {
 	requestCh chan request
 	resultCh  chan result
 	outputCh  chan Resources
-	ctx       context.Context
 	state     *State
+	ctx       context.Context
 }
 
 func (sw *stateWorker) Run() {
@@ -141,9 +146,10 @@ func (sw *stateWorker) Run() {
 type requestWorker struct {
 	requestCh chan request
 	resultCh  chan result
+	errorCh   chan error
 	executor  Executor
-	ctx       context.Context
 	queryCtx  QueryContext
+	ctx       context.Context
 }
 
 func (rw *requestWorker) Run() {
@@ -156,12 +162,18 @@ func (rw *requestWorker) Run() {
 			switch statement := statement.(type) {
 			case domain.Statement:
 				go func() {
-					response := rw.executor.DoStatement(rw.ctx, statement, rw.queryCtx)
+					response, err := rw.executor.DoStatement(rw.ctx, statement, rw.queryCtx)
+					if err != nil {
+						rw.errorCh <- err
+					}
 					rw.resultCh <- result{ResourceIdentifier: resourceId, Response: response}
 				}()
 			case []interface{}:
 				go func() {
-					responses := rw.executor.DoMultiplexedStatement(rw.ctx, statement, rw.queryCtx)
+					responses, err := rw.executor.DoMultiplexedStatement(rw.ctx, statement, rw.queryCtx)
+					if err != nil {
+						rw.errorCh <- err
+					}
 					rw.resultCh <- result{ResourceIdentifier: resourceId, Response: responses}
 				}()
 			}

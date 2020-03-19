@@ -32,10 +32,10 @@ type Executor struct {
 	log    domain.Logger
 }
 
-func (e Executor) DoStatement(ctx context.Context, statement domain.Statement, queryCtx QueryContext) DoneRequest {
+func (e Executor) DoStatement(ctx context.Context, statement domain.Statement, queryCtx QueryContext) (DoneRequest, error) {
 	emptyChainedParams := getEmptyChainedParams(statement)
 	if len(emptyChainedParams) > 0 {
-		return newEmptyChainedResponse(emptyChainedParams)
+		return newEmptyChainedResponse(emptyChainedParams), nil
 	}
 
 	e.log.Debug("executing request for statement", "resource", statement.Resource, "method", statement.Method)
@@ -54,32 +54,40 @@ func (e Executor) DoStatement(ctx context.Context, statement domain.Statement, q
 	response, err := e.client.Do(ctx, request)
 	switch {
 	case err == domain.ErrRequestTimeout:
-		return newTimeoutResponse(err, request, response, queryCtx)
+		return newTimeoutResponse(err, request, response, queryCtx), nil
 	case err != nil:
 		e.log.Debug("request failed", "error", err)
-		return DoneRequest{}
+		return DoneRequest{}, err
 	}
 
 	dr := newDoneRequest(request, response, queryCtx)
 
 	e.log.Debug("request execution done", "resource", statement.Resource, "method", statement.Method, "response", dr)
 
-	return dr
+	return dr, nil
 }
 
-func (e Executor) DoMultiplexedStatement(ctx context.Context, statements []interface{}, queryCtx QueryContext) DoneRequests {
+func (e Executor) DoMultiplexedStatement(ctx context.Context, statements []interface{}, queryCtx QueryContext) (DoneRequests, error) {
 	responses := make(DoneRequests, len(statements))
 
 	for i, stmt := range statements {
 		switch stmt := stmt.(type) {
 		case domain.Statement:
-			responses[i] = e.DoStatement(ctx, stmt, queryCtx)
+			r, err := e.DoStatement(ctx, stmt, queryCtx)
+			if err != nil {
+				return nil, err
+			}
+			responses[i] = r
 		case []interface{}:
-			responses[i] = e.DoMultiplexedStatement(ctx, stmt, queryCtx)
+			r, err := e.DoMultiplexedStatement(ctx, stmt, queryCtx)
+			if err != nil {
+				return nil, err
+			}
+			responses[i] = r
 		}
 	}
 
-	return responses
+	return responses, nil
 }
 
 func newDoneRequest(request domain.HttpRequest, response domain.HttpResponse, queryCtx QueryContext) DoneRequest {
