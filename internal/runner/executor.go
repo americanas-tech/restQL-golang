@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/b2wdigital/restQL-golang/internal/domain"
 	"github.com/pkg/errors"
+	"golang.org/x/sync/errgroup"
 	"strconv"
 	"strings"
 	"time"
@@ -71,26 +72,61 @@ func (e Executor) DoStatement(ctx context.Context, statement domain.Statement, q
 }
 
 func (e Executor) DoMultiplexedStatement(ctx context.Context, statements []interface{}, queryCtx domain.QueryContext) (domain.DoneResources, error) {
-	responses := make(domain.DoneResources, len(statements))
+	responseChans := make([]chan interface{}, len(statements))
+	for i := range responseChans {
+		responseChans[i] = make(chan interface{}, 1)
+	}
+	defer func() {
+		for _, ch := range responseChans {
+			close(ch)
+		}
+	}()
+
+	var g errgroup.Group
 
 	for i, stmt := range statements {
-		switch stmt := stmt.(type) {
-		case domain.Statement:
-			r, err := e.DoStatement(ctx, stmt, queryCtx)
+		i, stmt := i, stmt
+		ch := responseChans[i]
+
+		g.Go(func() error {
+			response, err := e.doCurrentStatement(stmt, ctx, queryCtx)
 			if err != nil {
-				return nil, err
+				return err
 			}
-			responses[i] = r
-		case []interface{}:
-			r, err := e.DoMultiplexedStatement(ctx, stmt, queryCtx)
-			if err != nil {
-				return nil, err
-			}
-			responses[i] = r
-		}
+			ch <- response
+			return nil
+		})
+	}
+
+	if err := g.Wait(); err != nil {
+		return nil, err
+	}
+
+	responses := make(domain.DoneResources, len(statements))
+	for i, ch := range responseChans {
+		responses[i] = <-ch
 	}
 
 	return responses, nil
+}
+
+func (e Executor) doCurrentStatement(stmt interface{}, ctx context.Context, queryCtx domain.QueryContext) (interface{}, error) {
+	switch stmt := stmt.(type) {
+	case domain.Statement:
+		r, err := e.DoStatement(ctx, stmt, queryCtx)
+		if err != nil {
+			return nil, err
+		}
+		return r, nil
+	case []interface{}:
+		r, err := e.DoMultiplexedStatement(ctx, stmt, queryCtx)
+		if err != nil {
+			return nil, err
+		}
+		return r, nil
+	default:
+		return nil, errors.Errorf("unknown statement type: %T", stmt)
+	}
 }
 
 type doneResourceOptions struct {
