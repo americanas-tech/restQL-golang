@@ -29,42 +29,15 @@ func Apply(h fasthttp.RequestHandler, mws []Middleware, log *logger.Logger) fast
 	return handler
 }
 
-type requestIdConf struct {
-	Header   string `yaml:"header"`
-	Strategy string `yaml:"strategy"`
-}
-
-type timeoutConf struct {
-	Duration string `yaml:"duration"`
-}
-
-type middlewareConf struct {
-	Web struct {
-		Middlewares struct {
-			RequestId *requestIdConf `yaml:"requestId"`
-			Timeout   *timeoutConf   `yaml:"timeout"`
-		} `yaml:"middlewares"`
-	} `yaml:"web"`
-}
-
-func FetchEnabled(config conf.Config, log *logger.Logger) []Middleware {
+func FetchEnabled(cfg *conf.Config, log *logger.Logger) []Middleware {
 	mws := []Middleware{NewRecover(log), NewNativeContext()}
 
-	var mc middlewareConf
-	err := config.File().Unmarshal(&mc)
-	if err != nil {
-		log.Warn("failed to unmarshal middleware configuration", "error", err)
-		return mws
+	if cfg.Web.Middlewares.Timeout != nil {
+		mws = append(mws, NewTimeout(cfg.Web.Middlewares.Timeout.Duration, log))
 	}
 
-	tc := mc.Web.Middlewares.Timeout
-	if tc != nil {
-		mws = append(mws, NewTimeout(tc.Duration, log))
-	}
-
-	rc := mc.Web.Middlewares.RequestId
-	if rc != nil {
-		mws = append(mws, NewRequestId(rc.Header, rc.Strategy, log))
+	if cfg.Web.Middlewares.RequestId != nil {
+		mws = append(mws, NewRequestId(cfg.Web.Middlewares.RequestId.Header, cfg.Web.Middlewares.RequestId.Strategy, log))
 	}
 
 	return mws

@@ -10,15 +10,18 @@ import (
 	"net/http"
 )
 
-func API(config conf.Config, log *logger.Logger) fasthttp.RequestHandler {
-	app := NewApp(config, log)
-	mr := eval.NewMappingReader(config, log)
-	qr := eval.NewQueryReader(config, log)
+func API(log *logger.Logger, cfg *conf.Config) fasthttp.RequestHandler {
+	app := NewApp(log, cfg)
 	client := httpclient.New(log)
-	r := runner.NewRunner(config, client, log)
-	e := eval.NewEvaluator(mr, qr, r, log)
 
-	restQl := NewRestQl(config, log, e)
+	executor := runner.NewExecutor(log, client, cfg.QueryResourceTimeout)
+	r := runner.NewRunner(log, client, executor, cfg.GlobalQueryTimeout)
+
+	mr := eval.NewMappingReader(cfg.Env, cfg.Mappings)
+	qr := eval.NewQueryReader(cfg.Queries)
+	e := eval.NewEvaluator(log, mr, qr, r)
+
+	restQl := NewRestQl(log, cfg, e)
 
 	app.Handle(http.MethodPost, "/validate-query", restQl.ValidateQuery)
 	app.Handle(http.MethodGet, "/run-query/:namespace/:queryId/:revision", restQl.RunSavedQuery)
@@ -26,9 +29,9 @@ func API(config conf.Config, log *logger.Logger) fasthttp.RequestHandler {
 	return app.RequestHandler()
 }
 
-func Health(config conf.Config, log *logger.Logger) fasthttp.RequestHandler {
-	app := NewApp(config, log)
-	check := NewCheck(config.Build())
+func Health(log *logger.Logger, cfg *conf.Config) fasthttp.RequestHandler {
+	app := NewApp(log, cfg)
+	check := NewCheck(cfg.Build)
 
 	app.Handle(http.MethodGet, "/health", check.Health)
 	app.Handle(http.MethodGet, "/resource-status", check.ResourceStatus)
@@ -36,8 +39,8 @@ func Health(config conf.Config, log *logger.Logger) fasthttp.RequestHandler {
 	return app.RequestHandlerWithoutMiddlewares()
 }
 
-func Debug(config conf.Config, log *logger.Logger) fasthttp.RequestHandler {
-	app := NewApp(config, log)
+func Debug(log *logger.Logger, cfg *conf.Config) fasthttp.RequestHandler {
+	app := NewApp(log, cfg)
 	pprof := NewPprof()
 
 	app.Handle(http.MethodGet, "/debug/pprof/goroutine", pprof.Index)

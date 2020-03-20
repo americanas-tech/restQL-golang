@@ -6,23 +6,13 @@ import (
 )
 
 type MappingsReader struct {
-	env  domain.EnvSource
-	file map[string]string
+	env   domain.EnvSource
+	local map[string]string
 }
 
-func NewMappingReader(config domain.Configuration, log domain.Logger) MappingsReader {
-	mr := MappingsReader{env: config.Env()}
-
-	mappingsConf := struct {
-		Mappings map[string]string
-	}{}
-
-	err := config.File().Unmarshal(&mappingsConf)
-	if err != nil {
-		log.Debug("failed to load mappings from config file", "error", err)
-	} else {
-		mr.file = mappingsConf.Mappings
-	}
+func NewMappingReader(env domain.EnvSource, local map[string]string) MappingsReader {
+	mr := MappingsReader{env: env}
+	mr.local = local
 
 	return mr
 }
@@ -31,8 +21,8 @@ func (mr MappingsReader) GetMapping(tenant, resource string) (domain.Mapping, er
 	switch {
 	case mr.env.GetString(resource) != "":
 		return domain.NewMapping(resource, mr.env.GetString(resource)), nil
-	case mr.file[resource] != "":
-		return domain.NewMapping(resource, mr.file[resource]), nil
+	case mr.local[resource] != "":
+		return domain.NewMapping(resource, mr.local[resource]), nil
 	default:
 		return domain.Mapping{}, NotFoundError{errors.Errorf("resource `%s` not found on mappings", resource)}
 	}
@@ -41,24 +31,19 @@ func (mr MappingsReader) GetMapping(tenant, resource string) (domain.Mapping, er
 type savedQueries map[string][]string
 
 type QueryReader struct {
-	file map[string]savedQueries
+	local map[string]savedQueries
 }
 
-func NewQueryReader(config domain.Configuration, log domain.Logger) QueryReader {
-	queryConf := struct {
-		Queries map[string]savedQueries
-	}{}
-
-	err := config.File().Unmarshal(&queryConf)
-	if err != nil {
-		log.Debug("failed to load queries from config file", "error", err)
+func NewQueryReader(local map[string]map[string][]string) QueryReader {
+	l := make(map[string]savedQueries)
+	for k, v := range local {
+		l[k] = v
 	}
-
-	return QueryReader{file: queryConf.Queries}
+	return QueryReader{local: l}
 }
 
 func (qr QueryReader) GetQuery(namespace, id string, revision int) (string, error) {
-	queriesInNamespace, ok := qr.file[namespace]
+	queriesInNamespace, ok := qr.local[namespace]
 	if !ok {
 		return "", NotFoundError{errors.Errorf("namespace not found: %s", namespace)}
 	}

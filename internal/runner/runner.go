@@ -10,25 +10,31 @@ import (
 var ErrQueryTimedOut = errors.New("query timed out")
 
 type Runner struct {
-	config   domain.Configuration
-	log      domain.Logger
-	client   domain.HttpClient
-	executor Executor
+	log                domain.Logger
+	client             domain.HttpClient
+	executor           Executor
+	globalQueryTimeout time.Duration
 }
 
-func NewRunner(config domain.Configuration, httpClient domain.HttpClient, log domain.Logger) Runner {
+func NewRunner(log domain.Logger, httpClient domain.HttpClient, executor Executor, globalQueryTimeout time.Duration) Runner {
 	return Runner{
-		config:   config,
-		log:      log,
-		client:   httpClient,
-		executor: Executor{client: httpClient, log: log},
+		log:                log,
+		client:             httpClient,
+		executor:           executor,
+		globalQueryTimeout: globalQueryTimeout,
 	}
 }
 
 func (r Runner) ExecuteQuery(ctx context.Context, query domain.Query, queryCtx domain.QueryContext) (domain.Resources, error) {
-	queryTimeout := parseQueryTimeout(query)
-	ctx, cancel := context.WithTimeout(ctx, queryTimeout)
-	defer cancel()
+	queryTimeout, ok := r.parseQueryTimeout(query)
+
+	var cancel context.CancelFunc
+	if ok {
+		ctx, cancel = context.WithTimeout(ctx, queryTimeout)
+		defer cancel()
+	} else {
+		ctx, cancel = context.WithCancel(ctx)
+	}
 
 	resources := initializeResources(query, queryCtx)
 
@@ -71,20 +77,18 @@ func (r Runner) ExecuteQuery(ctx context.Context, query domain.Query, queryCtx d
 	}
 }
 
-func parseQueryTimeout(query domain.Query) time.Duration {
-	defaultQueryTimeout := 5 * time.Second
-
+func (r Runner) parseQueryTimeout(query domain.Query) (time.Duration, bool) {
 	timeout, found := query.Use["timeout"]
 	if !found {
-		return defaultQueryTimeout
+		return r.globalQueryTimeout, false
 	}
 
 	duration, ok := timeout.(int)
 	if !ok {
-		return defaultQueryTimeout
+		return r.globalQueryTimeout, false
 	}
 
-	return time.Millisecond * time.Duration(duration)
+	return time.Millisecond * time.Duration(duration), true
 }
 
 func initializeResources(query domain.Query, queryCtx domain.QueryContext) domain.Resources {

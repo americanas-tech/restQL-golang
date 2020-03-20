@@ -2,46 +2,36 @@ package logger
 
 import (
 	"fmt"
-	"github.com/b2wdigital/restQL-golang/internal/plataform/conf"
 	"github.com/rs/zerolog"
 	"io"
 )
 
-type logConf struct {
+type LogOptions struct {
 	Enable    bool   `yaml:"enable"`
 	Timestamp bool   `yaml:"timestamp"`
 	Level     string `yaml:"level"`
 	Format    string `yaml:"format"`
 }
 
-type configFile struct {
-	Logging logConf `yaml:"logging"`
-}
-
-var defaultConfig = configFile{Logging: logConf{Enable: true, Timestamp: true, Level: "info", Format: "json"}}
-
-func New(w io.Writer, config conf.Config) *Logger {
-	lc := defaultConfig
-	config.File().Unmarshal(&lc)
-
+func New(w io.Writer, options LogOptions) *Logger {
 	output := w
-	if lc.Logging.Format == "pretty" {
+	if options.Format == "pretty" {
 		output = zerolog.ConsoleWriter{Out: w}
 	}
 
 	logger := zerolog.New(output)
 
-	if lc.Logging.Timestamp {
+	if options.Timestamp {
 		logger = logger.With().Timestamp().Logger()
 		zerolog.TimestampFieldName = "timestamp"
 	}
 
-	level, err := zerolog.ParseLevel(lc.Logging.Level)
+	level, err := zerolog.ParseLevel(options.Level)
 	if err != nil {
 		logger = logger.Level(level)
 	}
 
-	if !lc.Logging.Enable {
+	if !options.Enable {
 		zerolog.SetGlobalLevel(zerolog.Disabled)
 	}
 

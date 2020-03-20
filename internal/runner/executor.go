@@ -11,8 +11,13 @@ import (
 var errNoTimeoutProvided = errors.New("no timeout provided")
 
 type Executor struct {
-	client domain.HttpClient
-	log    domain.Logger
+	client          domain.HttpClient
+	log             domain.Logger
+	resourceTimeout time.Duration
+}
+
+func NewExecutor(log domain.Logger, client domain.HttpClient, resourceTimeout time.Duration) Executor {
+	return Executor{client: client, log: log, resourceTimeout: resourceTimeout}
 }
 
 func (e Executor) DoStatement(ctx context.Context, statement domain.Statement, queryCtx domain.QueryContext) (domain.DoneResource, error) {

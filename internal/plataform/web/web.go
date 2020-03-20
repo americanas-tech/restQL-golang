@@ -11,12 +11,12 @@ import (
 type Handler func(ctx *fasthttp.RequestCtx) error
 
 type App struct {
-	config conf.Config
+	config *conf.Config
 	router *fasthttprouter.Router
 	log    *logger.Logger
 }
 
-func NewApp(config conf.Config, log *logger.Logger) App {
+func NewApp(log *logger.Logger, config *conf.Config) App {
 	r := fasthttprouter.New()
 	r.NotFound = func(ctx *fasthttp.RequestCtx) { ctx.Response.SetBodyString("There is nothing here. =/") }
 

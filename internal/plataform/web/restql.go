@@ -23,13 +23,13 @@ var (
 )
 
 type RestQl struct {
-	config    conf.Config
+	config    *conf.Config
 	log       *logger.Logger
 	evaluator eval.Evaluator
 }
 
-func NewRestQl(c conf.Config, l *logger.Logger, e eval.Evaluator) RestQl {
-	return RestQl{config: c, log: l, evaluator: e}
+func NewRestQl(l *logger.Logger, cfg *conf.Config, e eval.Evaluator) RestQl {
+	return RestQl{config: cfg, log: l, evaluator: e}
 }
 
 func (r RestQl) ValidateQuery(ctx *fasthttp.RequestCtx) error {
@@ -108,7 +108,7 @@ func (r RestQl) makeQueryOptions(ctx *fasthttp.RequestCtx) (domain.QueryOptions,
 
 	var tenant string
 
-	envTenant := r.config.Env().GetString("TENANT")
+	envTenant := r.config.Tenant
 	if envTenant != "" {
 		tenant = envTenant
 	} else {

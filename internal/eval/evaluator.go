@@ -21,7 +21,7 @@ type Evaluator struct {
 	run            runner.Runner
 }
 
-func NewEvaluator(mr MappingsReader, qr QueryReader, r runner.Runner, log domain.Logger) Evaluator {
+func NewEvaluator(log domain.Logger, mr MappingsReader, qr QueryReader, r runner.Runner) Evaluator {
 	return Evaluator{log: log, mappingsReader: mr, queryReader: qr, run: r}
 }
 
