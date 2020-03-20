@@ -3,9 +3,12 @@ package httpclient
 import (
 	"context"
 	"github.com/b2wdigital/restQL-golang/internal/domain"
+	"github.com/b2wdigital/restQL-golang/internal/plataform/conf"
 	"github.com/b2wdigital/restQL-golang/internal/plataform/logger"
 	"github.com/pkg/errors"
+	"github.com/rs/dnscache"
 	"github.com/valyala/fasthttp"
+	"net"
 	"time"
 )
 
@@ -14,11 +17,46 @@ type HttpClient struct {
 	log    *logger.Logger
 }
 
-func New(log *logger.Logger) HttpClient {
+const network = "tcp"
+
+func New(log *logger.Logger, cfg *conf.Config) HttpClient {
+	clientCfg := cfg.Web.Client
+
+	r := &dnscache.Resolver{}
+	go func() {
+		t := time.NewTicker(1 * time.Minute)
+		defer t.Stop()
+		for range t.C {
+			r.Refresh(true)
+		}
+	}()
 	c := &fasthttp.Client{
+		Name:                     "restql",
 		NoDefaultUserAgentHeader: false,
-		ReadTimeout:              3 * time.Second,
-		WriteTimeout:             1 * time.Second,
+		ReadTimeout:              clientCfg.ReadTimeout,
+		WriteTimeout:             clientCfg.WriteTimeout,
+		MaxConnsPerHost:          clientCfg.MaxIdleConnectionsPerHosts,
+		MaxIdleConnDuration:      clientCfg.MaxIdleConnDuration,
+		MaxConnDuration:          clientCfg.MaxConnDuration,
+		Dial: func(addr string) (conn net.Conn, err error) {
+			host, port, err := net.SplitHostPort(addr)
+			if err != nil {
+				return nil, err
+			}
+			ips, err := r.LookupHost(context.Background(), host)
+			if err != nil {
+				return nil, err
+			}
+			for _, ip := range ips {
+				var dialer net.Dialer
+				conn, err = dialer.Dial(network, net.JoinHostPort(ip, port))
+				if err == nil {
+					break
+				}
+			}
+			return
+
+		},
 	}
 
 	return HttpClient{client: c, log: log}

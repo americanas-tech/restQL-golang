@@ -1,0 +1,17 @@
+web:
+  server:
+    readTimeout: 3s
+    gracefulShutdownTimeout: 1s
+
+  client:
+    readTimeout: 3s
+    writeTimeout: 1s
+    maxConnectionsDuration: 10m
+    maxIdleConnectionsPerHost: 512
+    maxIdleConnectionDuration: 10s
+
+logging:
+  enable: true
+  timestamp: true
+  level: info
+  format: json

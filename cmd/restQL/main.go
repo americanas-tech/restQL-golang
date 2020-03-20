@@ -45,36 +45,37 @@ func start() error {
 	shutdownSignal := make(chan os.Signal, 1)
 	signal.Notify(shutdownSignal, os.Interrupt, syscall.SIGTERM)
 
+	serverCfg := cfg.Web.Server
 	api := &fasthttp.Server{
 		Name:         "api",
 		Handler:      web.API(log, cfg),
 		TCPKeepalive: false,
-		ReadTimeout:  cfg.Web.ReadTimeout,
+		ReadTimeout:  serverCfg.ReadTimeout,
 	}
 	health := &fasthttp.Server{
 		Name:         "health",
 		Handler:      web.Health(log, cfg),
 		TCPKeepalive: false,
-		ReadTimeout:  cfg.Web.ReadTimeout,
+		ReadTimeout:  serverCfg.ReadTimeout,
 	}
 
 	serverErrors := make(chan error, 1)
 	go func() {
-		log.Info("api listing", "port", cfg.Web.ApiAddr)
-		serverErrors <- api.ListenAndServe(":" + cfg.Web.ApiAddr)
+		log.Info("api listing", "port", serverCfg.ApiAddr)
+		serverErrors <- api.ListenAndServe(":" + serverCfg.ApiAddr)
 	}()
 
 	go func() {
 		defer log.Info("stopping health")
-		log.Info("api health listing", "port", cfg.Web.ApiHealthAddr)
-		serverErrors <- health.ListenAndServe(":" + cfg.Web.ApiHealthAddr)
+		log.Info("api health listing", "port", serverCfg.ApiHealthAddr)
+		serverErrors <- health.ListenAndServe(":" + serverCfg.ApiHealthAddr)
 	}()
 
-	if cfg.Web.Env == "development" {
+	if serverCfg.Env == "development" {
 		debug := &fasthttp.Server{Name: "debug", Handler: web.Debug(log, cfg)}
 		go func() {
-			log.Info("api debug listing", "port", cfg.Web.DebugAddr)
-			serverErrors <- debug.ListenAndServe(":" + cfg.Web.DebugAddr)
+			log.Info("api debug listing", "port", serverCfg.DebugAddr)
+			serverErrors <- debug.ListenAndServe(":" + serverCfg.DebugAddr)
 		}()
 	}
 
@@ -86,7 +87,7 @@ func start() error {
 	case sig := <-shutdownSignal:
 		log.Info("starting shutdown", "signal", sig)
 
-		timeout, cancel := context.WithTimeout(context.Background(), cfg.Web.GracefulShutdownTimeout)
+		timeout, cancel := context.WithTimeout(context.Background(), serverCfg.GracefulShutdownTimeout)
 		defer cancel()
 		err := shutdown(timeout, log, api, health)
 

@@ -12,7 +12,7 @@ import (
 
 func API(log *logger.Logger, cfg *conf.Config) fasthttp.RequestHandler {
 	app := NewApp(log, cfg)
-	client := httpclient.New(log)
+	client := httpclient.New(log, cfg)
 
 	executor := runner.NewExecutor(log, client, cfg.QueryResourceTimeout)
 	r := runner.NewRunner(log, client, executor, cfg.GlobalQueryTimeout)

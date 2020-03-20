@@ -11,6 +11,7 @@ import (
 )
 
 const configFileName = "restql.yml"
+const defaultConfigPath = "./internal/plataform/conf/defaults.yaml"
 
 type requestIdConf struct {
 	Header   string `yaml:"header"`
@@ -23,23 +24,33 @@ type timeoutConf struct {
 
 type Config struct {
 	Web struct {
-		ApiAddr                 string        `env:"PORT,required"`
-		ApiHealthAddr           string        `env:"HEALTH_PORT,required"`
-		DebugAddr               string        `env:"DEBUG_PORT"`
-		Env                     string        `env:"ENV"`
-		GracefulShutdownTimeout time.Duration `yaml:"gracefulShutdownTimeout"`
-		ReadTimeout             time.Duration `yaml:"readTimeout"`
-		Middlewares             struct {
-			RequestId *requestIdConf `yaml:"requestId"`
-			Timeout   *timeoutConf   `yaml:"timeout"`
-		} `yaml:"middlewares"`
+		Server struct {
+			ApiAddr                 string        `env:"PORT,required"`
+			ApiHealthAddr           string        `env:"HEALTH_PORT,required"`
+			DebugAddr               string        `env:"DEBUG_PORT"`
+			Env                     string        `env:"ENV"`
+			GracefulShutdownTimeout time.Duration `yaml:"gracefulShutdownTimeout"`
+			ReadTimeout             time.Duration `yaml:"readTimeout"`
+			Middlewares             struct {
+				RequestId *requestIdConf `yaml:"requestId"`
+				Timeout   *timeoutConf   `yaml:"timeout"`
+			} `yaml:"middlewares"`
+		} `yaml:"server"`
+
+		Client struct {
+			ReadTimeout                time.Duration `yaml:"readTimeout"`
+			WriteTimeout               time.Duration `yaml:"writeTimeout"`
+			MaxConnDuration            time.Duration `yaml:"maxConnectionsDuration"`
+			MaxIdleConnDuration        time.Duration `yaml:"maxIdleConnectionDuration"`
+			MaxIdleConnectionsPerHosts int           `yaml:"maxIdleConnectionsPerHost"`
+		} `yaml:"client"`
 	} `yaml:"web"`
 
 	Logging struct {
-		Enable    bool   `yaml:"enable" env:"RESTQL_LOG_ENABLE"`
-		Timestamp bool   `yaml:"timestamp" env:"RESTQL_LOG_TIMESTAMP"`
-		Level     string `yaml:"level" env:"RESTQL_LOG_LEVEL"`
-		Format    string `yaml:"format" env:"RESTQL_LOG_FORMAT"`
+		Enable    bool   `yaml:"enable"`
+		Timestamp bool   `yaml:"timestamp"`
+		Level     string `yaml:"level"`
+		Format    string `yaml:"format"`
 	} `yaml:"logging"`
 
 	Tenant               string        `env:"TENANT"`
@@ -57,7 +68,12 @@ type Config struct {
 
 func Load(build string) (*Config, error) {
 	cfg := Config{}
-	err := yaml.Unmarshal(readConfigFile(), &cfg)
+	err := yaml.Unmarshal(readDefaultFile(), &cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	err = yaml.Unmarshal(readConfigFile(), &cfg)
 	if err != nil {
 		return nil, err
 	}
@@ -71,6 +87,16 @@ func Load(build string) (*Config, error) {
 	cfg.Env = EnvSource{}
 
 	return &cfg, nil
+}
+
+func readDefaultFile() []byte {
+	data, err := ioutil.ReadFile(defaultConfigPath)
+	if err != nil {
+		log.Printf("[ERROR] could not load default file at %s", defaultConfigPath)
+		return nil
+	}
+
+	return data
 }
 
 func readConfigFile() []byte {
