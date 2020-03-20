@@ -11,7 +11,7 @@ import (
 )
 
 const configFileName = "restql.yml"
-const defaultConfigPath = "./internal/plataform/conf/defaults.yaml"
+const defaultConfigPath = "./internal/platform/conf/defaults.yaml"
 
 type requestIdConf struct {
 	Header   string `yaml:"header"`

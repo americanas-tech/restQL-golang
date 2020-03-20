@@ -3,7 +3,7 @@ package web_test
 import (
 	"encoding/json"
 	"github.com/b2wdigital/restQL-golang/internal/domain"
-	"github.com/b2wdigital/restQL-golang/internal/plataform/web"
+	"github.com/b2wdigital/restQL-golang/internal/platform/web"
 	"reflect"
 	"testing"
 )

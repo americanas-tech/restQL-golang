@@ -2,9 +2,9 @@ package web
 
 import (
 	"github.com/b2wdigital/restQL-golang/internal/eval"
-	"github.com/b2wdigital/restQL-golang/internal/plataform/conf"
-	"github.com/b2wdigital/restQL-golang/internal/plataform/httpclient"
-	"github.com/b2wdigital/restQL-golang/internal/plataform/logger"
+	"github.com/b2wdigital/restQL-golang/internal/platform/conf"
+	"github.com/b2wdigital/restQL-golang/internal/platform/httpclient"
+	"github.com/b2wdigital/restQL-golang/internal/platform/logger"
 	"github.com/b2wdigital/restQL-golang/internal/runner"
 	"github.com/valyala/fasthttp"
 	"net/http"

@@ -3,9 +3,9 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/b2wdigital/restQL-golang/internal/plataform/conf"
-	"github.com/b2wdigital/restQL-golang/internal/plataform/logger"
-	"github.com/b2wdigital/restQL-golang/internal/plataform/web"
+	"github.com/b2wdigital/restQL-golang/internal/platform/conf"
+	"github.com/b2wdigital/restQL-golang/internal/platform/logger"
+	"github.com/b2wdigital/restQL-golang/internal/platform/web"
 	"github.com/pkg/errors"
 	"github.com/valyala/fasthttp"
 	"golang.org/x/sync/errgroup"

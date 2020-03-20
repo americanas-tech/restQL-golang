@@ -1,9 +1,9 @@
 package web
 
 import (
-	"github.com/b2wdigital/restQL-golang/internal/plataform/conf"
-	"github.com/b2wdigital/restQL-golang/internal/plataform/logger"
-	"github.com/b2wdigital/restQL-golang/internal/plataform/web/middleware"
+	"github.com/b2wdigital/restQL-golang/internal/platform/conf"
+	"github.com/b2wdigital/restQL-golang/internal/platform/logger"
+	"github.com/b2wdigital/restQL-golang/internal/platform/web/middleware"
 	"github.com/buaazp/fasthttprouter"
 	"github.com/valyala/fasthttp"
 )
