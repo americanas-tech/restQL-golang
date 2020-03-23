@@ -11,15 +11,13 @@ var ErrQueryTimedOut = errors.New("query timed out")
 
 type Runner struct {
 	log                domain.Logger
-	client             domain.HttpClient
 	executor           Executor
 	globalQueryTimeout time.Duration
 }
 
-func NewRunner(log domain.Logger, httpClient domain.HttpClient, executor Executor, globalQueryTimeout time.Duration) Runner {
+func NewRunner(log domain.Logger, executor Executor, globalQueryTimeout time.Duration) Runner {
 	return Runner{
 		log:                log,
-		client:             httpClient,
 		executor:           executor,
 		globalQueryTimeout: globalQueryTimeout,
 	}

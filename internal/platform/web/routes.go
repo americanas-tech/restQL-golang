@@ -15,7 +15,7 @@ func API(log *logger.Logger, cfg *conf.Config) fasthttp.RequestHandler {
 	client := httpclient.New(log, cfg)
 
 	executor := runner.NewExecutor(log, client, cfg.QueryResourceTimeout)
-	r := runner.NewRunner(log, client, executor, cfg.GlobalQueryTimeout)
+	r := runner.NewRunner(log, executor, cfg.GlobalQueryTimeout)
 
 	mr := eval.NewMappingReader(cfg.Env, cfg.Mappings)
 	qr := eval.NewQueryReader(cfg.Queries)

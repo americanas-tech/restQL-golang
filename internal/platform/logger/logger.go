@@ -7,10 +7,10 @@ import (
 )
 
 type LogOptions struct {
-	Enable    bool   `yaml:"enable"`
-	Timestamp bool   `yaml:"timestamp"`
-	Level     string `yaml:"level"`
-	Format    string `yaml:"format"`
+	Enable    bool
+	Timestamp bool
+	Level     string
+	Format    string
 }
 
 func New(w io.Writer, options LogOptions) *Logger {
@@ -27,7 +27,7 @@ func New(w io.Writer, options LogOptions) *Logger {
 	}
 
 	level, err := zerolog.ParseLevel(options.Level)
-	if err != nil {
+	if err == nil {
 		logger = logger.Level(level)
 	}
 
