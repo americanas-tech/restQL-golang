@@ -15,7 +15,7 @@ func setupRequest(request domain.HttpRequest, req *fasthttp.Request) {
 	uri := fasthttp.URI{DisablePathNormalizing: true}
 	uri.SetScheme(request.Schema)
 	uri.SetHost(request.Uri)
-	uri.SetQueryStringBytes(makeQueryArgs(request))
+	uri.SetQueryStringBytes(makeQueryArgs(uri.QueryString(), request))
 
 	uriStr := uri.String()
 	req.SetRequestURI(uriStr)
@@ -34,14 +34,15 @@ func readHeaders(res *fasthttp.Response) domain.Headers {
 	return h
 }
 
-func makeQueryArgs(request domain.HttpRequest) []byte {
-	var buf bytes.Buffer
+func makeQueryArgs(queryArgs []byte, request domain.HttpRequest) []byte {
+	buf := bytes.NewBuffer(queryArgs)
+
 	for key, value := range request.Query {
 		switch value := value.(type) {
 		case string:
-			appendStringParam(&buf, key, value)
+			appendStringParam(buf, key, value)
 		case []interface{}:
-			appendListParam(&buf, key, value)
+			appendListParam(buf, key, value)
 		}
 	}
 
