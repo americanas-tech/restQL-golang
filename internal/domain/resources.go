@@ -2,7 +2,7 @@ package domain
 
 type ResourceId string
 
-func newResourceId(statement Statement) ResourceId {
+func NewResourceId(statement Statement) ResourceId {
 	if statement.Alias != "" {
 		return ResourceId(statement.Alias)
 	}
@@ -15,7 +15,7 @@ type Resources map[ResourceId]interface{}
 func NewResources(statements []Statement) Resources {
 	resources := make(map[ResourceId]interface{})
 	for _, stmt := range statements {
-		index := newResourceId(stmt)
+		index := NewResourceId(stmt)
 		resources[index] = stmt
 	}
 
