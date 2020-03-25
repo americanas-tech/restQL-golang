@@ -1,3 +1,11 @@
+package conf
+
+import (
+	"github.com/rs/zerolog/log"
+	"gopkg.in/yaml.v2"
+)
+
+var defaults = []byte(`
 web:
   server:
     readTimeout: 3s
@@ -15,3 +23,11 @@ logging:
   timestamp: true
   level: info
   format: json
+`)
+
+func readDefaults(cfg *Config) {
+	err := yaml.Unmarshal(defaults, cfg)
+	if err != nil {
+		log.Printf("failed to unmarshal defaults : %s", err)
+	}
+}

@@ -11,7 +11,6 @@ import (
 )
 
 const configFileName = "restql.yml"
-const defaultConfigPath = "./internal/platform/conf/defaults.yaml"
 
 type requestIdConf struct {
 	Header   string `yaml:"header"`
@@ -68,12 +67,9 @@ type Config struct {
 
 func Load(build string) (*Config, error) {
 	cfg := Config{}
-	err := yaml.Unmarshal(readDefaultFile(), &cfg)
-	if err != nil {
-		return nil, err
-	}
+	readDefaults(&cfg)
 
-	err = yaml.Unmarshal(readConfigFile(), &cfg)
+	err := yaml.Unmarshal(readConfigFile(), &cfg)
 	if err != nil {
 		return nil, err
 	}
@@ -87,16 +83,6 @@ func Load(build string) (*Config, error) {
 	cfg.Env = EnvSource{}
 
 	return &cfg, nil
-}
-
-func readDefaultFile() []byte {
-	data, err := ioutil.ReadFile(defaultConfigPath)
-	if err != nil {
-		log.Printf("[ERROR] could not load default file at %s", defaultConfigPath)
-		return nil
-	}
-
-	return data
 }
 
 func readConfigFile() []byte {
