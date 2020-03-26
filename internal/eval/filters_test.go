@@ -50,6 +50,16 @@ func TestOnlyFilters(t *testing.T) {
 			},
 		},
 		{
+			"should do nothing if there is resource result is a primitive",
+			domain.Query{Statements: []domain.Statement{{Resource: "auth"}}},
+			domain.Resources{
+				"auth": domain.DoneResource{Details: domain.Details{Success: true}, Result: "1234567890abcdefg"},
+			},
+			domain.Resources{
+				"auth": domain.DoneResource{Details: domain.Details{Success: true}, Result: "1234567890abcdefg"},
+			},
+		},
+		{
 			"should bring only the given fields",
 			domain.Query{Statements: []domain.Statement{{
 				Resource: "hero",
