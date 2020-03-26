@@ -5,6 +5,7 @@ import (
 	"github.com/b2wdigital/restQL-golang/internal/domain"
 	"github.com/b2wdigital/restQL-golang/internal/eval"
 	"reflect"
+	"regexp"
 	"testing"
 )
 
@@ -265,7 +266,7 @@ func TestOnlyFilters(t *testing.T) {
 			"should bring only the given fields that matches arg",
 			domain.Query{Statements: []domain.Statement{{
 				Resource: "hero",
-				Only:     []interface{}{domain.Match{Target: "id", Arg: "56789"}, domain.Match{Target: "name", Arg: "batman"}, "age"},
+				Only:     []interface{}{domain.Match{Target: "id", Arg: regexp.MustCompile("56789")}, domain.Match{Target: "name", Arg: regexp.MustCompile("batman")}, "age"},
 			}}},
 			domain.Resources{
 				"hero": domain.DoneResource{
@@ -284,7 +285,7 @@ func TestOnlyFilters(t *testing.T) {
 			"should bring only the given fields that matches regex arg",
 			domain.Query{Statements: []domain.Statement{{
 				Resource: "hero",
-				Only:     []interface{}{domain.Match{Target: "id", Arg: "9$"}, domain.Match{Target: "name", Arg: "^b"}, domain.Match{Target: "age", Arg: "42"}},
+				Only:     []interface{}{domain.Match{Target: "id", Arg: regexp.MustCompile("9$")}, domain.Match{Target: "name", Arg: regexp.MustCompile("^b")}, domain.Match{Target: "age", Arg: regexp.MustCompile("42")}},
 			}}},
 			domain.Resources{
 				"hero": domain.DoneResource{
@@ -303,7 +304,7 @@ func TestOnlyFilters(t *testing.T) {
 			"should bring only the list elements that matches arg",
 			domain.Query{Statements: []domain.Statement{{
 				Resource: "hero",
-				Only:     []interface{}{domain.Match{Target: "weapons", Arg: "^b"}},
+				Only:     []interface{}{domain.Match{Target: "weapons", Arg: regexp.MustCompile("^b")}},
 			}}},
 			domain.Resources{
 				"hero": domain.DoneResource{
@@ -341,7 +342,7 @@ func TestOnlyFilters(t *testing.T) {
 			"should bring everything except non matching field",
 			domain.Query{Statements: []domain.Statement{{
 				Resource: "hero",
-				Only:     []interface{}{"*", domain.Match{Target: "name", Arg: "^c"}},
+				Only:     []interface{}{"*", domain.Match{Target: "name", Arg: regexp.MustCompile("^c")}},
 			}}},
 			domain.Resources{
 				"hero": domain.DoneResource{

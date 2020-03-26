@@ -3,6 +3,8 @@ package parser
 import (
 	"github.com/b2wdigital/restQL-golang/internal/domain"
 	"github.com/b2wdigital/restQL-golang/internal/parser/ast"
+	"github.com/pkg/errors"
+	"regexp"
 )
 
 func Parse(queryStr string) (domain.Query, error) {
@@ -16,7 +18,11 @@ func Parse(queryStr string) (domain.Query, error) {
 		return domain.Query{}, err
 	}
 
-	statements := mapToStatements(queryAst.Blocks)
+	statements, err := mapToStatements(queryAst.Blocks)
+	if err != nil {
+		return domain.Query{}, err
+	}
+
 	query := domain.Query{Statements: statements}
 
 	if queryAst.Use != nil {
@@ -38,17 +44,22 @@ func makeUse(queryAst *ast.Query) map[string]interface{} {
 	return result
 }
 
-func mapToStatements(fromBlocks []ast.Block) []domain.Statement {
+func mapToStatements(fromBlocks []ast.Block) ([]domain.Statement, error) {
 	result := make([]domain.Statement, len(fromBlocks))
 
 	for i, block := range fromBlocks {
-		result[i] = makeStatement(block)
+		statement, err := makeStatement(block)
+		if err != nil {
+			return nil, nil
+		}
+
+		result[i] = statement
 	}
 
-	return result
+	return result, nil
 }
 
-func makeStatement(block ast.Block) domain.Statement {
+func makeStatement(block ast.Block) (domain.Statement, error) {
 	s := domain.Statement{
 		Method:   block.Method,
 		Resource: block.Resource,
@@ -60,7 +71,12 @@ func makeStatement(block ast.Block) domain.Statement {
 		}
 
 		if qualifier.Only != nil {
-			s.Only = makeOnlyFilter(qualifier)
+			filter, err := makeOnlyFilter(qualifier)
+			if err != nil {
+				return domain.Statement{}, err
+			}
+
+			s.Only = filter
 		}
 
 		if qualifier.Timeout != nil {
@@ -85,7 +101,7 @@ func makeStatement(block ast.Block) domain.Statement {
 		s.IgnoreErrors = qualifier.IgnoreErrors || s.IgnoreErrors
 	}
 
-	return s
+	return s, nil
 }
 
 func makeParams(wq ast.Qualifier) domain.Params {
@@ -111,19 +127,23 @@ func makeParams(wq ast.Qualifier) domain.Params {
 	return p
 }
 
-func makeOnlyFilter(onlyQualifier ast.Qualifier) []interface{} {
+func makeOnlyFilter(onlyQualifier ast.Qualifier) ([]interface{}, error) {
 	filters := onlyQualifier.Only
 
 	result := make([]interface{}, len(filters))
 	for i, f := range filters {
 		if f.Match != "" {
-			result[i] = domain.Match{Target: f.Field, Arg: f.Match}
+			regex, err := regexp.Compile(f.Match)
+			if err != nil {
+				return nil, errors.Wrap(err, "matches function regex argument is invalid")
+			}
+			result[i] = domain.Match{Target: f.Field, Arg: regex}
 		} else {
 			result[i] = f.Field
 		}
 	}
 
-	return result
+	return result, nil
 }
 
 func makeHeaders(qualifier ast.Qualifier) map[string]interface{} {
