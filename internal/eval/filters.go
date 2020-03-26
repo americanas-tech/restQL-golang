@@ -57,14 +57,21 @@ func applyOnlyFilters(filters []interface{}, resourceResult interface{}) (interf
 }
 
 func extractWithFilters(filters map[string]interface{}, resourceResult interface{}) (interface{}, error) {
+	filters, hasSelectAll := extractSelectAllFilter(filters)
+
 	switch resourceResult := resourceResult.(type) {
 	case map[string]interface{}:
-		node := make(map[string]interface{})
+		var node map[string]interface{}
+		if hasSelectAll {
+			node = resourceResult
+		} else {
+			node = make(map[string]interface{})
+		}
 
 		for key, subFilter := range filters {
 			value := resourceResult[key]
 
-			if matchFilter, isMatch := subFilter.(domain.Match); isMatch {
+			if matchFilter, ok := subFilter.(domain.Match); ok {
 				err := applyMatchFilter(matchFilter, key, value, node)
 				if err != nil {
 					return nil, err
@@ -84,7 +91,12 @@ func extractWithFilters(filters map[string]interface{}, resourceResult interface
 
 		return node, nil
 	case []interface{}:
-		node := make([]interface{}, len(resourceResult))
+		var node []interface{}
+		if hasSelectAll {
+			node = resourceResult
+		} else {
+			node = make([]interface{}, len(resourceResult))
+		}
 
 		for i, r := range resourceResult {
 			filtered, err := extractWithFilters(filters, r)
@@ -98,6 +110,21 @@ func extractWithFilters(filters map[string]interface{}, resourceResult interface
 	}
 
 	return nil, nil
+}
+
+func extractSelectAllFilter(filters map[string]interface{}) (map[string]interface{}, bool) {
+	m := make(map[string]interface{})
+	has := false
+
+	for k, v := range filters {
+		if k != "*" {
+			m[k] = v
+		} else {
+			has = true
+		}
+	}
+
+	return m, has
 }
 
 func applyMatchFilter(filter domain.Match, key string, value interface{}, node map[string]interface{}) error {
@@ -131,6 +158,8 @@ func applyMatchFilter(filter domain.Match, key string, value interface{}, node m
 
 		if match {
 			node[key] = value
+		} else {
+			delete(node, key)
 		}
 
 		return nil
