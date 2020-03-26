@@ -289,6 +289,44 @@ func TestOnlyFilters(t *testing.T) {
 				},
 			},
 		},
+		{
+			"should bring everything",
+			domain.Query{Statements: []domain.Statement{{
+				Resource: "hero",
+				Only:     []interface{}{"*"},
+			}}},
+			domain.Resources{
+				"hero": domain.DoneResource{
+					Details: domain.Details{Success: true},
+					Result:  unmarshal(`{ "id": "12345", "name": "batman", "age": 42 }`),
+				},
+			},
+			domain.Resources{
+				"hero": domain.DoneResource{
+					Details: domain.Details{Success: true},
+					Result:  unmarshal(`{ "id": "12345", "name": "batman", "age": 42 }`),
+				},
+			},
+		},
+		{
+			"should bring everything except non matching field",
+			domain.Query{Statements: []domain.Statement{{
+				Resource: "hero",
+				Only:     []interface{}{"*", domain.Match{Target: "name", Arg: "^c"}},
+			}}},
+			domain.Resources{
+				"hero": domain.DoneResource{
+					Details: domain.Details{Success: true},
+					Result:  unmarshal(`{ "id": "12345", "name": "batman", "age": 42 }`),
+				},
+			},
+			domain.Resources{
+				"hero": domain.DoneResource{
+					Details: domain.Details{Success: true},
+					Result:  unmarshal(`{ "id": "12345", "age": 42 }`),
+				},
+			},
+		},
 	}
 
 	for _, tt := range tests {
