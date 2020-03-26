@@ -1,5 +1,7 @@
 package domain
 
+import "regexp"
+
 type Query struct {
 	Use        Modifiers
 	Statements []Statement
@@ -47,7 +49,7 @@ type Base64 struct {
 
 type Match struct {
 	Target string
-	Arg    string
+	Arg    *regexp.Regexp
 }
 
 type QueryOptions struct {

@@ -4,6 +4,7 @@ import (
 	"github.com/b2wdigital/restQL-golang/internal/domain"
 	. "github.com/b2wdigital/restQL-golang/internal/parser"
 	"reflect"
+	"regexp"
 	"testing"
 )
 
@@ -117,7 +118,7 @@ func TestQueryParser(t *testing.T) {
 		},
 		{
 			"Unique from statement and only filters with match function",
-			domain.Query{Statements: []domain.Statement{{Method: "from", Resource: "hero", Only: []interface{}{domain.Match{Target: "name", Arg: "^Super"}, "weapons"}}}},
+			domain.Query{Statements: []domain.Statement{{Method: "from", Resource: "hero", Only: []interface{}{domain.Match{Target: "name", Arg: regexp.MustCompile("^Super")}, "weapons"}}}},
 			`from hero only name -> matches("^Super"), weapons`,
 		},
 		{
