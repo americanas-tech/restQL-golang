@@ -69,6 +69,25 @@ func TestOnlyFilters(t *testing.T) {
 			},
 		},
 		{
+			"should bring only the given fields and not return field not present",
+			domain.Query{Statements: []domain.Statement{{
+				Resource: "hero",
+				Only:     []interface{}{"name", "age"},
+			}}},
+			domain.Resources{
+				"hero": domain.DoneResource{
+					Details: domain.Details{Success: true},
+					Result:  unmarshal(`{ "id": "12345", "name": "batman" }`),
+				},
+			},
+			domain.Resources{
+				"hero": domain.DoneResource{
+					Details: domain.Details{Success: true},
+					Result:  unmarshal(`{ "name": "batman" }`),
+				},
+			},
+		},
+		{
 			"should bring multiple nested fields",
 			domain.Query{Statements: []domain.Statement{{
 				Resource: "hero",
