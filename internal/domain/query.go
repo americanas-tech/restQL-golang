@@ -46,7 +46,7 @@ type Base64 struct {
 }
 
 type Match struct {
-	Target interface{}
+	Target string
 	Arg    string
 }
 

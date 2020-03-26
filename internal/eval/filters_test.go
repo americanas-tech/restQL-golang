@@ -23,7 +23,7 @@ func TestHiddenFilter(t *testing.T) {
 		"sidekick": domain.DoneResource{Details: domain.Details{Success: true}, Result: nil},
 	}
 
-	got := eval.ApplyFilters(query, resources)
+	got, _ := eval.ApplyFilters(query, resources)
 
 	if !reflect.DeepEqual(got, expectedResources) {
 		t.Fatalf("ApplyFilters = %+#v, want = %+#v", got, expectedResources)
@@ -232,11 +232,72 @@ func TestOnlyFilters(t *testing.T) {
 				},
 			},
 		},
+		{
+			"should bring only the given fields that matches arg",
+			domain.Query{Statements: []domain.Statement{{
+				Resource: "hero",
+				Only:     []interface{}{domain.Match{Target: "id", Arg: "56789"}, domain.Match{Target: "name", Arg: "batman"}, "age"},
+			}}},
+			domain.Resources{
+				"hero": domain.DoneResource{
+					Details: domain.Details{Success: true},
+					Result:  unmarshal(`{ "id": "12345", "name": "batman", "age": 42 }`),
+				},
+			},
+			domain.Resources{
+				"hero": domain.DoneResource{
+					Details: domain.Details{Success: true},
+					Result:  unmarshal(`{ "name": "batman", "age": 42 }`),
+				},
+			},
+		},
+		{
+			"should bring only the given fields that matches regex arg",
+			domain.Query{Statements: []domain.Statement{{
+				Resource: "hero",
+				Only:     []interface{}{domain.Match{Target: "id", Arg: "9$"}, domain.Match{Target: "name", Arg: "^b"}, domain.Match{Target: "age", Arg: "42"}},
+			}}},
+			domain.Resources{
+				"hero": domain.DoneResource{
+					Details: domain.Details{Success: true},
+					Result:  unmarshal(`{ "id": "12345", "name": "batman", "age": 42 }`),
+				},
+			},
+			domain.Resources{
+				"hero": domain.DoneResource{
+					Details: domain.Details{Success: true},
+					Result:  unmarshal(`{ "name": "batman", "age": 42 }`),
+				},
+			},
+		},
+		{
+			"should bring only the list elements that matches arg",
+			domain.Query{Statements: []domain.Statement{{
+				Resource: "hero",
+				Only:     []interface{}{domain.Match{Target: "weapons", Arg: "^b"}},
+			}}},
+			domain.Resources{
+				"hero": domain.DoneResource{
+					Details: domain.Details{Success: true},
+					Result:  unmarshal(`{ "id": "12345", "weapons": ["belt", "batarang", "katana"] }`),
+				},
+			},
+			domain.Resources{
+				"hero": domain.DoneResource{
+					Details: domain.Details{Success: true},
+					Result:  unmarshal(`{ "weapons": ["belt", "batarang"] }`),
+				},
+			},
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := eval.ApplyFilters(tt.query, tt.resources)
+			got, err := eval.ApplyFilters(tt.query, tt.resources)
+			if err != nil {
+				t.Fatalf("ApplyFilters returned unexpected error: %s", err)
+			}
+
 			if !reflect.DeepEqual(got, tt.expected) {
 				t.Fatalf("ApplyFilters = %+#v, want = %+#v", got, tt.expected)
 			}
