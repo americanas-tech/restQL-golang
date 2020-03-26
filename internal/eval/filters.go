@@ -52,7 +52,7 @@ func applyOnlyFilters(filters []interface{}, resourceResult interface{}) (interf
 		}
 		return list, nil
 	default:
-		return nil, nil
+		return nil, errors.Errorf("resource result has unknown type: %T", resourceResult)
 	}
 }
 
@@ -110,9 +110,9 @@ func extractWithFilters(filters map[string]interface{}, resourceResult interface
 		}
 
 		return node, nil
+	default:
+		return resourceResult, nil
 	}
-
-	return nil, nil
 }
 
 func extractSelectAllFilter(filters map[string]interface{}) (map[string]interface{}, bool) {
