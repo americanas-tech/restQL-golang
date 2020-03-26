@@ -69,7 +69,10 @@ func extractWithFilters(filters map[string]interface{}, resourceResult interface
 		}
 
 		for key, subFilter := range filters {
-			value := resourceResult[key]
+			value, found := resourceResult[key]
+			if !found {
+				continue
+			}
 
 			if matchFilter, ok := subFilter.(domain.Match); ok {
 				err := applyMatchFilter(matchFilter, key, value, node)
