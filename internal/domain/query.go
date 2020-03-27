@@ -48,7 +48,7 @@ type Base64 struct {
 }
 
 type Match struct {
-	Target string
+	Target []string
 	Arg    *regexp.Regexp
 }
 

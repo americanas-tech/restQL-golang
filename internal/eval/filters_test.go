@@ -64,7 +64,7 @@ func TestOnlyFilters(t *testing.T) {
 			"should bring only the given fields",
 			domain.Query{Statements: []domain.Statement{{
 				Resource: "hero",
-				Only:     []interface{}{"name", "age"},
+				Only:     []interface{}{[]string{"name"}, []string{"age"}},
 			}}},
 			domain.Resources{
 				"hero": domain.DoneResource{
@@ -83,7 +83,7 @@ func TestOnlyFilters(t *testing.T) {
 			"should bring only the given fields and not return field not present",
 			domain.Query{Statements: []domain.Statement{{
 				Resource: "hero",
-				Only:     []interface{}{"name", "age"},
+				Only:     []interface{}{[]string{"name"}, []string{"age"}},
 			}}},
 			domain.Resources{
 				"hero": domain.DoneResource{
@@ -102,7 +102,7 @@ func TestOnlyFilters(t *testing.T) {
 			"should bring multiple nested fields",
 			domain.Query{Statements: []domain.Statement{{
 				Resource: "hero",
-				Only:     []interface{}{"city.name", "city.population"},
+				Only:     []interface{}{[]string{"city", "name"}, []string{"city", "population"}},
 			}}},
 			domain.Resources{
 				"hero": domain.DoneResource{
@@ -121,7 +121,7 @@ func TestOnlyFilters(t *testing.T) {
 			"should bring only the given nested fields",
 			domain.Query{Statements: []domain.Statement{{
 				Resource: "hero",
-				Only:     []interface{}{"id", "nested.some-field.even-more-nested"},
+				Only:     []interface{}{[]string{"id"}, []string{"nested", "some-field", "even-more-nested"}},
 			}}},
 			domain.Resources{
 				"hero": domain.DoneResource{
@@ -140,7 +140,7 @@ func TestOnlyFilters(t *testing.T) {
 			"should bring only the given fields when field is in a list",
 			domain.Query{Statements: []domain.Statement{{
 				Resource: "hero",
-				Only:     []interface{}{"weapons.name"},
+				Only:     []interface{}{[]string{"weapons", "name"}},
 			}}},
 			domain.Resources{
 				"hero": domain.DoneResource{
@@ -159,7 +159,7 @@ func TestOnlyFilters(t *testing.T) {
 			"should bring only the given fields when field is a list of primitivies",
 			domain.Query{Statements: []domain.Statement{{
 				Resource: "hero",
-				Only:     []interface{}{"weapons"},
+				Only:     []interface{}{[]string{"weapons"}},
 			}}},
 			domain.Resources{
 				"hero": domain.DoneResource{
@@ -178,7 +178,7 @@ func TestOnlyFilters(t *testing.T) {
 			"should bring only the given fields when field is nested and in a list",
 			domain.Query{Statements: []domain.Statement{{
 				Resource: "hero",
-				Only:     []interface{}{"weapons.nested.some-field.even-more-nested"},
+				Only:     []interface{}{[]string{"weapons", "nested", "some-field", "even-more-nested"}},
 			}}},
 			domain.Resources{
 				"hero": domain.DoneResource{
@@ -197,7 +197,7 @@ func TestOnlyFilters(t *testing.T) {
 			"should bring fields in deep nested lists",
 			domain.Query{Statements: []domain.Statement{{
 				Resource: "hero",
-				Only:     []interface{}{"weapons.name", "weapons.properties.name", "weapons.properties.value"},
+				Only:     []interface{}{[]string{"weapons", "name"}, []string{"weapons", "properties", "name"}, []string{"weapons", "properties", "value"}},
 			}}},
 			domain.Resources{
 				"hero": domain.DoneResource{
@@ -216,7 +216,7 @@ func TestOnlyFilters(t *testing.T) {
 			"should bring only the given fields when body is a list",
 			domain.Query{Statements: []domain.Statement{{
 				Resource: "hero",
-				Only:     []interface{}{"name", "age"},
+				Only:     []interface{}{[]string{"name"}, []string{"age"}},
 			}}},
 			domain.Resources{
 				"hero": domain.DoneResource{
@@ -235,7 +235,7 @@ func TestOnlyFilters(t *testing.T) {
 			"should bring only the given fields when resource is multiplexed",
 			domain.Query{Statements: []domain.Statement{{
 				Resource: "hero",
-				Only:     []interface{}{"name", "age"},
+				Only:     []interface{}{[]string{"name"}, []string{"age"}},
 			}}},
 			domain.Resources{
 				"hero": domain.DoneResources{
@@ -266,7 +266,11 @@ func TestOnlyFilters(t *testing.T) {
 			"should bring only the given fields that matches arg",
 			domain.Query{Statements: []domain.Statement{{
 				Resource: "hero",
-				Only:     []interface{}{domain.Match{Target: "id", Arg: regexp.MustCompile("56789")}, domain.Match{Target: "name", Arg: regexp.MustCompile("batman")}, "age"},
+				Only: []interface{}{
+					domain.Match{Target: []string{"id"}, Arg: regexp.MustCompile("56789")},
+					domain.Match{Target: []string{"name"}, Arg: regexp.MustCompile("batman")},
+					[]string{"age"},
+				},
 			}}},
 			domain.Resources{
 				"hero": domain.DoneResource{
@@ -285,7 +289,7 @@ func TestOnlyFilters(t *testing.T) {
 			"should bring only the given fields that matches regex arg",
 			domain.Query{Statements: []domain.Statement{{
 				Resource: "hero",
-				Only:     []interface{}{domain.Match{Target: "id", Arg: regexp.MustCompile("9$")}, domain.Match{Target: "name", Arg: regexp.MustCompile("^b")}, domain.Match{Target: "age", Arg: regexp.MustCompile("42")}},
+				Only:     []interface{}{domain.Match{Target: []string{"id"}, Arg: regexp.MustCompile("9$")}, domain.Match{Target: []string{"name"}, Arg: regexp.MustCompile("^b")}, domain.Match{Target: []string{"age"}, Arg: regexp.MustCompile("42")}},
 			}}},
 			domain.Resources{
 				"hero": domain.DoneResource{
@@ -304,7 +308,7 @@ func TestOnlyFilters(t *testing.T) {
 			"should bring only the list elements that matches arg",
 			domain.Query{Statements: []domain.Statement{{
 				Resource: "hero",
-				Only:     []interface{}{domain.Match{Target: "weapons", Arg: regexp.MustCompile("^b")}},
+				Only:     []interface{}{domain.Match{Target: []string{"weapons"}, Arg: regexp.MustCompile("^b")}},
 			}}},
 			domain.Resources{
 				"hero": domain.DoneResource{
@@ -323,7 +327,7 @@ func TestOnlyFilters(t *testing.T) {
 			"should bring everything",
 			domain.Query{Statements: []domain.Statement{{
 				Resource: "hero",
-				Only:     []interface{}{"*"},
+				Only:     []interface{}{[]string{"*"}},
 			}}},
 			domain.Resources{
 				"hero": domain.DoneResource{
@@ -342,7 +346,7 @@ func TestOnlyFilters(t *testing.T) {
 			"should bring everything except non matching field",
 			domain.Query{Statements: []domain.Statement{{
 				Resource: "hero",
-				Only:     []interface{}{"*", domain.Match{Target: "name", Arg: regexp.MustCompile("^c")}},
+				Only:     []interface{}{[]string{"*"}, domain.Match{Target: []string{"name"}, Arg: regexp.MustCompile("^c")}},
 			}}},
 			domain.Resources{
 				"hero": domain.DoneResource{

@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/b2wdigital/restQL-golang/internal/domain"
 	"github.com/pkg/errors"
-	"strings"
 )
 
 func ApplyFilters(query domain.Query, resources domain.Resources) (domain.Resources, error) {
@@ -150,14 +149,8 @@ func buildFilterTree(filters []interface{}) map[string]interface{} {
 	tree := make(map[string]interface{})
 
 	for _, f := range filters {
-		switch f := f.(type) {
-		case string:
-			path := parsePath(f)
-			buildPathInTree(path, tree)
-		case domain.Match:
-			path := parsePath(f)
-			buildPathInTree(path, tree)
-		}
+		path := parsePath(f)
+		buildPathInTree(path, tree)
 	}
 
 	return tree
@@ -176,7 +169,7 @@ func buildPathInTree(path []interface{}, tree map[string]interface{}) {
 		field = f
 		leaf = nil
 	case domain.Match:
-		field = f.Target
+		field = f.Target[0]
 		leaf = f
 	}
 
@@ -203,8 +196,8 @@ func buildPathInTree(path []interface{}, tree map[string]interface{}) {
 
 func parsePath(s interface{}) []interface{} {
 	switch s := s.(type) {
-	case string:
-		items := strings.Split(s, ".")
+	case []string:
+		items := s
 
 		result := make([]interface{}, len(items))
 		for i, item := range items {
@@ -212,12 +205,12 @@ func parsePath(s interface{}) []interface{} {
 		}
 		return result
 	case domain.Match:
-		items := strings.Split(s.Target, ".")
+		items := s.Target
 
 		result := make([]interface{}, len(items))
 		for i, item := range items {
 			if i == len(items)-1 {
-				result[i] = domain.Match{Target: item, Arg: s.Arg}
+				result[i] = domain.Match{Target: []string{item}, Arg: s.Arg}
 			} else {
 				result[i] = item
 			}

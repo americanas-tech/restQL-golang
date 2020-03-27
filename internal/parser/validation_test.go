@@ -41,7 +41,7 @@ func TestParseValidation(t *testing.T) {
 					Resource: "hero",
 					Qualifiers: []ast.Qualifier{
 						{
-							Only: []ast.Filter{{Field: "name"}},
+							Only: []ast.Filter{{Field: []string{"name"}}},
 						},
 						{
 							Hidden: true,

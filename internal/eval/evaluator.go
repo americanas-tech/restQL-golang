@@ -53,7 +53,7 @@ func (e Evaluator) SavedQuery(ctx context.Context, queryOpts domain.QueryOptions
 		Input:    queryInput,
 	}
 
-	r, err := e.run.ExecuteQuery(ctx, query, queryCtx)
+	resources, err := e.run.ExecuteQuery(ctx, query, queryCtx)
 	switch {
 	case err == runner.ErrQueryTimedOut:
 		return nil, TimeoutError{Err: err}
@@ -61,7 +61,12 @@ func (e Evaluator) SavedQuery(ctx context.Context, queryOpts domain.QueryOptions
 		return nil, err
 	}
 
-	return r, nil
+	filteredResources, err := ApplyFilters(query, resources)
+	if err != nil {
+		return nil, err
+	}
+
+	return filteredResources, nil
 }
 
 func (e Evaluator) fetchMappings(tenant string, query domain.Query) (map[string]domain.Mapping, error) {

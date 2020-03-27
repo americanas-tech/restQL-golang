@@ -2,7 +2,7 @@ package ast
 
 const lexerDefinition = `
 		Use = use
-		Method = from|into|update|to|delete
+		Method = ^from\s+|^into\s+|^update\s+|^to\s+|^delete\s+
 		As = as
 
 		Headers = headers
@@ -42,11 +42,11 @@ const lexerDefinition = `
 `
 
 const (
-	FromMethod   = "from"
-	IntoMethod   = "into"
-	UpdateMethod = "update"
-	ToMethod     = "to"
-	DeleteMethod = "delete"
+	FromMethod   = "from "
+	IntoMethod   = "into "
+	UpdateMethod = "update "
+	ToMethod     = "to "
+	DeleteMethod = "delete "
 )
 
 const (
@@ -84,7 +84,7 @@ type Block struct {
 
 type Qualifier struct {
 	With         []WithItem    `(With @@+)`
-	Only         []Filter      `| (Only (@@)+)`
+	Only         []Filter      `| (Only @@+)`
 	Hidden       bool          `| @Hidden`
 	Timeout      *TimeoutValue `| (Timeout @@)`
 	Headers      []HeaderItem  `| (Headers @@+)`
@@ -94,8 +94,8 @@ type Qualifier struct {
 }
 
 type Filter struct {
-	Field string `@Ident`
-	Match string `(Arrow Matches LeftParentheses @String RightParentheses)?`
+	Field []string `@Ident (Dot @Ident)*`
+	Match string   `(Arrow Matches LeftParentheses @String RightParentheses)?`
 }
 
 type WithItem struct {

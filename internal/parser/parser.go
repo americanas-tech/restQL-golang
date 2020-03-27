@@ -5,6 +5,7 @@ import (
 	"github.com/b2wdigital/restQL-golang/internal/parser/ast"
 	"github.com/pkg/errors"
 	"regexp"
+	"strings"
 )
 
 func Parse(queryStr string) (domain.Query, error) {
@@ -61,7 +62,7 @@ func mapToStatements(fromBlocks []ast.Block) ([]domain.Statement, error) {
 
 func makeStatement(block ast.Block) (domain.Statement, error) {
 	s := domain.Statement{
-		Method:   block.Method,
+		Method:   strings.TrimSpace(block.Method),
 		Resource: block.Resource,
 		Alias:    block.Alias,
 	}
