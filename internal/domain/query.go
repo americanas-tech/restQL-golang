@@ -13,6 +13,7 @@ type Statement struct {
 	Method       string
 	Resource     string
 	Alias        string
+	In           []string
 	Headers      map[string]interface{}
 	Timeout      interface{}
 	With         Params

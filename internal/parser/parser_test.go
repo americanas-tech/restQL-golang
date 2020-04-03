@@ -122,6 +122,14 @@ func TestQueryParser(t *testing.T) {
 			`from hero only name -> matches("^Super"), weapons`,
 		},
 		{
+			"Unique from statement with aggregation",
+			domain.Query{Statements: []domain.Statement{
+				{Method: "from", Resource: "hero"},
+				{Method: "from", Resource: "sidekick", In: []string{"hero", "sidekick"}},
+			}},
+			"from hero from sidekick in hero.sidekick",
+		},
+		{
 			"Full query",
 			domain.Query{
 				Use: map[string]interface{}{"max-age": 600},
@@ -144,6 +152,7 @@ func TestQueryParser(t *testing.T) {
 						Method:   "from",
 						Resource: "sidekick",
 						Alias:    "s",
+						In:       []string{"hero", "sidekick"},
 						Headers:  map[string]interface{}{"X-Trace-Id": "abcdef12345"},
 						With: map[string]interface{}{
 							"id":      1,
@@ -176,7 +185,7 @@ func TestQueryParser(t *testing.T) {
 						id
 						name
 		
-				 from sidekick as s
+				 from sidekick as s in hero.sidekick
 					with
 						id = 1
 						name = "batman"

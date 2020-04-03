@@ -293,6 +293,14 @@ func TestAstParser(t *testing.T) {
 						weapons`,
 		},
 		{
+			"Simple from resource query with aggreation",
+			Query{Blocks: []Block{
+				{Method: FromMethod, Resource: "hero"},
+				{Method: FromMethod, Resource: "sidekick", In: []string{"hero", "sidekick"}},
+			}},
+			"from hero from sidekick in hero.sidekick",
+		},
+		{
 			"Full query",
 			Query{Blocks: []Block{
 				{
@@ -334,6 +342,7 @@ func TestAstParser(t *testing.T) {
 					Method:   FromMethod,
 					Resource: "sidekick",
 					Alias:    "s",
+					In:       []string{"hero", "sidekick"},
 					Qualifiers: []Qualifier{
 						{
 							With: []WithItem{
@@ -383,7 +392,7 @@ func TestAstParser(t *testing.T) {
 						var = $myvar
 		
 		
-				 from sidekick as s
+				 from sidekick as s in hero.sidekick
 					with
 						id = 1
 						name = "batman"

@@ -65,6 +65,7 @@ func makeStatement(block ast.Block) (domain.Statement, error) {
 		Method:   strings.TrimSpace(block.Method),
 		Resource: block.Resource,
 		Alias:    block.Alias,
+		In:       block.In,
 	}
 	for _, qualifier := range block.Qualifiers {
 		if qualifier.With != nil {

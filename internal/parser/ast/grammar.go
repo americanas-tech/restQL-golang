@@ -4,6 +4,7 @@ const lexerDefinition = `
 		Use = use
 		Method = ^from\s+|^into\s+|^update\s+|^to\s+|^delete\s+
 		As = as
+		In = in\s+
 
 		Headers = headers
 		With = with
@@ -79,6 +80,7 @@ type Block struct {
 	Method     string      `@Method`
 	Resource   string      `@Ident`
 	Alias      string      `(As @Ident)?`
+	In         []string    `(In @Ident (Dot @Ident)*)?`
 	Qualifiers []Qualifier `@@*`
 }
 
