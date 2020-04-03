@@ -65,7 +65,7 @@ type StatementDetails struct {
 
 type StatementResult struct {
 	Details interface{} `json:"details"`
-	Result  interface{} `json:"result"`
+	Result  interface{} `json:"result,omitempty"`
 }
 
 type QueryResponse map[string]StatementResult
@@ -87,10 +87,25 @@ func parseResponse(response interface{}) StatementResult {
 		details := make([]interface{}, len(response))
 		results := make([]interface{}, len(response))
 
+		hasResult := false
+
 		for i, r := range response {
 			result := parseResponse(r)
-			details[i] = result.Details
-			results[i] = result.Result
+
+			d := result.Details
+			if d != nil {
+				details[i] = d
+			}
+
+			r := result.Result
+			if r != nil {
+				hasResult = true
+				results[i] = r
+			}
+		}
+
+		if !hasResult {
+			return StatementResult{Details: details, Result: nil}
 		}
 
 		return StatementResult{Details: details, Result: results}

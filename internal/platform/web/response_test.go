@@ -92,6 +92,35 @@ func TestMakeQueryResponse(t *testing.T) {
 				},
 			},
 		},
+		{
+			"should make response for aggregated multiplexed result",
+			domain.Resources{
+				"hero": domain.DoneResource{
+					Details: domain.Details{Status: 200, Success: true},
+					Result:  unmarshal(`{"id": "10"}`),
+				},
+				"sidekick": domain.DoneResources{
+					domain.DoneResource{
+						Details: domain.Details{Status: 200, Success: true},
+						Result:  nil,
+					},
+					domain.DoneResource{
+						Details: domain.Details{Status: 200, Success: true},
+						Result:  nil,
+					},
+				},
+			},
+			web.QueryResponse{
+				"hero": web.StatementResult{
+					Details: web.StatementDetails{Status: 200, Success: true},
+					Result:  unmarshal(`{"id": "10"}`),
+				},
+				"sidekick": web.StatementResult{
+					Details: []interface{}{web.StatementDetails{Status: 200, Success: true}, web.StatementDetails{Status: 200, Success: true}},
+					Result:  nil,
+				},
+			},
+		},
 	}
 
 	for _, tt := range tests {
