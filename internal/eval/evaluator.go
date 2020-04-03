@@ -61,12 +61,14 @@ func (e Evaluator) SavedQuery(ctx context.Context, queryOpts domain.QueryOptions
 		return nil, err
 	}
 
-	filteredResources, err := ApplyFilters(query, resources)
+	resources, err = ApplyFilters(query, resources)
 	if err != nil {
 		return nil, err
 	}
 
-	return filteredResources, nil
+	resources = ApplyAggregators(query, resources)
+
+	return resources, nil
 }
 
 func (e Evaluator) fetchMappings(tenant string, query domain.Query) (map[string]domain.Mapping, error) {
