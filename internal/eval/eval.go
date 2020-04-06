@@ -1,5 +1,15 @@
 package eval
 
+import "github.com/b2wdigital/restQL-golang/internal/domain"
+
+type MappingsReader interface {
+	Get(tenant, resource string) (domain.Mapping, error)
+}
+
+type QueryReader interface {
+	Get(namespace, id string, revision int) (string, error)
+}
+
 type ValidationError struct {
 	Err error
 }

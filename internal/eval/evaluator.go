@@ -31,7 +31,7 @@ func (e Evaluator) SavedQuery(ctx context.Context, queryOpts domain.QueryOptions
 		return nil, err
 	}
 
-	queryTxt, err := e.queryReader.GetQuery(queryOpts.Namespace, queryOpts.Id, queryOpts.Revision)
+	queryTxt, err := e.queryReader.Get(queryOpts.Namespace, queryOpts.Id, queryOpts.Revision)
 	if err != nil {
 		return nil, err
 	}
@@ -75,7 +75,7 @@ func (e Evaluator) fetchMappings(tenant string, query domain.Query) (map[string]
 	mappings := make(map[string]domain.Mapping)
 
 	for _, stmt := range query.Statements {
-		url, err := e.mappingsReader.GetMapping(tenant, stmt.Resource)
+		url, err := e.mappingsReader.Get(tenant, stmt.Resource)
 		if err != nil {
 			return nil, err
 		}
