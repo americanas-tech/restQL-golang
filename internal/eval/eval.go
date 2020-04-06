@@ -3,7 +3,7 @@ package eval
 import "github.com/b2wdigital/restQL-golang/internal/domain"
 
 type MappingsReader interface {
-	Get(tenant, resource string) (domain.Mapping, error)
+	FromTenant(tenant string) (map[string]domain.Mapping, error)
 }
 
 type QueryReader interface {

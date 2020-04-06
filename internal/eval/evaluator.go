@@ -42,7 +42,7 @@ func (e Evaluator) SavedQuery(ctx context.Context, queryOpts domain.QueryOptions
 		return nil, ParserError{errors.Wrap(err, "invalid query syntax")}
 	}
 
-	mappings, err := e.fetchMappings(queryOpts.Tenant, query)
+	mappings, err := e.mappingsReader.FromTenant(queryOpts.Tenant)
 	if err != nil {
 		return nil, err
 	}
@@ -69,22 +69,6 @@ func (e Evaluator) SavedQuery(ctx context.Context, queryOpts domain.QueryOptions
 	resources = ApplyAggregators(query, resources)
 
 	return resources, nil
-}
-
-func (e Evaluator) fetchMappings(tenant string, query domain.Query) (map[string]domain.Mapping, error) {
-	mappings := make(map[string]domain.Mapping)
-
-	for _, stmt := range query.Statements {
-		url, err := e.mappingsReader.Get(tenant, stmt.Resource)
-		if err != nil {
-			return nil, err
-		}
-
-		mappings[stmt.Resource] = url
-	}
-
-	return mappings, nil
-
 }
 
 func validateQueryOptions(queryOpts domain.QueryOptions) error {

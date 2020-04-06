@@ -1,6 +1,9 @@
 package domain
 
-import "regexp"
+import (
+	"github.com/pkg/errors"
+	"regexp"
+)
 
 var pathParamRegex, _ = regexp.Compile("/:(.+)")
 var schemaRegex, _ = regexp.Compile("^(\\w+)://(.+)$")
@@ -13,7 +16,7 @@ type Mapping struct {
 	PathParamsSet map[string]struct{}
 }
 
-func NewMapping(resource, url string) Mapping {
+func NewMapping(resource, url string) (Mapping, error) {
 	paramsMatches := pathParamRegex.FindAllStringSubmatch(url, -1)
 
 	pathParamsSet := make(map[string]struct{})
@@ -25,6 +28,14 @@ func NewMapping(resource, url string) Mapping {
 	}
 
 	schemaMatches := schemaRegex.FindAllStringSubmatch(url, -1)
+	if len(schemaMatches) == 0 {
+		return Mapping{}, errors.Errorf("failed to create mapping from %s", url)
+	}
+
+	if len(schemaMatches[0]) != 3 {
+		return Mapping{}, errors.Errorf("failed to create mapping from %s", url)
+	}
+
 	schema := schemaMatches[0][1]
 	uri := schemaMatches[0][2]
 
@@ -34,7 +45,7 @@ func NewMapping(resource, url string) Mapping {
 		Schema:        schema,
 		PathParams:    pathParams,
 		PathParamsSet: pathParamsSet,
-	}
+	}, nil
 }
 
 func (m Mapping) HasParam(name string) bool {

@@ -8,6 +8,7 @@ import (
 
 type EnvSource interface {
 	GetString(key string) string
+	GetAll() map[string]string
 }
 
 type Logger interface {

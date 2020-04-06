@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 )
 
@@ -133,5 +134,17 @@ func doesFileExist(filepath string) bool {
 type EnvSource struct{}
 
 func (e EnvSource) GetString(key string) string {
-	return os.Getenv(key)
+	return os.Getenv("RESTQL_" + key)
+}
+
+func (e EnvSource) GetAll() map[string]string {
+	result := make(map[string]string)
+	for _, envVar := range os.Environ() {
+		pair := strings.SplitN(envVar, "=", 2)
+		if strings.HasPrefix(pair[0], "RESTQL_") {
+			result[pair[0]] = pair[1]
+		}
+	}
+
+	return result
 }

@@ -1,34 +1,9 @@
 package persistence
 
 import (
-	"github.com/b2wdigital/restQL-golang/internal/domain"
 	"github.com/b2wdigital/restQL-golang/internal/eval"
-	"github.com/b2wdigital/restQL-golang/internal/platform/conf"
 	"github.com/pkg/errors"
 )
-
-type MappingsReader struct {
-	env   conf.EnvSource
-	local map[string]string
-}
-
-func NewMappingReader(env conf.EnvSource, local map[string]string) MappingsReader {
-	mr := MappingsReader{env: env}
-	mr.local = local
-
-	return mr
-}
-
-func (mr MappingsReader) Get(tenant, resource string) (domain.Mapping, error) {
-	switch {
-	case mr.env.GetString(resource) != "":
-		return domain.NewMapping(resource, mr.env.GetString(resource)), nil
-	case mr.local[resource] != "":
-		return domain.NewMapping(resource, mr.local[resource]), nil
-	default:
-		return domain.Mapping{}, eval.NotFoundError{Err: errors.Errorf("resource `%s` not found on mappings", resource)}
-	}
-}
 
 type savedQueries map[string][]string
 
