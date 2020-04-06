@@ -19,7 +19,7 @@ func TestMappingsReader_Env(t *testing.T) {
 		},
 	}
 
-	reader := NewMappingReader(noOpLogger, envSource, map[string]string{})
+	reader := NewMappingReader(noOpLogger, envSource, map[string]string{}, nil)
 
 	expected := map[string]domain.Mapping{
 		"hero": {
@@ -38,7 +38,7 @@ func TestMappingsReader_Env(t *testing.T) {
 		},
 	}
 
-	mappings, err := reader.FromTenant(DEFAULT_TENANT)
+	mappings, err := reader.FromTenant(DEFAULT_TENANT, nil)
 
 	if err != nil {
 		t.Fatalf("FromTenant returned an unexpected error: %v", err)
@@ -56,7 +56,7 @@ func TestMappingsReader_Local(t *testing.T) {
 		"sidekick": "http://sidekick.api/",
 	}
 
-	reader := NewMappingReader(noOpLogger, envSource, local)
+	reader := NewMappingReader(noOpLogger, envSource, local, nil)
 
 	expected := map[string]domain.Mapping{
 		"hero": {
@@ -75,7 +75,7 @@ func TestMappingsReader_Local(t *testing.T) {
 		},
 	}
 
-	mappings, err := reader.FromTenant(DEFAULT_TENANT)
+	mappings, err := reader.FromTenant(DEFAULT_TENANT, nil)
 
 	if err != nil {
 		t.Fatalf("FromTenant returned an unexpected error: %v", err)
@@ -97,7 +97,7 @@ func TestMappingsReader_ShouldOverwriteMappings(t *testing.T) {
 		"sidekick": "http://sidekick.api/",
 	}
 
-	reader := NewMappingReader(noOpLogger, envSource, local)
+	reader := NewMappingReader(noOpLogger, envSource, local, nil)
 
 	expected := map[string]domain.Mapping{
 		"hero": {
@@ -116,7 +116,7 @@ func TestMappingsReader_ShouldOverwriteMappings(t *testing.T) {
 		},
 	}
 
-	mappings, err := reader.FromTenant(DEFAULT_TENANT)
+	mappings, err := reader.FromTenant(DEFAULT_TENANT, nil)
 
 	if err != nil {
 		t.Fatalf("FromTenant returned an unexpected error: %v", err)

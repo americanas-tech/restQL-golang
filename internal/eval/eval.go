@@ -1,9 +1,12 @@
 package eval
 
-import "github.com/b2wdigital/restQL-golang/internal/domain"
+import (
+	"context"
+	"github.com/b2wdigital/restQL-golang/internal/domain"
+)
 
 type MappingsReader interface {
-	FromTenant(tenant string) (map[string]domain.Mapping, error)
+	FromTenant(ctx context.Context, tenant string) (map[string]domain.Mapping, error)
 }
 
 type QueryReader interface {

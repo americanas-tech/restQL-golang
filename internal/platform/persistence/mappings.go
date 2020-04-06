@@ -1,8 +1,10 @@
 package persistence
 
 import (
+	"context"
 	"github.com/b2wdigital/restQL-golang/internal/domain"
 	"github.com/b2wdigital/restQL-golang/internal/platform/logger"
+	"github.com/b2wdigital/restQL-golang/internal/platform/persistence/database"
 	"regexp"
 	"strings"
 )
@@ -13,20 +15,30 @@ type MappingsReader struct {
 	log   *logger.Logger
 	env   map[string]domain.Mapping
 	local map[string]domain.Mapping
+	db    database.Database
 }
 
-func NewMappingReader(log *logger.Logger, env domain.EnvSource, local map[string]string) MappingsReader {
+func NewMappingReader(log *logger.Logger, env domain.EnvSource, local map[string]string, db database.Database) MappingsReader {
 	envMappings := getMappingsFromEnv(log, env)
 	localMappings := parseMappingsFromLocal(log, local)
 
-	return MappingsReader{log: log, env: envMappings, local: localMappings}
+	return MappingsReader{log: log, env: envMappings, local: localMappings, db: db}
 }
 
-func (mr MappingsReader) FromTenant(tenant string) (map[string]domain.Mapping, error) {
+func (mr MappingsReader) FromTenant(ctx context.Context, tenant string) (map[string]domain.Mapping, error) {
 	result := make(map[string]domain.Mapping)
 
 	for k, v := range mr.local {
 		result[k] = v
+	}
+
+	dbMappings, err := mr.db.FindMappingsForTenant(ctx, tenant)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, mapping := range dbMappings {
+		result[mapping.ResourceName] = mapping
 	}
 
 	for k, v := range mr.env {

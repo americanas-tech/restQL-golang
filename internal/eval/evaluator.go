@@ -42,7 +42,7 @@ func (e Evaluator) SavedQuery(ctx context.Context, queryOpts domain.QueryOptions
 		return nil, ParserError{errors.Wrap(err, "invalid query syntax")}
 	}
 
-	mappings, err := e.mappingsReader.FromTenant(queryOpts.Tenant)
+	mappings, err := e.mappingsReader.FromTenant(ctx, queryOpts.Tenant)
 	if err != nil {
 		return nil, err
 	}

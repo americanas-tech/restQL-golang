@@ -6,6 +6,7 @@ import (
 	"github.com/b2wdigital/restQL-golang/internal/platform/httpclient"
 	"github.com/b2wdigital/restQL-golang/internal/platform/logger"
 	"github.com/b2wdigital/restQL-golang/internal/platform/persistence"
+	"github.com/b2wdigital/restQL-golang/internal/platform/persistence/database"
 	"github.com/b2wdigital/restQL-golang/internal/runner"
 	"github.com/valyala/fasthttp"
 	"net/http"
@@ -18,7 +19,8 @@ func API(log *logger.Logger, cfg *conf.Config) fasthttp.RequestHandler {
 	executor := runner.NewExecutor(log, client, cfg.QueryResourceTimeout)
 	r := runner.NewRunner(log, executor, cfg.GlobalQueryTimeout)
 
-	mr := persistence.NewMappingReader(log, cfg.Env, cfg.Mappings)
+	db, _ := database.New(log, "mongodb://localhost:27017")
+	mr := persistence.NewMappingReader(log, cfg.Env, cfg.Mappings, db)
 	qr := persistence.NewQueryReader(cfg.Queries)
 	e := eval.NewEvaluator(log, mr, qr, r)
 
