@@ -2,6 +2,8 @@ package persistence
 
 import (
 	"github.com/b2wdigital/restQL-golang/internal/domain"
+	"github.com/b2wdigital/restQL-golang/internal/platform/logger"
+	"io/ioutil"
 	"reflect"
 	"testing"
 )
@@ -17,7 +19,7 @@ func TestMappingsReader_Env(t *testing.T) {
 		},
 	}
 
-	reader := NewMappingReader(envSource, map[string]string{})
+	reader := NewMappingReader(noOpLogger, envSource, map[string]string{})
 
 	expected := map[string]domain.Mapping{
 		"hero": {
@@ -54,7 +56,7 @@ func TestMappingsReader_Local(t *testing.T) {
 		"sidekick": "http://sidekick.api/",
 	}
 
-	reader := NewMappingReader(envSource, local)
+	reader := NewMappingReader(noOpLogger, envSource, local)
 
 	expected := map[string]domain.Mapping{
 		"hero": {
@@ -95,7 +97,7 @@ func TestMappingsReader_ShouldOverwriteMappings(t *testing.T) {
 		"sidekick": "http://sidekick.api/",
 	}
 
-	reader := NewMappingReader(envSource, local)
+	reader := NewMappingReader(noOpLogger, envSource, local)
 
 	expected := map[string]domain.Mapping{
 		"hero": {
@@ -124,6 +126,8 @@ func TestMappingsReader_ShouldOverwriteMappings(t *testing.T) {
 		t.Fatalf("FromTenant = %+#v, want = %+#v", mappings, expected)
 	}
 }
+
+var noOpLogger = logger.New(ioutil.Discard, logger.LogOptions{})
 
 type stubEnvSource struct {
 	getAll map[string]string
