@@ -10,7 +10,7 @@ type MappingsReader interface {
 }
 
 type QueryReader interface {
-	Get(namespace, id string, revision int) (string, error)
+	Get(ctx context.Context, namespace, id string, revision int) (string, error)
 }
 
 type ValidationError struct {

@@ -1,25 +1,49 @@
 package persistence
 
 import (
+	"context"
 	"github.com/b2wdigital/restQL-golang/internal/eval"
+	"github.com/b2wdigital/restQL-golang/internal/platform/logger"
+	"github.com/b2wdigital/restQL-golang/internal/platform/persistence/database"
 	"github.com/pkg/errors"
 )
 
 type savedQueries map[string][]string
 
 type QueryReader struct {
+	log   *logger.Logger
 	local map[string]savedQueries
+	db    database.Database
 }
 
-func NewQueryReader(local map[string]map[string][]string) QueryReader {
+func NewQueryReader(log *logger.Logger, local map[string]map[string][]string, db database.Database) QueryReader {
 	l := make(map[string]savedQueries)
 	for k, v := range local {
 		l[k] = v
 	}
-	return QueryReader{local: l}
+	return QueryReader{log: log, local: l, db: db}
 }
 
-func (qr QueryReader) Get(namespace, id string, revision int) (string, error) {
+func (qr QueryReader) Get(ctx context.Context, namespace, id string, revision int) (string, error) {
+	queryTxt, err := qr.db.FindQuery(ctx, namespace, id, revision)
+	if err != nil {
+		qr.log.Info("query not found in database : %s/%s/%d", namespace, id, revision)
+	}
+
+	if queryTxt != "" {
+		return queryTxt, nil
+	}
+
+	queryTxt, err = qr.getQueryFromLocal(namespace, id, revision)
+	if err != nil {
+		qr.log.Error("query not found due to an error : %s/%s/%d", err, namespace, id, revision)
+		return "", err
+	}
+
+	return queryTxt, nil
+}
+
+func (qr QueryReader) getQueryFromLocal(namespace string, id string, revision int) (string, error) {
 	queriesInNamespace, ok := qr.local[namespace]
 	if !ok {
 		return "", eval.NotFoundError{Err: errors.Errorf("namespace not found: %s", namespace)}
@@ -35,6 +59,5 @@ func (qr QueryReader) Get(namespace, id string, revision int) (string, error) {
 	}
 
 	queryTxt := queriesByRevision[revision-1]
-
 	return queryTxt, nil
 }

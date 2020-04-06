@@ -1,6 +1,7 @@
 package persistence
 
 import (
+	"context"
 	"github.com/b2wdigital/restQL-golang/internal/domain"
 	"github.com/b2wdigital/restQL-golang/internal/platform/logger"
 	"io/ioutil"
@@ -8,7 +9,7 @@ import (
 	"testing"
 )
 
-const DEFAULT_TENANT = "default"
+const defaultTenant = "default"
 
 func TestMappingsReader_Env(t *testing.T) {
 	envSource := stubEnvSource{
@@ -38,7 +39,7 @@ func TestMappingsReader_Env(t *testing.T) {
 		},
 	}
 
-	mappings, err := reader.FromTenant(DEFAULT_TENANT, nil)
+	mappings, err := reader.FromTenant(context.Background(), defaultTenant)
 
 	if err != nil {
 		t.Fatalf("FromTenant returned an unexpected error: %v", err)
@@ -75,7 +76,7 @@ func TestMappingsReader_Local(t *testing.T) {
 		},
 	}
 
-	mappings, err := reader.FromTenant(DEFAULT_TENANT, nil)
+	mappings, err := reader.FromTenant(context.Background(), defaultTenant)
 
 	if err != nil {
 		t.Fatalf("FromTenant returned an unexpected error: %v", err)
@@ -116,7 +117,7 @@ func TestMappingsReader_ShouldOverwriteMappings(t *testing.T) {
 		},
 	}
 
-	mappings, err := reader.FromTenant(DEFAULT_TENANT, nil)
+	mappings, err := reader.FromTenant(context.Background(), defaultTenant)
 
 	if err != nil {
 		t.Fatalf("FromTenant returned an unexpected error: %v", err)

@@ -13,15 +13,19 @@ import (
 )
 
 func API(log *logger.Logger, cfg *conf.Config) fasthttp.RequestHandler {
+	db, err := database.New(log, "mongodb://localhost:27017")
+	if err != nil {
+		//TODO: return err
+	}
+
 	app := NewApp(log, cfg)
 	client := httpclient.New(log, cfg)
 
 	executor := runner.NewExecutor(log, client, cfg.QueryResourceTimeout)
 	r := runner.NewRunner(log, executor, cfg.GlobalQueryTimeout)
 
-	db, _ := database.New(log, "mongodb://localhost:27017")
 	mr := persistence.NewMappingReader(log, cfg.Env, cfg.Mappings, db)
-	qr := persistence.NewQueryReader(cfg.Queries)
+	qr := persistence.NewQueryReader(log, cfg.Queries, db)
 	e := eval.NewEvaluator(log, mr, qr, r)
 
 	restQl := NewRestQl(log, cfg, e)

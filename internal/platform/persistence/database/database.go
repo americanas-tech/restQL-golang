@@ -11,6 +11,7 @@ import (
 
 type Database interface {
 	FindMappingsForTenant(ctx context.Context, tenantId string) ([]domain.Mapping, error)
+	FindQuery(ctx context.Context, namespace string, name string, revision int) (string, error)
 }
 
 func New(log *logger.Logger, connectionString string) (Database, error) {

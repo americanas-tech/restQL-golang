@@ -1,11 +1,11 @@
 package middleware
 
 import (
-	"fmt"
 	"github.com/b2wdigital/restQL-golang/internal/platform/logger"
 	"github.com/pkg/errors"
 	"github.com/valyala/fasthttp"
 	"net/http"
+	"runtime/debug"
 )
 
 type Recover struct {
@@ -20,8 +20,8 @@ func (r Recover) Apply(h fasthttp.RequestHandler) fasthttp.RequestHandler {
 	return func(ctx *fasthttp.RequestCtx) {
 		defer func() {
 			if reason := recover(); reason != nil {
-				err := errors.New(fmt.Sprintf("reason : %v", reason))
-				r.log.Error("application recovered from panic", err)
+				err := errors.Errorf("reason : %v", reason)
+				r.log.Error("application recovered from panic", err, "stack", string(debug.Stack()))
 
 				ctx.SetStatusCode(http.StatusInternalServerError)
 			}
