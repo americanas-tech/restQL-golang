@@ -45,10 +45,12 @@ func RespondError(ctx *fasthttp.RequestCtx, err error) error {
 }
 
 type StatementDebugging struct {
+	Method          string                 `json:"method,omitempty"`
 	Url             string                 `json:"url,omitempty"`
 	RequestHeaders  map[string]string      `json:"request-headers,omitempty"`
 	ResponseHeaders map[string]string      `json:"response-headers,omitempty"`
 	Params          map[string]interface{} `json:"params,omitempty"`
+	RequestBody     interface{}            `json:"request-body,omitempty"`
 	ResponseTime    int64                  `json:"response-time,omitempty"`
 }
 
@@ -134,10 +136,12 @@ func parseDebug(debug *domain.Debugging) *StatementDebugging {
 	}
 
 	return &StatementDebugging{
+		Method:          debug.Method,
 		Url:             debug.Url,
 		RequestHeaders:  debug.RequestHeaders,
 		ResponseHeaders: debug.ResponseHeaders,
 		Params:          debug.Params,
+		RequestBody:     debug.RequestBody,
 		ResponseTime:    debug.ResponseTime,
 	}
 }

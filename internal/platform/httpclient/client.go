@@ -70,7 +70,10 @@ func (hc HttpClient) Do(ctx context.Context, request domain.HttpRequest) (domain
 		fasthttp.ReleaseResponse(res)
 	}()
 
-	setupRequest(request, req)
+	err := setupRequest(request, req)
+	if err != nil {
+		return domain.HttpResponse{}, err
+	}
 
 	duration, err := hc.executeWithContext(ctx, req, res)
 	switch {

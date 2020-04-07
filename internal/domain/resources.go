@@ -23,10 +23,12 @@ func NewResources(statements []Statement) Resources {
 }
 
 type Debugging struct {
+	Method          string
 	Url             string
 	RequestHeaders  map[string]string
 	ResponseHeaders map[string]string
 	Params          map[string]interface{}
+	RequestBody     interface{}
 	ResponseTime    int64
 }
 

@@ -2,8 +2,11 @@ package httpclient
 
 import (
 	"bytes"
+	"encoding/json"
 	"github.com/b2wdigital/restQL-golang/internal/domain"
+	"github.com/pkg/errors"
 	"github.com/valyala/fasthttp"
+	"net/http"
 )
 
 var (
@@ -11,7 +14,7 @@ var (
 	equal     = []byte("=")
 )
 
-func setupRequest(request domain.HttpRequest, req *fasthttp.Request) {
+func setupRequest(request domain.HttpRequest, req *fasthttp.Request) error {
 	uri := fasthttp.URI{DisablePathNormalizing: true}
 	uri.SetScheme(request.Schema)
 	uri.SetHost(request.Uri)
@@ -20,9 +23,22 @@ func setupRequest(request domain.HttpRequest, req *fasthttp.Request) {
 	uriStr := uri.String()
 	req.SetRequestURI(uriStr)
 
+	if request.Method == http.MethodPost || request.Method == http.MethodPut {
+		data, err := json.Marshal(request.Body)
+		if err != nil {
+			//fmt.Printf("failed to marshal request body: %v\n", err)
+			return errors.Wrap(err, "failed to marshal request body")
+		}
+
+		req.SetBody(data)
+	}
+
 	for key, value := range request.Headers {
 		req.Header.Set(key, value)
 	}
+
+	req.Header.SetMethod(request.Method)
+	return nil
 }
 
 func readHeaders(res *fasthttp.Response) domain.Headers {

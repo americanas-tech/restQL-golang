@@ -32,8 +32,10 @@ func NewDoneResource(request domain.HttpRequest, response domain.HttpResponse, o
 
 func newDebugging(request domain.HttpRequest, response domain.HttpResponse) *domain.Debugging {
 	return &domain.Debugging{
+		Method:          request.Method,
 		Url:             response.Url,
 		Params:          request.Query,
+		RequestBody:     request.Body,
 		RequestHeaders:  request.Headers,
 		ResponseHeaders: response.Headers,
 		ResponseTime:    response.Duration.Milliseconds(),

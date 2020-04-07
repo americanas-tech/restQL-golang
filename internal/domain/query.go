@@ -2,6 +2,13 @@ package domain
 
 import "regexp"
 
+const (
+	FromMethod   string = "from"
+	ToMethod            = "to"
+	UpdateMethod        = "update"
+	DeleteMethod        = "delete"
+)
+
 type Query struct {
 	Use        Modifiers
 	Statements []Statement

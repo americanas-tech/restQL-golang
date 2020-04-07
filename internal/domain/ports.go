@@ -30,6 +30,7 @@ type Headers map[string]string
 type Body interface{}
 
 type HttpRequest struct {
+	Method  string
 	Schema  string
 	Uri     string
 	Query   map[string]interface{}
