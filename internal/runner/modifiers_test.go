@@ -108,7 +108,7 @@ func TestApplyModifiers(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := runner.ApplyModifiers(tt.modifiers, tt.resources)
+			got := runner.ApplyModifiers(tt.resources, tt.modifiers)
 
 			if !reflect.DeepEqual(got, tt.expected) {
 				t.Fatalf("ApplyModifiers = %+#v, want = %+#v", got, tt.expected)

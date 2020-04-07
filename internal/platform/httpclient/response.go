@@ -2,7 +2,6 @@ package httpclient
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/b2wdigital/restQL-golang/internal/domain"
 	"github.com/pkg/errors"
 	"github.com/valyala/fasthttp"
@@ -33,7 +32,6 @@ func unmarshalBody(res *fasthttp.Response) (interface{}, error) {
 	var responseBody interface{}
 	err := json.Unmarshal(res.Body(), &responseBody)
 	if err != nil {
-		fmt.Printf("responde body: %s\n", string(res.Body()))
 		return nil, errors.Wrapf(err, "failed to unmarshal response. error: %v. content: %s", err, string(res.Body()))
 	}
 	return responseBody, nil

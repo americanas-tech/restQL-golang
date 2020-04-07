@@ -2,7 +2,7 @@ package runner
 
 import "github.com/b2wdigital/restQL-golang/internal/domain"
 
-func ApplyModifiers(modifiers domain.Modifiers, resources domain.Resources) domain.Resources {
+func ApplyModifiers(resources domain.Resources, modifiers domain.Modifiers) domain.Resources {
 	for resourceId, stmt := range resources {
 		if stmt, ok := stmt.(domain.Statement); ok {
 			stmt.CacheControl = applyCacheModifiers(modifiers, stmt)

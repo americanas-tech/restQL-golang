@@ -59,7 +59,7 @@ func (r Runner) ExecuteQuery(ctx context.Context, query domain.Query, queryCtx d
 		ctx, cancel = context.WithCancel(ctx)
 	}
 
-	resources := initializeResources(query, queryCtx)
+	resources := r.initializeResources(query, queryCtx)
 
 	state := NewState(resources)
 
@@ -76,6 +76,7 @@ func (r Runner) ExecuteQuery(ctx context.Context, query domain.Query, queryCtx d
 	}()
 
 	stateWorker := &stateWorker{
+		log:       r.log,
 		requestCh: requestCh,
 		resultCh:  resultCh,
 		outputCh:  outputCh,
@@ -121,11 +122,12 @@ func (r Runner) parseQueryTimeout(query domain.Query) (time.Duration, bool) {
 	return time.Millisecond * time.Duration(duration), true
 }
 
-func initializeResources(query domain.Query, queryCtx domain.QueryContext) domain.Resources {
+func (r Runner) initializeResources(query domain.Query, queryCtx domain.QueryContext) domain.Resources {
 	resources := domain.NewResources(query.Statements)
 
-	resources = ApplyModifiers(query.Use, resources)
+	resources = ApplyModifiers(resources, query.Use)
 	resources = ResolveVariables(resources, queryCtx.Input.Params)
+	resources = ApplyEncoders(resources, r.log)
 	resources = MultiplexStatements(resources)
 
 	return resources
@@ -142,6 +144,7 @@ type result struct {
 }
 
 type stateWorker struct {
+	log       domain.Logger
 	requestCh chan request
 	resultCh  chan result
 	outputCh  chan domain.Resources
@@ -157,6 +160,7 @@ func (sw *stateWorker) Run() {
 		}
 
 		availableResources = ResolveChainedValues(availableResources, sw.state.Done())
+		availableResources = ApplyEncoders(availableResources, sw.log)
 		availableResources = MultiplexStatements(availableResources)
 
 		for resourceId, stmt := range availableResources {

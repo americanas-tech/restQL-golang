@@ -91,13 +91,7 @@ func makeQueryParams(statement domain.Statement, mapping domain.Mapping, queryCt
 		if mapping.HasParam(key) {
 			continue
 		}
-
-		str, ok := value.(string)
-
-		if !ok {
-			continue
-		}
-		queryArgs[key] = str
+		queryArgs[key] = value
 	}
 	return queryArgs
 }

@@ -7,6 +7,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/valyala/fasthttp"
 	"net/http"
+	"net/url"
 )
 
 var (
@@ -26,7 +27,6 @@ func setupRequest(request domain.HttpRequest, req *fasthttp.Request) error {
 	if request.Method == http.MethodPost || request.Method == http.MethodPut {
 		data, err := json.Marshal(request.Body)
 		if err != nil {
-			//fmt.Printf("failed to marshal request body: %v\n", err)
 			return errors.Wrap(err, "failed to marshal request body")
 		}
 
@@ -57,12 +57,26 @@ func makeQueryArgs(queryArgs []byte, request domain.HttpRequest) []byte {
 		switch value := value.(type) {
 		case string:
 			appendStringParam(buf, key, value)
+		case map[string]interface{}:
+			appendMapParam(buf, key, value)
 		case []interface{}:
 			appendListParam(buf, key, value)
 		}
 	}
 
 	return buf.Bytes()
+}
+
+func appendMapParam(buf *bytes.Buffer, key string, value map[string]interface{}) {
+	data, err := json.Marshal(value)
+	if err != nil {
+		return
+	}
+
+	buf.Write(ampersand)
+	buf.WriteString(key)
+	buf.Write(equal)
+	buf.WriteString(url.QueryEscape(string(data)))
 }
 
 func appendListParam(buf *bytes.Buffer, key string, value []interface{}) {
@@ -75,7 +89,7 @@ func appendListParam(buf *bytes.Buffer, key string, value []interface{}) {
 		buf.Write(ampersand)
 		buf.WriteString(key)
 		buf.Write(equal)
-		buf.WriteString(s)
+		buf.WriteString(url.QueryEscape(s))
 	}
 }
 
@@ -83,5 +97,5 @@ func appendStringParam(buf *bytes.Buffer, key string, value string) {
 	buf.Write(ampersand)
 	buf.WriteString(key)
 	buf.Write(equal)
-	buf.WriteString(value)
+	buf.WriteString(url.QueryEscape(value))
 }
