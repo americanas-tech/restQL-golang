@@ -53,6 +53,11 @@ type Config struct {
 		Format    string `yaml:"format"`
 	} `yaml:"logging"`
 
+	Database struct {
+		ConnectionString  string `yaml:"connectionString" env:"DATABASE_CONNECTION_STRING"`
+		ConnectionTimeout string `yaml:"timeout" env:"DATABASE_CONNECTION_TIMEOUT"`
+	} `yaml:"database"`
+
 	Tenant               string        `env:"TENANT"`
 	GlobalQueryTimeout   time.Duration `env:"QUERY_GLOBAL_TIMEOUT" envDefault:"30s"`
 	QueryResourceTimeout time.Duration `env:"QUERY_RESOURCE_TIMEOUT" envDefault:"5s"`

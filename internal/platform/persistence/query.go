@@ -27,7 +27,7 @@ func NewQueryReader(log *logger.Logger, local map[string]map[string][]string, db
 func (qr QueryReader) Get(ctx context.Context, namespace, id string, revision int) (string, error) {
 	queryTxt, err := qr.db.FindQuery(ctx, namespace, id, revision)
 	if err != nil {
-		qr.log.Info("query not found in database : %s/%s/%d", namespace, id, revision)
+		qr.log.Info("query not found in database", "namespace", namespace, "name", id, "revision", revision)
 	}
 
 	if queryTxt != "" {
@@ -36,7 +36,7 @@ func (qr QueryReader) Get(ctx context.Context, namespace, id string, revision in
 
 	queryTxt, err = qr.getQueryFromLocal(namespace, id, revision)
 	if err != nil {
-		qr.log.Error("query not found due to an error : %s/%s/%d", err, namespace, id, revision)
+		qr.log.Info("query not found in database", "namespace", namespace, "name", id, "revision", revision)
 		return "", err
 	}
 

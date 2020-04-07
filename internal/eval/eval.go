@@ -6,7 +6,7 @@ import (
 )
 
 type MappingsReader interface {
-	FromTenant(ctx context.Context, tenant string) (map[string]domain.Mapping, error)
+	FromTenant(ctx context.Context, tenant string) map[string]domain.Mapping
 }
 
 type QueryReader interface {

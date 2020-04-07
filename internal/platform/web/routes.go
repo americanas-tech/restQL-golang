@@ -13,9 +13,9 @@ import (
 )
 
 func API(log *logger.Logger, cfg *conf.Config) fasthttp.RequestHandler {
-	db, err := database.New(log, "mongodb://localhost:27017")
+	db, err := database.New(log, cfg.Database.ConnectionString, cfg.Database.ConnectionTimeout)
 	if err != nil {
-		//TODO: return err
+		log.Error("failed to establish connection to database", err)
 	}
 
 	app := NewApp(log, cfg)

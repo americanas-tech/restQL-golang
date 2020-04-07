@@ -23,6 +23,9 @@ logging:
   timestamp: true
   level: info
   format: json
+
+database:
+  timeout: 1000
 `)
 
 func readDefaults(cfg *Config) {
