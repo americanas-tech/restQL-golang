@@ -81,7 +81,7 @@ func (l *Logger) Debug(msg string, fields ...interface{}) {
 
 func makeFieldMap(fields []interface{}) map[string]interface{} {
 	fieldMap := make(map[string]interface{})
-	for i := 0; i < len(fields); i += 2 {
+	for i := 0; i <= len(fields)-2; i += 2 {
 		key := fmt.Sprintf("%v", fields[i])
 		value := fields[i+1]
 
