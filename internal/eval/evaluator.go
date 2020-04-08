@@ -16,13 +16,14 @@ var (
 
 type Evaluator struct {
 	log            domain.Logger
+	parser         parser.Parser
 	mappingsReader MappingsReader
 	queryReader    QueryReader
 	run            runner.Runner
 }
 
-func NewEvaluator(log domain.Logger, mr MappingsReader, qr QueryReader, r runner.Runner) Evaluator {
-	return Evaluator{log: log, mappingsReader: mr, queryReader: qr, run: r}
+func NewEvaluator(log domain.Logger, mr MappingsReader, qr QueryReader, r runner.Runner, parser parser.Parser) Evaluator {
+	return Evaluator{log: log, mappingsReader: mr, queryReader: qr, run: r, parser: parser}
 }
 
 func (e Evaluator) SavedQuery(ctx context.Context, queryOpts domain.QueryOptions, queryInput domain.QueryInput) (domain.Resources, error) {
@@ -36,7 +37,7 @@ func (e Evaluator) SavedQuery(ctx context.Context, queryOpts domain.QueryOptions
 		return nil, err
 	}
 
-	query, err := parser.Parse(queryTxt)
+	query, err := e.parser.Parse(queryTxt)
 	if err != nil {
 		e.log.Debug("failed to parse query", "error", err)
 		return nil, ParserError{errors.Wrap(err, "invalid query syntax")}

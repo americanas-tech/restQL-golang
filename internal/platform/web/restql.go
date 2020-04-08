@@ -26,15 +26,16 @@ type RestQl struct {
 	config    *conf.Config
 	log       *logger.Logger
 	evaluator eval.Evaluator
+	parser    parser.Parser
 }
 
-func NewRestQl(l *logger.Logger, cfg *conf.Config, e eval.Evaluator) RestQl {
-	return RestQl{config: cfg, log: l, evaluator: e}
+func NewRestQl(l *logger.Logger, cfg *conf.Config, e eval.Evaluator, p parser.Parser) RestQl {
+	return RestQl{config: cfg, log: l, evaluator: e, parser: p}
 }
 
 func (r RestQl) ValidateQuery(ctx *fasthttp.RequestCtx) error {
 	queryTxt := string(ctx.PostBody())
-	_, err := parser.Parse(queryTxt)
+	_, err := r.parser.Parse(queryTxt)
 	if err != nil {
 		r.log.Error("an error occurred when parsing query", err)
 
@@ -70,7 +71,7 @@ func (r RestQl) RunSavedQuery(ctx *fasthttp.RequestCtx) error {
 		case eval.ParserError:
 			return RespondError(ctx, NewRequestError(err, http.StatusInternalServerError))
 		case eval.TimeoutError:
-			return RespondError(ctx, NewRequestError(err, http.StatusOK))
+			return RespondError(ctx, NewRequestError(err, http.StatusRequestTimeout))
 		default:
 			return RespondError(ctx, err)
 		}

@@ -2,6 +2,7 @@ package web
 
 import (
 	"github.com/b2wdigital/restQL-golang/internal/eval"
+	"github.com/b2wdigital/restQL-golang/internal/parser"
 	"github.com/b2wdigital/restQL-golang/internal/platform/conf"
 	"github.com/b2wdigital/restQL-golang/internal/platform/httpclient"
 	"github.com/b2wdigital/restQL-golang/internal/platform/logger"
@@ -13,6 +14,12 @@ import (
 )
 
 func API(log *logger.Logger, cfg *conf.Config) fasthttp.RequestHandler {
+	p, err := parser.New()
+	if err != nil {
+		log.Error("failed to compile parser", err)
+		//TODO: return error
+	}
+
 	db, err := database.New(log, cfg.Database.ConnectionString, cfg.Database.ConnectionTimeout)
 	if err != nil {
 		log.Error("failed to establish connection to database", err)
@@ -26,9 +33,9 @@ func API(log *logger.Logger, cfg *conf.Config) fasthttp.RequestHandler {
 
 	mr := persistence.NewMappingReader(log, cfg.Env, cfg.Mappings, db)
 	qr := persistence.NewQueryReader(log, cfg.Queries, db)
-	e := eval.NewEvaluator(log, mr, qr, r)
+	e := eval.NewEvaluator(log, mr, qr, r, p)
 
-	restQl := NewRestQl(log, cfg, e)
+	restQl := NewRestQl(log, cfg, e, p)
 
 	app.Handle(http.MethodPost, "/validate-query", restQl.ValidateQuery)
 	app.Handle(http.MethodGet, "/run-query/:namespace/:queryId/:revision", restQl.RunSavedQuery)

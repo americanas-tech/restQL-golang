@@ -203,7 +203,7 @@ func TestQueryParser(t *testing.T) {
 
 	for _, testCase := range tests {
 		t.Run(testCase.name, func(t *testing.T) {
-			got, err := Parse(testCase.query)
+			got, err := Optimize(testCase.query)
 
 			if err != nil {
 				t.Errorf("An error occured during Parse\n%s", err)
@@ -235,7 +235,7 @@ from hero as h
 `
 
 	for i := 0; i < b.N; i++ {
-		_, err := Parse(query)
+		_, err := Optimize(query)
 
 		if err != nil {
 			b.Fatalf("An error ocurred when running the benchmark: %v", err)

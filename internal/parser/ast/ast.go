@@ -7,24 +7,22 @@ import (
 	"github.com/pkg/errors"
 )
 
-var parser *participle.Parser
-
-func init() {
-	if parser != nil {
-		return
-	}
-
-	newParser, err := makeParser()
-	if err != nil {
-		panic(err)
-	}
-
-	parser = newParser
+type Generator struct {
+	participleParser *participle.Parser
 }
 
-func Parse(query string) (q *Query, err error) {
+func New() (Generator, error) {
+	newParser, err := makeParser()
+	if err != nil {
+		return Generator{}, err
+	}
+
+	return Generator{participleParser: newParser}, nil
+}
+
+func (g Generator) Parse(query string) (q *Query, err error) {
 	q = &Query{}
-	if err = parser.ParseString(query, q); err != nil {
+	if err = g.participleParser.ParseString(query, q); err != nil {
 		return nil, errors.Wrap(err, fmt.Sprintf("failed to parse query: %s", query))
 	}
 
@@ -38,7 +36,7 @@ func makeParser() (*participle.Parser, error) {
 		return nil, errors.Wrap(err, fmt.Sprintf("failed to compile lexer definition"))
 	}
 
-	parser, err = participle.Build(
+	parser, err := participle.Build(
 		QUERY,
 		participle.Lexer(definition),
 		participle.Unquote("String"),
