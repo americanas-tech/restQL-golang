@@ -42,10 +42,6 @@ func TestMappingsReader_Env(t *testing.T) {
 
 	mappings := reader.FromTenant(context.Background(), defaultTenant)
 
-	if err != nil {
-		t.Fatalf("FromTenant returned an unexpected error: %v", err)
-	}
-
 	if !reflect.DeepEqual(mappings, expected) {
 		t.Fatalf("FromTenant = %+#v, want = %+#v", mappings, expected)
 	}
@@ -79,10 +75,6 @@ func TestMappingsReader_Local(t *testing.T) {
 	}
 
 	mappings := reader.FromTenant(context.Background(), defaultTenant)
-
-	if err != nil {
-		t.Fatalf("FromTenant returned an unexpected error: %v", err)
-	}
 
 	if !reflect.DeepEqual(mappings, expected) {
 		t.Fatalf("FromTenant = %+#v, want = %+#v", mappings, expected)
@@ -129,10 +121,6 @@ func TestMappingsReader_Database(t *testing.T) {
 	}
 
 	mappings := reader.FromTenant(context.Background(), defaultTenant)
-
-	if err != nil {
-		t.Fatalf("FromTenant returned an unexpected error: %v", err)
-	}
 
 	if !reflect.DeepEqual(mappings, expected) {
 		t.Fatalf("FromTenant = %+#v, want = %+#v", mappings, expected)
@@ -189,10 +177,6 @@ func TestMappingsReader_ShouldOverwriteMappings(t *testing.T) {
 	}
 
 	mappings := reader.FromTenant(context.Background(), defaultTenant)
-
-	if err != nil {
-		t.Fatalf("FromTenant returned an unexpected error: %v", err)
-	}
 
 	if !reflect.DeepEqual(mappings, expected) {
 		t.Fatalf("FromTenant = %+#v, want = %+#v", mappings, expected)
