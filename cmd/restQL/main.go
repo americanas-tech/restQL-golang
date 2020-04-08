@@ -46,9 +46,14 @@ func start() error {
 	signal.Notify(shutdownSignal, os.Interrupt, syscall.SIGTERM)
 
 	serverCfg := cfg.Web.Server
+	apiHandler, err := web.API(log, cfg)
+	if err != nil {
+		return err
+	}
+
 	api := &fasthttp.Server{
 		Name:         "api",
-		Handler:      web.API(log, cfg),
+		Handler:      apiHandler,
 		TCPKeepalive: false,
 		ReadTimeout:  serverCfg.ReadTimeout,
 	}

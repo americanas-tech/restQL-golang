@@ -72,6 +72,7 @@ func (hc HttpClient) Do(ctx context.Context, request domain.HttpRequest) (domain
 
 	err := setupRequest(request, req)
 	if err != nil {
+		hc.log.Debug("failed to setup http client request", "error", err)
 		return domain.HttpResponse{}, err
 	}
 

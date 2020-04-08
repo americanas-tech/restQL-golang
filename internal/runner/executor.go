@@ -32,9 +32,9 @@ func (e Executor) DoStatement(ctx context.Context, statement domain.Statement, q
 		return emptyChainedResponse, nil
 	}
 
-	e.log.Debug("executing request for statement", "resource", statement.Resource, "method", statement.Method)
-
 	request := MakeRequest(statement, queryCtx)
+
+	e.log.Debug("executing request for statement", "resource", statement.Resource, "method", statement.Method, "request", request)
 
 	timeout, err := parseTimeout(statement)
 	if err == nil {
@@ -50,7 +50,7 @@ func (e Executor) DoStatement(ctx context.Context, statement domain.Statement, q
 	case err == domain.ErrRequestTimeout:
 		return NewTimeoutResponse(err, request, response, drOptions), nil
 	case err != nil:
-		e.log.Debug("request failed", "error", err)
+		e.log.Debug("request execution failed", "error", err)
 		return domain.DoneResource{}, err
 	}
 

@@ -54,10 +54,10 @@ func (r Runner) ExecuteQuery(ctx context.Context, query domain.Query, queryCtx d
 	var cancel context.CancelFunc
 	if ok {
 		ctx, cancel = context.WithTimeout(ctx, queryTimeout)
-		defer cancel()
 	} else {
 		ctx, cancel = context.WithCancel(ctx)
 	}
+	defer cancel()
 
 	resources := r.initializeResources(query, queryCtx)
 
@@ -101,6 +101,7 @@ func (r Runner) ExecuteQuery(ctx context.Context, query domain.Query, queryCtx d
 		return output, nil
 	case err := <-errorCh:
 		cancel()
+		r.log.Debug("an error occurred when running the query", "error", err)
 		return nil, err
 	case <-ctx.Done():
 		r.log.Debug("query timed out")

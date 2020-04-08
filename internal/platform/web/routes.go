@@ -13,11 +13,11 @@ import (
 	"net/http"
 )
 
-func API(log *logger.Logger, cfg *conf.Config) fasthttp.RequestHandler {
+func API(log *logger.Logger, cfg *conf.Config) (fasthttp.RequestHandler, error) {
 	p, err := parser.New()
 	if err != nil {
 		log.Error("failed to compile parser", err)
-		//TODO: return error
+		return nil, err
 	}
 
 	db, err := database.New(log, cfg.Database.ConnectionString, cfg.Database.ConnectionTimeout)
@@ -40,7 +40,7 @@ func API(log *logger.Logger, cfg *conf.Config) fasthttp.RequestHandler {
 	app.Handle(http.MethodPost, "/validate-query", restQl.ValidateQuery)
 	app.Handle(http.MethodGet, "/run-query/:namespace/:queryId/:revision", restQl.RunSavedQuery)
 
-	return app.RequestHandler()
+	return app.RequestHandler(), nil
 }
 
 func Health(log *logger.Logger, cfg *conf.Config) fasthttp.RequestHandler {

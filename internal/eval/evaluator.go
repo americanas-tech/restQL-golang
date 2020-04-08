@@ -61,6 +61,7 @@ func (e Evaluator) SavedQuery(ctx context.Context, queryOpts domain.QueryOptions
 
 	resources, err = ApplyFilters(query, resources)
 	if err != nil {
+		e.log.Debug("failed to apply filters", "error", err)
 		return nil, err
 	}
 
