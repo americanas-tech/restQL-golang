@@ -117,6 +117,11 @@ func TestAstParser(t *testing.T) {
 			`from hero with id = { "id": "1" }`,
 		},
 		{
+			"Get query with object query parameters",
+			Query{Blocks: []Block{{Method: FromMethod, Resource: "hero", Qualifiers: []Qualifier{{With: []WithItem{{Key: "id", Value: Value{Object: []ObjectEntry{{Key: "id", Value: ObjectValue{Primitive: &Primitive{String: String("1")}}}}}}}}}}}},
+			`from hero with id = { id: "1" }`,
+		},
+		{
 			"Get query with object query parameters with multiple key/values",
 			Query{Blocks: []Block{{Method: FromMethod, Resource: "hero", Qualifiers: []Qualifier{{With: []WithItem{{Key: "id", Value: Value{Object: []ObjectEntry{{Key: "id", Value: ObjectValue{Primitive: &Primitive{String: String("1")}}}, {Key: "name", Value: ObjectValue{Primitive: &Primitive{String: String("batman")}}}}}}}}}}}},
 			`from hero with id = { "id": "1", "name": "batman" }`,

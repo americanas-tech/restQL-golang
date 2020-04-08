@@ -116,7 +116,7 @@ type Value struct {
 }
 
 type ObjectEntry struct {
-	Key   string      `@String Colon`
+	Key   string      `(@String | @Ident) Colon`
 	Value ObjectValue `@@`
 }
 
