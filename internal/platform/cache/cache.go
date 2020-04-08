@@ -15,7 +15,7 @@ type cacheItem struct {
 }
 
 func (i cacheItem) Expired() bool {
-	return time.Now().After(i.expiration)
+	return !i.expiration.IsZero() && time.Now().After(i.expiration)
 }
 
 type Loader func(ctx context.Context, key interface{}) (interface{}, error)
@@ -31,6 +31,12 @@ func WithRefreshInterval(interval time.Duration) Option {
 func WithRefreshQueueLength(length int) Option {
 	return func(c *Cache) {
 		c.refreshQueueLength = length
+	}
+}
+
+func WithExpiration(expiration time.Duration) Option {
+	return func(c *Cache) {
+		c.expiration = expiration
 	}
 }
 
@@ -105,9 +111,11 @@ func (c *Cache) loadItem(ctx context.Context, key interface{}) (cacheItem, error
 	}
 
 	item := cacheItem{
-		key:        key,
-		value:      value,
-		expiration: time.Now().Add(c.expiration),
+		key:   key,
+		value: value,
+	}
+	if c.expiration > 0 {
+		item.expiration = time.Now().Add(c.expiration)
 	}
 
 	err = c.gcache.Set(key, item)
@@ -125,6 +133,7 @@ func (c *Cache) setupRefreshWorker() *refreshWorker {
 	c.refreshWorkCh = refreshWorkCh
 
 	rw := refreshWorker{
+		log:           c.log,
 		cache:         c,
 		refreshWorkCh: refreshWorkCh,
 		ticker:        ticker,
@@ -134,6 +143,7 @@ func (c *Cache) setupRefreshWorker() *refreshWorker {
 }
 
 type refreshWorker struct {
+	log           *logger.Logger
 	cache         *Cache
 	refreshFn     Loader
 	refreshWorkCh chan interface{}
@@ -146,8 +156,10 @@ func (rw *refreshWorker) Run() {
 		case <-rw.ticker.C:
 			for key := range rw.refreshWorkCh {
 				go func() {
-					//todo: tratar context para atualização em background
-					rw.cache.loadItem(context.Background(), key)
+					_, err := rw.cache.loadItem(context.Background(), key)
+					if err != nil {
+						rw.log.Error("failed to refresh cache item in background", err)
+					}
 				}()
 			}
 		}

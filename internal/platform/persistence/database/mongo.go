@@ -27,15 +27,19 @@ type query struct {
 }
 
 type mongoDatabase struct {
-	logger *logger.Logger
-	client *mongo.Client
+	logger  *logger.Logger
+	client  *mongo.Client
+	options dbOptions
 }
 
 func (md mongoDatabase) FindMappingsForTenant(ctx context.Context, tenantId string) ([]domain.Mapping, error) {
+	timeout, cancel := context.WithTimeout(ctx, md.options.MappingsTimeout)
+	defer cancel()
+
 	var t tenant
 
 	collection := md.client.Database(databaseName).Collection("tenant")
-	err := collection.FindOne(ctx, bson.M{"_id": tenantId}).Decode(&t)
+	err := collection.FindOne(timeout, bson.M{"_id": tenantId}).Decode(&t)
 	if err != nil {
 		return nil, err
 	}
@@ -56,10 +60,13 @@ func (md mongoDatabase) FindMappingsForTenant(ctx context.Context, tenantId stri
 }
 
 func (md mongoDatabase) FindQuery(ctx context.Context, namespace string, name string, revision int) (string, error) {
+	timeout, cancel := context.WithTimeout(ctx, md.options.QueryTimeout)
+	defer cancel()
+
 	var q query
 
 	collection := md.client.Database(databaseName).Collection("query")
-	err := collection.FindOne(ctx, bson.M{"name": name, "namespace": namespace}).Decode(&q)
+	err := collection.FindOne(timeout, bson.M{"name": name, "namespace": namespace}).Decode(&q)
 	if err != nil {
 		return "", err
 	}

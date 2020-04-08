@@ -48,7 +48,6 @@ func New(log *logger.Logger, connectionString string, optionList ...Option) (Dat
 		return noOpDatabase{}, nil
 	}
 
-	//todo: fazer uso de timeouts para mappings e query
 	dbOptions := dbOptions{}
 	for _, o := range optionList {
 		o(&dbOptions)

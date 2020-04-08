@@ -22,7 +22,6 @@ type timeoutConf struct {
 	Duration string `yaml:"duration"`
 }
 
-//todo: add cache configurations for refresh
 type Config struct {
 	Web struct {
 		Server struct {

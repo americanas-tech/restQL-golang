@@ -3,6 +3,7 @@ package web
 import (
 	"github.com/b2wdigital/restQL-golang/internal/eval"
 	"github.com/b2wdigital/restQL-golang/internal/parser"
+	"github.com/b2wdigital/restQL-golang/internal/platform/cache"
 	"github.com/b2wdigital/restQL-golang/internal/platform/conf"
 	"github.com/b2wdigital/restQL-golang/internal/platform/httpclient"
 	"github.com/b2wdigital/restQL-golang/internal/platform/logger"
@@ -36,10 +37,18 @@ func API(log *logger.Logger, cfg *conf.Config) (fasthttp.RequestHandler, error) 
 	r := runner.NewRunner(log, executor, cfg.GlobalQueryTimeout)
 
 	mr := persistence.NewMappingReader(log, cfg.Env, cfg.Mappings, db)
-	cacheMr := persistence.NewCacheMappingsReader(log, mr)
+	tenantCache := cache.New(log,
+		persistence.TenantCacheLoader(mr),
+		cfg.Cache.Mappings.MaxSize,
+		cache.WithExpiration(cfg.Cache.Mappings.Expiration),
+		cache.WithRefreshInterval(cfg.Cache.Mappings.RefreshInterval),
+		cache.WithRefreshQueueLength(cfg.Cache.Mappings.RefreshQueueLength),
+	)
+	cacheMr := persistence.NewCacheMappingsReader(log, mr, tenantCache)
 
 	qr := persistence.NewQueryReader(log, cfg.Queries, db)
-	cacheQr := persistence.NewCacheQueryReader(qr, nil)
+	queryCache := cache.New(log, persistence.QueryCacheLoader(qr), cfg.Cache.Query.MaxSize)
+	cacheQr := persistence.NewCacheQueryReader(log, qr, queryCache)
 
 	e := eval.NewEvaluator(log, cacheMr, cacheQr, r, p)
 

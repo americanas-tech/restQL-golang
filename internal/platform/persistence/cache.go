@@ -15,9 +15,7 @@ type CacheMappingsReader struct {
 	cache *cache.Cache
 }
 
-func NewCacheMappingsReader(log *logger.Logger, mr eval.MappingsReader) eval.MappingsReader {
-	c := cache.New(log, tenantLoader(mr), 20)
-
+func NewCacheMappingsReader(log *logger.Logger, mr eval.MappingsReader, c *cache.Cache) eval.MappingsReader {
 	return &CacheMappingsReader{log: log, mr: mr, cache: c}
 }
 
@@ -35,7 +33,7 @@ func (c *CacheMappingsReader) FromTenant(ctx context.Context, tenant string) (ma
 	return mappings, nil
 }
 
-func tenantLoader(mr eval.MappingsReader) cache.Loader {
+func TenantCacheLoader(mr eval.MappingsReader) cache.Loader {
 	return func(ctx context.Context, key interface{}) (interface{}, error) {
 		tenant, ok := key.(string)
 		if !ok {
@@ -63,9 +61,7 @@ type CacheQueryReader struct {
 	cache *cache.Cache
 }
 
-func NewCacheQueryReader(qr eval.QueryReader, log *logger.Logger) eval.QueryReader {
-	c := cache.New(log, queryLoader(qr), 20)
-
+func NewCacheQueryReader(log *logger.Logger, qr eval.QueryReader, c *cache.Cache) eval.QueryReader {
 	return &CacheQueryReader{log: log, qr: qr, cache: c}
 }
 
@@ -84,7 +80,7 @@ func (c *CacheQueryReader) Get(ctx context.Context, namespace, id string, revisi
 	return query, nil
 }
 
-func queryLoader(qr eval.QueryReader) cache.Loader {
+func QueryCacheLoader(qr eval.QueryReader) cache.Loader {
 	return func(ctx context.Context, key interface{}) (interface{}, error) {
 		cacheKey, ok := key.(cacheQueryKey)
 		if !ok {
