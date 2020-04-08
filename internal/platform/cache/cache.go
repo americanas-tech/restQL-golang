@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/b2wdigital/restQL-golang/internal/platform/logger"
 	"github.com/bluele/gcache"
+	"github.com/pkg/errors"
 	"time"
 )
 
@@ -64,26 +65,27 @@ func New(log *logger.Logger, loader Loader, size int, options ...Option) *Cache 
 	return &cache
 }
 
-func (c *Cache) Get(ctx context.Context, key interface{}) (interface{}, bool) {
+func (c *Cache) Get(ctx context.Context, key interface{}) (interface{}, error) {
 	obj, err := c.gcache.Get(key)
 
 	switch {
 	case err == gcache.KeyNotFoundError:
-		item, ok := c.loadItem(ctx, key)
-		if !ok {
-			return nil, false
+		item, err := c.loadItem(ctx, key)
+		if err != nil {
+			return nil, err
 		}
 
-		return item.value, true
+		return item.value, nil
 	case err != nil:
 		c.log.Error("failed to retrieve value from cache", err, "key", key)
-		return nil, false
+		return nil, err
 	}
 
 	item, ok := obj.(cacheItem)
 	if !ok {
+		err := errors.Errorf("invalid cache item : %v", item)
 		c.log.Error("failed to cast cache item", err, "key", key)
-		return nil, false
+		return nil, err
 	}
 
 	if item.Expired() {
@@ -92,14 +94,14 @@ func (c *Cache) Get(ctx context.Context, key interface{}) (interface{}, bool) {
 		}()
 	}
 
-	return item.value, true
+	return item.value, nil
 }
 
-func (c *Cache) loadItem(ctx context.Context, key interface{}) (cacheItem, bool) {
+func (c *Cache) loadItem(ctx context.Context, key interface{}) (cacheItem, error) {
 	value, err := c.loader(ctx, key)
 	if err != nil {
 		c.log.Debug("failed to load value to populate cache", "error", err)
-		return cacheItem{}, false
+		return cacheItem{}, err
 	}
 
 	item := cacheItem{
@@ -111,9 +113,9 @@ func (c *Cache) loadItem(ctx context.Context, key interface{}) (cacheItem, bool)
 	err = c.gcache.Set(key, item)
 	if err != nil {
 		c.log.Error("failed to set value on cache", err)
-		return cacheItem{}, false
+		return cacheItem{}, err
 	}
-	return item, true
+	return item, nil
 }
 
 func (c *Cache) setupRefreshWorker() *refreshWorker {

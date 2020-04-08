@@ -9,7 +9,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-//todo: tratar erro na chamda de cache.Get
 type CacheMappingsReader struct {
 	log   *logger.Logger
 	mr    eval.MappingsReader
@@ -23,7 +22,11 @@ func NewCacheMappingsReader(log *logger.Logger, mr eval.MappingsReader) eval.Map
 }
 
 func (c *CacheMappingsReader) FromTenant(ctx context.Context, tenant string) (map[string]domain.Mapping, error) {
-	result, _ := c.cache.Get(ctx, tenant)
+	result, err := c.cache.Get(ctx, tenant)
+	if err != nil {
+		return nil, err
+	}
+
 	mappings, ok := result.(map[string]domain.Mapping)
 	if !ok {
 		c.log.Info("failed to convert cache content", "content", result)
@@ -68,7 +71,11 @@ func NewCacheQueryReader(qr eval.QueryReader, log *logger.Logger) eval.QueryRead
 
 func (c *CacheQueryReader) Get(ctx context.Context, namespace, id string, revision int) (string, error) {
 	cacheKey := cacheQueryKey{namespace: namespace, id: id, revision: revision}
-	result, _ := c.cache.Get(ctx, cacheKey)
+	result, err := c.cache.Get(ctx, cacheKey)
+	if err != nil {
+		return "", err
+	}
+
 	query, ok := result.(string)
 	if !ok {
 		c.log.Info("failed to convert cache content", "content", result)
