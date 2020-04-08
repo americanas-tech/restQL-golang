@@ -15,7 +15,7 @@ type CacheMappingsReader struct {
 	cache *cache.Cache
 }
 
-func NewCacheMappingsReader(log *logger.Logger, mr eval.MappingsReader, c *cache.Cache) eval.MappingsReader {
+func NewCacheMappingsReader(log *logger.Logger, mr MappingsReader, c *cache.Cache) *CacheMappingsReader {
 	return &CacheMappingsReader{log: log, mr: mr, cache: c}
 }
 
@@ -61,7 +61,7 @@ type CacheQueryReader struct {
 	cache *cache.Cache
 }
 
-func NewCacheQueryReader(log *logger.Logger, qr eval.QueryReader, c *cache.Cache) eval.QueryReader {
+func NewCacheQueryReader(log *logger.Logger, qr QueryReader, c *cache.Cache) *CacheQueryReader {
 	return &CacheQueryReader{log: log, qr: qr, cache: c}
 }
 
