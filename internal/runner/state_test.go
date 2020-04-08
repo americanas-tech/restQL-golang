@@ -3,7 +3,7 @@ package runner_test
 import (
 	"github.com/b2wdigital/restQL-golang/internal/domain"
 	"github.com/b2wdigital/restQL-golang/internal/runner"
-	"reflect"
+	"github.com/b2wdigital/restQL-golang/test"
 	"testing"
 )
 
@@ -20,9 +20,7 @@ func TestAvailableResources(t *testing.T) {
 		state := runner.NewState(input)
 		got := state.Available()
 
-		if !reflect.DeepEqual(got, expected) {
-			t.Fatalf("Available = %#+v, want = %#+v", got, expected)
-		}
+		test.Equal(t, got, expected)
 	})
 
 	t.Run("should return resource with no parameter or static parameters using alias as resource id", func(t *testing.T) {
@@ -37,9 +35,7 @@ func TestAvailableResources(t *testing.T) {
 		state := runner.NewState(input)
 		got := state.Available()
 
-		if !reflect.DeepEqual(got, expected) {
-			t.Fatalf("Available = %#+v, want = %#+v", got, expected)
-		}
+		test.Equal(t, got, expected)
 	})
 
 	t.Run("should not return resource with unresolved dependency", func(t *testing.T) {
@@ -62,9 +58,7 @@ func TestAvailableResources(t *testing.T) {
 		state := runner.NewState(input)
 		got := state.Available()
 
-		if !reflect.DeepEqual(got, expected) {
-			t.Fatalf("Available = %#+v, want = %#+v", got, expected)
-		}
+		test.Equal(t, got, expected)
 	})
 
 	t.Run("should return resource with resolved dependency inside complex param", func(t *testing.T) {
@@ -92,9 +86,7 @@ func TestAvailableResources(t *testing.T) {
 
 		got := state.Available()
 
-		if !reflect.DeepEqual(got, expected) {
-			t.Fatalf("Available = %#+v, want = %#+v", got, expected)
-		}
+		test.Equal(t, got, expected)
 	})
 }
 
@@ -113,13 +105,8 @@ func TestSetAsRequested(t *testing.T) {
 		initialAvailable := state.Available()
 		initialRequested := state.Requested()
 
-		if !reflect.DeepEqual(initialAvailable, expectedInitialAvailable) {
-			t.Fatalf("Initial Available = %#+v, want = %#+v", initialAvailable, expectedInitialAvailable)
-		}
-
-		if !reflect.DeepEqual(initialRequested, expectedInitialRequested) {
-			t.Fatalf(" Initial Requested = %#+v, want = %#+v", initialRequested, expectedInitialRequested)
-		}
+		test.Equal(t, initialAvailable, expectedInitialAvailable)
+		test.Equal(t, initialRequested, expectedInitialRequested)
 
 		state.SetAsRequest("hero")
 
@@ -132,13 +119,8 @@ func TestSetAsRequested(t *testing.T) {
 		finalAvailable := state.Available()
 		finalRequested := state.Requested()
 
-		if !reflect.DeepEqual(finalAvailable, expectedFinalAvailable) {
-			t.Fatalf("Final Available = %#+v, want = %#+v", finalAvailable, expectedFinalAvailable)
-		}
-
-		if !reflect.DeepEqual(finalRequested, expectedFinalRequested) {
-			t.Fatalf("Final Requested = %#+v, want = %#+v", finalRequested, expectedFinalRequested)
-		}
+		test.Equal(t, finalAvailable, expectedFinalAvailable)
+		test.Equal(t, finalRequested, expectedFinalRequested)
 	})
 }
 
@@ -161,12 +143,7 @@ func TestUpdateDone(t *testing.T) {
 		gotRequestedStatements := state.Requested()
 		gotDoneRequests := state.Done()
 
-		if !reflect.DeepEqual(gotRequestedStatements, expectedRequestedStatements) {
-			t.Fatalf("state had the requested statements = %#+v, expected = %#+v", gotRequestedStatements, expectedRequestedStatements)
-		}
-
-		if !reflect.DeepEqual(gotDoneRequests, expectedDoneRequests) {
-			t.Fatalf("state had the done statementes = %#+v, want = %#+v", gotDoneRequests, expectedDoneRequests)
-		}
+		test.Equal(t, gotRequestedStatements, expectedRequestedStatements)
+		test.Equal(t, gotDoneRequests, expectedDoneRequests)
 	})
 }

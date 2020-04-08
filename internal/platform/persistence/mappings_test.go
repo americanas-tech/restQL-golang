@@ -4,8 +4,8 @@ import (
 	"context"
 	"github.com/b2wdigital/restQL-golang/internal/domain"
 	"github.com/b2wdigital/restQL-golang/internal/platform/logger"
+	"github.com/b2wdigital/restQL-golang/test"
 	"io/ioutil"
-	"reflect"
 	"testing"
 )
 
@@ -42,9 +42,7 @@ func TestMappingsReader_Env(t *testing.T) {
 
 	mappings := reader.FromTenant(context.Background(), defaultTenant)
 
-	if !reflect.DeepEqual(mappings, expected) {
-		t.Fatalf("FromTenant = %+#v, want = %+#v", mappings, expected)
-	}
+	test.Equal(t, mappings, expected)
 }
 
 func TestMappingsReader_Local(t *testing.T) {
@@ -76,9 +74,7 @@ func TestMappingsReader_Local(t *testing.T) {
 
 	mappings := reader.FromTenant(context.Background(), defaultTenant)
 
-	if !reflect.DeepEqual(mappings, expected) {
-		t.Fatalf("FromTenant = %+#v, want = %+#v", mappings, expected)
-	}
+	test.Equal(t, mappings, expected)
 }
 
 func TestMappingsReader_Database(t *testing.T) {
@@ -122,9 +118,7 @@ func TestMappingsReader_Database(t *testing.T) {
 
 	mappings := reader.FromTenant(context.Background(), defaultTenant)
 
-	if !reflect.DeepEqual(mappings, expected) {
-		t.Fatalf("FromTenant = %+#v, want = %+#v", mappings, expected)
-	}
+	test.Equal(t, mappings, expected)
 }
 
 func TestMappingsReader_ShouldOverwriteMappings(t *testing.T) {
@@ -178,9 +172,7 @@ func TestMappingsReader_ShouldOverwriteMappings(t *testing.T) {
 
 	mappings := reader.FromTenant(context.Background(), defaultTenant)
 
-	if !reflect.DeepEqual(mappings, expected) {
-		t.Fatalf("FromTenant = %+#v, want = %+#v", mappings, expected)
-	}
+	test.Equal(t, mappings, expected)
 }
 
 var noOpLogger = logger.New(ioutil.Discard, logger.LogOptions{})

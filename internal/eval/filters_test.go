@@ -1,9 +1,9 @@
 package eval_test
 
 import (
-	"encoding/json"
 	"github.com/b2wdigital/restQL-golang/internal/domain"
 	"github.com/b2wdigital/restQL-golang/internal/eval"
+	"github.com/b2wdigital/restQL-golang/test"
 	"reflect"
 	"regexp"
 	"testing"
@@ -69,13 +69,13 @@ func TestOnlyFilters(t *testing.T) {
 			domain.Resources{
 				"hero": domain.DoneResource{
 					Details: domain.Details{Success: true},
-					Result:  unmarshal(`{ "id": "12345", "name": "batman", "age": 42 }`),
+					Result:  test.Unmarshal(`{ "id": "12345", "name": "batman", "age": 42 }`),
 				},
 			},
 			domain.Resources{
 				"hero": domain.DoneResource{
 					Details: domain.Details{Success: true},
-					Result:  unmarshal(`{ "name": "batman", "age": 42 }`),
+					Result:  test.Unmarshal(`{ "name": "batman", "age": 42 }`),
 				},
 			},
 		},
@@ -88,13 +88,13 @@ func TestOnlyFilters(t *testing.T) {
 			domain.Resources{
 				"hero": domain.DoneResource{
 					Details: domain.Details{Success: true},
-					Result:  unmarshal(`{ "id": "12345", "name": "batman" }`),
+					Result:  test.Unmarshal(`{ "id": "12345", "name": "batman" }`),
 				},
 			},
 			domain.Resources{
 				"hero": domain.DoneResource{
 					Details: domain.Details{Success: true},
-					Result:  unmarshal(`{ "name": "batman" }`),
+					Result:  test.Unmarshal(`{ "name": "batman" }`),
 				},
 			},
 		},
@@ -107,13 +107,13 @@ func TestOnlyFilters(t *testing.T) {
 			domain.Resources{
 				"hero": domain.DoneResource{
 					Details: domain.Details{Success: true},
-					Result:  unmarshal(`{ "id": "12345", "name": "batman", "age": 42, "city": { "name": "gotham", "population": 10000000 } }`),
+					Result:  test.Unmarshal(`{ "id": "12345", "name": "batman", "age": 42, "city": { "name": "gotham", "population": 10000000 } }`),
 				},
 			},
 			domain.Resources{
 				"hero": domain.DoneResource{
 					Details: domain.Details{Success: true},
-					Result:  unmarshal(`{ "city": { "name": "gotham", "population": 10000000 } }`),
+					Result:  test.Unmarshal(`{ "city": { "name": "gotham", "population": 10000000 } }`),
 				},
 			},
 		},
@@ -126,13 +126,13 @@ func TestOnlyFilters(t *testing.T) {
 			domain.Resources{
 				"hero": domain.DoneResource{
 					Details: domain.Details{Success: true},
-					Result:  unmarshal(`{ "id": "12345", "nested": {"some-field": {"even-more-nested": "abcdef", "other-field": 1} } }`),
+					Result:  test.Unmarshal(`{ "id": "12345", "nested": {"some-field": {"even-more-nested": "abcdef", "other-field": 1} } }`),
 				},
 			},
 			domain.Resources{
 				"hero": domain.DoneResource{
 					Details: domain.Details{Success: true},
-					Result:  unmarshal(`{ "id": "12345", "nested": {"some-field": {"even-more-nested": "abcdef"} } }`),
+					Result:  test.Unmarshal(`{ "id": "12345", "nested": {"some-field": {"even-more-nested": "abcdef"} } }`),
 				},
 			},
 		},
@@ -145,13 +145,13 @@ func TestOnlyFilters(t *testing.T) {
 			domain.Resources{
 				"hero": domain.DoneResource{
 					Details: domain.Details{Success: true},
-					Result:  unmarshal(`{ "id": "12345", "weapons": [{"id": 1, "name": "belt"}, {"id": 2, "name": "batarang"}] }`),
+					Result:  test.Unmarshal(`{ "id": "12345", "weapons": [{"id": 1, "name": "belt"}, {"id": 2, "name": "batarang"}] }`),
 				},
 			},
 			domain.Resources{
 				"hero": domain.DoneResource{
 					Details: domain.Details{Success: true},
-					Result:  unmarshal(`{"weapons": [{"name": "belt"}, {"name": "batarang"}] }`),
+					Result:  test.Unmarshal(`{"weapons": [{"name": "belt"}, {"name": "batarang"}] }`),
 				},
 			},
 		},
@@ -164,13 +164,13 @@ func TestOnlyFilters(t *testing.T) {
 			domain.Resources{
 				"hero": domain.DoneResource{
 					Details: domain.Details{Success: true},
-					Result:  unmarshal(`{ "id": "12345", "weapons": ["belt", "batarang"] }`),
+					Result:  test.Unmarshal(`{ "id": "12345", "weapons": ["belt", "batarang"] }`),
 				},
 			},
 			domain.Resources{
 				"hero": domain.DoneResource{
 					Details: domain.Details{Success: true},
-					Result:  unmarshal(`{"weapons": ["belt", "batarang"] }`),
+					Result:  test.Unmarshal(`{"weapons": ["belt", "batarang"] }`),
 				},
 			},
 		},
@@ -183,13 +183,13 @@ func TestOnlyFilters(t *testing.T) {
 			domain.Resources{
 				"hero": domain.DoneResource{
 					Details: domain.Details{Success: true},
-					Result:  unmarshal(`{ "id": "12345", "weapons": [{"id": 1, "name": "belt", "nested": {"some-field": {"even-more-nested": "abcdef"} }}, {"id": 2, "name": "batarang", "nested": {"some-field": {"even-more-nested": "abcdef"} }}] }`),
+					Result:  test.Unmarshal(`{ "id": "12345", "weapons": [{"id": 1, "name": "belt", "nested": {"some-field": {"even-more-nested": "abcdef"} }}, {"id": 2, "name": "batarang", "nested": {"some-field": {"even-more-nested": "abcdef"} }}] }`),
 				},
 			},
 			domain.Resources{
 				"hero": domain.DoneResource{
 					Details: domain.Details{Success: true},
-					Result:  unmarshal(`{"weapons": [{"nested": {"some-field": {"even-more-nested": "abcdef"} }}, {"nested": {"some-field": {"even-more-nested": "abcdef"} }}] }`),
+					Result:  test.Unmarshal(`{"weapons": [{"nested": {"some-field": {"even-more-nested": "abcdef"} }}, {"nested": {"some-field": {"even-more-nested": "abcdef"} }}] }`),
 				},
 			},
 		},
@@ -202,13 +202,13 @@ func TestOnlyFilters(t *testing.T) {
 			domain.Resources{
 				"hero": domain.DoneResource{
 					Details: domain.Details{Success: true},
-					Result:  unmarshal(`{ "id": "12345", "weapons": [{"id": 1, "name": "belt", "properties": [{"name": "color", "value": "yellow"}, {"name": "weight", "value": "10"}]}, {"id": 2, "name": "batarang", "properties": [{"name": "color", "value": "black"}, {"name": "weight", "value": "1"}]}] }`),
+					Result:  test.Unmarshal(`{ "id": "12345", "weapons": [{"id": 1, "name": "belt", "properties": [{"name": "color", "value": "yellow"}, {"name": "weight", "value": "10"}]}, {"id": 2, "name": "batarang", "properties": [{"name": "color", "value": "black"}, {"name": "weight", "value": "1"}]}] }`),
 				},
 			},
 			domain.Resources{
 				"hero": domain.DoneResource{
 					Details: domain.Details{Success: true},
-					Result:  unmarshal(`{"weapons": [{"name": "belt", "properties": [{"name": "color", "value": "yellow"}, {"name": "weight", "value": "10"}]}, {"name": "batarang", "properties": [{"name": "color", "value": "black"}, {"name": "weight", "value": "1"}]}] }`),
+					Result:  test.Unmarshal(`{"weapons": [{"name": "belt", "properties": [{"name": "color", "value": "yellow"}, {"name": "weight", "value": "10"}]}, {"name": "batarang", "properties": [{"name": "color", "value": "black"}, {"name": "weight", "value": "1"}]}] }`),
 				},
 			},
 		},
@@ -221,13 +221,13 @@ func TestOnlyFilters(t *testing.T) {
 			domain.Resources{
 				"hero": domain.DoneResource{
 					Details: domain.Details{Success: true},
-					Result:  unmarshal(`[{ "id": "12345", "name": "batman", "age": 42 },{ "id": "67890", "name": "wonder woman", "age": 35 }]`),
+					Result:  test.Unmarshal(`[{ "id": "12345", "name": "batman", "age": 42 },{ "id": "67890", "name": "wonder woman", "age": 35 }]`),
 				},
 			},
 			domain.Resources{
 				"hero": domain.DoneResource{
 					Details: domain.Details{Success: true},
-					Result:  unmarshal(`[{ "name": "batman", "age": 42 },{ "name": "wonder woman", "age": 35 }]`),
+					Result:  test.Unmarshal(`[{ "name": "batman", "age": 42 },{ "name": "wonder woman", "age": 35 }]`),
 				},
 			},
 		},
@@ -241,11 +241,11 @@ func TestOnlyFilters(t *testing.T) {
 				"hero": domain.DoneResources{
 					domain.DoneResource{
 						Details: domain.Details{Success: true},
-						Result:  unmarshal(`{ "id": "12345", "name": "batman", "age": 42 }`),
+						Result:  test.Unmarshal(`{ "id": "12345", "name": "batman", "age": 42 }`),
 					},
 					domain.DoneResource{
 						Details: domain.Details{Success: true},
-						Result:  unmarshal(`{ "id": "56789", "name": "wonder woman", "age": 35 }`),
+						Result:  test.Unmarshal(`{ "id": "56789", "name": "wonder woman", "age": 35 }`),
 					},
 				},
 			},
@@ -253,11 +253,11 @@ func TestOnlyFilters(t *testing.T) {
 				"hero": domain.DoneResources{
 					domain.DoneResource{
 						Details: domain.Details{Success: true},
-						Result:  unmarshal(`{ "name": "batman", "age": 42 }`),
+						Result:  test.Unmarshal(`{ "name": "batman", "age": 42 }`),
 					},
 					domain.DoneResource{
 						Details: domain.Details{Success: true},
-						Result:  unmarshal(`{ "name": "wonder woman", "age": 35 }`),
+						Result:  test.Unmarshal(`{ "name": "wonder woman", "age": 35 }`),
 					},
 				},
 			},
@@ -275,13 +275,13 @@ func TestOnlyFilters(t *testing.T) {
 			domain.Resources{
 				"hero": domain.DoneResource{
 					Details: domain.Details{Success: true},
-					Result:  unmarshal(`{ "id": "12345", "name": "batman", "age": 42 }`),
+					Result:  test.Unmarshal(`{ "id": "12345", "name": "batman", "age": 42 }`),
 				},
 			},
 			domain.Resources{
 				"hero": domain.DoneResource{
 					Details: domain.Details{Success: true},
-					Result:  unmarshal(`{ "name": "batman", "age": 42 }`),
+					Result:  test.Unmarshal(`{ "name": "batman", "age": 42 }`),
 				},
 			},
 		},
@@ -294,13 +294,13 @@ func TestOnlyFilters(t *testing.T) {
 			domain.Resources{
 				"hero": domain.DoneResource{
 					Details: domain.Details{Success: true},
-					Result:  unmarshal(`{ "id": "12345", "name": "batman", "age": 42 }`),
+					Result:  test.Unmarshal(`{ "id": "12345", "name": "batman", "age": 42 }`),
 				},
 			},
 			domain.Resources{
 				"hero": domain.DoneResource{
 					Details: domain.Details{Success: true},
-					Result:  unmarshal(`{ "name": "batman", "age": 42 }`),
+					Result:  test.Unmarshal(`{ "name": "batman", "age": 42 }`),
 				},
 			},
 		},
@@ -313,13 +313,13 @@ func TestOnlyFilters(t *testing.T) {
 			domain.Resources{
 				"hero": domain.DoneResource{
 					Details: domain.Details{Success: true},
-					Result:  unmarshal(`{ "id": "12345", "weapons": ["belt", "batarang", "katana"] }`),
+					Result:  test.Unmarshal(`{ "id": "12345", "weapons": ["belt", "batarang", "katana"] }`),
 				},
 			},
 			domain.Resources{
 				"hero": domain.DoneResource{
 					Details: domain.Details{Success: true},
-					Result:  unmarshal(`{ "weapons": ["belt", "batarang"] }`),
+					Result:  test.Unmarshal(`{ "weapons": ["belt", "batarang"] }`),
 				},
 			},
 		},
@@ -332,13 +332,13 @@ func TestOnlyFilters(t *testing.T) {
 			domain.Resources{
 				"hero": domain.DoneResource{
 					Details: domain.Details{Success: true},
-					Result:  unmarshal(`{ "id": "12345", "name": "batman", "age": 42 }`),
+					Result:  test.Unmarshal(`{ "id": "12345", "name": "batman", "age": 42 }`),
 				},
 			},
 			domain.Resources{
 				"hero": domain.DoneResource{
 					Details: domain.Details{Success: true},
-					Result:  unmarshal(`{ "id": "12345", "name": "batman", "age": 42 }`),
+					Result:  test.Unmarshal(`{ "id": "12345", "name": "batman", "age": 42 }`),
 				},
 			},
 		},
@@ -351,13 +351,13 @@ func TestOnlyFilters(t *testing.T) {
 			domain.Resources{
 				"hero": domain.DoneResource{
 					Details: domain.Details{Success: true},
-					Result:  unmarshal(`{ "id": "12345", "name": "batman", "age": 42 }`),
+					Result:  test.Unmarshal(`{ "id": "12345", "name": "batman", "age": 42 }`),
 				},
 			},
 			domain.Resources{
 				"hero": domain.DoneResource{
 					Details: domain.Details{Success: true},
-					Result:  unmarshal(`{ "id": "12345", "age": 42 }`),
+					Result:  test.Unmarshal(`{ "id": "12345", "age": 42 }`),
 				},
 			},
 		},
@@ -366,22 +366,9 @@ func TestOnlyFilters(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := eval.ApplyFilters(tt.query, tt.resources)
-			if err != nil {
-				t.Fatalf("ApplyFilters returned unexpected error: %s", err)
-			}
 
-			if !reflect.DeepEqual(got, tt.expected) {
-				t.Fatalf("ApplyFilters = %+#v, want = %+#v", got, tt.expected)
-			}
+			test.VerifyError(t, err)
+			test.Equal(t, got, tt.expected)
 		})
 	}
-}
-
-func unmarshal(body string) interface{} {
-	var f interface{}
-	err := json.Unmarshal([]byte(body), &f)
-	if err != nil {
-		panic(err)
-	}
-	return f
 }

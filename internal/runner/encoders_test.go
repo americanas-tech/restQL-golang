@@ -3,7 +3,7 @@ package runner_test
 import (
 	"github.com/b2wdigital/restQL-golang/internal/domain"
 	"github.com/b2wdigital/restQL-golang/internal/runner"
-	"reflect"
+	"github.com/b2wdigital/restQL-golang/test"
 	"testing"
 )
 
@@ -116,9 +116,7 @@ func TestApplyEncoders(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got := runner.ApplyEncoders(tt.resources, logger)
-			if !reflect.DeepEqual(got, tt.expected) {
-				t.Errorf("ApplyEncoders = %#+v. Want %#+v", got, tt.expected)
-			}
+			test.Equal(t, got, tt.expected)
 		})
 	}
 }

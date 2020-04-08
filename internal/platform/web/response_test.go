@@ -1,9 +1,9 @@
 package web_test
 
 import (
-	"encoding/json"
 	"github.com/b2wdigital/restQL-golang/internal/domain"
 	"github.com/b2wdigital/restQL-golang/internal/platform/web"
+	"github.com/b2wdigital/restQL-golang/test"
 	"reflect"
 	"testing"
 )
@@ -19,13 +19,13 @@ func TestMakeQueryResponse(t *testing.T) {
 			domain.Resources{
 				"hero": domain.DoneResource{
 					Details: domain.Details{Status: 200, Success: true},
-					Result:  unmarshal(`{"id": "12345abcde"}`),
+					Result:  test.Unmarshal(`{"id": "12345abcde"}`),
 				},
 			},
 			web.QueryResponse{
 				"hero": web.StatementResult{
 					Details: web.StatementDetails{Status: 200, Success: true},
-					Result:  unmarshal(`{"id": "12345abcde"}`),
+					Result:  test.Unmarshal(`{"id": "12345abcde"}`),
 				},
 			},
 		},
@@ -34,13 +34,13 @@ func TestMakeQueryResponse(t *testing.T) {
 			domain.Resources{
 				"hero": domain.DoneResource{
 					Details: domain.Details{Status: 200, Success: true, IgnoreErrors: true},
-					Result:  unmarshal(`{"id": "12345abcde"}`),
+					Result:  test.Unmarshal(`{"id": "12345abcde"}`),
 				},
 			},
 			web.QueryResponse{
 				"hero": web.StatementResult{
 					Details: web.StatementDetails{Status: 200, Success: true, Metadata: web.StatementMetadata{IgnoreErrors: "ignore"}},
-					Result:  unmarshal(`{"id": "12345abcde"}`),
+					Result:  test.Unmarshal(`{"id": "12345abcde"}`),
 				},
 			},
 		},
@@ -55,7 +55,7 @@ func TestMakeQueryResponse(t *testing.T) {
 						Params:          map[string]interface{}{"filter": "no"},
 						ResponseTime:    100,
 					}},
-					Result: unmarshal(`{"id": "12345abcde"}`),
+					Result: test.Unmarshal(`{"id": "12345abcde"}`),
 				},
 			},
 			web.QueryResponse{
@@ -67,7 +67,7 @@ func TestMakeQueryResponse(t *testing.T) {
 						Params:          map[string]interface{}{"filter": "no"},
 						ResponseTime:    100,
 					}},
-					Result: unmarshal(`{"id": "12345abcde"}`),
+					Result: test.Unmarshal(`{"id": "12345abcde"}`),
 				},
 			},
 		},
@@ -77,18 +77,18 @@ func TestMakeQueryResponse(t *testing.T) {
 				"hero": domain.DoneResources{
 					domain.DoneResource{
 						Details: domain.Details{Status: 200, Success: true},
-						Result:  unmarshal(`{"id": "12345abcde"}`),
+						Result:  test.Unmarshal(`{"id": "12345abcde"}`),
 					},
 					domain.DoneResource{
 						Details: domain.Details{Status: 200, Success: true},
-						Result:  unmarshal(`{"id": "67890fghij"}`),
+						Result:  test.Unmarshal(`{"id": "67890fghij"}`),
 					},
 				},
 			},
 			web.QueryResponse{
 				"hero": web.StatementResult{
 					Details: []interface{}{web.StatementDetails{Status: 200, Success: true}, web.StatementDetails{Status: 200, Success: true}},
-					Result:  []interface{}{unmarshal(`{"id": "12345abcde"}`), unmarshal(`{"id": "67890fghij"}`)},
+					Result:  []interface{}{test.Unmarshal(`{"id": "12345abcde"}`), test.Unmarshal(`{"id": "67890fghij"}`)},
 				},
 			},
 		},
@@ -97,7 +97,7 @@ func TestMakeQueryResponse(t *testing.T) {
 			domain.Resources{
 				"hero": domain.DoneResource{
 					Details: domain.Details{Status: 200, Success: true},
-					Result:  unmarshal(`{"id": "10"}`),
+					Result:  test.Unmarshal(`{"id": "10"}`),
 				},
 				"sidekick": domain.DoneResources{
 					domain.DoneResource{
@@ -113,7 +113,7 @@ func TestMakeQueryResponse(t *testing.T) {
 			web.QueryResponse{
 				"hero": web.StatementResult{
 					Details: web.StatementDetails{Status: 200, Success: true},
-					Result:  unmarshal(`{"id": "10"}`),
+					Result:  test.Unmarshal(`{"id": "10"}`),
 				},
 				"sidekick": web.StatementResult{
 					Details: []interface{}{web.StatementDetails{Status: 200, Success: true}, web.StatementDetails{Status: 200, Success: true}},
@@ -187,18 +187,8 @@ func TestCalculateStatusCode(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got := web.CalculateStatusCode(tt.queryResult)
-			if !reflect.DeepEqual(got, tt.expected) {
-				t.Errorf("CalculateStatusCode = %#+v, want = %#+v", got, tt.expected)
-			}
+
+			test.Equal(t, got, tt.expected)
 		})
 	}
-}
-
-func unmarshal(body string) interface{} {
-	var f interface{}
-	err := json.Unmarshal([]byte(body), &f)
-	if err != nil {
-		panic(err)
-	}
-	return f
 }

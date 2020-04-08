@@ -2,8 +2,8 @@ package parser_test
 
 import (
 	"github.com/b2wdigital/restQL-golang/internal/domain"
-	. "github.com/b2wdigital/restQL-golang/internal/parser"
-	"reflect"
+	"github.com/b2wdigital/restQL-golang/internal/parser"
+	"github.com/b2wdigital/restQL-golang/test"
 	"regexp"
 	"testing"
 )
@@ -201,17 +201,15 @@ func TestQueryParser(t *testing.T) {
 		},
 	}
 
-	for _, testCase := range tests {
-		t.Run(testCase.name, func(t *testing.T) {
-			got, err := Optimize(testCase.query)
+	queryParser, err := parser.New()
+	test.VerifyError(t, err)
 
-			if err != nil {
-				t.Errorf("An error occured during Parse\n%s", err)
-			}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := queryParser.Parse(tt.query)
 
-			if !reflect.DeepEqual(got, testCase.expected) {
-				t.Errorf("Parse = %#v,\nwant %#v", got, testCase.expected)
-			}
+			test.VerifyError(t, err)
+			test.Equal(t, got, tt.expected)
 		})
 	}
 }
@@ -234,8 +232,13 @@ from hero as h
 	with id = $id
 `
 
+	queryParser, err := parser.New()
+	if err != nil {
+		b.Fatalf("failed to compile the queryParser : %v", err)
+	}
+
 	for i := 0; i < b.N; i++ {
-		_, err := Optimize(query)
+		_, err := queryParser.Parse(query)
 
 		if err != nil {
 			b.Fatalf("An error ocurred when running the benchmark: %v", err)

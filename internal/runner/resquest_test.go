@@ -3,8 +3,8 @@ package runner_test
 import (
 	"github.com/b2wdigital/restQL-golang/internal/domain"
 	"github.com/b2wdigital/restQL-golang/internal/runner"
+	"github.com/b2wdigital/restQL-golang/test"
 	"net/http"
-	"reflect"
 	"testing"
 )
 
@@ -99,9 +99,8 @@ func TestMakeRequest(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got := runner.MakeRequest(tt.statement, tt.queryCtx)
-			if !reflect.DeepEqual(got, tt.expected) {
-				t.Errorf("MakeRequest = %#+v, want = %#+v", got, tt.expected)
-			}
+
+			test.Equal(t, got, tt.expected)
 		})
 	}
 }

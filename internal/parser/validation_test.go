@@ -2,6 +2,7 @@ package parser
 
 import (
 	"github.com/b2wdigital/restQL-golang/internal/parser/ast"
+	"github.com/b2wdigital/restQL-golang/test"
 	"testing"
 )
 
@@ -28,9 +29,7 @@ func TestParseValidation(t *testing.T) {
 			t.Fatalf("Expected an error from Parse but didn't got one")
 		}
 
-		if err != ErrDuplicatedQualifiers {
-			t.Fatalf("Expected error %v got %v", ErrDuplicatedQualifiers, err)
-		}
+		test.Equal(t, err, ErrDuplicatedQualifiers)
 	})
 
 	t.Run("should not have only and hidden keywords in the same block", func(t *testing.T) {
@@ -55,9 +54,7 @@ func TestParseValidation(t *testing.T) {
 			t.Fatalf("Expected an error from Parse but didn't got one")
 		}
 
-		if err != ErrInvalidOnlyAndHiddenKeywordsInSameStatement {
-			t.Fatalf("Expected error %v got %v", ErrDuplicatedQualifiers, err)
-		}
+		test.Equal(t, err, ErrInvalidOnlyAndHiddenKeywordsInSameStatement)
 	})
 }
 

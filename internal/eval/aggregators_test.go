@@ -3,7 +3,7 @@ package eval_test
 import (
 	"github.com/b2wdigital/restQL-golang/internal/domain"
 	"github.com/b2wdigital/restQL-golang/internal/eval"
-	"reflect"
+	"github.com/b2wdigital/restQL-golang/test"
 	"testing"
 )
 
@@ -33,11 +33,11 @@ func TestApplyAggregators(t *testing.T) {
 				{Resource: "sidekick", In: []string{"hero", "sidekick"}},
 			}},
 			domain.Resources{
-				"hero":     domain.DoneResource{Details: domain.Details{Success: true}, Result: unmarshal(`{ "id": 1, "name": "batman" }`)},
-				"sidekick": domain.DoneResource{Details: domain.Details{Success: true}, Result: unmarshal(`{ "id": 10, "name": "robin" }`)},
+				"hero":     domain.DoneResource{Details: domain.Details{Success: true}, Result: test.Unmarshal(`{ "id": 1, "name": "batman" }`)},
+				"sidekick": domain.DoneResource{Details: domain.Details{Success: true}, Result: test.Unmarshal(`{ "id": 10, "name": "robin" }`)},
 			},
 			domain.Resources{
-				"hero":     domain.DoneResource{Details: domain.Details{Success: true}, Result: unmarshal(`{ "id": 1, "name": "batman", "sidekick": { "id": 10, "name": "robin" } }`)},
+				"hero":     domain.DoneResource{Details: domain.Details{Success: true}, Result: test.Unmarshal(`{ "id": 1, "name": "batman", "sidekick": { "id": 10, "name": "robin" } }`)},
 				"sidekick": domain.DoneResource{Details: domain.Details{Success: true}, Result: nil},
 			},
 		},
@@ -48,11 +48,11 @@ func TestApplyAggregators(t *testing.T) {
 				{Resource: "sidekick", In: []string{"hero", "sidekick"}},
 			}},
 			domain.Resources{
-				"hero":     domain.DoneResource{Details: domain.Details{Success: true}, Result: unmarshal(`{ "id": 1, "name": "batman" }`)},
-				"sidekick": domain.DoneResource{Details: domain.Details{Success: true}, Result: unmarshal(`[{ "id": 10, "name": "robin" }, { "id": 11, "name": "batgirl" }]`)},
+				"hero":     domain.DoneResource{Details: domain.Details{Success: true}, Result: test.Unmarshal(`{ "id": 1, "name": "batman" }`)},
+				"sidekick": domain.DoneResource{Details: domain.Details{Success: true}, Result: test.Unmarshal(`[{ "id": 10, "name": "robin" }, { "id": 11, "name": "batgirl" }]`)},
 			},
 			domain.Resources{
-				"hero":     domain.DoneResource{Details: domain.Details{Success: true}, Result: unmarshal(`{ "id": 1, "name": "batman", "sidekick":  [{ "id": 10, "name": "robin" }, { "id": 11, "name": "batgirl" }]}`)},
+				"hero":     domain.DoneResource{Details: domain.Details{Success: true}, Result: test.Unmarshal(`{ "id": 1, "name": "batman", "sidekick":  [{ "id": 10, "name": "robin" }, { "id": 11, "name": "batgirl" }]}`)},
 				"sidekick": domain.DoneResource{Details: domain.Details{Success: true}, Result: nil},
 			},
 		},
@@ -64,15 +64,15 @@ func TestApplyAggregators(t *testing.T) {
 			}},
 			domain.Resources{
 				"hero": domain.DoneResources{
-					domain.DoneResource{Details: domain.Details{Success: true}, Result: unmarshal(`{ "id": 1, "name": "batman" }`)},
-					domain.DoneResource{Details: domain.Details{Success: true}, Result: unmarshal(`{ "id": 2, "name": "wonder woman" }`)},
+					domain.DoneResource{Details: domain.Details{Success: true}, Result: test.Unmarshal(`{ "id": 1, "name": "batman" }`)},
+					domain.DoneResource{Details: domain.Details{Success: true}, Result: test.Unmarshal(`{ "id": 2, "name": "wonder woman" }`)},
 				},
-				"sidekick": domain.DoneResource{Details: domain.Details{Success: true}, Result: unmarshal(`{ "id": 10, "name": "robin" }`)},
+				"sidekick": domain.DoneResource{Details: domain.Details{Success: true}, Result: test.Unmarshal(`{ "id": 10, "name": "robin" }`)},
 			},
 			domain.Resources{
 				"hero": domain.DoneResources{
-					domain.DoneResource{Details: domain.Details{Success: true}, Result: unmarshal(`{ "id": 1, "name": "batman", "sidekick": { "id": 10, "name": "robin" } }`)},
-					domain.DoneResource{Details: domain.Details{Success: true}, Result: unmarshal(`{ "id": 2, "name": "wonder woman", "sidekick": { "id": 10, "name": "robin" } }`)},
+					domain.DoneResource{Details: domain.Details{Success: true}, Result: test.Unmarshal(`{ "id": 1, "name": "batman", "sidekick": { "id": 10, "name": "robin" } }`)},
+					domain.DoneResource{Details: domain.Details{Success: true}, Result: test.Unmarshal(`{ "id": 2, "name": "wonder woman", "sidekick": { "id": 10, "name": "robin" } }`)},
 				},
 				"sidekick": domain.DoneResource{Details: domain.Details{Success: true}, Result: nil},
 			},
@@ -84,11 +84,11 @@ func TestApplyAggregators(t *testing.T) {
 				{Resource: "sidekick", In: []string{"hero", "sidekick"}},
 			}},
 			domain.Resources{
-				"hero":     domain.DoneResource{Details: domain.Details{Success: true}, Result: unmarshal(`[{ "id": 1, "name": "batman" }, { "id": 2, "name": "wonder woman" }]`)},
-				"sidekick": domain.DoneResource{Details: domain.Details{Success: true}, Result: unmarshal(`{ "id": 10, "name": "robin" }`)},
+				"hero":     domain.DoneResource{Details: domain.Details{Success: true}, Result: test.Unmarshal(`[{ "id": 1, "name": "batman" }, { "id": 2, "name": "wonder woman" }]`)},
+				"sidekick": domain.DoneResource{Details: domain.Details{Success: true}, Result: test.Unmarshal(`{ "id": 10, "name": "robin" }`)},
 			},
 			domain.Resources{
-				"hero":     domain.DoneResource{Details: domain.Details{Success: true}, Result: unmarshal(`[{ "id": 1, "name": "batman", "sidekick": { "id": 10, "name": "robin" } }, { "id": 2, "name": "wonder woman", "sidekick": { "id": 10, "name": "robin" } }]`)},
+				"hero":     domain.DoneResource{Details: domain.Details{Success: true}, Result: test.Unmarshal(`[{ "id": 1, "name": "batman", "sidekick": { "id": 10, "name": "robin" } }, { "id": 2, "name": "wonder woman", "sidekick": { "id": 10, "name": "robin" } }]`)},
 				"sidekick": domain.DoneResource{Details: domain.Details{Success: true}, Result: nil},
 			},
 		},
@@ -99,16 +99,16 @@ func TestApplyAggregators(t *testing.T) {
 				{Resource: "sidekick", In: []string{"hero", "sidekick"}},
 			}},
 			domain.Resources{
-				"hero": domain.DoneResource{Details: domain.Details{Success: true}, Result: unmarshal(`{ "id": 1, "name": "batman" }`)},
+				"hero": domain.DoneResource{Details: domain.Details{Success: true}, Result: test.Unmarshal(`{ "id": 1, "name": "batman" }`)},
 				"sidekick": domain.DoneResources{
-					domain.DoneResource{Details: domain.Details{Success: true}, Result: unmarshal(`{ "id": 10, "name": "robin" }`)},
-					domain.DoneResource{Details: domain.Details{Success: true}, Result: unmarshal(`{ "id": 11, "name": "batgirl" }`)},
+					domain.DoneResource{Details: domain.Details{Success: true}, Result: test.Unmarshal(`{ "id": 10, "name": "robin" }`)},
+					domain.DoneResource{Details: domain.Details{Success: true}, Result: test.Unmarshal(`{ "id": 11, "name": "batgirl" }`)},
 				},
 			},
 			domain.Resources{
 				"hero": domain.DoneResource{
 					Details: domain.Details{Success: true},
-					Result:  unmarshal(`{ "id": 1, "name": "batman", "sidekick": [{ "id": 10, "name": "robin" }, { "id": 11, "name": "batgirl" }] }`),
+					Result:  test.Unmarshal(`{ "id": 1, "name": "batman", "sidekick": [{ "id": 10, "name": "robin" }, { "id": 11, "name": "batgirl" }] }`),
 				},
 				"sidekick": domain.DoneResources{
 					domain.DoneResource{Details: domain.Details{Success: true}, Result: nil},
@@ -124,23 +124,23 @@ func TestApplyAggregators(t *testing.T) {
 			}},
 			domain.Resources{
 				"hero": domain.DoneResources{
-					domain.DoneResource{Details: domain.Details{Success: true}, Result: unmarshal(`{ "id": 1, "name": "batman"}`)},
-					domain.DoneResource{Details: domain.Details{Success: true}, Result: unmarshal(`{ "id": 2, "name": "wonder woman"}`)},
+					domain.DoneResource{Details: domain.Details{Success: true}, Result: test.Unmarshal(`{ "id": 1, "name": "batman"}`)},
+					domain.DoneResource{Details: domain.Details{Success: true}, Result: test.Unmarshal(`{ "id": 2, "name": "wonder woman"}`)},
 				},
 				"sidekick": domain.DoneResources{
-					domain.DoneResource{Details: domain.Details{Success: true}, Result: unmarshal(`{ "id": 10, "name": "robin" }`)},
-					domain.DoneResource{Details: domain.Details{Success: true}, Result: unmarshal(`{ "id": 11, "name": "batgirl" }`)},
+					domain.DoneResource{Details: domain.Details{Success: true}, Result: test.Unmarshal(`{ "id": 10, "name": "robin" }`)},
+					domain.DoneResource{Details: domain.Details{Success: true}, Result: test.Unmarshal(`{ "id": 11, "name": "batgirl" }`)},
 				},
 			},
 			domain.Resources{
 				"hero": domain.DoneResources{
 					domain.DoneResource{
 						Details: domain.Details{Success: true},
-						Result:  unmarshal(`{ "id": 1, "name": "batman", "sidekick": { "id": 10, "name": "robin" } }`),
+						Result:  test.Unmarshal(`{ "id": 1, "name": "batman", "sidekick": { "id": 10, "name": "robin" } }`),
 					},
 					domain.DoneResource{
 						Details: domain.Details{Success: true},
-						Result:  unmarshal(`{ "id": 2, "name": "wonder woman", "sidekick": { "id": 11, "name": "batgirl" } }`),
+						Result:  test.Unmarshal(`{ "id": 2, "name": "wonder woman", "sidekick": { "id": 11, "name": "batgirl" } }`),
 					},
 				},
 				"sidekick": domain.DoneResources{
@@ -156,11 +156,11 @@ func TestApplyAggregators(t *testing.T) {
 				{Resource: "sidekick", In: []string{"hero", "sidekick"}},
 			}},
 			domain.Resources{
-				"hero":     domain.DoneResource{Details: domain.Details{Success: true}, Result: unmarshal(`[{ "id": 1, "name": "batman" }, { "id": 2, "name": "wonder woman" }]`)},
-				"sidekick": domain.DoneResource{Details: domain.Details{Success: true}, Result: unmarshal(`[{ "id": 10, "name": "robin" }, { "id": 11, "name": "batgirl" }]`)},
+				"hero":     domain.DoneResource{Details: domain.Details{Success: true}, Result: test.Unmarshal(`[{ "id": 1, "name": "batman" }, { "id": 2, "name": "wonder woman" }]`)},
+				"sidekick": domain.DoneResource{Details: domain.Details{Success: true}, Result: test.Unmarshal(`[{ "id": 10, "name": "robin" }, { "id": 11, "name": "batgirl" }]`)},
 			},
 			domain.Resources{
-				"hero":     domain.DoneResource{Details: domain.Details{Success: true}, Result: unmarshal(`[{ "id": 1, "name": "batman", "sidekick": { "id": 10, "name": "robin" } }, { "id": 2, "name": "wonder woman", "sidekick": { "id": 11, "name": "batgirl" } }]`)},
+				"hero":     domain.DoneResource{Details: domain.Details{Success: true}, Result: test.Unmarshal(`[{ "id": 1, "name": "batman", "sidekick": { "id": 10, "name": "robin" } }, { "id": 2, "name": "wonder woman", "sidekick": { "id": 11, "name": "batgirl" } }]`)},
 				"sidekick": domain.DoneResource{Details: domain.Details{Success: true}, Result: nil},
 			},
 		},
@@ -169,10 +169,7 @@ func TestApplyAggregators(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got := eval.ApplyAggregators(tt.query, tt.resources)
-
-			if !reflect.DeepEqual(got, tt.expected) {
-				t.Fatalf("ApplyAggregators = %+#v, want = %+#v", got, tt.expected)
-			}
+			test.Equal(t, got, tt.expected)
 		})
 	}
 }

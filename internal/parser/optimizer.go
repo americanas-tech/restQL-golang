@@ -21,7 +21,7 @@ func Optimize(queryAst *ast.Query) (domain.Query, error) {
 
 	query := domain.Query{Statements: statements}
 
-	if query.Use != nil {
+	if queryAst.Use != nil {
 		query.Use = makeUse(queryAst)
 	}
 

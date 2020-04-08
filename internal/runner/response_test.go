@@ -3,7 +3,7 @@ package runner_test
 import (
 	"github.com/b2wdigital/restQL-golang/internal/domain"
 	"github.com/b2wdigital/restQL-golang/internal/runner"
-	"reflect"
+	"github.com/b2wdigital/restQL-golang/test"
 	"testing"
 	"time"
 )
@@ -74,9 +74,8 @@ func TestNewDoneResource(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got := runner.NewDoneResource(tt.request, tt.response, tt.options)
-			if !reflect.DeepEqual(got, tt.expected) {
-				t.Errorf("NewDoneResource = %#+v, want = %#+v", got, tt.expected)
-			}
+
+			test.Equal(t, got, tt.expected)
 		})
 	}
 
@@ -145,9 +144,8 @@ func TestNewTimeoutResponse(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got := runner.NewTimeoutResponse(timeoutErr, tt.request, tt.response, tt.options)
-			if !reflect.DeepEqual(got, tt.expected) {
-				t.Errorf("NewTimeoutResponse = %#+v, want = %#+v", got, tt.expected)
-			}
+
+			test.Equal(t, got, tt.expected)
 		})
 	}
 }
@@ -164,9 +162,7 @@ func TestNewEmptyChainedResponse(t *testing.T) {
 
 		got := runner.NewEmptyChainedResponse(params, options)
 
-		if !reflect.DeepEqual(got, expected) {
-			t.Fatalf("NewEmptyChainedResponse = %#+v, want = %#+v", got, expected)
-		}
+		test.Equal(t, got, expected)
 	})
 
 	t.Run("should create response for multiple empty chained param", func(t *testing.T) {
@@ -180,9 +176,7 @@ func TestNewEmptyChainedResponse(t *testing.T) {
 
 		got := runner.NewEmptyChainedResponse(params, options)
 
-		if !reflect.DeepEqual(got, expected) {
-			t.Fatalf("NewEmptyChainedResponse = %#+v, want = %#+v", got, expected)
-		}
+		test.Equal(t, got, expected)
 	})
 
 	t.Run("should create response for empty chained statement with ignore errors", func(t *testing.T) {
@@ -196,9 +190,7 @@ func TestNewEmptyChainedResponse(t *testing.T) {
 
 		got := runner.NewEmptyChainedResponse(params, options)
 
-		if !reflect.DeepEqual(got, expected) {
-			t.Fatalf("NewEmptyChainedResponse = %#+v, want = %#+v", got, expected)
-		}
+		test.Equal(t, got, expected)
 	})
 }
 
@@ -233,9 +225,8 @@ func TestGetEmptyChainedParams(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got := runner.GetEmptyChainedParams(tt.statement)
-			if !reflect.DeepEqual(got, tt.expected) {
-				t.Errorf("GetEmptyChainedParams = %#+v, want = %#+v", got, tt.expected)
-			}
+
+			test.Equal(t, got, tt.expected)
 		})
 	}
 }
