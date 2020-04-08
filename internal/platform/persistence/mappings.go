@@ -25,7 +25,9 @@ func NewMappingReader(log *logger.Logger, env domain.EnvSource, local map[string
 	return MappingsReader{log: log, env: envMappings, local: localMappings, db: db}
 }
 
-func (mr MappingsReader) FromTenant(ctx context.Context, tenant string) map[string]domain.Mapping {
+func (mr MappingsReader) FromTenant(ctx context.Context, tenant string) (map[string]domain.Mapping, error) {
+	mr.log.Debug("fetching mappings")
+
 	result := make(map[string]domain.Mapping)
 
 	for k, v := range mr.local {
@@ -33,8 +35,9 @@ func (mr MappingsReader) FromTenant(ctx context.Context, tenant string) map[stri
 	}
 
 	dbMappings, err := mr.db.FindMappingsForTenant(ctx, tenant)
-	if err != nil {
+	if err != nil && err != database.ErrNoDatabase {
 		mr.log.Debug("failed to load mappings from database")
+		return nil, err
 	}
 
 	for _, mapping := range dbMappings {
@@ -45,7 +48,7 @@ func (mr MappingsReader) FromTenant(ctx context.Context, tenant string) map[stri
 		result[k] = v
 	}
 
-	return result
+	return result, nil
 }
 
 func getMappingsFromEnv(log *logger.Logger, envSource domain.EnvSource) map[string]domain.Mapping {

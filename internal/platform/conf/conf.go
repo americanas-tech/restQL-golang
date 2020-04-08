@@ -22,6 +22,7 @@ type timeoutConf struct {
 	Duration string `yaml:"duration"`
 }
 
+//todo: add cache configurations for refresh
 type Config struct {
 	Web struct {
 		Server struct {
@@ -54,9 +55,25 @@ type Config struct {
 	} `yaml:"logging"`
 
 	Database struct {
-		ConnectionString  string `yaml:"connectionString" env:"DATABASE_CONNECTION_STRING"`
-		ConnectionTimeout string `yaml:"timeout" env:"DATABASE_CONNECTION_TIMEOUT"`
+		ConnectionString string `yaml:"connectionString" env:"DATABASE_CONNECTION_STRING"`
+		Timeouts         struct {
+			Connection string        `yaml:"connection" env:"DATABASE_CONNECTION_TIMEOUT"`
+			Mappings   time.Duration `yaml:"mappings"`
+			Query      time.Duration `yaml:"query"`
+		} `yaml:"timeouts"`
 	} `yaml:"database"`
+
+	Cache struct {
+		Mappings struct {
+			MaxSize            int           `yaml:"maxSize" env:"RESTQL_CACHE_MAPPINGS_MAX_SIZE"`
+			Expiration         time.Duration `yaml:"expiration" env:"RESTQL_CACHE_MAPPINGS_EXPIRATION"`
+			RefreshInterval    time.Duration `yaml:"refreshInterval" env:"RESTQL_CACHE_MAPPINGS_REFRESH_INTERVAL"`
+			RefreshQueueLength int           `yaml:"refreshQueueLength" env:"RESTQL_CACHE_MAPPINGS_REFRESH_QUEUE_LENGTH"`
+		} `yaml:"mappings"`
+		Query struct {
+			MaxSize int `yaml:"maxSize" env:"RESTQL_CACHE_QUERY_MAX_SIZE"`
+		} `yaml:"query"`
+	} `yaml:"cache"`
 
 	Tenant               string        `env:"TENANT"`
 	GlobalQueryTimeout   time.Duration `env:"QUERY_GLOBAL_TIMEOUT" envDefault:"30s"`

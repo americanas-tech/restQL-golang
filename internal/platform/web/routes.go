@@ -20,7 +20,11 @@ func API(log *logger.Logger, cfg *conf.Config) (fasthttp.RequestHandler, error) 
 		return nil, err
 	}
 
-	db, err := database.New(log, cfg.Database.ConnectionString, cfg.Database.ConnectionTimeout)
+	db, err := database.New(log, cfg.Database.ConnectionString,
+		database.WithConnectionTimeout(cfg.Database.Timeouts.Connection),
+		database.WithMappingsTimeout(cfg.Database.Timeouts.Mappings),
+		database.WithQueryTimeout(cfg.Database.Timeouts.Query),
+	)
 	if err != nil {
 		log.Error("failed to establish connection to database", err)
 	}
@@ -32,8 +36,12 @@ func API(log *logger.Logger, cfg *conf.Config) (fasthttp.RequestHandler, error) 
 	r := runner.NewRunner(log, executor, cfg.GlobalQueryTimeout)
 
 	mr := persistence.NewMappingReader(log, cfg.Env, cfg.Mappings, db)
+	cacheMr := persistence.NewCacheMappingsReader(log, mr)
+
 	qr := persistence.NewQueryReader(log, cfg.Queries, db)
-	e := eval.NewEvaluator(log, mr, qr, r, p)
+	cacheQr := persistence.NewCacheQueryReader(qr, nil)
+
+	e := eval.NewEvaluator(log, cacheMr, cacheQr, r, p)
 
 	restQl := NewRestQl(log, cfg, e, p)
 
