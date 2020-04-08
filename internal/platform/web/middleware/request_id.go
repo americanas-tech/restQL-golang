@@ -5,8 +5,6 @@ import (
 	"github.com/valyala/fasthttp"
 )
 
-var requestIdKey = []byte{0x1}
-
 type IdGenerator interface {
 	Run() string
 }
@@ -47,11 +45,10 @@ func (r RequestId) Apply(h fasthttp.RequestHandler) fasthttp.RequestHandler {
 
 		if len(currentRequestId) == 0 {
 			requestId = r.generator.Run()
+			ctx.Request.Header.Set(r.header, requestId)
 		} else {
 			requestId = string(currentRequestId)
 		}
-
-		ctx.SetUserValueBytes(requestIdKey, requestId)
 
 		h(ctx)
 
