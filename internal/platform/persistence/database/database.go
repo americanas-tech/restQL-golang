@@ -7,19 +7,18 @@ import (
 	"github.com/b2wdigital/restQL-golang/internal/platform/logger"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
-	"strconv"
 	"time"
 )
 
 type dbOptions struct {
-	ConnectionTimeout string
+	ConnectionTimeout time.Duration
 	MappingsTimeout   time.Duration
 	QueryTimeout      time.Duration
 }
 
 type Option func(o *dbOptions)
 
-func WithConnectionTimeout(timeout string) Option {
+func WithConnectionTimeout(timeout time.Duration) Option {
 	return func(o *dbOptions) {
 		o.ConnectionTimeout = timeout
 	}
@@ -53,12 +52,9 @@ func New(log *logger.Logger, connectionString string, optionList ...Option) (Dat
 		o(&dbOptions)
 	}
 
-	timeout, err := parseTimeout(dbOptions.ConnectionTimeout)
-	if err != nil {
-		return noOpDatabase{}, err
-	}
+	timeout := dbOptions.ConnectionTimeout
 
-	log.Info("starting database connection", "timeout-in-ms", timeout)
+	log.Info("starting database connection", "timeout", timeout.String())
 
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
@@ -74,15 +70,6 @@ func New(log *logger.Logger, connectionString string, optionList ...Option) (Dat
 	log.Info("database connection established", "url", connectionString)
 
 	return mongoDatabase{logger: log, client: client, options: dbOptions}, nil
-}
-
-func parseTimeout(timeout string) (time.Duration, error) {
-	n, err := strconv.Atoi(timeout)
-	if err != nil {
-		return 0, err
-	}
-
-	return time.Millisecond * time.Duration(n), nil
 }
 
 var ErrNoDatabase = errors.New("no op database")

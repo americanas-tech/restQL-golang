@@ -25,10 +25,10 @@ type timeoutConf struct {
 type Config struct {
 	Web struct {
 		Server struct {
-			ApiAddr                 string        `env:"PORT,required"`
-			ApiHealthAddr           string        `env:"HEALTH_PORT,required"`
-			DebugAddr               string        `env:"DEBUG_PORT"`
-			Env                     string        `env:"ENV"`
+			ApiAddr                 string        `env:"RESTQL_PORT,required"`
+			ApiHealthAddr           string        `env:"RESTQL_HEALTH_PORT,required"`
+			DebugAddr               string        `env:"RESTQL_DEBUG_PORT"`
+			Env                     string        `env:"RESTQL_ENV"`
 			GracefulShutdownTimeout time.Duration `yaml:"gracefulShutdownTimeout"`
 			ReadTimeout             time.Duration `yaml:"readTimeout"`
 			Middlewares             struct {
@@ -54,9 +54,9 @@ type Config struct {
 	} `yaml:"logging"`
 
 	Database struct {
-		ConnectionString string `yaml:"connectionString" env:"DATABASE_CONNECTION_STRING"`
+		ConnectionString string `yaml:"connectionString" env:"RESTQL_DATABASE_CONNECTION_STRING"`
 		Timeouts         struct {
-			Connection string        `yaml:"connection" env:"DATABASE_CONNECTION_TIMEOUT"`
+			Connection time.Duration `yaml:"connection" env:"RESTQL_DATABASE_CONNECTION_TIMEOUT"`
 			Mappings   time.Duration `yaml:"mappings"`
 			Query      time.Duration `yaml:"query"`
 		} `yaml:"timeouts"`
@@ -74,9 +74,9 @@ type Config struct {
 		} `yaml:"query"`
 	} `yaml:"cache"`
 
-	Tenant               string        `env:"TENANT"`
-	GlobalQueryTimeout   time.Duration `env:"QUERY_GLOBAL_TIMEOUT" envDefault:"30s"`
-	QueryResourceTimeout time.Duration `env:"QUERY_RESOURCE_TIMEOUT" envDefault:"5s"`
+	Tenant               string        `env:"RESTQL_TENANT"`
+	GlobalQueryTimeout   time.Duration `env:"RESTQL_QUERY_GLOBAL_TIMEOUT" envDefault:"30s"`
+	QueryResourceTimeout time.Duration `env:"RESTQL_QUERY_RESOURCE_TIMEOUT" envDefault:"5s"`
 
 	Mappings map[string]string `yaml:"mappings"`
 
