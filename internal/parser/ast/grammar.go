@@ -87,12 +87,12 @@ type Block struct {
 type Qualifier struct {
 	With         []WithItem    `(With @@+)`
 	Only         []Filter      `| (Only @@+)`
-	Hidden       bool          `| @Hidden`
+	Hidden       bool          `| (@Hidden)`
 	Timeout      *TimeoutValue `| (Timeout @@)`
 	Headers      []HeaderItem  `| (Headers @@+)`
-	MaxAge       *MaxAgeValue  `| (MaxAge Equal @@ | CacheControl Equal @@)`
+	MaxAge       *MaxAgeValue  `| (MaxAge Equal @@)`
 	SMaxAge      *SMaxAgeValue `| (SMaxAge Equal @@)`
-	IgnoreErrors bool          `| @IgnoreErrors`
+	IgnoreErrors bool          `| (@IgnoreErrors)`
 }
 
 type Filter struct {

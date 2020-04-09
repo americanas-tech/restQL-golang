@@ -205,11 +205,6 @@ func TestAstGenerator(t *testing.T) {
 		},
 		{
 			"Get query with cache control",
-			ast.Query{Blocks: []ast.Block{{Method: ast.FromMethod, Resource: "hero", Qualifiers: []ast.Qualifier{{MaxAge: &ast.MaxAgeValue{Int: Int(2000)}}}}}},
-			`from hero cache-control = 2000`,
-		},
-		{
-			"Get query with cache control",
 			ast.Query{Blocks: []ast.Block{{Method: ast.FromMethod, Resource: "hero", Qualifiers: []ast.Qualifier{{SMaxAge: &ast.SMaxAgeValue{Int: Int(2000)}}}}}},
 			`from hero s-max-age = 2000`,
 		},
