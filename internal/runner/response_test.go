@@ -69,6 +69,111 @@ func TestNewDoneResource(t *testing.T) {
 			runner.DoneResourceOptions{IgnoreErrors: true},
 			domain.DoneResource{Details: domain.Details{Status: 200, Success: true, IgnoreErrors: true}, Result: nil},
 		},
+		{
+			"should create done resource with cache control information returned by resource",
+			domain.HttpRequest{},
+			domain.HttpResponse{StatusCode: 200, Body: nil, Headers: map[string]string{"Cache-Control": "max-age=400, s-maxage=600"}},
+			runner.DoneResourceOptions{},
+			domain.DoneResource{
+				Details: domain.Details{
+					Status:  200,
+					Success: true,
+					CacheControl: domain.ResourceCacheControl{
+						MaxAge:  domain.ResourceCacheControlValue{Exist: true, Time: 400},
+						SMaxAge: domain.ResourceCacheControlValue{Exist: true, Time: 600},
+					},
+					IgnoreErrors: false,
+				},
+				Result: nil,
+			},
+		},
+		{
+			"should create done resource with cache control information returned by resource",
+			domain.HttpRequest{},
+			domain.HttpResponse{StatusCode: 200, Body: nil, Headers: map[string]string{"Cache-Control": "no-cache"}},
+			runner.DoneResourceOptions{},
+			domain.DoneResource{
+				Details: domain.Details{
+					Status:  200,
+					Success: true,
+					CacheControl: domain.ResourceCacheControl{
+						NoCache: true,
+					},
+					IgnoreErrors: false,
+				},
+				Result: nil,
+			},
+		},
+		{
+			"should create done resource with cache control information defined in statement if not returned by resource",
+			domain.HttpRequest{},
+			domain.HttpResponse{StatusCode: 200, Body: nil},
+			runner.DoneResourceOptions{MaxAge: 100, SMaxAge: 300},
+			domain.DoneResource{
+				Details: domain.Details{
+					Status:  200,
+					Success: true,
+					CacheControl: domain.ResourceCacheControl{
+						MaxAge:  domain.ResourceCacheControlValue{Exist: true, Time: 100},
+						SMaxAge: domain.ResourceCacheControlValue{Exist: true, Time: 300},
+					},
+					IgnoreErrors: false,
+				},
+				Result: nil,
+			},
+		},
+		{
+			"should create done resource with cache control information defined in statement if not returned by resource",
+			domain.HttpRequest{},
+			domain.HttpResponse{StatusCode: 200, Body: nil},
+			runner.DoneResourceOptions{MaxAge: 100},
+			domain.DoneResource{
+				Details: domain.Details{
+					Status:  200,
+					Success: true,
+					CacheControl: domain.ResourceCacheControl{
+						MaxAge: domain.ResourceCacheControlValue{Exist: true, Time: 100},
+					},
+					IgnoreErrors: false,
+				},
+				Result: nil,
+			},
+		},
+		{
+			"should create done resource with minimum cache control information between the returned by resource and the defined in statement",
+			domain.HttpRequest{},
+			domain.HttpResponse{StatusCode: 200, Body: nil, Headers: map[string]string{"Cache-Control": "max-age=100, s-maxage=600"}},
+			runner.DoneResourceOptions{MaxAge: 400, SMaxAge: 300},
+			domain.DoneResource{
+				Details: domain.Details{
+					Status:  200,
+					Success: true,
+					CacheControl: domain.ResourceCacheControl{
+						MaxAge:  domain.ResourceCacheControlValue{Exist: true, Time: 100},
+						SMaxAge: domain.ResourceCacheControlValue{Exist: true, Time: 300},
+					},
+					IgnoreErrors: false,
+				},
+				Result: nil,
+			},
+		},
+		{
+			"should create done resource with minimum cache control information between the returned by resource and the defined in statement",
+			domain.HttpRequest{},
+			domain.HttpResponse{StatusCode: 200, Body: nil, Headers: map[string]string{"Cache-Control": "no-cache"}},
+			runner.DoneResourceOptions{MaxAge: 400, SMaxAge: 300},
+			domain.DoneResource{
+				Details: domain.Details{
+					Status:  200,
+					Success: true,
+					CacheControl: domain.ResourceCacheControl{
+						NoCache: true,
+					},
+					IgnoreErrors: false,
+				},
+				Result: nil,
+			},
+		},
 	}
 
 	for _, tt := range tests {

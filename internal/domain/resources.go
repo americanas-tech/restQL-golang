@@ -32,10 +32,22 @@ type Debugging struct {
 	ResponseTime    int64
 }
 
+type ResourceCacheControlValue struct {
+	Exist bool
+	Time  int
+}
+
+type ResourceCacheControl struct {
+	NoCache bool
+	MaxAge  ResourceCacheControlValue
+	SMaxAge ResourceCacheControlValue
+}
+
 type Details struct {
 	Status       int
 	Success      bool
 	IgnoreErrors bool
+	CacheControl ResourceCacheControl
 	Debug        *Debugging
 }
 

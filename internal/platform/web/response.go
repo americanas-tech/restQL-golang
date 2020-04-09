@@ -1,15 +1,20 @@
 package web
 
 import (
+	"bytes"
 	"encoding/json"
 	"github.com/b2wdigital/restQL-golang/internal/domain"
 	"github.com/valyala/fasthttp"
 	"net/http"
+	"strconv"
 )
 
-func Respond(ctx *fasthttp.RequestCtx, data interface{}, statusCode int) error {
+func Respond(ctx *fasthttp.RequestCtx, data interface{}, statusCode int, headers map[string]string) error {
 	ctx.Response.Header.SetContentType("application/json; charset=utf-8")
 	ctx.Response.SetStatusCode(statusCode)
+	for k, v := range headers {
+		ctx.Response.Header.Set(k, v)
+	}
 
 	if data != nil {
 		encoder := json.NewEncoder(ctx.Response.BodyWriter())
@@ -29,7 +34,7 @@ func RespondError(ctx *fasthttp.RequestCtx, err error) error {
 		er := ErrorResponse{
 			Error: webErr.Err.Error(),
 		}
-		if err := Respond(ctx, er, webErr.Status); err != nil {
+		if err := Respond(ctx, er, webErr.Status, nil); err != nil {
 			return err
 		}
 		return nil
@@ -38,7 +43,7 @@ func RespondError(ctx *fasthttp.RequestCtx, err error) error {
 	er := ErrorResponse{
 		Error: http.StatusText(http.StatusInternalServerError),
 	}
-	if err := Respond(ctx, er, http.StatusInternalServerError); err != nil {
+	if err := Respond(ctx, er, http.StatusInternalServerError, nil); err != nil {
 		return err
 	}
 	return nil
@@ -70,15 +75,21 @@ type StatementResult struct {
 	Result  interface{} `json:"result,omitempty"`
 }
 
-type QueryResponse map[string]StatementResult
+type QueryResponse struct {
+	StatusCode int
+	Body       map[string]StatementResult
+	Headers    map[string]string
+}
 
 func MakeQueryResponse(queryResult domain.Resources) QueryResponse {
-	m := make(QueryResponse)
+	m := make(map[string]StatementResult)
 	for key, response := range queryResult {
 		m[string(key)] = parseResponse(response)
 	}
 
-	return m
+	statusCode := CalculateStatusCode(queryResult)
+	headers := makeHeaders(queryResult)
+	return QueryResponse{Body: m, StatusCode: statusCode, Headers: headers}
 }
 
 func parseResponse(response interface{}) StatementResult {
@@ -159,21 +170,6 @@ func CalculateStatusCode(queryResult domain.Resources) int {
 	return maxStatusCode
 }
 
-func findMaxStatusCode(results []interface{}) int {
-	resourceStatuses := make([]int, len(results))
-	for i, result := range results {
-		resourceStatuses[i] = calculateResultStatusCode(result)
-	}
-
-	maxStatusCode := 200
-	for _, status := range resourceStatuses {
-		if status > maxStatusCode {
-			maxStatusCode = status
-		}
-	}
-	return maxStatusCode
-}
-
 var statusNormalization = map[int]int{0: 500, 204: 200, 201: 200}
 
 func calculateResultStatusCode(result interface{}) int {
@@ -195,4 +191,109 @@ func calculateResultStatusCode(result interface{}) int {
 	default:
 		return 500
 	}
+}
+
+func findMaxStatusCode(results []interface{}) int {
+	resourceStatuses := make([]int, len(results))
+	for i, result := range results {
+		resourceStatuses[i] = calculateResultStatusCode(result)
+	}
+
+	maxStatusCode := 200
+	for _, status := range resourceStatuses {
+		if status > maxStatusCode {
+			maxStatusCode = status
+		}
+	}
+	return maxStatusCode
+}
+
+func makeHeaders(queryResult domain.Resources) map[string]string {
+	cacheControl := calculateCacheControl(queryResult)
+	cacheControlString := generateCacheControlString(cacheControl)
+
+	headers := make(map[string]string)
+	if cacheControlString != "" {
+		headers["Cache-Control"] = cacheControlString
+	}
+
+	return headers
+}
+
+func calculateCacheControl(queryResult domain.Resources) domain.ResourceCacheControl {
+	results := make([]interface{}, len(queryResult))
+	index := 0
+	for _, r := range queryResult {
+		results[index] = r
+		index++
+	}
+
+	return findMinCacheControl(results)
+}
+
+func findMinCacheControl(results []interface{}) domain.ResourceCacheControl {
+	resourceCacheControls := make([]domain.ResourceCacheControl, len(results))
+	for i, result := range results {
+		resourceCacheControls[i] = calculateResultCacheControl(result)
+	}
+
+	minCacheControl := domain.ResourceCacheControl{
+		MaxAge:  domain.ResourceCacheControlValue{Exist: false},
+		SMaxAge: domain.ResourceCacheControlValue{Exist: false},
+	}
+
+	for _, cc := range resourceCacheControls {
+		switch {
+		case minCacheControl.NoCache:
+			continue
+		case cc.NoCache:
+			minCacheControl.NoCache = true
+		default:
+			if !minCacheControl.MaxAge.Exist || cc.MaxAge.Time < minCacheControl.MaxAge.Time {
+				minCacheControl.MaxAge = cc.MaxAge
+			}
+
+			if !minCacheControl.SMaxAge.Exist || cc.SMaxAge.Time < minCacheControl.SMaxAge.Time {
+				minCacheControl.SMaxAge = cc.SMaxAge
+			}
+
+			minCacheControl.NoCache = false
+		}
+	}
+
+	return minCacheControl
+}
+
+func calculateResultCacheControl(result interface{}) domain.ResourceCacheControl {
+	switch result := result.(type) {
+	case domain.DoneResource:
+		return result.Details.CacheControl
+	case domain.DoneResources:
+		return findMinCacheControl(result)
+	default:
+		return domain.ResourceCacheControl{}
+	}
+}
+
+func generateCacheControlString(cacheControl domain.ResourceCacheControl) string {
+	var buf bytes.Buffer
+
+	if cacheControl.NoCache {
+		return "no-cache"
+	}
+
+	if cacheControl.MaxAge.Exist {
+		buf.WriteString("max-age=")
+		buf.WriteString(strconv.Itoa(cacheControl.MaxAge.Time))
+	}
+
+	if cacheControl.SMaxAge.Exist {
+		if buf.Len() > 0 {
+			buf.WriteString(", ")
+		}
+		buf.WriteString("s-maxage=")
+		buf.WriteString(strconv.Itoa(cacheControl.SMaxAge.Time))
+	}
+
+	return buf.String()
 }

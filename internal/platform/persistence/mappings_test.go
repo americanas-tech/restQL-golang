@@ -40,8 +40,9 @@ func TestMappingsReader_Env(t *testing.T) {
 		},
 	}
 
-	mappings := reader.FromTenant(context.Background(), defaultTenant)
+	mappings, err := reader.FromTenant(context.Background(), defaultTenant)
 
+	test.VerifyError(t, err)
 	test.Equal(t, mappings, expected)
 }
 
@@ -72,8 +73,9 @@ func TestMappingsReader_Local(t *testing.T) {
 		},
 	}
 
-	mappings := reader.FromTenant(context.Background(), defaultTenant)
+	mappings, err := reader.FromTenant(context.Background(), defaultTenant)
 
+	test.VerifyError(t, err)
 	test.Equal(t, mappings, expected)
 }
 
@@ -116,8 +118,9 @@ func TestMappingsReader_Database(t *testing.T) {
 		},
 	}
 
-	mappings := reader.FromTenant(context.Background(), defaultTenant)
+	mappings, err := reader.FromTenant(context.Background(), defaultTenant)
 
+	test.VerifyError(t, err)
 	test.Equal(t, mappings, expected)
 }
 
@@ -170,8 +173,9 @@ func TestMappingsReader_ShouldOverwriteMappings(t *testing.T) {
 		},
 	}
 
-	mappings := reader.FromTenant(context.Background(), defaultTenant)
+	mappings, err := reader.FromTenant(context.Background(), defaultTenant)
 
+	test.VerifyError(t, err)
 	test.Equal(t, mappings, expected)
 }
 

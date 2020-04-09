@@ -47,7 +47,7 @@ func (r RestQl) ValidateQuery(ctx *fasthttp.RequestCtx) error {
 		return RespondError(ctx, e)
 	}
 
-	return Respond(ctx, nil, http.StatusOK)
+	return Respond(ctx, nil, http.StatusOK, nil)
 }
 
 func (r RestQl) RunSavedQuery(ctx *fasthttp.RequestCtx) error {
@@ -78,8 +78,7 @@ func (r RestQl) RunSavedQuery(ctx *fasthttp.RequestCtx) error {
 	}
 
 	response := MakeQueryResponse(result)
-	statusCode := CalculateStatusCode(result)
-	return Respond(ctx, response, statusCode)
+	return Respond(ctx, response.Body, response.StatusCode, response.Headers)
 }
 
 func (r RestQl) makeQueryOptions(ctx *fasthttp.RequestCtx) (domain.QueryOptions, error) {

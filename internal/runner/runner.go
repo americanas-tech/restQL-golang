@@ -126,8 +126,8 @@ func (r Runner) parseQueryTimeout(query domain.Query) (time.Duration, bool) {
 func (r Runner) initializeResources(query domain.Query, queryCtx domain.QueryContext) domain.Resources {
 	resources := domain.NewResources(query.Statements)
 
-	resources = ApplyModifiers(resources, query.Use)
 	resources = ResolveVariables(resources, queryCtx.Input.Params)
+	resources = ApplyModifiers(resources, query.Use)
 	resources = ApplyEncoders(resources, r.log)
 	resources = MultiplexStatements(resources)
 
