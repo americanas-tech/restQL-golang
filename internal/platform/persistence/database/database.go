@@ -73,7 +73,7 @@ func New(log *logger.Logger, connectionString string, optionList ...Option) (Dat
 
 	log.Info("database connection established", "url", connectionString)
 
-	return mongoDatabase{logger: log, client: client}, nil
+	return mongoDatabase{logger: log, client: client, options: dbOptions}, nil
 }
 
 func parseTimeout(timeout string) (time.Duration, error) {

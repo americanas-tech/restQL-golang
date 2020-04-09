@@ -32,7 +32,7 @@ func (e Evaluator) SavedQuery(ctx context.Context, queryOpts domain.QueryOptions
 		return nil, err
 	}
 
-	queryTxt, err := e.queryReader.Get(nil, queryOpts.Namespace, queryOpts.Id, queryOpts.Revision)
+	queryTxt, err := e.queryReader.Get(ctx, queryOpts.Namespace, queryOpts.Id, queryOpts.Revision)
 	if err != nil {
 		return nil, err
 	}

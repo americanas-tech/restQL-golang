@@ -36,7 +36,7 @@ func (mr MappingsReader) FromTenant(ctx context.Context, tenant string) (map[str
 
 	dbMappings, err := mr.db.FindMappingsForTenant(ctx, tenant)
 	if err != nil && err != database.ErrNoDatabase {
-		mr.log.Debug("failed to load mappings from database")
+		mr.log.Debug("failed to load mappings from database", "error", err)
 		return nil, err
 	}
 

@@ -33,13 +33,16 @@ type mongoDatabase struct {
 }
 
 func (md mongoDatabase) FindMappingsForTenant(ctx context.Context, tenantId string) ([]domain.Mapping, error) {
-	timeout, cancel := context.WithTimeout(ctx, md.options.MappingsTimeout)
-	defer cancel()
+	mappingsTimeout := md.options.MappingsTimeout
+	if mappingsTimeout > 0 {
+		ctx, _ = context.WithTimeout(ctx, mappingsTimeout)
+	}
+	md.logger.Debug("mappings timeout defined", "timeout", mappingsTimeout)
 
 	var t tenant
 
 	collection := md.client.Database(databaseName).Collection("tenant")
-	err := collection.FindOne(timeout, bson.M{"_id": tenantId}).Decode(&t)
+	err := collection.FindOne(ctx, bson.M{"_id": tenantId}).Decode(&t)
 	if err != nil {
 		return nil, err
 	}
@@ -60,13 +63,17 @@ func (md mongoDatabase) FindMappingsForTenant(ctx context.Context, tenantId stri
 }
 
 func (md mongoDatabase) FindQuery(ctx context.Context, namespace string, name string, revision int) (string, error) {
-	timeout, cancel := context.WithTimeout(ctx, md.options.QueryTimeout)
-	defer cancel()
+	//todo: log if timeout is zero
+	queryTimeout := md.options.QueryTimeout
+	if queryTimeout > 0 {
+		ctx, _ = context.WithTimeout(ctx, queryTimeout)
+	}
+	md.logger.Debug("query timeout defined", "timeout", queryTimeout)
 
 	var q query
 
 	collection := md.client.Database(databaseName).Collection("query")
-	err := collection.FindOne(timeout, bson.M{"name": name, "namespace": namespace}).Decode(&q)
+	err := collection.FindOne(ctx, bson.M{"name": name, "namespace": namespace}).Decode(&q)
 	if err != nil {
 		return "", err
 	}

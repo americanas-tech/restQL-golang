@@ -96,7 +96,7 @@ func (c *Cache) Get(ctx context.Context, key interface{}) (interface{}, error) {
 
 	if item.Expired() {
 		go func() {
-			c.refreshWorkCh <- item
+			c.refreshWorkCh <- item.key
 		}()
 	}
 
