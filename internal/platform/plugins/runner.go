@@ -2,30 +2,55 @@ package plugins
 
 import (
 	"github.com/b2wdigital/restQL-golang/internal/domain"
+	"github.com/b2wdigital/restQL-golang/internal/platform/logger"
 	"github.com/b2wdigital/restQL-golang/pkg/restql"
+	"github.com/pkg/errors"
 )
 
-type Runner struct{}
+type Runner struct {
+	log *logger.Logger
+}
 
-func NewRunner() *Runner {
-	return &Runner{}
+func NewRunner(log *logger.Logger) *Runner {
+	return &Runner{log: log}
 }
 
 func (r *Runner) BeforeQuery(plugin restql.Plugin, query string, queryCtx domain.QueryContext) {
-	plugin.BeforeQuery(query, queryCtx)
+	r.safeExecute(plugin.Name(), "BeforeQuery", func() {
+		plugin.BeforeQuery(query, queryCtx)
+	})
 }
 
 func (r *Runner) AfterQuery(plugin restql.Plugin, query string, result domain.Resources) {
-	m := convertQueryResult(result)
-	plugin.AfterQuery(query, m)
+	r.safeExecute(plugin.Name(), "AfterQuery", func() {
+		m := convertQueryResult(result)
+		plugin.AfterQuery(query, m)
+	})
 }
 
 func (r *Runner) BeforeRequest(plugin restql.Plugin, request domain.HttpRequest) {
-	plugin.BeforeRequest(request)
+	r.safeExecute(plugin.Name(), "BeforeRequest", func() {
+		plugin.BeforeRequest(request)
+	})
 }
 
 func (r *Runner) AfterRequest(plugin restql.Plugin, request domain.HttpRequest, response domain.HttpResponse, err error) {
-	plugin.AfterRequest(request, response, err)
+	r.safeExecute(plugin.Name(), "AfterRequest", func() {
+		plugin.AfterRequest(request, response, err)
+	})
+}
+
+func (r *Runner) safeExecute(pluginName string, hook string, fn func()) {
+	go func() {
+		defer func() {
+			if reason := recover(); reason != nil {
+				err := errors.Errorf("reason : %v", reason)
+				r.log.Error("plugin produced a panic", err, "name", pluginName, "hook", hook)
+			}
+		}()
+
+		fn()
+	}()
 }
 
 func convertQueryResult(resource interface{}) map[string]interface{} {
