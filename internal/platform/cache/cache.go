@@ -50,7 +50,7 @@ type Cache struct {
 	refreshQueueLength int
 }
 
-func New(log *logger.Logger, loader Loader, size int, options ...Option) *Cache {
+func New(log *logger.Logger, size int, loader Loader, options ...Option) *Cache {
 	c := gcache.New(size).LRU().Build()
 
 	cache := Cache{

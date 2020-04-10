@@ -1,25 +1,24 @@
-package persistence
+package cache
 
 import (
 	"context"
 	"github.com/b2wdigital/restQL-golang/internal/domain"
-	"github.com/b2wdigital/restQL-golang/internal/eval"
-	"github.com/b2wdigital/restQL-golang/internal/platform/cache"
 	"github.com/b2wdigital/restQL-golang/internal/platform/logger"
+	"github.com/b2wdigital/restQL-golang/internal/platform/persistence"
 	"github.com/pkg/errors"
 )
 
-type CacheMappingsReader struct {
+type MappingsReaderCache struct {
 	log   *logger.Logger
-	mr    eval.MappingsReader
-	cache *cache.Cache
+	cache *Cache
+	mr    persistence.MappingsReader
 }
 
-func NewCacheMappingsReader(log *logger.Logger, mr MappingsReader, c *cache.Cache) *CacheMappingsReader {
-	return &CacheMappingsReader{log: log, mr: mr, cache: c}
+func NewMappingsReaderCache(log *logger.Logger, mr persistence.MappingsReader, c *Cache) *MappingsReaderCache {
+	return &MappingsReaderCache{log: log, mr: mr, cache: c}
 }
 
-func (c *CacheMappingsReader) FromTenant(ctx context.Context, tenant string) (map[string]domain.Mapping, error) {
+func (c *MappingsReaderCache) FromTenant(ctx context.Context, tenant string) (map[string]domain.Mapping, error) {
 	result, err := c.cache.Get(ctx, tenant)
 	if err != nil {
 		return nil, err
@@ -33,7 +32,7 @@ func (c *CacheMappingsReader) FromTenant(ctx context.Context, tenant string) (ma
 	return mappings, nil
 }
 
-func TenantCacheLoader(mr eval.MappingsReader) cache.Loader {
+func TenantCacheLoader(mr persistence.MappingsReader) Loader {
 	return func(ctx context.Context, key interface{}) (interface{}, error) {
 		tenant, ok := key.(string)
 		if !ok {
@@ -55,17 +54,17 @@ type cacheQueryKey struct {
 	revision  int
 }
 
-type CacheQueryReader struct {
+type QueryReaderCache struct {
 	log   *logger.Logger
-	qr    eval.QueryReader
-	cache *cache.Cache
+	cache *Cache
+	qr    persistence.QueryReader
 }
 
-func NewCacheQueryReader(log *logger.Logger, qr QueryReader, c *cache.Cache) *CacheQueryReader {
-	return &CacheQueryReader{log: log, qr: qr, cache: c}
+func NewQueryReaderCache(log *logger.Logger, qr persistence.QueryReader, c *Cache) *QueryReaderCache {
+	return &QueryReaderCache{log: log, qr: qr, cache: c}
 }
 
-func (c *CacheQueryReader) Get(ctx context.Context, namespace, id string, revision int) (string, error) {
+func (c *QueryReaderCache) Get(ctx context.Context, namespace, id string, revision int) (string, error) {
 	cacheKey := cacheQueryKey{namespace: namespace, id: id, revision: revision}
 	result, err := c.cache.Get(ctx, cacheKey)
 	if err != nil {
@@ -80,7 +79,7 @@ func (c *CacheQueryReader) Get(ctx context.Context, namespace, id string, revisi
 	return query, nil
 }
 
-func QueryCacheLoader(qr eval.QueryReader) cache.Loader {
+func QueryCacheLoader(qr persistence.QueryReader) Loader {
 	return func(ctx context.Context, key interface{}) (interface{}, error) {
 		cacheKey, ok := key.(cacheQueryKey)
 		if !ok {

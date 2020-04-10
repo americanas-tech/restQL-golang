@@ -37,18 +37,17 @@ func API(log *logger.Logger, cfg *conf.Config) (fasthttp.RequestHandler, error) 
 	r := runner.NewRunner(log, executor, cfg.GlobalQueryTimeout)
 
 	mr := persistence.NewMappingReader(log, cfg.Env, cfg.Mappings, db)
-	tenantCache := cache.New(log,
-		persistence.TenantCacheLoader(mr),
-		cfg.Cache.Mappings.MaxSize,
+	tenantCache := cache.New(log, cfg.Cache.Mappings.MaxSize,
+		cache.TenantCacheLoader(mr),
 		cache.WithExpiration(cfg.Cache.Mappings.Expiration),
 		cache.WithRefreshInterval(cfg.Cache.Mappings.RefreshInterval),
 		cache.WithRefreshQueueLength(cfg.Cache.Mappings.RefreshQueueLength),
 	)
-	cacheMr := persistence.NewCacheMappingsReader(log, mr, tenantCache)
+	cacheMr := cache.NewMappingsReaderCache(log, mr, tenantCache)
 
 	qr := persistence.NewQueryReader(log, cfg.Queries, db)
-	queryCache := cache.New(log, persistence.QueryCacheLoader(qr), cfg.Cache.Query.MaxSize)
-	cacheQr := persistence.NewCacheQueryReader(log, qr, queryCache)
+	queryCache := cache.New(log, cfg.Cache.Query.MaxSize, cache.QueryCacheLoader(qr))
+	cacheQr := cache.NewQueryReaderCache(log, qr, queryCache)
 
 	e := eval.NewEvaluator(log, cacheMr, cacheQr, r, p)
 
