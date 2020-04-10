@@ -1,7 +1,6 @@
 package parser
 
 import (
-	"fmt"
 	"github.com/b2wdigital/restQL-golang/internal/domain"
 	"github.com/b2wdigital/restQL-golang/internal/parser/ast"
 )
@@ -24,8 +23,6 @@ func New() (Parser, error) {
 }
 
 func (p parser) Parse(queryStr string) (domain.Query, error) {
-	fmt.Printf("parsing query\n")
-
 	query, err := p.astGenerator.Parse(queryStr)
 	if err != nil {
 		return domain.Query{}, err

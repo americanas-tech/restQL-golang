@@ -20,7 +20,7 @@ func API(log *logger.Logger, cfg *conf.Config) (fasthttp.RequestHandler, error) 
 		log.Error("failed to compile parser", err)
 		return nil, err
 	}
-	parserCacheLoader := cache.New(log, 20, cache.ParserCacheLoader(defaultParser))
+	parserCacheLoader := cache.New(log, cfg.Cache.Parser.MaxSize, cache.ParserCacheLoader(defaultParser))
 	parserCache := cache.NewParserCache(log, parserCacheLoader)
 
 	db, err := database.New(log, cfg.Database.ConnectionString,

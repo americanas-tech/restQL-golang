@@ -80,6 +80,9 @@ type Config struct {
 		Query struct {
 			MaxSize int `yaml:"maxSize" env:"RESTQL_CACHE_QUERY_MAX_SIZE"`
 		} `yaml:"query"`
+		Parser struct {
+			MaxSize int `yaml:"maxSize" env:"RESTQL_CACHE_PARSER_MAX_SIZE"`
+		} `yaml:"parser"`
 	} `yaml:"cache"`
 
 	Tenant               string        `env:"RESTQL_TENANT"`
