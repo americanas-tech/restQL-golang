@@ -85,6 +85,10 @@ type Config struct {
 		} `yaml:"parser"`
 	} `yaml:"cache"`
 
+	Plugins struct {
+		Location string `yaml:"location" env:"RESTQL_PLUGINS_LOCATION"`
+	} `yaml:"plugins"`
+
 	Tenant               string        `env:"RESTQL_TENANT"`
 	GlobalQueryTimeout   time.Duration `env:"RESTQL_QUERY_GLOBAL_TIMEOUT" envDefault:"30s"`
 	QueryResourceTimeout time.Duration `env:"RESTQL_QUERY_RESOURCE_TIMEOUT" envDefault:"5s"`

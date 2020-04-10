@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/b2wdigital/restQL-golang/internal/domain"
 	"github.com/b2wdigital/restQL-golang/internal/parser"
+	"github.com/b2wdigital/restQL-golang/internal/platform/plugins"
 	"github.com/b2wdigital/restQL-golang/internal/runner"
 	"github.com/pkg/errors"
 )
@@ -19,11 +20,19 @@ type Evaluator struct {
 	parser         parser.Parser
 	mappingsReader MappingsReader
 	queryReader    QueryReader
-	run            runner.Runner
+	runner         runner.Runner
+	pluginsManager plugins.Manager
 }
 
-func NewEvaluator(log domain.Logger, mr MappingsReader, qr QueryReader, r runner.Runner, parser parser.Parser) Evaluator {
-	return Evaluator{log: log, mappingsReader: mr, queryReader: qr, run: r, parser: parser}
+func NewEvaluator(log domain.Logger, mr MappingsReader, qr QueryReader, r runner.Runner, p parser.Parser, pm plugins.Manager) Evaluator {
+	return Evaluator{
+		log:            log,
+		mappingsReader: mr,
+		queryReader:    qr,
+		runner:         r,
+		parser:         p,
+		pluginsManager: pm,
+	}
 }
 
 func (e Evaluator) SavedQuery(ctx context.Context, queryOpts domain.QueryOptions, queryInput domain.QueryInput) (domain.Resources, error) {
@@ -55,7 +64,9 @@ func (e Evaluator) SavedQuery(ctx context.Context, queryOpts domain.QueryOptions
 		Input:    queryInput,
 	}
 
-	resources, err := e.run.ExecuteQuery(ctx, query, queryCtx)
+	e.pluginsManager.RunBeforeQuery(queryTxt, queryCtx)
+
+	resources, err := e.runner.ExecuteQuery(ctx, query, queryCtx)
 	switch {
 	case err == runner.ErrQueryTimedOut:
 		return nil, TimeoutError{Err: err}
@@ -70,6 +81,8 @@ func (e Evaluator) SavedQuery(ctx context.Context, queryOpts domain.QueryOptions
 	}
 
 	resources = ApplyAggregators(query, resources)
+
+	e.pluginsManager.RunAfterQuery(queryTxt, resources)
 
 	return resources, nil
 }

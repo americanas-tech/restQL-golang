@@ -9,6 +9,7 @@ import (
 	"github.com/b2wdigital/restQL-golang/internal/platform/logger"
 	"github.com/b2wdigital/restQL-golang/internal/platform/persistence"
 	"github.com/b2wdigital/restQL-golang/internal/platform/persistence/database"
+	"github.com/b2wdigital/restQL-golang/internal/platform/plugins"
 	"github.com/b2wdigital/restQL-golang/internal/runner"
 	"github.com/valyala/fasthttp"
 	"net/http"
@@ -35,7 +36,12 @@ func API(log *logger.Logger, cfg *conf.Config) (fasthttp.RequestHandler, error) 
 	app := NewApp(log, cfg)
 	client := httpclient.New(log, cfg)
 
-	executor := runner.NewExecutor(log, client, cfg.QueryResourceTimeout)
+	pluginManager, err := plugins.NewManager(log, cfg.Plugins.Location)
+	if err != nil {
+		log.Error("failed to initialize plugins", err)
+	}
+
+	executor := runner.NewExecutor(log, client, pluginManager, cfg.QueryResourceTimeout)
 	r := runner.NewRunner(log, executor, cfg.GlobalQueryTimeout)
 
 	mr := persistence.NewMappingReader(log, cfg.Env, cfg.Mappings, db)
@@ -51,7 +57,7 @@ func API(log *logger.Logger, cfg *conf.Config) (fasthttp.RequestHandler, error) 
 	queryCache := cache.New(log, cfg.Cache.Query.MaxSize, cache.QueryCacheLoader(qr))
 	cacheQr := cache.NewQueryReaderCache(log, qr, queryCache)
 
-	e := eval.NewEvaluator(log, cacheMr, cacheQr, r, parserCache)
+	e := eval.NewEvaluator(log, cacheMr, cacheQr, r, parserCache, pluginManager)
 
 	restQl := NewRestQl(log, cfg, e, defaultParser)
 

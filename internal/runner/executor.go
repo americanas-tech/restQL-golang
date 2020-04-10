@@ -3,6 +3,7 @@ package runner
 import (
 	"context"
 	"github.com/b2wdigital/restQL-golang/internal/domain"
+	"github.com/b2wdigital/restQL-golang/internal/platform/plugins"
 	"github.com/pkg/errors"
 	"golang.org/x/sync/errgroup"
 	"time"
@@ -14,10 +15,11 @@ type Executor struct {
 	client          domain.HttpClient
 	log             domain.Logger
 	resourceTimeout time.Duration
+	pluginsManager  plugins.Manager
 }
 
-func NewExecutor(log domain.Logger, client domain.HttpClient, resourceTimeout time.Duration) Executor {
-	return Executor{client: client, log: log, resourceTimeout: resourceTimeout}
+func NewExecutor(log domain.Logger, client domain.HttpClient, pm plugins.Manager, resourceTimeout time.Duration) Executor {
+	return Executor{client: client, log: log, pluginsManager: pm, resourceTimeout: resourceTimeout}
 }
 
 func (e Executor) DoStatement(ctx context.Context, statement domain.Statement, queryCtx domain.QueryContext) (domain.DoneResource, error) {
@@ -40,6 +42,8 @@ func (e Executor) DoStatement(ctx context.Context, statement domain.Statement, q
 
 	e.log.Debug("executing request for statement", "resource", statement.Resource, "method", statement.Method, "request", request)
 
+	e.pluginsManager.RunBeforeRequest(request)
+
 	timeout, err := parseTimeout(statement)
 	if err == nil {
 		var cancel context.CancelFunc
@@ -50,6 +54,8 @@ func (e Executor) DoStatement(ctx context.Context, statement domain.Statement, q
 	}
 
 	response, err := e.client.Do(ctx, request)
+	e.pluginsManager.RunAfterRequest(response, err)
+
 	switch {
 	case err == domain.ErrRequestTimeout:
 		return NewTimeoutResponse(err, request, response, drOptions), nil
