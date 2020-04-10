@@ -24,8 +24,8 @@ func (r *Runner) BeforeRequest(plugin restql.Plugin, request domain.HttpRequest)
 	plugin.BeforeRequest(request)
 }
 
-func (r *Runner) AfterRequest(plugin restql.Plugin, response domain.HttpResponse, err error) {
-	plugin.AfterRequest(response, err)
+func (r *Runner) AfterRequest(plugin restql.Plugin, request domain.HttpRequest, response domain.HttpResponse, err error) {
+	plugin.AfterRequest(request, response, err)
 }
 
 func convertQueryResult(resource interface{}) map[string]interface{} {

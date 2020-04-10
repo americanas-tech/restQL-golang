@@ -36,3 +36,16 @@ func unmarshalBody(res *fasthttp.Response) (interface{}, error) {
 	}
 	return responseBody, nil
 }
+
+func makeErrorResponse(req *fasthttp.Request, responseTime time.Duration, err error) domain.HttpResponse {
+	statusCode := 0
+	if err == domain.ErrRequestTimeout {
+		statusCode = 408
+	}
+
+	return domain.HttpResponse{
+		Url:        req.URI().String(),
+		StatusCode: statusCode,
+		Duration:   responseTime,
+	}
+}

@@ -65,10 +65,10 @@ func IsDebugEnabled(queryCtx domain.QueryContext) bool {
 	return d
 }
 
-func NewTimeoutResponse(err error, request domain.HttpRequest, response domain.HttpResponse, options DoneResourceOptions) domain.DoneResource {
+func NewErrorResponse(err error, request domain.HttpRequest, response domain.HttpResponse, options DoneResourceOptions) domain.DoneResource {
 	dr := domain.DoneResource{
 		Details: domain.Details{
-			Status:       408,
+			Status:       response.StatusCode,
 			Success:      false,
 			IgnoreErrors: options.IgnoreErrors,
 		},

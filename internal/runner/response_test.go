@@ -248,7 +248,7 @@ func TestNewTimeoutResponse(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := runner.NewTimeoutResponse(timeoutErr, tt.request, tt.response, tt.options)
+			got := runner.NewErrorResponse(timeoutErr, tt.request, tt.response, tt.options)
 
 			test.Equal(t, got, tt.expected)
 		})

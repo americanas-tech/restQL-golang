@@ -80,14 +80,14 @@ func (hc HttpClient) Do(ctx context.Context, request domain.HttpRequest) (domain
 	switch {
 	case err == domain.ErrRequestTimeout:
 		hc.log.Debug("request execution did not complete on time", "request", request)
-		return domain.HttpResponse{}, err
+		return makeErrorResponse(req, duration, err), err
 	case err != nil:
-		return domain.HttpResponse{}, errors.Wrap(err, "request execution failed")
+		return makeErrorResponse(req, duration, err), errors.Wrap(err, "request execution failed")
 	}
 
 	response, err := makeResponse(req, res, duration)
 	if err != nil {
-		return domain.HttpResponse{}, err
+		return makeErrorResponse(req, duration, err), err
 	}
 
 	return response, nil

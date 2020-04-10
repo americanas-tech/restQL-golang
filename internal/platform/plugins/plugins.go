@@ -44,9 +44,9 @@ func (m Manager) RunBeforeRequest(request domain.HttpRequest) {
 	}
 }
 
-func (m Manager) RunAfterRequest(response domain.HttpResponse, err error) {
+func (m Manager) RunAfterRequest(request domain.HttpRequest, response domain.HttpResponse, err error) {
 	for _, p := range m.availablePlugins {
-		m.runner.AfterRequest(p, response, err)
+		m.runner.AfterRequest(p, request, response, err)
 	}
 }
 

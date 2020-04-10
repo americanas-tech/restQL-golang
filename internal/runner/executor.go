@@ -54,14 +54,14 @@ func (e Executor) DoStatement(ctx context.Context, statement domain.Statement, q
 	}
 
 	response, err := e.client.Do(ctx, request)
-	e.pluginsManager.RunAfterRequest(response, err)
+	e.pluginsManager.RunAfterRequest(request, response, err)
 
 	switch {
 	case err == domain.ErrRequestTimeout:
-		return NewTimeoutResponse(err, request, response, drOptions), nil
+		return NewErrorResponse(err, request, response, drOptions), nil
 	case err != nil:
 		e.log.Debug("request execution failed", "error", err)
-		return domain.DoneResource{}, err
+		return NewErrorResponse(err, request, response, drOptions), err
 	}
 
 	dr := NewDoneResource(request, response, drOptions)
