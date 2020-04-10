@@ -41,5 +41,15 @@ func FetchEnabled(cfg *conf.Config, log *logger.Logger) []Middleware {
 		mws = append(mws, NewRequestId(mwCfg.RequestId.Header, mwCfg.RequestId.Strategy, log))
 	}
 
+	if mwCfg.Cors != nil {
+		cors := NewCors(log,
+			WithAllowOrigins(mwCfg.Cors.AllowOrigin),
+			WithAllowHeaders(mwCfg.Cors.AllowHeaders),
+			WithAllowMethods(mwCfg.Cors.AllowMethods),
+			WithExposedHeaders(mwCfg.Cors.ExposeHeaders),
+		)
+		mws = append(mws, cors)
+	}
+
 	return mws
 }

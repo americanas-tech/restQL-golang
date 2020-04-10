@@ -22,6 +22,13 @@ type timeoutConf struct {
 	Duration string `yaml:"duration"`
 }
 
+type corsConf struct {
+	AllowOrigin   string `yaml:"allow_origin" env:"RESTQL_CORS_ALLOW_ORIGIN"`
+	AllowMethods  string `yaml:"allow_methods" env:"RESTQL_CORS_ALLOW_METHODS"`
+	AllowHeaders  string `yaml:"allow_headers" env:"RESTQL_CORS_ALLOW_HEADERS"`
+	ExposeHeaders string `yaml:"expose_headers" env:"RESTQL_CORS_EXPOSE_HEADERS"`
+}
+
 type Config struct {
 	Web struct {
 		Server struct {
@@ -34,6 +41,7 @@ type Config struct {
 			Middlewares             struct {
 				RequestId *requestIdConf `yaml:"requestId"`
 				Timeout   *timeoutConf   `yaml:"timeout"`
+				Cors      *corsConf      `yaml:"cors"`
 			} `yaml:"middlewares"`
 		} `yaml:"server"`
 

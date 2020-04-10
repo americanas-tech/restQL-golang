@@ -34,8 +34,11 @@ type mongoDatabase struct {
 
 func (md mongoDatabase) FindMappingsForTenant(ctx context.Context, tenantId string) ([]domain.Mapping, error) {
 	mappingsTimeout := md.options.MappingsTimeout
+
+	var cancel context.CancelFunc
 	if mappingsTimeout > 0 {
-		ctx, _ = context.WithTimeout(ctx, mappingsTimeout)
+		ctx, cancel = context.WithTimeout(ctx, mappingsTimeout)
+		defer cancel()
 	}
 	md.logger.Debug("mappings timeout defined", "timeout", mappingsTimeout)
 
