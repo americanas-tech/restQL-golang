@@ -15,11 +15,13 @@ import (
 )
 
 func API(log *logger.Logger, cfg *conf.Config) (fasthttp.RequestHandler, error) {
-	p, err := parser.New()
+	defaultParser, err := parser.New()
 	if err != nil {
 		log.Error("failed to compile parser", err)
 		return nil, err
 	}
+	parserCacheLoader := cache.New(log, 20, cache.ParserCacheLoader(defaultParser))
+	parserCache := cache.NewParserCache(log, parserCacheLoader)
 
 	db, err := database.New(log, cfg.Database.ConnectionString,
 		database.WithConnectionTimeout(cfg.Database.Timeouts.Connection),
@@ -49,9 +51,9 @@ func API(log *logger.Logger, cfg *conf.Config) (fasthttp.RequestHandler, error) 
 	queryCache := cache.New(log, cfg.Cache.Query.MaxSize, cache.QueryCacheLoader(qr))
 	cacheQr := cache.NewQueryReaderCache(log, qr, queryCache)
 
-	e := eval.NewEvaluator(log, cacheMr, cacheQr, r, p)
+	e := eval.NewEvaluator(log, cacheMr, cacheQr, r, parserCache)
 
-	restQl := NewRestQl(log, cfg, e, p)
+	restQl := NewRestQl(log, cfg, e, defaultParser)
 
 	app.Handle(http.MethodPost, "/validate-query", restQl.ValidateQuery)
 	app.Handle(http.MethodGet, "/run-query/:namespace/:queryId/:revision", restQl.RunSavedQuery)
