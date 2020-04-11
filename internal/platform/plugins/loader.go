@@ -11,6 +11,16 @@ import (
 )
 
 func loadPlugins(log *logger.Logger, location string) ([]restql.Plugin, error) {
+	if location == "" {
+		log.Info("no plugin location provided")
+		return nil, nil
+	}
+
+	if _, err := os.Stat(location); os.IsNotExist(err) {
+		log.Info("provided plugin location does not exist", "path", location)
+		return nil, nil
+	}
+
 	dir, err := os.Open(location)
 	if err != nil {
 		return nil, err
