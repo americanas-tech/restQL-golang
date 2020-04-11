@@ -12,6 +12,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 )
 
 func main() {
@@ -26,7 +27,8 @@ var build string
 func start() error {
 	//// =========================================================================
 	//// Config
-	//config := conf.New(build)
+	startupStart := time.Now()
+
 	cfg, err := conf.Load(build)
 	if err != nil {
 		return err
@@ -86,6 +88,9 @@ func start() error {
 
 	//// =========================================================================
 	//// Shutdown
+	startupDelay := time.Since(startupStart)
+	log.Info("application running", "startup-time", startupDelay.String())
+
 	select {
 	case err := <-serverErrors:
 		return errors.Wrap(err, "server error")
