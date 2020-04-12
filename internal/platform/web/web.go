@@ -3,6 +3,7 @@ package web
 import (
 	"github.com/b2wdigital/restQL-golang/internal/platform/conf"
 	"github.com/b2wdigital/restQL-golang/internal/platform/logger"
+	"github.com/b2wdigital/restQL-golang/internal/platform/plugins"
 	"github.com/b2wdigital/restQL-golang/internal/platform/web/middleware"
 	"github.com/buaazp/fasthttprouter"
 	"github.com/valyala/fasthttp"
@@ -11,16 +12,17 @@ import (
 type Handler func(ctx *fasthttp.RequestCtx) error
 
 type App struct {
-	config *conf.Config
-	router *fasthttprouter.Router
-	log    *logger.Logger
+	config         *conf.Config
+	router         *fasthttprouter.Router
+	log            *logger.Logger
+	pluginsManager plugins.Manager
 }
 
-func NewApp(log *logger.Logger, config *conf.Config) App {
+func NewApp(log *logger.Logger, config *conf.Config, pm plugins.Manager) App {
 	r := fasthttprouter.New()
 	r.NotFound = func(ctx *fasthttp.RequestCtx) { ctx.Response.SetBodyString("There is nothing here. =/") }
 
-	return App{router: r, config: config, log: log}
+	return App{router: r, config: config, log: log, pluginsManager: pm}
 }
 
 func (a App) Handle(method, url string, handler Handler) {
@@ -40,7 +42,7 @@ func (a App) Handle(method, url string, handler Handler) {
 }
 
 func (a App) RequestHandler() fasthttp.RequestHandler {
-	mws := middleware.FetchEnabled(a.config, a.log)
+	mws := middleware.FetchEnabled(a.log, a.config, a.pluginsManager)
 	h := middleware.Apply(a.router.Handler, mws, a.log)
 	return h
 }

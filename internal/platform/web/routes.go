@@ -33,13 +33,12 @@ func API(log *logger.Logger, cfg *conf.Config) (fasthttp.RequestHandler, error) 
 		log.Error("failed to establish connection to database", err)
 	}
 
-	app := NewApp(log, cfg)
-
 	pluginManager, err := plugins.NewManager(log, cfg.Plugins.Location)
 	if err != nil {
 		log.Error("failed to initialize plugins", err)
 	}
 
+	app := NewApp(log, cfg, pluginManager)
 	client := httpclient.New(log, pluginManager, cfg)
 	executor := runner.NewExecutor(log, client, cfg.QueryResourceTimeout)
 	r := runner.NewRunner(log, executor, cfg.GlobalQueryTimeout)
@@ -68,7 +67,7 @@ func API(log *logger.Logger, cfg *conf.Config) (fasthttp.RequestHandler, error) 
 }
 
 func Health(log *logger.Logger, cfg *conf.Config) fasthttp.RequestHandler {
-	app := NewApp(log, cfg)
+	app := NewApp(log, cfg, plugins.NoOpManager)
 	check := NewCheck(cfg.Build)
 
 	app.Handle(http.MethodGet, "/health", check.Health)
@@ -78,7 +77,7 @@ func Health(log *logger.Logger, cfg *conf.Config) fasthttp.RequestHandler {
 }
 
 func Debug(log *logger.Logger, cfg *conf.Config) fasthttp.RequestHandler {
-	app := NewApp(log, cfg)
+	app := NewApp(log, cfg, plugins.NoOpManager)
 	pprof := NewPprof()
 
 	app.Handle(http.MethodGet, "/debug/pprof/goroutine", pprof.Index)

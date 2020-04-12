@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/b2wdigital/restQL-golang/internal/platform/conf"
 	"github.com/b2wdigital/restQL-golang/internal/platform/logger"
+	"github.com/b2wdigital/restQL-golang/internal/platform/plugins"
 	"github.com/valyala/fasthttp"
 )
 
@@ -29,8 +30,8 @@ func Apply(h fasthttp.RequestHandler, mws []Middleware, log *logger.Logger) fast
 	return handler
 }
 
-func FetchEnabled(cfg *conf.Config, log *logger.Logger) []Middleware {
-	mws := []Middleware{NewRecover(log), NewNativeContext()}
+func FetchEnabled(log *logger.Logger, cfg *conf.Config, pm plugins.Manager) []Middleware {
+	mws := []Middleware{NewRecover(log), NewNativeContext(), NewTransaction(pm)}
 
 	mwCfg := cfg.Web.Server.Middlewares
 	if mwCfg.Timeout != nil {
