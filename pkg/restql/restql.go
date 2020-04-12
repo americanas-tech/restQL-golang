@@ -1,13 +1,16 @@
 package restql
 
-import "github.com/b2wdigital/restQL-golang/internal/domain"
+import (
+	"context"
+	"github.com/b2wdigital/restQL-golang/internal/domain"
+)
 
 type Plugin interface {
 	Name() string
-	BeforeQuery(query string, queryCtx QueryContext)
-	AfterQuery(query string, result map[string]interface{})
-	BeforeRequest(request HttpRequest)
-	AfterRequest(request HttpRequest, response HttpResponse, err error)
+	BeforeQuery(ctx context.Context, query string, queryCtx QueryContext)
+	AfterQuery(ctx context.Context, query string, result map[string]interface{})
+	BeforeRequest(ctx context.Context, request HttpRequest)
+	AfterRequest(ctx context.Context, request HttpRequest, response HttpResponse, err error)
 }
 
 type QueryInput = domain.QueryInput

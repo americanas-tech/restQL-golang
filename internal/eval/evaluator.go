@@ -64,7 +64,7 @@ func (e Evaluator) SavedQuery(ctx context.Context, queryOpts domain.QueryOptions
 		Input:    queryInput,
 	}
 
-	e.pluginsManager.RunBeforeQuery(queryTxt, queryCtx)
+	e.pluginsManager.RunBeforeQuery(ctx, queryTxt, queryCtx)
 
 	resources, err := e.runner.ExecuteQuery(ctx, query, queryCtx)
 	switch {
@@ -82,7 +82,7 @@ func (e Evaluator) SavedQuery(ctx context.Context, queryOpts domain.QueryOptions
 
 	resources = ApplyAggregators(query, resources)
 
-	e.pluginsManager.RunAfterQuery(queryTxt, resources)
+	e.pluginsManager.RunAfterQuery(ctx, queryTxt, resources)
 
 	return resources, nil
 }

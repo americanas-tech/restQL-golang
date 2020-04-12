@@ -1,6 +1,7 @@
 package plugins
 
 import (
+	"context"
 	"github.com/b2wdigital/restQL-golang/internal/domain"
 	"github.com/b2wdigital/restQL-golang/internal/platform/logger"
 	"github.com/b2wdigital/restQL-golang/pkg/restql"
@@ -8,10 +9,10 @@ import (
 )
 
 type Manager interface {
-	RunBeforeQuery(query string, queryCtx domain.QueryContext)
-	RunAfterQuery(query string, result domain.Resources)
-	RunBeforeRequest(request domain.HttpRequest)
-	RunAfterRequest(request domain.HttpRequest, response domain.HttpResponse, err error)
+	RunBeforeQuery(ctx context.Context, query string, queryCtx domain.QueryContext)
+	RunAfterQuery(ctx context.Context, query string, result domain.Resources)
+	RunBeforeRequest(ctx context.Context, request domain.HttpRequest)
+	RunAfterRequest(ctx context.Context, request domain.HttpRequest, response domain.HttpResponse, err error)
 }
 
 type manager struct {
@@ -28,35 +29,35 @@ func NewManager(log *logger.Logger, pluginsLocation string) (Manager, error) {
 	return manager{log: log, availablePlugins: ps}, nil
 }
 
-func (m manager) RunBeforeQuery(query string, queryCtx domain.QueryContext) {
+func (m manager) RunBeforeQuery(ctx context.Context, query string, queryCtx domain.QueryContext) {
 	for _, p := range m.availablePlugins {
 		m.safeExecute(p.Name(), "BeforeQuery", func() {
-			p.BeforeQuery(query, queryCtx)
+			p.BeforeQuery(ctx, query, queryCtx)
 		})
 	}
 }
 
-func (m manager) RunAfterQuery(query string, result domain.Resources) {
+func (m manager) RunAfterQuery(ctx context.Context, query string, result domain.Resources) {
 	for _, p := range m.availablePlugins {
 		m.safeExecute(p.Name(), "AfterQuery", func() {
 			m := convertQueryResult(result)
-			p.AfterQuery(query, m)
+			p.AfterQuery(ctx, query, m)
 		})
 	}
 }
 
-func (m manager) RunBeforeRequest(request domain.HttpRequest) {
+func (m manager) RunBeforeRequest(ctx context.Context, request domain.HttpRequest) {
 	for _, p := range m.availablePlugins {
 		m.safeExecute(p.Name(), "BeforeRequest", func() {
-			p.BeforeRequest(request)
+			p.BeforeRequest(ctx, request)
 		})
 	}
 }
 
-func (m manager) RunAfterRequest(request domain.HttpRequest, response domain.HttpResponse, err error) {
+func (m manager) RunAfterRequest(ctx context.Context, request domain.HttpRequest, response domain.HttpResponse, err error) {
 	for _, p := range m.availablePlugins {
 		m.safeExecute(p.Name(), "AfterRequest", func() {
-			p.AfterRequest(request, response, err)
+			p.AfterRequest(ctx, request, response, err)
 		})
 	}
 }
@@ -124,8 +125,8 @@ func convertDoneResource(doneResource interface{}) interface{} {
 
 type noOpManager struct{}
 
-func (n noOpManager) RunBeforeQuery(query string, queryCtx domain.QueryContext) {}
-func (n noOpManager) RunAfterQuery(query string, result domain.Resources)       {}
-func (n noOpManager) RunBeforeRequest(request domain.HttpRequest)               {}
-func (n noOpManager) RunAfterRequest(request domain.HttpRequest, response domain.HttpResponse, err error) {
+func (n noOpManager) RunBeforeQuery(ctx context.Context, query string, queryCtx domain.QueryContext) {}
+func (n noOpManager) RunAfterQuery(ctx context.Context, query string, result domain.Resources)       {}
+func (n noOpManager) RunBeforeRequest(ctx context.Context, request domain.HttpRequest)               {}
+func (n noOpManager) RunAfterRequest(ctx context.Context, request domain.HttpRequest, response domain.HttpResponse, err error) {
 }

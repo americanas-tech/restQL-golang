@@ -80,9 +80,9 @@ func (hc HttpClient) Do(ctx context.Context, request domain.HttpRequest) (domain
 
 	var response domain.HttpResponse
 
-	hc.pluginManager.RunBeforeRequest(request)
+	hc.pluginManager.RunBeforeRequest(ctx, request)
 	defer func() {
-		hc.pluginManager.RunAfterRequest(request, response, err)
+		hc.pluginManager.RunAfterRequest(ctx, request, response, err)
 	}()
 
 	duration, err := hc.executeWithContext(ctx, req, res)
