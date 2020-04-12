@@ -34,14 +34,14 @@ func API(log *logger.Logger, cfg *conf.Config) (fasthttp.RequestHandler, error) 
 	}
 
 	app := NewApp(log, cfg)
-	client := httpclient.New(log, cfg)
 
 	pluginManager, err := plugins.NewManager(log, cfg.Plugins.Location)
 	if err != nil {
 		log.Error("failed to initialize plugins", err)
 	}
 
-	executor := runner.NewExecutor(log, client, pluginManager, cfg.QueryResourceTimeout)
+	client := httpclient.New(log, pluginManager, cfg)
+	executor := runner.NewExecutor(log, client, cfg.QueryResourceTimeout)
 	r := runner.NewRunner(log, executor, cfg.GlobalQueryTimeout)
 
 	mr := persistence.NewMappingReader(log, cfg.Env, cfg.Mappings, db)

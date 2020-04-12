@@ -5,6 +5,7 @@ import (
 	"github.com/b2wdigital/restQL-golang/internal/domain"
 	"github.com/b2wdigital/restQL-golang/internal/platform/conf"
 	"github.com/b2wdigital/restQL-golang/internal/platform/logger"
+	"github.com/b2wdigital/restQL-golang/internal/platform/plugins"
 	"github.com/pkg/errors"
 	"github.com/rs/dnscache"
 	"github.com/valyala/fasthttp"
@@ -13,13 +14,14 @@ import (
 )
 
 type HttpClient struct {
-	client *fasthttp.Client
-	log    *logger.Logger
+	client        *fasthttp.Client
+	log           *logger.Logger
+	pluginManager plugins.Manager
 }
 
 const network = "tcp"
 
-func New(log *logger.Logger, cfg *conf.Config) HttpClient {
+func New(log *logger.Logger, pm plugins.Manager, cfg *conf.Config) HttpClient {
 	clientCfg := cfg.Web.Client
 
 	r := &dnscache.Resolver{}
@@ -59,7 +61,7 @@ func New(log *logger.Logger, cfg *conf.Config) HttpClient {
 		},
 	}
 
-	return HttpClient{client: c, log: log}
+	return HttpClient{client: c, log: log, pluginManager: pm}
 }
 
 func (hc HttpClient) Do(ctx context.Context, request domain.HttpRequest) (domain.HttpResponse, error) {
@@ -76,18 +78,29 @@ func (hc HttpClient) Do(ctx context.Context, request domain.HttpRequest) (domain
 		return domain.HttpResponse{}, err
 	}
 
+	var response domain.HttpResponse
+
+	hc.pluginManager.RunBeforeRequest(request)
+	defer func() {
+		hc.pluginManager.RunAfterRequest(request, response, err)
+	}()
+
 	duration, err := hc.executeWithContext(ctx, req, res)
+
 	switch {
 	case err == domain.ErrRequestTimeout:
 		hc.log.Debug("request execution did not complete on time", "request", request)
-		return makeErrorResponse(req, duration, err), err
+		response = makeErrorResponse(req, duration, err)
+		return response, err
 	case err != nil:
-		return makeErrorResponse(req, duration, err), errors.Wrap(err, "request execution failed")
+		response = makeErrorResponse(req, duration, err)
+		return response, errors.Wrap(err, "request execution failed")
 	}
 
-	response, err := makeResponse(req, res, duration)
+	response, err = makeResponse(req, res, duration)
 	if err != nil {
-		return makeErrorResponse(req, duration, err), err
+		response = makeErrorResponse(req, duration, err)
+		return response, err
 	}
 
 	return response, nil
