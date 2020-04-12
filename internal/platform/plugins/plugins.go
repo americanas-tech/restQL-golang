@@ -4,6 +4,7 @@ import (
 	"github.com/b2wdigital/restQL-golang/internal/domain"
 	"github.com/b2wdigital/restQL-golang/internal/platform/logger"
 	"github.com/b2wdigital/restQL-golang/pkg/restql"
+	"github.com/pkg/errors"
 )
 
 type Manager interface {
@@ -16,7 +17,6 @@ type Manager interface {
 type manager struct {
 	log              *logger.Logger
 	availablePlugins []restql.Plugin
-	runner           *Runner
 }
 
 func NewManager(log *logger.Logger, pluginsLocation string) (Manager, error) {
@@ -25,32 +25,100 @@ func NewManager(log *logger.Logger, pluginsLocation string) (Manager, error) {
 		return noOpManager{}, err
 	}
 
-	runner := NewRunner(log)
-
-	return manager{log: log, availablePlugins: ps, runner: runner}, nil
+	return manager{log: log, availablePlugins: ps}, nil
 }
 
 func (m manager) RunBeforeQuery(query string, queryCtx domain.QueryContext) {
 	for _, p := range m.availablePlugins {
-		m.runner.BeforeQuery(p, query, queryCtx)
+		m.safeExecute(p.Name(), "BeforeQuery", func() {
+			p.BeforeQuery(query, queryCtx)
+		})
 	}
 }
 
 func (m manager) RunAfterQuery(query string, result domain.Resources) {
 	for _, p := range m.availablePlugins {
-		m.runner.AfterQuery(p, query, result)
+		m.safeExecute(p.Name(), "AfterQuery", func() {
+			m := convertQueryResult(result)
+			p.AfterQuery(query, m)
+		})
 	}
 }
 
 func (m manager) RunBeforeRequest(request domain.HttpRequest) {
 	for _, p := range m.availablePlugins {
-		m.runner.BeforeRequest(p, request)
+		m.safeExecute(p.Name(), "BeforeRequest", func() {
+			p.BeforeRequest(request)
+		})
 	}
 }
 
 func (m manager) RunAfterRequest(request domain.HttpRequest, response domain.HttpResponse, err error) {
 	for _, p := range m.availablePlugins {
-		m.runner.AfterRequest(p, request, response, err)
+		m.safeExecute(p.Name(), "AfterRequest", func() {
+			p.AfterRequest(request, response, err)
+		})
+	}
+}
+
+func (m manager) safeExecute(pluginName string, hook string, fn func()) {
+	go func() {
+		defer func() {
+			if reason := recover(); reason != nil {
+				err := errors.Errorf("reason : %v", reason)
+				m.log.Error("plugin produced a panic", err, "name", pluginName, "hook", hook)
+			}
+		}()
+
+		fn()
+	}()
+}
+
+func convertQueryResult(resource interface{}) map[string]interface{} {
+	switch resource := resource.(type) {
+	case domain.Resources:
+		m := make(map[string]interface{})
+		for k, v := range resource {
+			m[string(k)] = convertDoneResource(v)
+		}
+		return m
+	case domain.Details:
+		return map[string]interface{}{
+			"status":       resource.Status,
+			"success":      resource.Success,
+			"ignoreErrors": resource.IgnoreErrors,
+			"debugging":    convertQueryResult(resource.Debug),
+		}
+	case *domain.Debugging:
+		return map[string]interface{}{
+			"method":          resource.Method,
+			"url":             resource.Url,
+			"requestHeaders":  resource.RequestHeaders,
+			"responseHeaders": resource.ResponseHeaders,
+			"params":          resource.Params,
+			"requestBody":     resource.RequestBody,
+			"responseTime":    resource.ResponseTime,
+		}
+	default:
+		return nil
+	}
+}
+
+func convertDoneResource(doneResource interface{}) interface{} {
+	switch resource := doneResource.(type) {
+	case domain.DoneResource:
+		return map[string]interface{}{
+			"details": convertQueryResult(resource.Details),
+			"result":  resource.Result,
+		}
+	case domain.DoneResources:
+		l := make([]interface{}, len(resource))
+		for i, r := range resource {
+			l[i] = convertQueryResult(r)
+		}
+		return l
+	default:
+		return resource
 	}
 }
 
