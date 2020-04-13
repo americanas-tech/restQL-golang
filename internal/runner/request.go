@@ -19,7 +19,8 @@ var disallowedHeaders = map[string]struct{}{
 var queryMethodToHttpMethod = map[string]string{
 	domain.FromMethod:   http.MethodGet,
 	domain.ToMethod:     http.MethodPost,
-	domain.UpdateMethod: http.MethodPut,
+	domain.IntoMethod:   http.MethodPut,
+	domain.UpdateMethod: http.MethodPatch,
 	domain.DeleteMethod: http.MethodDelete,
 }
 

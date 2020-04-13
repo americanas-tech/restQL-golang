@@ -5,6 +5,7 @@ import "regexp"
 const (
 	FromMethod   string = "from"
 	ToMethod            = "to"
+	IntoMethod          = "into"
 	UpdateMethod        = "update"
 	DeleteMethod        = "delete"
 )
