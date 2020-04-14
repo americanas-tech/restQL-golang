@@ -3,6 +3,7 @@ package runner
 import (
 	"context"
 	"github.com/b2wdigital/restQL-golang/internal/domain"
+	"github.com/b2wdigital/restQL-golang/pkg/restql"
 	"github.com/pkg/errors"
 	"sync"
 	"time"
@@ -35,12 +36,12 @@ var resultChannelPool = sync.Pool{
 var ErrQueryTimedOut = errors.New("query timed out")
 
 type Runner struct {
-	log                domain.Logger
+	log                restql.Logger
 	executor           Executor
 	globalQueryTimeout time.Duration
 }
 
-func NewRunner(log domain.Logger, executor Executor, globalQueryTimeout time.Duration) Runner {
+func NewRunner(log restql.Logger, executor Executor, globalQueryTimeout time.Duration) Runner {
 	return Runner{
 		log:                log,
 		executor:           executor,
@@ -145,7 +146,7 @@ type result struct {
 }
 
 type stateWorker struct {
-	log       domain.Logger
+	log       restql.Logger
 	requestCh chan request
 	resultCh  chan result
 	outputCh  chan domain.Resources

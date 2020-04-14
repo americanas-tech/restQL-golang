@@ -3,6 +3,7 @@ package runner
 import (
 	"context"
 	"github.com/b2wdigital/restQL-golang/internal/domain"
+	"github.com/b2wdigital/restQL-golang/pkg/restql"
 	"github.com/pkg/errors"
 	"golang.org/x/sync/errgroup"
 	"time"
@@ -12,11 +13,11 @@ var errNoTimeoutProvided = errors.New("no timeout provided")
 
 type Executor struct {
 	client          domain.HttpClient
-	log             domain.Logger
+	log             restql.Logger
 	resourceTimeout time.Duration
 }
 
-func NewExecutor(log domain.Logger, client domain.HttpClient, resourceTimeout time.Duration) Executor {
+func NewExecutor(log restql.Logger, client domain.HttpClient, resourceTimeout time.Duration) Executor {
 	return Executor{client: client, log: log, resourceTimeout: resourceTimeout}
 }
 

@@ -11,15 +11,6 @@ type EnvSource interface {
 	GetAll() map[string]string
 }
 
-type Logger interface {
-	Panic(msg string, fields ...interface{})
-	Fatal(msg string, fields ...interface{})
-	Error(msg string, err error, fields ...interface{})
-	Warn(msg string, fields ...interface{})
-	Info(msg string, fields ...interface{})
-	Debug(msg string, fields ...interface{})
-}
-
 type HttpClient interface {
 	Do(ctx context.Context, request HttpRequest) (HttpResponse, error)
 }

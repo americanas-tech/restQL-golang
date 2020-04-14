@@ -5,9 +5,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/b2wdigital/restQL-golang/internal/domain"
+	"github.com/b2wdigital/restQL-golang/pkg/restql"
 )
 
-func ApplyEncoders(resources domain.Resources, log domain.Logger) domain.Resources {
+func ApplyEncoders(resources domain.Resources, log restql.Logger) domain.Resources {
 	for resourceId, statement := range resources {
 		if statement, ok := statement.(domain.Statement); ok {
 			resources[resourceId] = applyEncoderToStatement(log, statement)
@@ -17,7 +18,7 @@ func ApplyEncoders(resources domain.Resources, log domain.Logger) domain.Resourc
 	return resources
 }
 
-func applyEncoderToStatement(log domain.Logger, statement domain.Statement) domain.Statement {
+func applyEncoderToStatement(log restql.Logger, statement domain.Statement) domain.Statement {
 	params := statement.With
 	for key, value := range params {
 		result := applyEncoderToValue(log, value)
@@ -30,7 +31,7 @@ func applyEncoderToStatement(log domain.Logger, statement domain.Statement) doma
 	return statement
 }
 
-func applyEncoderToValue(log domain.Logger, value interface{}) interface{} {
+func applyEncoderToValue(log restql.Logger, value interface{}) interface{} {
 	var result interface{}
 	switch value := value.(type) {
 	case domain.Base64:
@@ -55,7 +56,7 @@ func applyEncoderToValue(log domain.Logger, value interface{}) interface{} {
 	return result
 }
 
-func applyJsonEncoder(log domain.Logger, value domain.Json) interface{} {
+func applyJsonEncoder(log restql.Logger, value domain.Json) interface{} {
 	if _, ok := value.Target.(domain.Chain); ok {
 		return value
 	}

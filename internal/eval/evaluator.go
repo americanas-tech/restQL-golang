@@ -6,6 +6,7 @@ import (
 	"github.com/b2wdigital/restQL-golang/internal/parser"
 	"github.com/b2wdigital/restQL-golang/internal/platform/plugins"
 	"github.com/b2wdigital/restQL-golang/internal/runner"
+	"github.com/b2wdigital/restQL-golang/pkg/restql"
 	"github.com/pkg/errors"
 )
 
@@ -16,7 +17,7 @@ var (
 )
 
 type Evaluator struct {
-	log            domain.Logger
+	log            restql.Logger
 	parser         parser.Parser
 	mappingsReader MappingsReader
 	queryReader    QueryReader
@@ -24,7 +25,7 @@ type Evaluator struct {
 	pluginsManager plugins.Manager
 }
 
-func NewEvaluator(log domain.Logger, mr MappingsReader, qr QueryReader, r runner.Runner, p parser.Parser, pm plugins.Manager) Evaluator {
+func NewEvaluator(log restql.Logger, mr MappingsReader, qr QueryReader, r runner.Runner, p parser.Parser, pm plugins.Manager) Evaluator {
 	return Evaluator{
 		log:            log,
 		mappingsReader: mr,
