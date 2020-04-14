@@ -13,12 +13,14 @@ import (
 
 type Manager interface {
 	RunBeforeTransaction(ctx context.Context, requestCtx *fasthttp.RequestCtx) context.Context
-	RunAfterTransaction(ctx context.Context, requestCtx *fasthttp.RequestCtx)
-	RunBeforeQuery(ctx context.Context, query string, queryCtx domain.QueryContext)
-	RunAfterQuery(ctx context.Context, query string, result domain.Resources)
-	RunBeforeRequest(ctx context.Context, request domain.HttpRequest)
-	RunAfterRequest(ctx context.Context, request domain.HttpRequest, response domain.HttpResponse, err error)
+	RunAfterTransaction(ctx context.Context, requestCtx *fasthttp.RequestCtx) context.Context
+	RunBeforeQuery(ctx context.Context, query string, queryCtx domain.QueryContext) context.Context
+	RunAfterQuery(ctx context.Context, query string, result domain.Resources) context.Context
+	RunBeforeRequest(ctx context.Context, request domain.HttpRequest) context.Context
+	RunAfterRequest(ctx context.Context, request domain.HttpRequest, response domain.HttpResponse, err error) context.Context
 }
+
+type pluginExecutor func(ctx context.Context, p restql.Plugin) context.Context
 
 type manager struct {
 	log              *logger.Logger
@@ -35,59 +37,54 @@ func NewManager(log *logger.Logger, pluginsLocation string) (Manager, error) {
 }
 
 func (m manager) RunBeforeTransaction(ctx context.Context, requestCtx *fasthttp.RequestCtx) context.Context {
+	return m.executeAllPluginsWithContext("BeforeTransaction", ctx, func(currentCtx context.Context, p restql.Plugin) context.Context {
+		tr := m.newTransactionRequest(requestCtx)
+		return p.BeforeTransaction(currentCtx, tr)
+	})
+}
+
+func (m manager) RunAfterTransaction(ctx context.Context, requestCtx *fasthttp.RequestCtx) context.Context {
+	return m.executeAllPluginsWithContext("AfterTransaction", ctx, func(currentCtx context.Context, p restql.Plugin) context.Context {
+		tr := m.newTransactionResponse(requestCtx)
+		return p.AfterTransaction(currentCtx, tr)
+	})
+}
+
+func (m manager) RunBeforeQuery(ctx context.Context, query string, queryCtx domain.QueryContext) context.Context {
+	return m.executeAllPluginsWithContext("BeforeQuery", ctx, func(currentCtx context.Context, p restql.Plugin) context.Context {
+		return p.BeforeQuery(currentCtx, query, queryCtx)
+	})
+}
+
+func (m manager) RunAfterQuery(ctx context.Context, query string, result domain.Resources) context.Context {
+	return m.executeAllPluginsWithContext("AfterQuery", ctx, func(currentCtx context.Context, p restql.Plugin) context.Context {
+		m := convertQueryResult(result)
+		return p.AfterQuery(currentCtx, query, m)
+	})
+}
+
+func (m manager) RunBeforeRequest(ctx context.Context, request domain.HttpRequest) context.Context {
+	return m.executeAllPluginsWithContext("BeforeRequest", ctx, func(currentCtx context.Context, p restql.Plugin) context.Context {
+		return p.BeforeRequest(currentCtx, request)
+	})
+}
+
+func (m manager) RunAfterRequest(ctx context.Context, request domain.HttpRequest, response domain.HttpResponse, err error) context.Context {
+	return m.executeAllPluginsWithContext("AfterRequest", ctx, func(currentCtx context.Context, p restql.Plugin) context.Context {
+		return p.AfterRequest(currentCtx, request, response, err)
+	})
+}
+func (m manager) executeAllPluginsWithContext(hook string, ctx context.Context, fn pluginExecutor) context.Context {
 	var pluginCtx context.Context
 
 	pluginCtx = ctx
 	for _, p := range m.availablePlugins {
-		m.safeExecute(p.Name(), "BeforeTransaction", func() {
-			tr := m.newTransactionRequest(requestCtx)
-			pluginCtx = p.BeforeTransaction(pluginCtx, tr)
+		m.safeExecute(p.Name(), hook, func() {
+			pluginCtx = fn(pluginCtx, p)
 		})
 	}
 
 	return pluginCtx
-}
-
-func (m manager) RunAfterTransaction(ctx context.Context, requestCtx *fasthttp.RequestCtx) {
-	for _, p := range m.availablePlugins {
-		m.safeExecute(p.Name(), "AfterTransaction", func() {
-			tr := m.newTransactionResponse(requestCtx)
-			p.AfterTransaction(ctx, tr)
-		})
-	}
-}
-
-func (m manager) RunBeforeQuery(ctx context.Context, query string, queryCtx domain.QueryContext) {
-	for _, p := range m.availablePlugins {
-		m.safeExecute(p.Name(), "BeforeQuery", func() {
-			p.BeforeQuery(ctx, query, queryCtx)
-		})
-	}
-}
-
-func (m manager) RunAfterQuery(ctx context.Context, query string, result domain.Resources) {
-	for _, p := range m.availablePlugins {
-		m.safeExecute(p.Name(), "AfterQuery", func() {
-			m := convertQueryResult(result)
-			p.AfterQuery(ctx, query, m)
-		})
-	}
-}
-
-func (m manager) RunBeforeRequest(ctx context.Context, request domain.HttpRequest) {
-	for _, p := range m.availablePlugins {
-		m.safeExecute(p.Name(), "BeforeRequest", func() {
-			p.BeforeRequest(ctx, request)
-		})
-	}
-}
-
-func (m manager) RunAfterRequest(ctx context.Context, request domain.HttpRequest, response domain.HttpResponse, err error) {
-	for _, p := range m.availablePlugins {
-		m.safeExecute(p.Name(), "AfterRequest", func() {
-			p.AfterRequest(ctx, request, response, err)
-		})
-	}
 }
 
 func (m manager) safeExecute(pluginName string, hook string, fn func()) {
@@ -109,6 +106,7 @@ func (m manager) newTransactionRequest(ctx *fasthttp.RequestCtx) restql.Transact
 
 	header := make(http.Header)
 	ctx.Request.Header.VisitAll(func(k, v []byte) {
+		//todo: mudar para .Add
 		header.Set(string(k), string(v))
 	})
 
@@ -182,11 +180,20 @@ var NoOpManager Manager = noOpManager{}
 type noOpManager struct{}
 
 func (n noOpManager) RunBeforeTransaction(ctx context.Context, requestCtx *fasthttp.RequestCtx) context.Context {
-	return nil
+	return ctx
 }
-func (n noOpManager) RunAfterTransaction(ctx context.Context, requestCtx *fasthttp.RequestCtx)       {}
-func (n noOpManager) RunBeforeQuery(ctx context.Context, query string, queryCtx domain.QueryContext) {}
-func (n noOpManager) RunAfterQuery(ctx context.Context, query string, result domain.Resources)       {}
-func (n noOpManager) RunBeforeRequest(ctx context.Context, request domain.HttpRequest)               {}
-func (n noOpManager) RunAfterRequest(ctx context.Context, request domain.HttpRequest, response domain.HttpResponse, err error) {
+func (n noOpManager) RunAfterTransaction(ctx context.Context, requestCtx *fasthttp.RequestCtx) context.Context {
+	return ctx
+}
+func (n noOpManager) RunBeforeQuery(ctx context.Context, query string, queryCtx domain.QueryContext) context.Context {
+	return ctx
+}
+func (n noOpManager) RunAfterQuery(ctx context.Context, query string, result domain.Resources) context.Context {
+	return ctx
+}
+func (n noOpManager) RunBeforeRequest(ctx context.Context, request domain.HttpRequest) context.Context {
+	return ctx
+}
+func (n noOpManager) RunAfterRequest(ctx context.Context, request domain.HttpRequest, response domain.HttpResponse, err error) context.Context {
+	return ctx
 }

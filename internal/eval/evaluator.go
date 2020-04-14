@@ -59,15 +59,15 @@ func (e Evaluator) SavedQuery(ctx context.Context, queryOpts domain.QueryOptions
 		return nil, err
 	}
 
-	queryCtx := domain.QueryContext{
+	queryContext := domain.QueryContext{
 		Mappings: mappings,
 		Options:  queryOpts,
 		Input:    queryInput,
 	}
 
-	e.pluginsManager.RunBeforeQuery(ctx, queryTxt, queryCtx)
+	queryCtx := e.pluginsManager.RunBeforeQuery(ctx, queryTxt, queryContext)
 
-	resources, err := e.runner.ExecuteQuery(ctx, query, queryCtx)
+	resources, err := e.runner.ExecuteQuery(queryCtx, query, queryContext)
 	switch {
 	case err == runner.ErrQueryTimedOut:
 		return nil, TimeoutError{Err: err}
@@ -83,7 +83,7 @@ func (e Evaluator) SavedQuery(ctx context.Context, queryOpts domain.QueryOptions
 
 	resources = ApplyAggregators(query, resources)
 
-	e.pluginsManager.RunAfterQuery(ctx, queryTxt, resources)
+	queryCtx = e.pluginsManager.RunAfterQuery(queryCtx, queryTxt, resources)
 
 	return resources, nil
 }

@@ -22,7 +22,7 @@ func (t Transaction) Apply(h fasthttp.RequestHandler) fasthttp.RequestHandler {
 
 		defer func() {
 			if reason := recover(); reason != nil {
-				t.pluginsManager.RunAfterTransaction(nativeContext, ctx)
+				t.pluginsManager.RunAfterTransaction(transactionCtx, ctx)
 				panic(reason)
 			}
 		}()

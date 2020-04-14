@@ -10,11 +10,11 @@ import (
 type Plugin interface {
 	Name() string
 	BeforeTransaction(ctx context.Context, tr TransactionRequest) context.Context
-	AfterTransaction(ctx context.Context, tr TransactionResponse)
-	BeforeQuery(ctx context.Context, query string, queryCtx QueryContext)
-	AfterQuery(ctx context.Context, query string, result map[string]interface{})
-	BeforeRequest(ctx context.Context, request HttpRequest)
-	AfterRequest(ctx context.Context, request HttpRequest, response HttpResponse, err error)
+	AfterTransaction(ctx context.Context, tr TransactionResponse) context.Context
+	BeforeQuery(ctx context.Context, query string, queryCtx QueryContext) context.Context
+	AfterQuery(ctx context.Context, query string, result map[string]interface{}) context.Context
+	BeforeRequest(ctx context.Context, request HttpRequest) context.Context
+	AfterRequest(ctx context.Context, request HttpRequest, response HttpResponse, err error) context.Context
 }
 
 type TransactionRequest struct {
