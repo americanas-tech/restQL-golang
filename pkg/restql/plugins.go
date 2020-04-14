@@ -25,7 +25,7 @@ type TransactionRequest struct {
 
 type TransactionResponse struct {
 	Status int
-	Header []byte
+	Header http.Header
 	Body   []byte
 }
 

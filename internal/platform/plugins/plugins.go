@@ -106,8 +106,7 @@ func (m manager) newTransactionRequest(ctx *fasthttp.RequestCtx) restql.Transact
 
 	header := make(http.Header)
 	ctx.Request.Header.VisitAll(func(k, v []byte) {
-		//todo: mudar para .Add
-		header.Set(string(k), string(v))
+		header.Add(string(k), string(v))
 	})
 
 	//todo: add header to ctx
@@ -120,9 +119,14 @@ func (m manager) newTransactionRequest(ctx *fasthttp.RequestCtx) restql.Transact
 }
 
 func (m manager) newTransactionResponse(ctx *fasthttp.RequestCtx) restql.TransactionResponse {
+	header := make(http.Header)
+	ctx.Response.Header.VisitAll(func(k, v []byte) {
+		header.Add(string(k), string(v))
+	})
+
 	return restql.TransactionResponse{
 		Status: ctx.Response.StatusCode(),
-		Header: ctx.Response.Header.Header(),
+		Header: header,
 		Body:   ctx.Response.Body(),
 	}
 }

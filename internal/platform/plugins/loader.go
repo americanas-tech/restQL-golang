@@ -1,7 +1,6 @@
 package plugins
 
 import (
-	"fmt"
 	"github.com/b2wdigital/restQL-golang/internal/platform/logger"
 	"github.com/b2wdigital/restQL-golang/pkg/restql"
 	"github.com/pkg/errors"
@@ -66,11 +65,10 @@ func loadPlugin(log *logger.Logger, pluginPath string) (restql.Plugin, error) {
 		return nil, err
 	}
 
-	fmt.Printf("addPluginSym type : %T\n", addPluginSym)
-	addPlugin, ok := addPluginSym.(func(log restql.Logger) restql.Plugin)
+	addPlugin, ok := addPluginSym.(func(log restql.Logger) (restql.Plugin, error))
 	if !ok {
 		return nil, errors.New("failed to load plugin : AddPlugin function has wrong signature")
 	}
 
-	return addPlugin(log), nil
+	return addPlugin(log)
 }
