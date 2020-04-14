@@ -41,14 +41,18 @@ func (e Executor) DoStatement(ctx context.Context, statement domain.Statement, q
 
 	e.log.Debug("executing request for statement", "resource", statement.Resource, "method", statement.Method, "request", request)
 
+	var cancel context.CancelFunc
 	timeout, err := parseTimeout(statement)
-	if err == nil {
-		var cancel context.CancelFunc
+	switch {
+	case err == nil:
 		ctx, cancel = context.WithTimeout(ctx, timeout)
-		defer cancel()
-	} else if err != errNoTimeoutProvided {
+	case err == errNoTimeoutProvided:
+		ctx, cancel = context.WithCancel(ctx)
+	default:
 		e.log.Debug("failed to set timeout for statement", "error", err)
+		ctx, cancel = context.WithCancel(ctx)
 	}
+	defer cancel()
 
 	response, err := e.client.Do(ctx, request)
 
