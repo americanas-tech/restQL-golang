@@ -38,7 +38,8 @@ type Config struct {
 			Env                     string        `env:"RESTQL_ENV"`
 			GracefulShutdownTimeout time.Duration `yaml:"gracefulShutdownTimeout"`
 			ReadTimeout             time.Duration `yaml:"readTimeout"`
-			Middlewares             struct {
+
+			Middlewares struct {
 				RequestId *requestIdConf `yaml:"requestId"`
 				Timeout   *timeoutConf   `yaml:"timeout"`
 				Cors      *corsConf      `yaml:"cors"`
@@ -90,6 +91,7 @@ type Config struct {
 	} `yaml:"plugins"`
 
 	Tenant               string        `env:"RESTQL_TENANT"`
+	ForwardPrefix        string        `yaml:"forwardPrefix" env:"FORWARD_PREFIX"`
 	GlobalQueryTimeout   time.Duration `env:"RESTQL_QUERY_GLOBAL_TIMEOUT" envDefault:"30s"`
 	QueryResourceTimeout time.Duration `env:"RESTQL_QUERY_RESOURCE_TIMEOUT" envDefault:"5s"`
 

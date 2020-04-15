@@ -28,8 +28,14 @@ func TestMakeRequest(t *testing.T) {
 			domain.HttpRequest{Method: http.MethodPost, Schema: "http", Uri: "hero.io/api", Query: map[string]interface{}{}, Body: map[string]interface{}{"id": 1}, Headers: map[string]string{"Content-Type": "application/json"}},
 		},
 		{
-			"should make put request with url",
+			"should make patch request with url",
 			domain.Statement{Method: domain.UpdateMethod, Resource: "hero", With: map[string]interface{}{"id": 1}},
+			domain.QueryContext{Mappings: map[string]domain.Mapping{"hero": {Schema: "http", Uri: "hero.io/api"}}},
+			domain.HttpRequest{Method: http.MethodPatch, Schema: "http", Uri: "hero.io/api", Query: map[string]interface{}{}, Body: map[string]interface{}{"id": 1}, Headers: map[string]string{"Content-Type": "application/json"}},
+		},
+		{
+			"should make put request with url",
+			domain.Statement{Method: domain.IntoMethod, Resource: "hero", With: map[string]interface{}{"id": 1}},
 			domain.QueryContext{Mappings: map[string]domain.Mapping{"hero": {Schema: "http", Uri: "hero.io/api"}}},
 			domain.HttpRequest{Method: http.MethodPut, Schema: "http", Uri: "hero.io/api", Query: map[string]interface{}{}, Body: map[string]interface{}{"id": 1}, Headers: map[string]string{"Content-Type": "application/json"}},
 		},
@@ -96,9 +102,11 @@ func TestMakeRequest(t *testing.T) {
 		},
 	}
 
+	forwardPrefix := "c_"
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := runner.MakeRequest(tt.statement, tt.queryCtx)
+			got := runner.MakeRequest(forwardPrefix, tt.statement, tt.queryCtx)
 
 			test.Equal(t, got, tt.expected)
 		})

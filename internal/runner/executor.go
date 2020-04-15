@@ -15,10 +15,11 @@ type Executor struct {
 	client          domain.HttpClient
 	log             restql.Logger
 	resourceTimeout time.Duration
+	forwardPrefix   string
 }
 
-func NewExecutor(log restql.Logger, client domain.HttpClient, resourceTimeout time.Duration) Executor {
-	return Executor{client: client, log: log, resourceTimeout: resourceTimeout}
+func NewExecutor(log restql.Logger, client domain.HttpClient, resourceTimeout time.Duration, forwardPrefix string) Executor {
+	return Executor{client: client, log: log, resourceTimeout: resourceTimeout, forwardPrefix: forwardPrefix}
 }
 
 func (e Executor) DoStatement(ctx context.Context, statement domain.Statement, queryCtx domain.QueryContext) (domain.DoneResource, error) {
@@ -37,7 +38,7 @@ func (e Executor) DoStatement(ctx context.Context, statement domain.Statement, q
 		return emptyChainedResponse, nil
 	}
 
-	request := MakeRequest(statement, queryCtx)
+	request := MakeRequest(e.forwardPrefix, statement, queryCtx)
 
 	e.log.Debug("executing request for statement", "resource", statement.Resource, "method", statement.Method, "request", request)
 

@@ -24,7 +24,7 @@ var queryMethodToHttpMethod = map[string]string{
 	domain.DeleteMethod: http.MethodDelete,
 }
 
-func MakeRequest(statement domain.Statement, queryCtx domain.QueryContext) domain.HttpRequest {
+func MakeRequest(forwardPrefix string, statement domain.Statement, queryCtx domain.QueryContext) domain.HttpRequest {
 	mapping := queryCtx.Mappings[statement.Resource]
 	method := queryMethodToHttpMethod[statement.Method]
 	url := makeUrl(mapping, statement)
@@ -38,12 +38,12 @@ func MakeRequest(statement domain.Statement, queryCtx domain.QueryContext) domai
 	}
 
 	if statement.Method == domain.FromMethod {
-		req.Query = makeQueryParams(statement, mapping, queryCtx)
+		req.Query = makeQueryParams(forwardPrefix, statement, mapping, queryCtx)
 	} else {
-		req.Query = getForwardParams(queryCtx)
+		req.Query = getForwardParams(forwardPrefix, queryCtx)
 	}
 
-	if statement.Method == domain.ToMethod || statement.Method == domain.UpdateMethod {
+	if statement.Method == domain.ToMethod || statement.Method == domain.UpdateMethod || statement.Method == domain.IntoMethod {
 		req.Body = makeBody(statement, mapping)
 	}
 
@@ -86,8 +86,8 @@ func getForwardHeaders(queryCtx domain.QueryContext) map[string]string {
 	return r
 }
 
-func makeQueryParams(statement domain.Statement, mapping domain.Mapping, queryCtx domain.QueryContext) map[string]interface{} {
-	queryArgs := getForwardParams(queryCtx)
+func makeQueryParams(forwardPrefix string, statement domain.Statement, mapping domain.Mapping, queryCtx domain.QueryContext) map[string]interface{} {
+	queryArgs := getForwardParams(forwardPrefix, queryCtx)
 	for key, value := range statement.With {
 		if mapping.HasParam(key) {
 			continue
@@ -97,10 +97,10 @@ func makeQueryParams(statement domain.Statement, mapping domain.Mapping, queryCt
 	return queryArgs
 }
 
-func getForwardParams(queryCtx domain.QueryContext) map[string]interface{} {
+func getForwardParams(forwardPrefix string, queryCtx domain.QueryContext) map[string]interface{} {
 	r := make(map[string]interface{})
 	for k, v := range queryCtx.Input.Params {
-		if strings.HasPrefix(k, "c_") {
+		if strings.HasPrefix(k, forwardPrefix) {
 			r[k] = v
 		}
 	}
