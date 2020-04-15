@@ -24,6 +24,14 @@ logging:
   level: info
   format: json
 
+cache:
+  mappings:
+    maxSize: 100
+  query:
+    maxSize: 100
+  parser:
+    maxSize: 100
+
 database:
   timeout: 1000
 `)
