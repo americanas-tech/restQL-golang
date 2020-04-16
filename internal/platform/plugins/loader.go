@@ -42,7 +42,7 @@ func loadPlugins(log *logger.Logger, location string) ([]restql.Plugin, error) {
 	for _, info := range fileInfos {
 		if !info.IsDir() {
 			pluginPath := path.Join(location, info.Name())
-			timeout, _ := context.WithTimeout(context.Background(), 100*time.Millisecond)
+			timeout, _ := context.WithTimeout(context.Background(), 1*time.Second)
 
 			p, err := loadPlugin(timeout, log, pluginPath)
 			if err != nil {
