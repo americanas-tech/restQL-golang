@@ -42,6 +42,7 @@ func loadPlugins(log *logger.Logger, location string) ([]restql.Plugin, error) {
 	for _, info := range fileInfos {
 		if !info.IsDir() {
 			pluginPath := path.Join(location, info.Name())
+			log.Info("start loading plugin", "plugin", info.Name())
 			timeout, _ := context.WithTimeout(context.Background(), 1*time.Second)
 
 			p, err := loadPlugin(timeout, log, pluginPath)
@@ -63,30 +64,35 @@ func loadPlugin(ctx context.Context, log *logger.Logger, pluginPath string) (res
 	var pluginerr error
 
 	go func() {
+		log.Info("opening plugin")
 		p, err := plugin.Open(pluginPath)
 		if err != nil {
 			pluginerr = err
 			return
 		}
 
+		log.Info("looking up AddPlugin")
 		addPluginSym, err := p.Lookup("AddPlugin")
 		if err != nil {
 			pluginerr = err
 			return
 		}
 
+		log.Info("casting AddPlugin")
 		addPlugin, ok := addPluginSym.(func(log restql.Logger) (restql.Plugin, error))
 		if !ok {
 			pluginerr = errors.New("failed to load plugin : AddPlugin function has wrong signature")
 			return
 		}
 
+		log.Info("running AddPlugin")
 		result, err := addPlugin(log)
 		if err != nil {
 			pluginerr = err
 			return
 		}
 
+		log.Info("AddPlugin finished")
 		out <- result
 	}()
 
