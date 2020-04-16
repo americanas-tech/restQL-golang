@@ -1,12 +1,14 @@
 package plugins
 
 import (
+	"context"
 	"github.com/b2wdigital/restQL-golang/internal/platform/logger"
 	"github.com/b2wdigital/restQL-golang/pkg/restql"
 	"github.com/pkg/errors"
 	"os"
 	"path"
 	"plugin"
+	"time"
 )
 
 func loadPlugins(log *logger.Logger, location string) ([]restql.Plugin, error) {
@@ -40,7 +42,9 @@ func loadPlugins(log *logger.Logger, location string) ([]restql.Plugin, error) {
 	for _, info := range fileInfos {
 		if !info.IsDir() {
 			pluginPath := path.Join(location, info.Name())
-			p, err := loadPlugin(log, pluginPath)
+			timeout, _ := context.WithTimeout(context.Background(), 100*time.Millisecond)
+
+			p, err := loadPlugin(timeout, log, pluginPath)
 			if err != nil {
 				log.Error("failed to load plugin", err, "path", pluginPath)
 				continue
@@ -54,21 +58,46 @@ func loadPlugins(log *logger.Logger, location string) ([]restql.Plugin, error) {
 	return availablePlugins, nil
 }
 
-func loadPlugin(log *logger.Logger, pluginPath string) (restql.Plugin, error) {
-	p, err := plugin.Open(pluginPath)
-	if err != nil {
-		return nil, err
-	}
+func loadPlugin(ctx context.Context, log *logger.Logger, pluginPath string) (restql.Plugin, error) {
+	out := make(chan restql.Plugin)
+	var pluginerr error
 
-	addPluginSym, err := p.Lookup("AddPlugin")
-	if err != nil {
-		return nil, err
-	}
+	go func() {
+		p, err := plugin.Open(pluginPath)
+		if err != nil {
+			pluginerr = err
+			return
+		}
 
-	addPlugin, ok := addPluginSym.(func(log restql.Logger) (restql.Plugin, error))
-	if !ok {
-		return nil, errors.New("failed to load plugin : AddPlugin function has wrong signature")
-	}
+		addPluginSym, err := p.Lookup("AddPlugin")
+		if err != nil {
+			pluginerr = err
+			return
+		}
 
-	return addPlugin(log)
+		addPlugin, ok := addPluginSym.(func(log restql.Logger) (restql.Plugin, error))
+		if !ok {
+			pluginerr = errors.New("failed to load plugin : AddPlugin function has wrong signature")
+			return
+		}
+
+		result, err := addPlugin(log)
+		if err != nil {
+			pluginerr = err
+			return
+		}
+
+		out <- result
+	}()
+
+	select {
+	case p := <-out:
+		if pluginerr != nil {
+			return nil, pluginerr
+		}
+
+		return p, nil
+	case <-ctx.Done():
+		return nil, errors.New("failed to load plugin : timed out")
+	}
 }
