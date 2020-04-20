@@ -19,18 +19,51 @@ func resolveStatement(stmt interface{}, doneResources domain.Resources) interfac
 	case domain.Statement:
 		params := stmt.With
 		for paramName, value := range params {
-			switch param := value.(type) {
-			case domain.Chain:
-				params[paramName] = resolveChainParam(param, doneResources)
-			case []interface{}:
-				params[paramName] = resolveListParam(param, doneResources)
-			case map[string]interface{}:
-				params[paramName] = resolveObjectParam(param, doneResources)
-			}
+			params[paramName] = resolveParam(value, doneResources)
 		}
 	}
 
 	return stmt
+}
+
+func resolveParam(value interface{}, doneResources domain.Resources) interface{} {
+	switch param := value.(type) {
+	case domain.Chain:
+		return resolveChainParam(param, doneResources)
+	case domain.Flatten:
+		return domain.Flatten{Target: resolveParam(param.Target, doneResources)}
+	case domain.Json:
+		return domain.Json{Target: resolveParam(param.Target, doneResources)}
+	case domain.Base64:
+		return domain.Base64{Target: resolveParam(param.Target, doneResources)}
+	case []interface{}:
+		return resolveListParam(param, doneResources)
+	case map[string]interface{}:
+		return resolveObjectParam(param, doneResources)
+	default:
+		return value
+	}
+}
+
+func resolveObjectParam(objectParam map[string]interface{}, doneResources domain.Resources) map[string]interface{} {
+	result := make(map[string]interface{})
+
+	for key, value := range objectParam {
+		result[key] = resolveParam(value, doneResources)
+	}
+
+	return result
+}
+
+func resolveListParam(listParam []interface{}, doneResources domain.Resources) []interface{} {
+	result := make([]interface{}, len(listParam))
+	copy(result, listParam)
+
+	for i, value := range result {
+		result[i] = resolveParam(value, doneResources)
+	}
+
+	return result
 }
 
 func resolveChainParam(chain domain.Chain, doneResources domain.Resources) interface{} {
@@ -75,35 +108,6 @@ func toPath(chain domain.Chain) []string {
 		r[i] = c.(string)
 	}
 	return r
-}
-
-func resolveObjectParam(objectParam map[string]interface{}, doneResources domain.Resources) map[string]interface{} {
-	result := make(map[string]interface{})
-
-	for key, value := range objectParam {
-		switch param := value.(type) {
-		case domain.Chain:
-			result[key] = resolveChainParam(param, doneResources)
-		default:
-			result[key] = param
-		}
-	}
-
-	return result
-}
-
-func resolveListParam(listParam []interface{}, doneResources domain.Resources) []interface{} {
-	result := make([]interface{}, len(listParam))
-	copy(result, listParam)
-
-	for i, value := range result {
-		switch param := value.(type) {
-		case domain.Chain:
-			result[i] = resolveChainParam(param, doneResources)
-		}
-	}
-
-	return result
 }
 
 func getValue(pathToValue []string, b domain.Body) interface{} {

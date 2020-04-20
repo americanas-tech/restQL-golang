@@ -187,6 +187,24 @@ func TestResolveChainedValues(t *testing.T) {
 			domain.Resources{"resource-name": domain.Statement{Resource: "resource-name", With: domain.Params{"country": map[string]interface{}{"code": domain.Chain{"done-resource", "hero", "origin"}}}}},
 			domain.Resources{"done-resource": domain.DoneResource{Details: domain.Details{Status: 200}, Result: test.Unmarshal(`{"hero": {"origin": "USA"}}`)}},
 		},
+		{
+			"Returns a statement with flattened chained value",
+			domain.Resources{"resource-name": domain.Statement{Resource: "resource-name", With: domain.Params{"id": domain.Flatten{Target: []interface{}{"abcdef", "12345"}}}}},
+			domain.Resources{"resource-name": domain.Statement{Resource: "resource-name", With: domain.Params{"id": domain.Flatten{Target: domain.Chain{"done-resource", "id"}}}}},
+			domain.Resources{"done-resource": domain.DoneResource{Details: domain.Details{Status: 200}, Result: test.Unmarshal(`{"id": ["abcdef", "12345"]}`)}},
+		},
+		{
+			"Returns a statement with single flattened list value",
+			domain.Resources{"resource-name": domain.Statement{Resource: "resource-name", With: domain.Params{"id": domain.Flatten{Target: []interface{}{float64(1), float64(2)}}, "name": []interface{}{"a", "b"}}}},
+			domain.Resources{"resource-name": domain.Statement{Resource: "resource-name", With: domain.Params{"id": domain.Flatten{Target: domain.Chain{"done-resource", "id"}}, "name": []interface{}{"a", "b"}}}},
+			domain.Resources{"done-resource": domain.DoneResource{Details: domain.Details{Status: 200}, Result: test.Unmarshal(`{"id": [1,2]}`)}},
+		},
+		{
+			"Returns a statement with flattened chained param inside object",
+			domain.Resources{"resource-name": domain.Statement{Resource: "resource-name", With: domain.Params{"country": map[string]interface{}{"code": domain.Flatten{Target: "USA"}}}}},
+			domain.Resources{"resource-name": domain.Statement{Resource: "resource-name", With: domain.Params{"country": map[string]interface{}{"code": domain.Flatten{Target: domain.Chain{"done-resource", "hero", "origin"}}}}}},
+			domain.Resources{"done-resource": domain.DoneResource{Details: domain.Details{Status: 200}, Result: test.Unmarshal(`{"hero": {"origin": "USA"}}`)}},
+		},
 	}
 
 	for _, tt := range tests {
