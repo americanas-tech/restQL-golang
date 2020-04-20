@@ -192,6 +192,28 @@ func TestMultiplexStatements(t *testing.T) {
 			},
 		},
 		{
+			"should make a new statement for each list value in object param",
+			domain.Resources{
+				"hero": domain.Statement{
+					Method:   "from",
+					Resource: "hero",
+					With: map[string]interface{}{
+						"obj": map[string]interface{}{
+							"id": []interface{}{"12345", "67890"},
+						},
+						"name": "batman",
+						"age":  45,
+					},
+				},
+			},
+			domain.Resources{
+				"hero": []interface{}{
+					domain.Statement{Method: "from", Resource: "hero", With: map[string]interface{}{"obj": map[string]interface{}{"id": "12345"}, "name": "batman", "age": 45}},
+					domain.Statement{Method: "from", Resource: "hero", With: map[string]interface{}{"obj": map[string]interface{}{"id": "67890"}, "name": "batman", "age": 45}},
+				},
+			},
+		},
+		{
 			"should make a new statement for each value of the cartesian product of list params",
 			domain.Resources{
 				"hero": domain.Statement{
