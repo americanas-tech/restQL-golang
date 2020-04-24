@@ -35,3 +35,15 @@ type QueryContext = domain.QueryContext
 
 type HttpRequest = domain.HttpRequest
 type HttpResponse = domain.HttpResponse
+
+type pluginLoader = func(logger Logger) (Plugin, error)
+
+var pluginLoaders []pluginLoader
+
+func ServePlugin(fn func(logger Logger) (Plugin, error)) {
+	pluginLoaders = append(pluginLoaders, fn)
+}
+
+func GetPluginLoaders() []pluginLoader {
+	return pluginLoaders
+}

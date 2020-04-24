@@ -28,9 +28,10 @@ type manager struct {
 }
 
 func NewManager(log *logger.Logger, pluginsLocation string) (Manager, error) {
-	ps, err := loadPlugins(log, pluginsLocation)
-	if err != nil {
-		return NoOpManager, err
+	ps := loadStaticPlugin(log)
+	if len(ps) == 0 {
+		log.Info("no plugins provided")
+		return NoOpManager, nil
 	}
 
 	return manager{log: log, availablePlugins: ps}, nil
