@@ -50,6 +50,40 @@ func (r RestQl) ValidateQuery(ctx *fasthttp.RequestCtx) error {
 	return Respond(ctx, nil, http.StatusOK, nil)
 }
 
+func (r RestQl) RunAdHocQuery(ctx *fasthttp.RequestCtx) error {
+	tenant, err := r.makeTenant(ctx)
+	if err != nil {
+		return RespondError(ctx, NewRequestError(err, http.StatusUnprocessableEntity))
+	}
+	options := domain.QueryOptions{Tenant: tenant}
+
+	input := r.makeQueryInput(ctx)
+	context := middleware.GetNativeContext(ctx)
+
+	queryTxt := string(ctx.PostBody())
+
+	result, err := r.evaluator.AdHocQuery(context, queryTxt, options, input)
+	if err != nil {
+		r.log.Debug("failed to evaluated adhoc query", "error", err)
+
+		switch err := err.(type) {
+		case eval.ValidationError:
+			return RespondError(ctx, NewRequestError(err, http.StatusUnprocessableEntity))
+		case eval.NotFoundError:
+			return RespondError(ctx, NewRequestError(err, http.StatusNotFound))
+		case eval.ParserError:
+			return RespondError(ctx, NewRequestError(err, http.StatusInternalServerError))
+		case eval.TimeoutError:
+			return RespondError(ctx, NewRequestError(err, http.StatusRequestTimeout))
+		default:
+			return RespondError(ctx, err)
+		}
+	}
+
+	response := MakeQueryResponse(result)
+	return Respond(ctx, response.Body, response.StatusCode, response.Headers)
+}
+
 func (r RestQl) RunSavedQuery(ctx *fasthttp.RequestCtx) error {
 	options, err := r.makeQueryOptions(ctx)
 	if err != nil {
@@ -106,17 +140,9 @@ func (r RestQl) makeQueryOptions(ctx *fasthttp.RequestCtx) (domain.QueryOptions,
 		return domain.QueryOptions{}, ErrInvalidRevisionType
 	}
 
-	var tenant string
-
-	envTenant := r.config.Tenant
-	if envTenant != "" {
-		tenant = envTenant
-	} else {
-		tenant = string(ctx.QueryArgs().Peek("tenant"))
-	}
-
-	if tenant == "" {
-		return domain.QueryOptions{}, ErrInvalidTenant
+	tenant, err := r.makeTenant(ctx)
+	if err != nil {
+		return domain.QueryOptions{}, err
 	}
 
 	qo := domain.QueryOptions{
@@ -127,6 +153,22 @@ func (r RestQl) makeQueryOptions(ctx *fasthttp.RequestCtx) (domain.QueryOptions,
 	}
 
 	return qo, nil
+}
+
+func (r RestQl) makeTenant(ctx *fasthttp.RequestCtx) (string, error) {
+	var tenant string
+
+	envTenant := r.config.Tenant
+	if envTenant != "" {
+		tenant = envTenant
+	} else {
+		tenant = string(ctx.QueryArgs().Peek("tenant"))
+	}
+
+	if tenant == "" {
+		return "", ErrInvalidTenant
+	}
+	return tenant, nil
 }
 
 func (r RestQl) makeQueryInput(ctx *fasthttp.RequestCtx) domain.QueryInput {

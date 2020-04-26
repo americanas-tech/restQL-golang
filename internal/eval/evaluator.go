@@ -14,6 +14,7 @@ var (
 	ErrInvalidRevision  = errors.New("revision must be greater than 0")
 	ErrInvalidQueryId   = errors.New("query id must be not empty")
 	ErrInvalidNamespace = errors.New("namespace must be not empty")
+	ErrInvalidTenant    = errors.New("tenant must be not empty")
 )
 
 type Evaluator struct {
@@ -36,6 +37,14 @@ func NewEvaluator(log restql.Logger, mr MappingsReader, qr QueryReader, r runner
 	}
 }
 
+func (e Evaluator) AdHocQuery(ctx context.Context, queryTxt string, queryOpts domain.QueryOptions, queryInput domain.QueryInput) (domain.Resources, error) {
+	if queryOpts.Tenant == "" {
+		return nil, ValidationError{ErrInvalidTenant}
+	}
+
+	return e.evaluateQuery(ctx, queryTxt, queryOpts, queryInput)
+}
+
 func (e Evaluator) SavedQuery(ctx context.Context, queryOpts domain.QueryOptions, queryInput domain.QueryInput) (domain.Resources, error) {
 	err := validateQueryOptions(queryOpts)
 	if err != nil {
@@ -47,6 +56,10 @@ func (e Evaluator) SavedQuery(ctx context.Context, queryOpts domain.QueryOptions
 		return nil, err
 	}
 
+	return e.evaluateQuery(ctx, queryTxt, queryOpts, queryInput)
+}
+
+func (e Evaluator) evaluateQuery(ctx context.Context, queryTxt string, queryOpts domain.QueryOptions, queryInput domain.QueryInput) (domain.Resources, error) {
 	query, err := e.parser.Parse(queryTxt)
 	if err != nil {
 		e.log.Debug("failed to parse query", "error", err)
@@ -99,6 +112,10 @@ func validateQueryOptions(queryOpts domain.QueryOptions) error {
 
 	if queryOpts.Namespace == "" {
 		return ValidationError{ErrInvalidNamespace}
+	}
+
+	if queryOpts.Tenant == "" {
+		return ValidationError{ErrInvalidTenant}
 	}
 
 	return nil
