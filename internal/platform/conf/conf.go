@@ -141,6 +141,16 @@ func readConfigFile() []byte {
 }
 
 func getConfigFilepath() string {
+	envConfigFilepath := os.Getenv("RESTQL_CONFIG")
+	if envConfigFilepath != "" {
+		fileAtCustom, err := filepath.Abs(envConfigFilepath)
+		if err != nil {
+			log.Printf("[DEBUG] failed to find directory: %v", err)
+		}
+
+		return fileAtCustom
+	}
+
 	fileAtRoot := filepath.Join(".", configFileName)
 	if doesFileExist(fileAtRoot) {
 		return fileAtRoot
