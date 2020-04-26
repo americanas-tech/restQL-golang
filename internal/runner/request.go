@@ -37,7 +37,7 @@ func MakeRequest(forwardPrefix string, statement domain.Statement, queryCtx doma
 		Headers: headers,
 	}
 
-	if statement.Method == domain.FromMethod {
+	if statement.Method == domain.FromMethod || statement.Method == domain.DeleteMethod {
 		req.Query = makeQueryParams(forwardPrefix, statement, mapping, queryCtx)
 	} else {
 		req.Query = getForwardParams(forwardPrefix, queryCtx)

@@ -5,28 +5,35 @@ import (
 	"fmt"
 	"github.com/b2wdigital/restQL-golang/test"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"strings"
-
-	//"strings"
 	"testing"
 )
 
-func TestGetResource(t *testing.T) {
-	query := `from planets`
+func TestWithQualifierOnFromStatement(t *testing.T) {
+	query := `
+from planets
+	with 
+		name = "Yavin IV"
+		population = 1000
+		residents = ["john", "janne"] -> flatten
+		rotation_period = 24.5
+		terrain = { "north": "jungle", "south": "rainforests" }
+`
 
 	planetResponse := `
 [{
 	"name": "Yavin IV",
-	"rotation_period": "24",
+	"rotation_period": 24.5,
 	"orbital_period": "4818",
 	"diameter": "10200",
 	"climate": "temperate, tropical",
 	"gravity": "1 standard",
-	"terrain": "jungle, rainforests",
+	"terrain": { "north": "jungle", "south": "rainforests" },
 	"surface_water": "8",
 	"population": "1000",
-	"residents": [],
+	"residents": ["john", "janne"],
 	"films": [1]
 }]
 `
@@ -47,63 +54,14 @@ func TestGetResource(t *testing.T) {
 	defer mockServer.Teardown()
 
 	mockServer.Mux().HandleFunc("/api/planets/", func(w http.ResponseWriter, r *http.Request) {
-		test.Equal(t, r.Method, http.MethodGet)
+		params := r.URL.Query()
 
-		w.WriteHeader(200)
-		io.WriteString(w, planetResponse)
-	})
-	mockServer.Start()
+		test.Equal(t, params["name"][0], "Yavin IV")
+		test.Equal(t, params["population"][0], "1000")
+		test.Equal(t, params["rotation_period"][0], "24.5")
+		test.Equal(t, params["terrain"][0], `{"north":"jungle","south":"rainforests"}`)
 
-	response, err := httpClient.Post(adHocQueryUrl, "text/plain", strings.NewReader(query))
-	test.VerifyError(t, err)
-	defer response.Body.Close()
-
-	var body map[string]interface{}
-	err = json.NewDecoder(response.Body).Decode(&body)
-	test.VerifyError(t, err)
-
-	test.Equal(t, body, test.Unmarshal(expectedResponse))
-}
-
-func TestGetResourceById(t *testing.T) {
-	query := `
-from planets
-	with id = "someplanet"
-`
-
-	planetResponse := `
-{
-	"name": "planet",
-	"rotation_period": "24",
-	"orbital_period": "4818",
-	"diameter": "10200",
-	"climate": "temperate, tropical",
-	"gravity": "1 standard",
-	"terrain": "jungle, rainforests",
-	"surface_water": "8",
-	"population": "1000",
-	"residents": [],
-	"films": [1]
-}
-`
-
-	expectedResponse := fmt.Sprintf(`
-	{
-		"planets": {
-			"details": {
-				"success": true,
-				"status": 200,
-				"metadata": {}
-			},
-			"result": %s 
-		}
-	}`, planetResponse)
-
-	mockServer := test.NewMockServer(mockPort)
-	defer mockServer.Teardown()
-
-	mockServer.Mux().HandleFunc("/api/planets/someplanet", func(w http.ResponseWriter, r *http.Request) {
-		test.Equal(t, r.Method, http.MethodGet)
+		test.Equal(t, params["residents"], []string{"john", "janne"})
 
 		w.WriteHeader(200)
 		io.WriteString(w, planetResponse)
@@ -123,23 +81,29 @@ from planets
 	test.Equal(t, body, test.Unmarshal(expectedResponse))
 }
 
-func TestPostResource(t *testing.T) {
+func TestWithQualifierOnPostStatement(t *testing.T) {
 	query := `
 to planets
+	with 
+		name = "Yavin IV"
+		population = 1000
+		rotation_period = 24.5
+		terrain = { "north": "jungle", "south": "rainforests" }
+		residents = ["john", "janne"] -> flatten
 `
 
 	planetResponse := `
 {
 	"name": "Yavin IV",
-	"rotation_period": "24",
+	"rotation_period": 24.5,
 	"orbital_period": "4818",
 	"diameter": "10200",
 	"climate": "temperate, tropical",
 	"gravity": "1 standard",
-	"terrain": "jungle, rainforests",
+	"terrain": { "north": "jungle", "south": "rainforests" },
 	"surface_water": "8",
-	"population": "1000",
-	"residents": [],
+	"population": 1000,
+	"residents": ["john", "janne"],
 	"films": [1]
 }
 `
@@ -162,6 +126,24 @@ to planets
 	mockServer.Mux().HandleFunc("/api/planets/", func(w http.ResponseWriter, r *http.Request) {
 		test.Equal(t, r.Method, http.MethodPost)
 
+		b, err := ioutil.ReadAll(r.Body)
+		test.VerifyError(t, err)
+
+		body := string(b)
+		test.NotEqual(t, body, "")
+
+		expectedBody := `
+{
+	"name": "Yavin IV",
+	"population": 1000,
+	"residents": ["john", "janne"],
+	"rotation_period": 24.5,
+	"terrain": { "north": "jungle", "south": "rainforests" }
+}
+`
+
+		test.Equal(t, test.Unmarshal(expectedBody), test.Unmarshal(body))
+
 		w.WriteHeader(201)
 		io.WriteString(w, planetResponse)
 	})
@@ -180,23 +162,29 @@ to planets
 	test.Equal(t, body, test.Unmarshal(expectedResponse))
 }
 
-func TestPutResource(t *testing.T) {
+func TestWithQualifierOnPutStatement(t *testing.T) {
 	query := `
 into planets
+	with 
+		name = "Yavin IV"
+		population = 1000
+		rotation_period = 24.5
+		terrain = { "north": "jungle", "south": "rainforests" }
+		residents = ["john", "janne"] -> flatten
 `
 
 	planetResponse := `
 {
 	"name": "Yavin IV",
-	"rotation_period": "24",
+	"rotation_period": 24.5,
 	"orbital_period": "4818",
 	"diameter": "10200",
 	"climate": "temperate, tropical",
 	"gravity": "1 standard",
-	"terrain": "jungle, rainforests",
+	"terrain": { "north": "jungle", "south": "rainforests" },
 	"surface_water": "8",
-	"population": "1500",
-	"residents": [],
+	"population": 1000,
+	"residents": ["john", "janne"],
 	"films": [1]
 }
 `
@@ -206,7 +194,7 @@ into planets
 		"planets": {
 			"details": {
 				"success": true,
-				"status": 200,
+				"status": 201,
 				"metadata": {}
 			},
 			"result": %s 
@@ -219,7 +207,25 @@ into planets
 	mockServer.Mux().HandleFunc("/api/planets/", func(w http.ResponseWriter, r *http.Request) {
 		test.Equal(t, r.Method, http.MethodPut)
 
-		w.WriteHeader(200)
+		b, err := ioutil.ReadAll(r.Body)
+		test.VerifyError(t, err)
+
+		body := string(b)
+		test.NotEqual(t, body, "")
+
+		expectedBody := `
+{
+	"name": "Yavin IV",
+	"population": 1000,
+	"residents": ["john", "janne"],
+	"rotation_period": 24.5,
+	"terrain": { "north": "jungle", "south": "rainforests" }
+}
+`
+
+		test.Equal(t, test.Unmarshal(expectedBody), test.Unmarshal(body))
+
+		w.WriteHeader(201)
 		io.WriteString(w, planetResponse)
 	})
 	mockServer.Start()
@@ -237,23 +243,29 @@ into planets
 	test.Equal(t, body, test.Unmarshal(expectedResponse))
 }
 
-func TestPatchResource(t *testing.T) {
+func TestWithQualifierOnPatchStatement(t *testing.T) {
 	query := `
 update planets
+	with 
+		name = "Yavin IV"
+		population = 1000
+		rotation_period = 24.5
+		terrain = { "north": "jungle", "south": "rainforests" }
+		residents = ["john", "janne"] -> flatten
 `
 
 	planetResponse := `
 {
-	"name": "Yavin V",
-	"rotation_period": "24",
+	"name": "Yavin IV",
+	"rotation_period": 24.5,
 	"orbital_period": "4818",
 	"diameter": "10200",
 	"climate": "temperate, tropical",
 	"gravity": "1 standard",
-	"terrain": "jungle, rainforests",
+	"terrain": { "north": "jungle", "south": "rainforests" },
 	"surface_water": "8",
-	"population": "1000",
-	"residents": [],
+	"population": 1000,
+	"residents": ["john", "janne"],
 	"films": [1]
 }
 `
@@ -276,6 +288,24 @@ update planets
 	mockServer.Mux().HandleFunc("/api/planets/", func(w http.ResponseWriter, r *http.Request) {
 		test.Equal(t, r.Method, http.MethodPatch)
 
+		b, err := ioutil.ReadAll(r.Body)
+		test.VerifyError(t, err)
+
+		body := string(b)
+		test.NotEqual(t, body, "")
+
+		expectedBody := `
+{
+	"name": "Yavin IV",
+	"population": 1000,
+	"residents": ["john", "janne"],
+	"rotation_period": 24.5,
+	"terrain": { "north": "jungle", "south": "rainforests" }
+}
+`
+
+		test.Equal(t, test.Unmarshal(expectedBody), test.Unmarshal(body))
+
 		w.WriteHeader(201)
 		io.WriteString(w, planetResponse)
 	})
@@ -294,10 +324,18 @@ update planets
 	test.Equal(t, body, test.Unmarshal(expectedResponse))
 }
 
-func TestDeleteResource(t *testing.T) {
+func TestWithQualifierOnDeleteStatement(t *testing.T) {
 	query := `
 delete planets
+	with 
+		name = "Yavin IV"
+		population = 1000
+		residents = ["john", "janne"] -> flatten
+		rotation_period = 24.5
+		terrain = { "north": "jungle", "south": "rainforests" }
 `
+
+	planetResponse := `{}`
 
 	expectedResponse := fmt.Sprintf(`
 	{
@@ -307,18 +345,25 @@ delete planets
 				"status": 200,
 				"metadata": {}
 			},
-			"result": {}
+			"result": %s 
 		}
-	}`)
+	}`, planetResponse)
 
 	mockServer := test.NewMockServer(mockPort)
 	defer mockServer.Teardown()
 
 	mockServer.Mux().HandleFunc("/api/planets/", func(w http.ResponseWriter, r *http.Request) {
-		test.Equal(t, r.Method, http.MethodDelete)
+		params := r.URL.Query()
+
+		test.Equal(t, params["name"][0], "Yavin IV")
+		test.Equal(t, params["population"][0], "1000")
+		test.Equal(t, params["rotation_period"][0], "24.5")
+		test.Equal(t, params["terrain"][0], `{"north":"jungle","south":"rainforests"}`)
+
+		test.Equal(t, params["residents"], []string{"john", "janne"})
 
 		w.WriteHeader(200)
-		io.WriteString(w, `{}`)
+		io.WriteString(w, planetResponse)
 	})
 	mockServer.Start()
 

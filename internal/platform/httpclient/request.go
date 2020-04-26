@@ -8,6 +8,7 @@ import (
 	"github.com/valyala/fasthttp"
 	"net/http"
 	"net/url"
+	"strconv"
 )
 
 var (
@@ -57,6 +58,10 @@ func makeQueryArgs(queryArgs []byte, request domain.HttpRequest) []byte {
 		switch value := value.(type) {
 		case string:
 			appendStringParam(buf, key, value)
+		case int:
+			appendStringParam(buf, key, strconv.Itoa(value))
+		case float64:
+			appendStringParam(buf, key, strconv.FormatFloat(value, 'f', -1, 64))
 		case map[string]interface{}:
 			appendMapParam(buf, key, value)
 		case []interface{}:
