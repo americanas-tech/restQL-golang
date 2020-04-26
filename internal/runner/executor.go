@@ -43,7 +43,7 @@ func (e Executor) DoStatement(ctx context.Context, statement domain.Statement, q
 	e.log.Debug("executing request for statement", "resource", statement.Resource, "method", statement.Method, "request", request)
 
 	var cancel context.CancelFunc
-	timeout, err := parseTimeout(statement)
+	timeout, err := e.parseTimeout(statement)
 	switch {
 	case err == nil:
 		ctx, cancel = context.WithTimeout(ctx, timeout)
@@ -130,10 +130,10 @@ func (e Executor) doCurrentStatement(stmt interface{}, ctx context.Context, quer
 	}
 }
 
-func parseTimeout(statement domain.Statement) (time.Duration, error) {
+func (e Executor) parseTimeout(statement domain.Statement) (time.Duration, error) {
 	timeout := statement.Timeout
 	if timeout == nil {
-		return 0, errNoTimeoutProvided
+		return e.resourceTimeout, nil
 	}
 
 	duration, ok := timeout.(int)

@@ -24,7 +24,7 @@ func setupRequest(request domain.HttpRequest, req *fasthttp.Request) error {
 	uriStr := uri.String()
 	req.SetRequestURI(uriStr)
 
-	if request.Method == http.MethodPost || request.Method == http.MethodPut {
+	if request.Method == http.MethodPost || request.Method == http.MethodPut || request.Method == http.MethodPatch {
 		data, err := json.Marshal(request.Body)
 		if err != nil {
 			return errors.Wrap(err, "failed to marshal request body")
