@@ -230,16 +230,29 @@ func getMap(entries []ast.ObjectEntry) map[string]interface{} {
 	result := map[string]interface{}{}
 
 	for _, entry := range entries {
-		if entry.Value.Primitive != nil {
-			result[entry.Key] = getPrimitive(entry.Value.Primitive)
-		}
-
-		if entry.Value.Nested != nil {
-			result[entry.Key] = getMap(entry.Value.Nested)
-		}
+		result[entry.Key] = getMapValue(entry.Value)
 	}
 
 	return result
+}
+
+func getMapValue(objectValue ast.ObjectValue) interface{} {
+	switch {
+	case objectValue.Primitive != nil:
+		return getPrimitive(objectValue.Primitive)
+	case objectValue.Variable != nil:
+		return domain.Variable{Target: *objectValue.Variable}
+	case objectValue.List != nil:
+		l := make([]interface{}, len(objectValue.List))
+		for i, v := range objectValue.List {
+			l[i] = getMapValue(*v)
+		}
+		return l
+	case objectValue.Nested != nil:
+		return getMap(objectValue.Nested)
+	default:
+		return nil
+	}
 }
 
 func getPrimitive(primitive *ast.Primitive) interface{} {

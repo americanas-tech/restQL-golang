@@ -121,8 +121,10 @@ type ObjectEntry struct {
 }
 
 type ObjectValue struct {
-	Nested    []ObjectEntry `LeftBrace (@@)* RightBrace`
-	Primitive *Primitive    `| @@`
+	Nested    []ObjectEntry  `LeftBrace (@@)* RightBrace`
+	List      []*ObjectValue `| LeftBracket (@@)* RightBracket`
+	Variable  *string        `| Dollar @Ident`
+	Primitive *Primitive     `| @@`
 }
 
 type Primitive struct {

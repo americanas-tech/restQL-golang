@@ -123,6 +123,16 @@ func TestAstGenerator(t *testing.T) {
 			`from hero with id = { id: "1" }`,
 		},
 		{
+			"Get query with object query parameters using list value",
+			ast.Query{Blocks: []ast.Block{{Method: ast.FromMethod, Resource: "hero", Qualifiers: []ast.Qualifier{{With: []ast.WithItem{{Key: "id", Value: ast.Value{Object: []ast.ObjectEntry{{Key: "names", Value: ast.ObjectValue{List: []*ast.ObjectValue{{Primitive: &ast.Primitive{String: String("batman")}}, {Primitive: &ast.Primitive{String: String("wonder woman")}}}}}}}}}}}}}},
+			`from hero with id = { names: ["batman", "wonder woman"] }`,
+		},
+		{
+			"Get query with object query parameters using a variable value",
+			ast.Query{Blocks: []ast.Block{{Method: ast.FromMethod, Resource: "hero", Qualifiers: []ast.Qualifier{{With: []ast.WithItem{{Key: "id", Value: ast.Value{Object: []ast.ObjectEntry{{Key: "id", Value: ast.ObjectValue{Variable: String("id")}}}}}}}}}}},
+			`from hero with id = { id: $id }`,
+		},
+		{
 			"Get query with object query parameters with multiple key/values",
 			ast.Query{Blocks: []ast.Block{{Method: ast.FromMethod, Resource: "hero", Qualifiers: []ast.Qualifier{{With: []ast.WithItem{{Key: "id", Value: ast.Value{Object: []ast.ObjectEntry{{Key: "id", Value: ast.ObjectValue{Primitive: &ast.Primitive{String: String("1")}}}, {Key: "name", Value: ast.ObjectValue{Primitive: &ast.Primitive{String: String("batman")}}}}}}}}}}}},
 			`from hero with id = { "id": "1", "name": "batman" }`,
