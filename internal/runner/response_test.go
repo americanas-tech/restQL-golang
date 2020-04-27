@@ -199,7 +199,7 @@ func TestNewTimeoutResponse(t *testing.T) {
 		{
 			"should create response for time outed execution",
 			domain.HttpRequest{},
-			domain.HttpResponse{},
+			domain.HttpResponse{StatusCode: 408},
 			runner.DoneResourceOptions{},
 			domain.DoneResource{
 				Details: domain.Details{Status: 408, Success: false, IgnoreErrors: false},
@@ -215,8 +215,9 @@ func TestNewTimeoutResponse(t *testing.T) {
 				Headers: map[string]string{"X-TID": "12345abdef"},
 			},
 			domain.HttpResponse{
-				Url:      "http://hero.io/api",
-				Duration: 100 * time.Millisecond,
+				StatusCode: 408,
+				Url:        "http://hero.io/api",
+				Duration:   100 * time.Millisecond,
 			},
 			runner.DoneResourceOptions{Debugging: true},
 			domain.DoneResource{
@@ -237,7 +238,7 @@ func TestNewTimeoutResponse(t *testing.T) {
 		{
 			"should create response for time outed execution with debug",
 			domain.HttpRequest{},
-			domain.HttpResponse{},
+			domain.HttpResponse{StatusCode: 408},
 			runner.DoneResourceOptions{IgnoreErrors: true},
 			domain.DoneResource{
 				Details: domain.Details{Status: 408, Success: false, IgnoreErrors: true},
