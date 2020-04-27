@@ -555,3 +555,68 @@ from people
 
 	test.Equal(t, body, test.Unmarshal(expectedResponse))
 }
+
+func TestWithQualifierEncodersOnFromStatement(t *testing.T) {
+	query := `
+from planets
+	with 
+		name = "Yavin IV" -> base64
+		population = 1000
+		residents = ["john", "janne"] -> json
+`
+
+	planetResponse := `
+{
+	"name": "Yavin IV",
+	"rotation_period": 24.5,
+	"orbital_period": "4818",
+	"diameter": "10200",
+	"climate": "temperate, tropical",
+	"gravity": "1 standard",
+	"terrain": { "north": "jungle", "south": "rainforests" },
+	"surface_water": "8",
+	"population": "1000",
+	"residents": ["john", "janne"],
+	"films": [1]
+}
+`
+
+	expectedResponse := fmt.Sprintf(`
+	{
+		"planets": {
+			"details": {
+				"success": true,
+				"status": 200,
+				"metadata": {}
+			},
+			"result": %s 
+		}
+	}`, planetResponse)
+
+	mockServer := test.NewMockServer(mockPort)
+	defer mockServer.Teardown()
+
+	mockServer.Mux().HandleFunc("/api/planets/", func(w http.ResponseWriter, r *http.Request) {
+		params := r.URL.Query()
+
+		test.Equal(t, params["population"][0], "1000")
+		test.Equal(t, params["name"][0], "WWF2aW4gSVY=")
+		test.Equal(t, params["residents"][0], `["john","janne"]`)
+
+		w.WriteHeader(200)
+		io.WriteString(w, planetResponse)
+	})
+	mockServer.Start()
+
+	response, err := httpClient.Post(adHocQueryUrl, "text/plain", strings.NewReader(query))
+	test.VerifyError(t, err)
+	defer response.Body.Close()
+
+	test.Equal(t, response.StatusCode, 200)
+
+	var body map[string]interface{}
+	err = json.NewDecoder(response.Body).Decode(&body)
+	test.VerifyError(t, err)
+
+	test.Equal(t, body, test.Unmarshal(expectedResponse))
+}
