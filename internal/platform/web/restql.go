@@ -95,7 +95,7 @@ func (r RestQl) RunSavedQuery(ctx *fasthttp.RequestCtx) error {
 
 	result, err := r.evaluator.SavedQuery(context, options, input)
 	if err != nil {
-		r.log.Debug("failed to evaluated saved query", "error", err)
+		r.log.Error("failed to evaluated saved query", err)
 
 		switch err := err.(type) {
 		case eval.ValidationError:
