@@ -8,6 +8,7 @@ import (
 	"github.com/b2wdigital/restQL-golang/internal/platform/web"
 	"github.com/pkg/errors"
 	"github.com/valyala/fasthttp"
+	_ "go.uber.org/automaxprocs"
 	"golang.org/x/sync/errgroup"
 	"os"
 	"os/signal"

@@ -14,7 +14,11 @@ require (
 	github.com/rs/zerolog v1.18.0
 	github.com/valyala/fasthttp v1.9.0
 	go.mongodb.org/mongo-driver v1.3.1
+	go.uber.org/automaxprocs v1.3.0
 	golang.org/x/crypto v0.0.0-20200406173513-056763e48d71 // indirect
+	golang.org/x/lint v0.0.0-20200302205851-738671d3881b // indirect
 	golang.org/x/sync v0.0.0-20200317015054-43a5402ce75a
+	golang.org/x/tools v0.0.0-20200504152539-33427f1b0364 // indirect
 	gopkg.in/yaml.v2 v2.2.8
+	honnef.co/go/tools v0.0.1-2020.1.3 // indirect
 )
