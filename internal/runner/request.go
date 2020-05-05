@@ -1,7 +1,6 @@
 package runner
 
 import (
-	"fmt"
 	"github.com/b2wdigital/restQL-golang/internal/domain"
 	"net/http"
 	"strings"
@@ -28,7 +27,7 @@ func MakeRequest(forwardPrefix string, statement domain.Statement, queryCtx doma
 	mapping := queryCtx.Mappings[statement.Resource]
 	method := queryMethodToHttpMethod[statement.Method]
 	headers := makeHeaders(statement, queryCtx)
-	path := applyParamsToPath(mapping, statement)
+	path := mapping.PathWithParams(statement.With)
 
 	req := domain.HttpRequest{
 		Method:  method,
@@ -107,18 +106,4 @@ func getForwardParams(forwardPrefix string, queryCtx domain.QueryContext) map[st
 	}
 
 	return r
-}
-
-func applyParamsToPath(mapping domain.Mapping, statement domain.Statement) string {
-	path := mapping.Path
-	for _, pathParam := range mapping.PathParams {
-		pathParamValue, found := statement.With[pathParam]
-		if !found {
-			pathParamValue = ""
-		}
-
-		path = strings.Replace(path, fmt.Sprintf(":%v", pathParam), fmt.Sprintf("%v", pathParamValue), 1)
-	}
-
-	return path
 }

@@ -17,7 +17,11 @@ var (
 )
 
 func setupRequest(request domain.HttpRequest, req *fasthttp.Request) error {
-	uri := fasthttp.URI{DisablePathNormalizing: true}
+	uri := fasthttp.AcquireURI()
+	defer func() {
+		fasthttp.ReleaseURI(uri)
+	}()
+	uri.DisablePathNormalizing = true
 	uri.SetScheme(request.Schema)
 	uri.SetHost(request.Host)
 	uri.SetPath(request.Path)

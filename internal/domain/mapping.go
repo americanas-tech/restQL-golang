@@ -1,8 +1,10 @@
 package domain
 
 import (
+	"fmt"
 	"github.com/pkg/errors"
 	"regexp"
+	"strings"
 )
 
 var pathParamRegex = regexp.MustCompile("/:(.+)")
@@ -55,4 +57,18 @@ func NewMapping(resource, url string) (Mapping, error) {
 func (m Mapping) HasParam(name string) bool {
 	_, found := m.PathParamsSet[name]
 	return found
+}
+
+func (m Mapping) PathWithParams(params map[string]interface{}) string {
+	path := m.Path
+	for _, pathParam := range m.PathParams {
+		pathParamValue, found := params[pathParam]
+		if !found {
+			pathParamValue = ""
+		}
+
+		path = strings.Replace(path, fmt.Sprintf(":%v", pathParam), fmt.Sprintf("%v", pathParamValue), 1)
+	}
+
+	return path
 }
