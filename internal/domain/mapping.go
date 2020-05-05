@@ -5,18 +5,21 @@ import (
 	"regexp"
 )
 
-var pathParamRegex, _ = regexp.Compile("/:(.+)")
-var schemaRegex, _ = regexp.Compile("^(\\w+)://(.+)$")
+var pathParamRegex = regexp.MustCompile("/:(.+)")
+var urlRegex = regexp.MustCompile("(https?)://([-a-zA-Z0-9@:%._+~#=]+)([-a-zA-Z0-9@:%_+.~#?&/=]*)")
 
 type Mapping struct {
 	ResourceName  string
 	Schema        string
-	Uri           string
+	Host          string
+	Path          string
 	PathParams    []string
 	PathParamsSet map[string]struct{}
 }
 
 func NewMapping(resource, url string) (Mapping, error) {
+	mapping := Mapping{ResourceName: resource}
+
 	paramsMatches := pathParamRegex.FindAllStringSubmatch(url, -1)
 
 	pathParamsSet := make(map[string]struct{})
@@ -27,25 +30,26 @@ func NewMapping(resource, url string) (Mapping, error) {
 		pathParamsSet[paramName] = struct{}{}
 	}
 
-	schemaMatches := schemaRegex.FindAllStringSubmatch(url, -1)
-	if len(schemaMatches) == 0 {
+	mapping.PathParams = pathParams
+	mapping.PathParamsSet = pathParamsSet
+
+	urlMatches := urlRegex.FindAllStringSubmatch(url, -1)
+	if len(urlMatches) == 0 {
 		return Mapping{}, errors.Errorf("failed to create mapping from %s", url)
 	}
 
-	if len(schemaMatches[0]) != 3 {
+	m := urlMatches[0]
+	if len(m) < 3 {
 		return Mapping{}, errors.Errorf("failed to create mapping from %s", url)
 	}
+	mapping.Schema = m[1]
+	mapping.Host = m[2]
 
-	schema := schemaMatches[0][1]
-	uri := schemaMatches[0][2]
+	if len(m) >= 4 {
+		mapping.Path = m[3]
+	}
 
-	return Mapping{
-		ResourceName:  resource,
-		Uri:           uri,
-		Schema:        schema,
-		PathParams:    pathParams,
-		PathParamsSet: pathParamsSet,
-	}, nil
+	return mapping, nil
 }
 
 func (m Mapping) HasParam(name string) bool {

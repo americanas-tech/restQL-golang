@@ -19,11 +19,11 @@ var (
 func setupRequest(request domain.HttpRequest, req *fasthttp.Request) error {
 	uri := fasthttp.URI{DisablePathNormalizing: true}
 	uri.SetScheme(request.Schema)
-	uri.SetHost(request.Uri)
+	uri.SetHost(request.Host)
+	uri.SetPath(request.Path)
 	uri.SetQueryStringBytes(makeQueryArgs(uri.QueryString(), request))
 
-	uriStr := uri.String()
-	req.SetRequestURI(uriStr)
+	req.SetRequestURIBytes(uri.FullURI())
 
 	if request.Method == http.MethodPost || request.Method == http.MethodPut || request.Method == http.MethodPatch {
 		data, err := json.Marshal(request.Body)

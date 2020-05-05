@@ -48,6 +48,8 @@ func (mr MappingsReader) FromTenant(ctx context.Context, tenant string) (map[str
 		result[k] = v
 	}
 
+	mr.log.Debug("tenant mappings", "value", result)
+
 	return result, nil
 }
 

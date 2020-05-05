@@ -27,13 +27,14 @@ var queryMethodToHttpMethod = map[string]string{
 func MakeRequest(forwardPrefix string, statement domain.Statement, queryCtx domain.QueryContext) domain.HttpRequest {
 	mapping := queryCtx.Mappings[statement.Resource]
 	method := queryMethodToHttpMethod[statement.Method]
-	url := makeUrl(mapping, statement)
 	headers := makeHeaders(statement, queryCtx)
+	path := applyParamsToPath(mapping, statement)
 
 	req := domain.HttpRequest{
 		Method:  method,
 		Schema:  mapping.Schema,
-		Uri:     url,
+		Host:    mapping.Host,
+		Path:    path,
 		Headers: headers,
 	}
 
@@ -108,16 +109,16 @@ func getForwardParams(forwardPrefix string, queryCtx domain.QueryContext) map[st
 	return r
 }
 
-func makeUrl(mapping domain.Mapping, statement domain.Statement) string {
-	resource := mapping.Uri
+func applyParamsToPath(mapping domain.Mapping, statement domain.Statement) string {
+	path := mapping.Path
 	for _, pathParam := range mapping.PathParams {
 		pathParamValue, found := statement.With[pathParam]
 		if !found {
 			pathParamValue = ""
 		}
 
-		resource = strings.Replace(resource, fmt.Sprintf(":%v", pathParam), fmt.Sprintf("%v", pathParamValue), 1)
+		path = strings.Replace(path, fmt.Sprintf(":%v", pathParam), fmt.Sprintf("%v", pathParamValue), 1)
 	}
 
-	return resource
+	return path
 }
