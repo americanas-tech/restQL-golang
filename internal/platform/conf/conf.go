@@ -64,6 +64,7 @@ type Config struct {
 
 	Database struct {
 		ConnectionString string `yaml:"connectionString" env:"RESTQL_DATABASE_CONNECTION_STRING"`
+		Name             string `yaml:"name" env:"RESTQL_DATABASE_NAME"`
 		Timeouts         struct {
 			Connection time.Duration `yaml:"connection" env:"RESTQL_DATABASE_CONNECTION_TIMEOUT"`
 			Mappings   time.Duration `yaml:"mappings"`

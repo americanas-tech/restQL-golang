@@ -28,6 +28,7 @@ func API(log *logger.Logger, cfg *conf.Config) (fasthttp.RequestHandler, error) 
 		database.WithConnectionTimeout(cfg.Database.Timeouts.Connection),
 		database.WithMappingsTimeout(cfg.Database.Timeouts.Mappings),
 		database.WithQueryTimeout(cfg.Database.Timeouts.Query),
+		database.WithDatabaseName(cfg.Database.Name),
 	)
 	if err != nil {
 		log.Error("failed to establish connection to database", err)

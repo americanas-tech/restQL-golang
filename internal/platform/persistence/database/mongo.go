@@ -9,8 +9,6 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-const databaseName = "restql"
-
 type tenant struct {
 	Mappings map[string]string
 }
@@ -44,7 +42,7 @@ func (md mongoDatabase) FindMappingsForTenant(ctx context.Context, tenantId stri
 
 	var t tenant
 
-	collection := md.client.Database(databaseName).Collection("tenant")
+	collection := md.client.Database(md.options.DatabaseName).Collection("tenant")
 	err := collection.FindOne(ctx, bson.M{"_id": tenantId}).Decode(&t)
 	if err != nil {
 		return nil, err
@@ -75,7 +73,7 @@ func (md mongoDatabase) FindQuery(ctx context.Context, namespace string, name st
 
 	var q query
 
-	collection := md.client.Database(databaseName).Collection("query")
+	collection := md.client.Database(md.options.DatabaseName).Collection("query")
 	err := collection.FindOne(ctx, bson.M{"name": name, "namespace": namespace}).Decode(&q)
 	if err != nil {
 		return "", err

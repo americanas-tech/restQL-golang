@@ -14,6 +14,7 @@ type dbOptions struct {
 	ConnectionTimeout time.Duration
 	MappingsTimeout   time.Duration
 	QueryTimeout      time.Duration
+	DatabaseName      string
 }
 
 type Option func(o *dbOptions)
@@ -33,6 +34,12 @@ func WithMappingsTimeout(timeout time.Duration) Option {
 func WithQueryTimeout(timeout time.Duration) Option {
 	return func(o *dbOptions) {
 		o.QueryTimeout = timeout
+	}
+}
+
+func WithDatabaseName(name string) Option {
+	return func(o *dbOptions) {
+		o.DatabaseName = name
 	}
 }
 
