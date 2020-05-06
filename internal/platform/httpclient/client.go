@@ -37,7 +37,7 @@ func New(log *logger.Logger, pm plugins.Manager, cfg *conf.Config) HttpClient {
 		NoDefaultUserAgentHeader: false,
 		ReadTimeout:              clientCfg.ReadTimeout,
 		WriteTimeout:             clientCfg.WriteTimeout,
-		MaxConnsPerHost:          clientCfg.MaxIdleConnectionsPerHosts,
+		MaxConnsPerHost:          clientCfg.MaxConnsPerHost,
 		MaxIdleConnDuration:      clientCfg.MaxIdleConnDuration,
 		MaxConnDuration:          clientCfg.MaxConnDuration,
 		Dial: func(addr string) (conn net.Conn, err error) {
