@@ -97,8 +97,6 @@ func (m manager) safeExecute(pluginName string, hook string, fn func()) {
 		}
 	}()
 
-	m.log.Info("Is fn nil?", "nil", fn == nil)
-
 	fn()
 }
 
