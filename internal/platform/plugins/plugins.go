@@ -9,6 +9,7 @@ import (
 	"github.com/valyala/fasthttp"
 	"net/http"
 	"net/url"
+	"runtime/debug"
 )
 
 type Manager interface {
@@ -91,10 +92,12 @@ func (m manager) executeAllPluginsWithContext(hook string, ctx context.Context, 
 func (m manager) safeExecute(pluginName string, hook string, fn func()) {
 	defer func() {
 		if reason := recover(); reason != nil {
-			err := errors.Errorf("reason : %v", reason)
+			err := errors.Errorf("reason : %v\n\t stack : %v", reason, string(debug.Stack()))
 			m.log.Error("plugin produced a panic", err, "name", pluginName, "hook", hook)
 		}
 	}()
+
+	m.log.Info("Is fn nil?", "nil", fn == nil)
 
 	fn()
 }
@@ -148,6 +151,10 @@ func convertQueryResult(resource interface{}) map[string]interface{} {
 			"debugging":    convertQueryResult(resource.Debug),
 		}
 	case *domain.Debugging:
+		if resource == nil {
+			return nil
+		}
+
 		return map[string]interface{}{
 			"method":          resource.Method,
 			"url":             resource.Url,
