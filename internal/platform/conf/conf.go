@@ -50,6 +50,7 @@ type Config struct {
 			ReadTimeout         time.Duration `yaml:"readTimeout"`
 			WriteTimeout        time.Duration `yaml:"writeTimeout"`
 			MaxConnDuration     time.Duration `yaml:"maxConnectionDuration"`
+			MaxConnWaitTimeout  time.Duration `yaml:"maxConnectionWaitTimeout"`
 			MaxConnsPerHost     int           `yaml:"maxConnectionsPerHost"`
 			MaxIdleConnDuration time.Duration `yaml:"maxIdleConnectionDuration"`
 		} `yaml:"client"`

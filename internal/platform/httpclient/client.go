@@ -40,6 +40,7 @@ func New(log *logger.Logger, pm plugins.Manager, cfg *conf.Config) HttpClient {
 		MaxConnsPerHost:          clientCfg.MaxConnsPerHost,
 		MaxIdleConnDuration:      clientCfg.MaxIdleConnDuration,
 		MaxConnDuration:          clientCfg.MaxConnDuration,
+		MaxConnWaitTimeout:       clientCfg.MaxConnWaitTimeout,
 		Dial: func(addr string) (conn net.Conn, err error) {
 			host, port, err := net.SplitHostPort(addr)
 			if err != nil {
