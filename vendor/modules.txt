@@ -16,7 +16,7 @@ github.com/go-stack/stack
 github.com/golang/snappy
 # github.com/google/uuid v1.1.1
 github.com/google/uuid
-# github.com/klauspost/compress v1.10.3
+# github.com/klauspost/compress v1.10.5
 github.com/klauspost/compress/flate
 github.com/klauspost/compress/fse
 github.com/klauspost/compress/gzip
@@ -36,7 +36,7 @@ github.com/rs/zerolog/internal/json
 github.com/rs/zerolog/log
 # github.com/valyala/bytebufferpool v1.0.0
 github.com/valyala/bytebufferpool
-# github.com/valyala/fasthttp v1.9.0
+# github.com/valyala/fasthttp v1.12.0
 github.com/valyala/fasthttp
 github.com/valyala/fasthttp/fasthttpadaptor
 github.com/valyala/fasthttp/fasthttputil
