@@ -106,6 +106,8 @@ func (r RestQl) RunSavedQuery(ctx *fasthttp.RequestCtx) error {
 			return RespondError(ctx, NewRequestError(err, http.StatusInternalServerError))
 		case eval.TimeoutError:
 			return RespondError(ctx, NewRequestError(err, http.StatusRequestTimeout))
+		case eval.MappingError:
+			return RespondError(ctx, NewRequestError(err, http.StatusInternalServerError))
 		default:
 			return RespondError(ctx, err)
 		}

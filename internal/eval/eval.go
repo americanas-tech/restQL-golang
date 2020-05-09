@@ -44,3 +44,11 @@ type TimeoutError struct {
 func (te TimeoutError) Error() string {
 	return te.Err.Error()
 }
+
+type MappingError struct {
+	Err error
+}
+
+func (me MappingError) Error() string {
+	return me.Err.Error()
+}

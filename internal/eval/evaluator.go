@@ -72,6 +72,12 @@ func (e Evaluator) evaluateQuery(ctx context.Context, queryTxt string, queryOpts
 		return nil, err
 	}
 
+	err = validateQueryResources(query, mappings)
+	if err != nil {
+		e.log.Debug("query reference invalid resource", err)
+		return nil, err
+	}
+
 	queryContext := domain.QueryContext{
 		Mappings: mappings,
 		Options:  queryOpts,
@@ -99,6 +105,18 @@ func (e Evaluator) evaluateQuery(ctx context.Context, queryTxt string, queryOpts
 	queryCtx = e.pluginsManager.RunAfterQuery(queryCtx, queryTxt, resources)
 
 	return resources, nil
+}
+
+func validateQueryResources(query domain.Query, mappings map[string]domain.Mapping) error {
+	for _, s := range query.Statements {
+		_, found := mappings[s.Resource]
+		if !found {
+			err := errors.Errorf("statement should reference a valid mapped resource. Error was in %s", s.Resource)
+			return MappingError{Err: err}
+		}
+	}
+
+	return nil
 }
 
 func validateQueryOptions(queryOpts domain.QueryOptions) error {
