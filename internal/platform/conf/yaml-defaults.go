@@ -14,7 +14,6 @@ web:
   client:
     readTimeout: 3s
     writeTimeout: 1s
-    maxConnectionsDuration: 10m
     maxIdleConnectionsPerHost: 512
     maxIdleConnectionDuration: 10s
 
