@@ -4,6 +4,7 @@ import (
 	"github.com/b2wdigital/restQL-golang/internal/domain"
 	"net/http"
 	"strings"
+	"time"
 )
 
 var disallowedHeaders = map[string]struct{}{
@@ -23,11 +24,12 @@ var queryMethodToHttpMethod = map[string]string{
 	domain.DeleteMethod: http.MethodDelete,
 }
 
-func MakeRequest(forwardPrefix string, statement domain.Statement, queryCtx domain.QueryContext) domain.HttpRequest {
+func MakeRequest(defaultResourceTimeout time.Duration, forwardPrefix string, statement domain.Statement, queryCtx domain.QueryContext) domain.HttpRequest {
 	mapping := queryCtx.Mappings[statement.Resource]
 	method := queryMethodToHttpMethod[statement.Method]
 	headers := makeHeaders(statement, queryCtx)
 	path := mapping.PathWithParams(statement.With)
+	timeout := parseTimeout(defaultResourceTimeout, statement)
 
 	req := domain.HttpRequest{
 		Method:  method,
@@ -35,6 +37,7 @@ func MakeRequest(forwardPrefix string, statement domain.Statement, queryCtx doma
 		Host:    mapping.Host,
 		Path:    path,
 		Headers: headers,
+		Timeout: timeout,
 	}
 
 	if statement.Method == domain.FromMethod || statement.Method == domain.DeleteMethod {
@@ -106,4 +109,18 @@ func getForwardParams(forwardPrefix string, queryCtx domain.QueryContext) map[st
 	}
 
 	return r
+}
+
+func parseTimeout(defaultResourceTimeout time.Duration, statement domain.Statement) time.Duration {
+	timeout := statement.Timeout
+	if timeout == nil {
+		return defaultResourceTimeout
+	}
+
+	duration, ok := timeout.(int)
+	if !ok {
+		return defaultResourceTimeout
+	}
+
+	return time.Millisecond * time.Duration(duration)
 }

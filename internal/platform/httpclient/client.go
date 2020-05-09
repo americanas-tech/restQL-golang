@@ -2,6 +2,7 @@ package httpclient
 
 import (
 	"context"
+	"fmt"
 	"github.com/b2wdigital/restQL-golang/internal/domain"
 	"github.com/b2wdigital/restQL-golang/internal/platform/conf"
 	"github.com/b2wdigital/restQL-golang/internal/platform/logger"
@@ -86,11 +87,13 @@ func (hc HttpClient) Do(ctx context.Context, request domain.HttpRequest) (domain
 		hc.pluginManager.RunAfterRequest(requestCtx, request, response, err)
 	}()
 
-	duration, err := hc.executeWithContext(requestCtx, req, res)
+	timeout, cancel := context.WithTimeout(requestCtx, request.Timeout)
+	defer cancel()
+	duration, err := hc.executeWithContext(timeout, req, res)
 
 	switch {
 	case err == domain.ErrRequestTimeout:
-		hc.log.Info("request timed out", "url", request.Uri, "method", request.Method)
+		hc.log.Info("request timed out", "url", fmt.Sprintf("%s://%s%s", request.Schema, request.Host, request.Path), "method", request.Method, "duration", duration.Milliseconds())
 		response = makeErrorResponse(req, duration, err)
 		return response, err
 	case err != nil:

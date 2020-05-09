@@ -38,22 +38,9 @@ func (e Executor) DoStatement(ctx context.Context, statement domain.Statement, q
 		return emptyChainedResponse, nil
 	}
 
-	request := MakeRequest(e.forwardPrefix, statement, queryCtx)
+	request := MakeRequest(e.resourceTimeout, e.forwardPrefix, statement, queryCtx)
 
 	e.log.Debug("executing request for statement", "resource", statement.Resource, "method", statement.Method, "request", request)
-
-	var cancel context.CancelFunc
-	timeout, err := e.parseTimeout(statement)
-	switch {
-	case err == nil:
-		ctx, cancel = context.WithTimeout(ctx, timeout)
-	case err == errNoTimeoutProvided:
-		ctx, cancel = context.WithCancel(ctx)
-	default:
-		e.log.Debug("failed to set timeout for statement", "error", err)
-		ctx, cancel = context.WithCancel(ctx)
-	}
-	defer cancel()
 
 	response, err := e.client.Do(ctx, request)
 
@@ -128,18 +115,4 @@ func (e Executor) doCurrentStatement(stmt interface{}, ctx context.Context, quer
 	default:
 		return nil, errors.Errorf("unknown statement type: %T", stmt)
 	}
-}
-
-func (e Executor) parseTimeout(statement domain.Statement) (time.Duration, error) {
-	timeout := statement.Timeout
-	if timeout == nil {
-		return e.resourceTimeout, nil
-	}
-
-	duration, ok := timeout.(int)
-	if !ok {
-		return 0, errors.Errorf("statement timeout is not an int, got %T", timeout)
-	}
-
-	return time.Millisecond * time.Duration(duration), nil
 }

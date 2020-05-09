@@ -29,6 +29,7 @@ type HttpRequest struct {
 	Query   map[string]interface{}
 	Body    Body
 	Headers Headers
+	Timeout time.Duration
 }
 
 type HttpResponse struct {
