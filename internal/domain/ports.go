@@ -23,7 +23,6 @@ type Body interface{}
 type HttpRequest struct {
 	Method  string
 	Schema  string
-	Uri     string
 	Host    string
 	Path    string
 	Query   map[string]interface{}

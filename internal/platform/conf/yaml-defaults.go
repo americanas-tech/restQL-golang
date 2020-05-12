@@ -12,7 +12,7 @@ web:
     gracefulShutdownTimeout: 1s
 
   client:
-    readTimeout: 3s
+    readTimeout: 1s
     writeTimeout: 1s
     maxIdleConnectionsPerHost: 512
     maxIdleConnectionDuration: 10s

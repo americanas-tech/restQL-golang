@@ -34,7 +34,8 @@ func TestNewDoneResource(t *testing.T) {
 			"should create done resource with debug",
 			domain.HttpRequest{
 				Schema:  "http",
-				Uri:     "hero.io/api",
+				Host:    "hero.io",
+				Path:    "/api",
 				Query:   map[string]interface{}{"id": "123456"},
 				Headers: map[string]string{"X-TID": "12345abdef"},
 			},
@@ -210,7 +211,8 @@ func TestNewTimeoutResponse(t *testing.T) {
 			"should create response for time outed execution with debug",
 			domain.HttpRequest{
 				Schema:  "http",
-				Uri:     "hero.io/api",
+				Host:    "hero.io",
+				Path:    "/api",
 				Query:   map[string]interface{}{"id": "123456"},
 				Headers: map[string]string{"X-TID": "12345abdef"},
 			},

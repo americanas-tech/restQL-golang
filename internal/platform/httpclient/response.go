@@ -8,9 +8,9 @@ import (
 	"time"
 )
 
-func makeResponse(req *fasthttp.Request, res *fasthttp.Response, responseTime time.Duration) (domain.HttpResponse, error) {
+func makeResponse(requestUrl string, res *fasthttp.Response, responseTime time.Duration) (domain.HttpResponse, error) {
 	response := domain.HttpResponse{
-		Url:        req.URI().String(),
+		Url:        requestUrl,
 		StatusCode: res.StatusCode(),
 		Headers:    readHeaders(res),
 		Duration:   responseTime,
@@ -37,14 +37,14 @@ func unmarshalBody(res *fasthttp.Response) (interface{}, error) {
 	return responseBody, nil
 }
 
-func makeErrorResponse(req *fasthttp.Request, responseTime time.Duration, err error) domain.HttpResponse {
+func makeErrorResponse(requestUrl string, responseTime time.Duration, err error) domain.HttpResponse {
 	statusCode := 0
 	if err == domain.ErrRequestTimeout {
 		statusCode = 408
 	}
 
 	return domain.HttpResponse{
-		Url:        req.URI().String(),
+		Url:        requestUrl,
 		StatusCode: statusCode,
 		Duration:   responseTime,
 	}
