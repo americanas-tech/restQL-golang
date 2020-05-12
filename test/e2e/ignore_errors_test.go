@@ -6,6 +6,7 @@ import (
 	"github.com/b2wdigital/restQL-golang/test"
 	"io"
 	"net/http"
+	"net/url"
 	"strings"
 	"testing"
 )
@@ -180,7 +181,15 @@ from people
 	mockServer.Mux().HandleFunc("/api/people/", func(w http.ResponseWriter, r *http.Request) {
 		params := r.URL.Query()
 
-		test.Equal(t, params["name"][0], "Yavin King")
+		nameParam := params["name"]
+		if len(nameParam) == 0 {
+			t.Error("got empty nameParam param", nameParam)
+			return
+		}
+
+		name, err := url.QueryUnescape(nameParam[0])
+		test.VerifyError(t, err)
+		test.Equal(t, name, "Yavin King")
 
 		w.WriteHeader(404)
 		io.WriteString(w, peopleResponse)

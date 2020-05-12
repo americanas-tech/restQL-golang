@@ -6,6 +6,7 @@ import (
 	"github.com/b2wdigital/restQL-golang/test"
 	"io"
 	"net/http"
+	"net/url"
 	"strings"
 	"testing"
 )
@@ -309,10 +310,12 @@ from people
 	})
 	mockServer.Mux().HandleFunc("/api/people/", func(w http.ResponseWriter, r *http.Request) {
 		params := r.URL.Query()
-		profileData := params["profile"][0]
+		profileData, err := url.QueryUnescape(params["profile"][0])
+
+		test.VerifyError(t, err)
 
 		var profile map[string]string
-		err := json.Unmarshal([]byte(profileData), &profile)
+		err = json.Unmarshal([]byte(profileData), &profile)
 		test.VerifyError(t, err)
 
 		if profile["name"] == "john" {
@@ -600,8 +603,9 @@ from people
 	})
 	mockServer.Mux().HandleFunc("/api/people/", func(w http.ResponseWriter, r *http.Request) {
 		params := r.URL.Query()
-		profileData := params["profile"][0]
+		profileData, err := url.QueryUnescape(params["profile"][0])
 
+		test.VerifyError(t, err)
 		test.Equal(t, profileData, `{"name":["john","janne"]}`)
 
 		w.WriteHeader(200)

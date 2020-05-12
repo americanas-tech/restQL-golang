@@ -7,6 +7,7 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"strings"
 	"testing"
 )
@@ -56,12 +57,17 @@ from planets
 	mockServer.Mux().HandleFunc("/api/planets/", func(w http.ResponseWriter, r *http.Request) {
 		params := r.URL.Query()
 
-		test.Equal(t, params["name"][0], "Yavin IV")
 		test.Equal(t, params["population"][0], "1000")
 		test.Equal(t, params["rotation_period"][0], "24.5")
-		test.Equal(t, params["terrain"][0], `{"north":"jungle","south":"rainforests"}`)
-
 		test.Equal(t, params["residents"], []string{"john", "janne"})
+
+		name, err := url.QueryUnescape(params["name"][0])
+		test.VerifyError(t, err)
+		test.Equal(t, name, "Yavin IV")
+
+		terrain, err := url.QueryUnescape(params["terrain"][0])
+		test.VerifyError(t, err)
+		test.Equal(t, terrain, `{"north":"jungle","south":"rainforests"}`)
 
 		w.WriteHeader(200)
 		io.WriteString(w, planetResponse)
@@ -355,12 +361,17 @@ delete planets
 	mockServer.Mux().HandleFunc("/api/planets/", func(w http.ResponseWriter, r *http.Request) {
 		params := r.URL.Query()
 
-		test.Equal(t, params["name"][0], "Yavin IV")
 		test.Equal(t, params["population"][0], "1000")
 		test.Equal(t, params["rotation_period"][0], "24.5")
-		test.Equal(t, params["terrain"][0], `{"north":"jungle","south":"rainforests"}`)
-
 		test.Equal(t, params["residents"], []string{"john", "janne"})
+
+		name, err := url.QueryUnescape(params["name"][0])
+		test.VerifyError(t, err)
+		test.Equal(t, name, "Yavin IV")
+
+		terrain, err := url.QueryUnescape(params["terrain"][0])
+		test.VerifyError(t, err)
+		test.Equal(t, terrain, `{"north":"jungle","south":"rainforests"}`)
 
 		w.WriteHeader(200)
 		io.WriteString(w, planetResponse)
@@ -425,12 +436,17 @@ from planets
 	mockServer.Mux().HandleFunc("/api/planets/", func(w http.ResponseWriter, r *http.Request) {
 		params := r.URL.Query()
 
-		test.Equal(t, params["name"][0], "Yavin")
 		test.Equal(t, params["population"][0], "1000")
 		test.Equal(t, params["rotation_period"][0], "24.5")
-		test.Equal(t, params["terrain"][0], `{"north":"jungle","south":"rainforests"}`)
-
 		test.Equal(t, params["residents"], []string{"john", "janne"})
+
+		name, err := url.QueryUnescape(params["name"][0])
+		test.VerifyError(t, err)
+		test.Equal(t, name, "Yavin")
+
+		terrain, err := url.QueryUnescape(params["terrain"][0])
+		test.VerifyError(t, err)
+		test.Equal(t, terrain, `{"north":"jungle","south":"rainforests"}`)
 
 		w.WriteHeader(200)
 		io.WriteString(w, planetResponse)
@@ -523,12 +539,17 @@ from people
 	mockServer.Mux().HandleFunc("/api/planets/", func(w http.ResponseWriter, r *http.Request) {
 		params := r.URL.Query()
 
-		test.Equal(t, params["name"][0], "Yavin")
 		test.Equal(t, params["population"][0], "1000")
 		test.Equal(t, params["rotation_period"][0], "24.5")
-		test.Equal(t, params["terrain"][0], `{"north":"jungle","south":"rainforests"}`)
-
 		test.Equal(t, params["residents"], []string{"john", "janne"})
+
+		name, err := url.QueryUnescape(params["name"][0])
+		test.VerifyError(t, err)
+		test.Equal(t, name, "Yavin")
+
+		terrain, err := url.QueryUnescape(params["terrain"][0])
+		test.VerifyError(t, err)
+		test.Equal(t, terrain, `{"north":"jungle","south":"rainforests"}`)
 
 		w.WriteHeader(200)
 		io.WriteString(w, planetResponse)
@@ -536,7 +557,9 @@ from people
 	mockServer.Mux().HandleFunc("/api/people/", func(w http.ResponseWriter, r *http.Request) {
 		params := r.URL.Query()
 
-		test.Equal(t, params["name"][0], "Yavin King")
+		name, err := url.QueryUnescape(params["name"][0])
+		test.VerifyError(t, err)
+		test.Equal(t, name, "Yavin King")
 
 		w.WriteHeader(200)
 		io.WriteString(w, peopleResponse)
@@ -600,8 +623,14 @@ from planets
 		params := r.URL.Query()
 
 		test.Equal(t, params["population"][0], "1000")
-		test.Equal(t, params["name"][0], "WWF2aW4gSVY=")
-		test.Equal(t, params["residents"][0], `["john","janne"]`)
+
+		name, err := url.QueryUnescape(params["name"][0])
+		test.VerifyError(t, err)
+		test.Equal(t, name, "WWF2aW4gSVY=")
+
+		residents, err := url.QueryUnescape(params["residents"][0])
+		test.VerifyError(t, err)
+		test.Equal(t, residents, `["john","janne"]`)
 
 		w.WriteHeader(200)
 		io.WriteString(w, planetResponse)
