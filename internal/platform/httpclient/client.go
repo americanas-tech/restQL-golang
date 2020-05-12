@@ -31,7 +31,7 @@ func New(log *logger.Logger, pm plugins.Manager, cfg *conf.Config) *HttpClient {
 			r.Refresh(true)
 		}
 	}()
-	var dialer = &fasthttp.TCPDialer{
+	dialer := &fasthttp.TCPDialer{
 		Resolver: &net.Resolver{
 			PreferGo:     true,
 			StrictErrors: false,
@@ -91,9 +91,9 @@ func (hc *HttpClient) Do(ctx context.Context, request domain.HttpRequest) (domai
 		hc.pluginManager.RunAfterRequest(requestCtx, request, response, err)
 	}()
 
-	timeout, cancel := context.WithTimeout(requestCtx, request.Timeout)
-	defer cancel()
-	duration, err := hc.executeWithContext(timeout, req, res)
+	//timeout, cancel := context.WithTimeout(requestCtx, request.Timeout)
+	//defer cancel()
+	duration, err := hc.executeWithContext(request.Timeout, req, res)
 
 	switch {
 	case err == domain.ErrRequestTimeout:
@@ -114,21 +114,31 @@ func (hc *HttpClient) Do(ctx context.Context, request domain.HttpRequest) (domai
 	return response, nil
 }
 
-func (hc *HttpClient) executeWithContext(ctx context.Context, req *fasthttp.Request, res *fasthttp.Response) (time.Duration, error) {
+func (hc *HttpClient) executeWithContext(timeout time.Duration, req *fasthttp.Request, res *fasthttp.Response) (time.Duration, error) {
 	var start time.Time
 
-	errCh := make(chan error)
-	go func() {
-		start = time.Now()
-		errCh <- hc.client.Do(req, res)
-	}()
+	//errCh := make(chan error)
+	//go func() {
+	//	start = time.Now()
+	//	errCh <- hc.client.DoTimeout(req, res, timeout)
+	//}()
 
-	select {
-	case e := <-errCh:
-		finish := time.Since(start)
-		return finish, e
-	case <-ctx.Done():
-		finish := time.Since(start)
+	start = time.Now()
+	err := hc.client.DoTimeout(req, res, timeout)
+	finish := time.Since(start)
+
+	if err == fasthttp.ErrTimeout {
 		return finish, domain.ErrRequestTimeout
 	}
+
+	return finish, err
+
+	//select {
+	//case e := <-errCh:
+	//	finish := time.Since(start)
+	//	return finish, e
+	//case <-ctx.Done():
+	//	finish := time.Since(start)
+	//	return finish, domain.ErrRequestTimeout
+	//}
 }
