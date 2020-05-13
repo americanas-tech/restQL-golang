@@ -39,7 +39,7 @@ func unmarshalBody(res *fasthttp.Response) (interface{}, error) {
 
 func makeErrorResponse(requestUrl string, responseTime time.Duration, err error) domain.HttpResponse {
 	statusCode := 0
-	if err == domain.ErrRequestTimeout {
+	if err == fasthttp.ErrTimeout {
 		statusCode = 408
 	}
 
