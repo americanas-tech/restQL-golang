@@ -48,7 +48,7 @@ func newFastHttpClient(log *logger.Logger, pm plugins.Manager, cfg *conf.Config)
 				if err != nil {
 					return nil, err
 				}
-				ips, err := r.LookupHost(context.Background(), host)
+				ips, err := r.LookupHost(ctx, host)
 				if err != nil {
 					return nil, err
 				}
