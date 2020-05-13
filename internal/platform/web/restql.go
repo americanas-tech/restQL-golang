@@ -53,6 +53,7 @@ func (r RestQl) ValidateQuery(ctx *fasthttp.RequestCtx) error {
 func (r RestQl) RunAdHocQuery(ctx *fasthttp.RequestCtx) error {
 	tenant, err := r.makeTenant(ctx)
 	if err != nil {
+		r.log.Error("failed to build query options", err)
 		return RespondError(ctx, NewRequestError(err, http.StatusUnprocessableEntity))
 	}
 	options := domain.QueryOptions{Tenant: tenant}
@@ -64,7 +65,7 @@ func (r RestQl) RunAdHocQuery(ctx *fasthttp.RequestCtx) error {
 
 	result, err := r.evaluator.AdHocQuery(context, queryTxt, options, input)
 	if err != nil {
-		r.log.Debug("failed to evaluated adhoc query", "error", err)
+		r.log.Error("failed to evaluated adhoc query", err)
 
 		switch err := err.(type) {
 		case eval.ValidationError:
@@ -87,6 +88,7 @@ func (r RestQl) RunAdHocQuery(ctx *fasthttp.RequestCtx) error {
 func (r RestQl) RunSavedQuery(ctx *fasthttp.RequestCtx) error {
 	options, err := r.makeQueryOptions(ctx)
 	if err != nil {
+		r.log.Error("failed to build query options", err)
 		return RespondError(ctx, NewRequestError(err, http.StatusUnprocessableEntity))
 	}
 

@@ -17,7 +17,7 @@ import (
 	"time"
 )
 
-const clientPoolSize = 8
+const clientPoolSize = 60
 
 type httpResult struct {
 	target   string
@@ -27,7 +27,6 @@ type httpResult struct {
 }
 
 type fastHttpClient struct {
-	client        *fasthttp.Client
 	clientPool    []*fasthttp.Client
 	log           *logger.Logger
 	pluginManager plugins.Manager
@@ -88,26 +87,13 @@ func newFastHttpClient(log *logger.Logger, pm plugins.Manager, cfg *conf.Config)
 		}
 	}
 
-	c := &fasthttp.Client{
-		Name:                          "restql",
-		NoDefaultUserAgentHeader:      false,
-		DisableHeaderNamesNormalizing: true,
-		Dial:                          dialer.Dial,
-		ReadTimeout:                   clientCfg.ReadTimeout,
-		WriteTimeout:                  clientCfg.WriteTimeout,
-		MaxConnsPerHost:               clientCfg.MaxConnsPerHost,
-		MaxIdleConnDuration:           clientCfg.MaxIdleConnDuration,
-		MaxConnDuration:               clientCfg.MaxConnDuration,
-		MaxConnWaitTimeout:            clientCfg.MaxConnWaitTimeout,
-	}
-
 	rp := &sync.Pool{
 		New: func() interface{} {
 			return make(chan httpResult)
 		},
 	}
 
-	return &fastHttpClient{client: c, clientPool: clientPool, log: log, pluginManager: pm, responsePool: rp}
+	return &fastHttpClient{clientPool: clientPool, log: log, pluginManager: pm, responsePool: rp}
 }
 
 func (hc *fastHttpClient) Do(ctx context.Context, request domain.HttpRequest) (domain.HttpResponse, error) {

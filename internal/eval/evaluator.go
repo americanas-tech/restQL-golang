@@ -74,7 +74,7 @@ func (e Evaluator) evaluateQuery(ctx context.Context, queryTxt string, queryOpts
 
 	err = validateQueryResources(query, mappings)
 	if err != nil {
-		e.log.Debug("query reference invalid resource", err)
+		e.log.Error("query reference invalid resource", err)
 		return nil, err
 	}
 
@@ -96,7 +96,7 @@ func (e Evaluator) evaluateQuery(ctx context.Context, queryTxt string, queryOpts
 
 	resources, err = ApplyFilters(query, resources)
 	if err != nil {
-		e.log.Debug("failed to apply filters", "error", err)
+		e.log.Error("failed to apply filters", err)
 		return nil, err
 	}
 
