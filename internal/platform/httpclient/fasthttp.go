@@ -11,11 +11,27 @@ import (
 	"github.com/rs/dnscache"
 	"github.com/valyala/fasthttp"
 	"math"
-	"math/rand"
 	"net"
 	"sync"
+	"sync/atomic"
 	"time"
 )
+
+type httpTarget struct {
+	client  *fasthttp.Client
+	pending *int64
+}
+
+func (ht *httpTarget) DoDeadline(req *fasthttp.Request, resp *fasthttp.Response, deadline time.Time) error {
+	atomic.AddInt64(ht.pending, 1)
+	err := ht.client.DoDeadline(req, resp, deadline)
+	atomic.AddInt64(ht.pending, -1)
+	return err
+}
+
+func (ht *httpTarget) PendingRequests() int {
+	return int(atomic.LoadInt64(ht.pending))
+}
 
 const clientPoolSize = 60
 
@@ -27,7 +43,7 @@ type httpResult struct {
 }
 
 type fastHttpClient struct {
-	clientPool    []*fasthttp.Client
+	client        *fasthttp.LBClient
 	log           *logger.Logger
 	pluginManager plugins.Manager
 	responsePool  *sync.Pool
@@ -71,20 +87,33 @@ func newFastHttpClient(log *logger.Logger, pm plugins.Manager, cfg *conf.Config)
 
 	maxConnsPerHostPerClient := int(math.Floor(float64(clientCfg.MaxConnsPerHost) / float64(clientPoolSize)))
 
-	clientPool := make([]*fasthttp.Client, clientPoolSize)
+	clientPool := make([]fasthttp.BalancingClient, clientPoolSize)
 	for i := 0; i < clientPoolSize; i++ {
-		clientPool[i] = &fasthttp.Client{
-			Name:                          fmt.Sprintf("restql-%d", i),
-			NoDefaultUserAgentHeader:      false,
-			DisableHeaderNamesNormalizing: true,
-			Dial:                          dialer.Dial,
-			ReadTimeout:                   clientCfg.ReadTimeout,
-			WriteTimeout:                  clientCfg.WriteTimeout,
-			MaxConnsPerHost:               maxConnsPerHostPerClient,
-			MaxIdleConnDuration:           clientCfg.MaxIdleConnDuration,
-			MaxConnDuration:               clientCfg.MaxConnDuration,
-			MaxConnWaitTimeout:            clientCfg.MaxConnWaitTimeout,
+		var initialPendingReqs int64 = 0
+
+		clientPool[i] = &httpTarget{
+			client: &fasthttp.Client{
+				Name:                          fmt.Sprintf("restql-%d", i),
+				NoDefaultUserAgentHeader:      false,
+				DisableHeaderNamesNormalizing: true,
+				Dial:                          dialer.Dial,
+				ReadTimeout:                   clientCfg.ReadTimeout,
+				WriteTimeout:                  clientCfg.WriteTimeout,
+				MaxConnsPerHost:               maxConnsPerHostPerClient,
+				MaxIdleConnDuration:           clientCfg.MaxIdleConnDuration,
+				MaxConnDuration:               clientCfg.MaxConnDuration,
+				MaxConnWaitTimeout:            clientCfg.MaxConnWaitTimeout,
+			},
+			pending: &initialPendingReqs,
 		}
+	}
+
+	lbClient := &fasthttp.LBClient{
+		Clients: clientPool,
+		Timeout: clientCfg.ReadTimeout,
+		HealthCheck: func(req *fasthttp.Request, resp *fasthttp.Response, err error) bool {
+			return true
+		},
 	}
 
 	rp := &sync.Pool{
@@ -93,7 +122,7 @@ func newFastHttpClient(log *logger.Logger, pm plugins.Manager, cfg *conf.Config)
 		},
 	}
 
-	return &fastHttpClient{clientPool: clientPool, log: log, pluginManager: pm, responsePool: rp}
+	return &fastHttpClient{client: lbClient, log: log, pluginManager: pm, responsePool: rp}
 }
 
 func (hc *fastHttpClient) Do(ctx context.Context, request domain.HttpRequest) (domain.HttpResponse, error) {
@@ -112,11 +141,9 @@ func (hc *fastHttpClient) Do(ctx context.Context, request domain.HttpRequest) (d
 			return
 		}
 
-		client := hc.pickClient()
-
 		res := fasthttp.AcquireResponse()
 		start := time.Now()
-		err = client.DoTimeout(req, res, request.Timeout)
+		err = hc.client.DoTimeout(req, res, request.Timeout)
 		finish := time.Since(start)
 
 		reqUri := req.URI().String()
@@ -166,9 +193,4 @@ func (hc *fastHttpClient) Do(ctx context.Context, request domain.HttpRequest) (d
 	hc.pluginManager.RunAfterRequest(requestCtx, request, response, err)
 
 	return response, nil
-}
-
-func (hc *fastHttpClient) pickClient() *fasthttp.Client {
-	r := rand.Intn(clientPoolSize)
-	return hc.clientPool[r]
 }
