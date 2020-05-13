@@ -8,5 +8,5 @@ import (
 )
 
 func New(log *logger.Logger, pm plugins.Manager, cfg *conf.Config) domain.HttpClient {
-	return newNativeHttpClient(log, pm, cfg)
+	return newFastHttpClient(log, pm, cfg)
 }
