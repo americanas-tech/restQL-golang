@@ -70,11 +70,14 @@ func (e Executor) DoMultiplexedStatement(ctx context.Context, statements []inter
 		}
 	}()
 
+	sem := make(chan struct{}, 10)
+
 	var g errgroup.Group
 
 	for i, stmt := range statements {
 		i, stmt := i, stmt
 		ch := responseChans[i]
+		sem <- struct{}{}
 
 		g.Go(func() error {
 			response, err := e.doCurrentStatement(stmt, ctx, queryCtx)
@@ -82,6 +85,7 @@ func (e Executor) DoMultiplexedStatement(ctx context.Context, statements []inter
 				return err
 			}
 			ch <- response
+			<-sem
 			return nil
 		})
 	}
