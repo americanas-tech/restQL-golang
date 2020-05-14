@@ -79,6 +79,14 @@ func start() error {
 		serverErrors <- health.ListenAndServe(":" + serverCfg.ApiHealthAddr)
 	}()
 
+	if serverCfg.Env == "development" {
+		debug := &fasthttp.Server{Name: "debug", Handler: web.Debug(log, cfg)}
+		go func() {
+			log.Info("api debug listing", "port", serverCfg.DebugAddr)
+			serverErrors <- debug.ListenAndServe(":" + serverCfg.DebugAddr)
+		}()
+	}
+
 	//// =========================================================================
 	//// Shutdown
 	startupDelay := time.Since(startupStart)

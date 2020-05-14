@@ -77,3 +77,18 @@ func Health(log *logger.Logger, cfg *conf.Config) fasthttp.RequestHandler {
 
 	return app.RequestHandlerWithoutMiddlewares()
 }
+
+func Debug(log *logger.Logger, cfg *conf.Config) fasthttp.RequestHandler {
+	app := NewApp(log, cfg, plugins.NoOpManager)
+	pprof := NewPprof()
+
+	app.Handle(http.MethodGet, "/debug/pprof/goroutine", pprof.Index)
+	app.Handle(http.MethodGet, "/debug/pprof/heap", pprof.Index)
+	app.Handle(http.MethodGet, "/debug/pprof/threadcreate", pprof.Index)
+	app.Handle(http.MethodGet, "/debug/pprof/block", pprof.Index)
+	app.Handle(http.MethodGet, "/debug/pprof/mutex", pprof.Index)
+
+	app.Handle(http.MethodGet, "/debug/pprof/profile", pprof.Profile)
+
+	return app.RequestHandlerWithoutMiddlewares()
+}
