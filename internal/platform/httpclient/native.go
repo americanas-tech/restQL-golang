@@ -37,8 +37,12 @@ func newNativeHttpClient(log *logger.Logger, pm plugins.Manager, cfg *conf.Confi
 	}()
 
 	t := &http.Transport{
-		MaxConnsPerHost: clientCfg.MaxConnsPerHost,
-		IdleConnTimeout: clientCfg.MaxIdleConnDuration,
+		Proxy:                 http.ProxyFromEnvironment,
+		MaxConnsPerHost:       clientCfg.MaxConnsPerHost,
+		MaxIdleConnsPerHost:   1024,
+		IdleConnTimeout:       clientCfg.MaxIdleConnDuration,
+		TLSHandshakeTimeout:   10 * time.Second,
+		ExpectContinueTimeout: time.Second,
 		DialContext: func(ctx context.Context, network, addr string) (conn net.Conn, err error) {
 			host, port, err := net.SplitHostPort(addr)
 			if err != nil {
@@ -60,6 +64,7 @@ func newNativeHttpClient(log *logger.Logger, pm plugins.Manager, cfg *conf.Confi
 	}
 
 	c := &http.Client{
+		Timeout:   clientCfg.ReadTimeout,
 		Transport: t,
 	}
 
