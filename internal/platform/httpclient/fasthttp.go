@@ -10,6 +10,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/rs/dnscache"
 	"github.com/valyala/fasthttp"
+	"math"
 	"math/rand"
 	"net"
 	"sync"
@@ -68,6 +69,8 @@ func newFastHttpClient(log *logger.Logger, pm plugins.Manager, cfg *conf.Config)
 		},
 	}
 
+	maxConnsPerHostPerClient := int(math.Floor(float64(clientCfg.MaxConnsPerHost / clientPoolSize)))
+
 	clientPool := make([]*fasthttp.Client, clientPoolSize)
 	for i := 0; i < clientPoolSize; i++ {
 		clientPool[i] = &fasthttp.Client{
@@ -77,7 +80,7 @@ func newFastHttpClient(log *logger.Logger, pm plugins.Manager, cfg *conf.Config)
 			Dial:                          dialer.Dial,
 			ReadTimeout:                   clientCfg.ReadTimeout,
 			WriteTimeout:                  clientCfg.WriteTimeout,
-			MaxConnsPerHost:               clientCfg.MaxConnsPerHost,
+			MaxConnsPerHost:               maxConnsPerHostPerClient,
 			MaxIdleConnDuration:           clientCfg.MaxIdleConnDuration,
 			MaxConnDuration:               clientCfg.MaxConnDuration,
 			MaxConnWaitTimeout:            clientCfg.MaxConnWaitTimeout,
