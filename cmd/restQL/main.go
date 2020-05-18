@@ -12,11 +12,14 @@ import (
 	"golang.org/x/sync/errgroup"
 	"os"
 	"os/signal"
+	"runtime"
 	"syscall"
 	"time"
 )
 
 func main() {
+	runtime.SetMutexProfileFraction(1)
+
 	if err := start(); err != nil {
 		fmt.Printf("[ERROR] failed to start api : %v", err)
 		os.Exit(1)
