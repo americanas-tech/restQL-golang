@@ -18,9 +18,6 @@ import (
 )
 
 func main() {
-	runtime.SetMutexProfileFraction(1)
-	runtime.SetBlockProfileRate(1)
-
 	if err := start(); err != nil {
 		fmt.Printf("[ERROR] failed to start api : %v", err)
 		os.Exit(1)
@@ -37,6 +34,11 @@ func start() error {
 	cfg, err := conf.Load(build)
 	if err != nil {
 		return err
+	}
+
+	if cfg.Web.Server.Env == "development" {
+		runtime.SetMutexProfileFraction(1)
+		runtime.SetBlockProfileRate(1)
 	}
 
 	log := logger.New(os.Stdout, logger.LogOptions{
