@@ -2,17 +2,12 @@ package httpclient
 
 import (
 	"context"
-	"fmt"
 	"github.com/b2wdigital/restQL-golang/internal/domain"
 	"github.com/b2wdigital/restQL-golang/internal/platform/conf"
 	"github.com/b2wdigital/restQL-golang/internal/platform/logger"
 	"github.com/b2wdigital/restQL-golang/internal/platform/plugins"
 	"github.com/pkg/errors"
-	"github.com/rs/dnscache"
 	"github.com/valyala/fasthttp"
-	"math"
-	"math/rand"
-	"net"
 	"sync"
 	"time"
 )
@@ -27,73 +22,22 @@ type httpResult struct {
 }
 
 type fastHttpClient struct {
-	clientPool    []*fasthttp.Client
+	clientPool    *clientPool
 	log           *logger.Logger
 	pluginManager plugins.Manager
 	responsePool  *sync.Pool
 }
 
 func newFastHttpClient(log *logger.Logger, pm plugins.Manager, cfg *conf.Config) *fastHttpClient {
-	clientCfg := cfg.Web.Client
-
-	r := &dnscache.Resolver{}
-	go func() {
-		t := time.NewTicker(10 * time.Minute)
-		defer t.Stop()
-		for range t.C {
-			r.Refresh(true)
-		}
-	}()
-	dialer := &fasthttp.TCPDialer{
-		Resolver: &net.Resolver{
-			PreferGo:     true,
-			StrictErrors: false,
-			Dial: func(ctx context.Context, network, address string) (conn net.Conn, err error) {
-				host, port, err := net.SplitHostPort(address)
-				if err != nil {
-					return nil, err
-				}
-				ips, err := r.LookupHost(ctx, host)
-				if err != nil {
-					return nil, err
-				}
-				for _, ip := range ips {
-					var dialer net.Dialer
-					conn, err = dialer.Dial(network, net.JoinHostPort(ip, port))
-					if err == nil {
-						break
-					}
-				}
-				return
-			},
-		},
-	}
-
-	maxConnsPerHostPerClient := int(math.Floor(float64(clientCfg.MaxConnsPerHost / clientPoolSize)))
-
-	clientPool := make([]*fasthttp.Client, clientPoolSize)
-	for i := 0; i < clientPoolSize; i++ {
-		clientPool[i] = &fasthttp.Client{
-			Name:                          fmt.Sprintf("restql-%d", i),
-			NoDefaultUserAgentHeader:      false,
-			DisableHeaderNamesNormalizing: true,
-			Dial:                          dialer.Dial,
-			ReadTimeout:                   clientCfg.ReadTimeout,
-			WriteTimeout:                  clientCfg.WriteTimeout,
-			MaxConnsPerHost:               maxConnsPerHostPerClient,
-			MaxIdleConnDuration:           clientCfg.MaxIdleConnDuration,
-			MaxConnDuration:               clientCfg.MaxConnDuration,
-			MaxConnWaitTimeout:            clientCfg.MaxConnWaitTimeout,
-		}
-	}
-
 	rp := &sync.Pool{
 		New: func() interface{} {
 			return make(chan httpResult)
 		},
 	}
 
-	return &fastHttpClient{clientPool: clientPool, log: log, pluginManager: pm, responsePool: rp}
+	pool := newClientPool(cfg)
+
+	return &fastHttpClient{clientPool: pool, log: log, pluginManager: pm, responsePool: rp}
 }
 
 func (hc *fastHttpClient) Do(ctx context.Context, request domain.HttpRequest) (domain.HttpResponse, error) {
@@ -112,7 +56,7 @@ func (hc *fastHttpClient) Do(ctx context.Context, request domain.HttpRequest) (d
 			return
 		}
 
-		client := hc.pickClient()
+		client := hc.clientPool.Get(request)
 
 		res := fasthttp.AcquireResponse()
 		start := time.Now()
@@ -166,9 +110,4 @@ func (hc *fastHttpClient) Do(ctx context.Context, request domain.HttpRequest) (d
 	hc.pluginManager.RunAfterRequest(requestCtx, request, response, err)
 
 	return response, nil
-}
-
-func (hc *fastHttpClient) pickClient() *fasthttp.Client {
-	n := rand.Intn(clientPoolSize)
-	return hc.clientPool[n]
 }
