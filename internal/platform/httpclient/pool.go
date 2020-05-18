@@ -7,7 +7,6 @@ import (
 	"github.com/rs/dnscache"
 	"github.com/valyala/fasthttp"
 	"net"
-	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -16,7 +15,7 @@ import (
 type clientPool struct {
 	cfg      *conf.Config
 	dialer   *fasthttp.TCPDialer
-	clients  map[string]*fasthttp.HostClient
+	clients  map[string]*fasthttp.PipelineClient
 	mClients sync.Mutex
 }
 
@@ -56,34 +55,34 @@ func newClientPool(cfg *conf.Config) *clientPool {
 
 	return &clientPool{
 		cfg:     cfg,
-		clients: make(map[string]*fasthttp.HostClient),
+		clients: make(map[string]*fasthttp.PipelineClient),
 		dialer:  dialer,
 	}
 }
 
-func (cp *clientPool) Get(request domain.HttpRequest) *fasthttp.HostClient {
+func (cp *clientPool) Get(request domain.HttpRequest) *fasthttp.PipelineClient {
 	clientCfg := cp.cfg.Web.Client
 
 	host := request.Host
 	isTLS := request.Schema == "https"
 
-	var client *fasthttp.HostClient
+	var client *fasthttp.PipelineClient
 
 	client, found := cp.clients[host]
 	if !found {
-		client = &fasthttp.HostClient{
-			Addr:                          addMissingPort(host, isTLS),
-			IsTLS:                         isTLS,
-			Name:                          "restql-" + host,
-			NoDefaultUserAgentHeader:      false,
-			DisableHeaderNamesNormalizing: true,
-			Dial:                          cp.dialer.Dial,
-			ReadTimeout:                   clientCfg.ReadTimeout,
-			WriteTimeout:                  clientCfg.WriteTimeout,
-			MaxConns:                      clientCfg.MaxConnsPerHost,
-			MaxIdleConnDuration:           clientCfg.MaxIdleConnDuration,
-			MaxConnDuration:               clientCfg.MaxConnDuration,
-			MaxConnWaitTimeout:            clientCfg.MaxConnWaitTimeout,
+		client = &fasthttp.PipelineClient{
+			Addr:                addMissingPort(host, isTLS),
+			IsTLS:               isTLS,
+			Dial:                cp.dialer.Dial,
+			ReadTimeout:         clientCfg.ReadTimeout,
+			WriteTimeout:        clientCfg.WriteTimeout,
+			MaxConns:            clientCfg.MaxConnsPerHost,
+			MaxIdleConnDuration: clientCfg.MaxIdleConnDuration,
+			//Name:                          "restql-" + host,
+			//NoDefaultUserAgentHeader:      false,
+			//DisableHeaderNamesNormalizing: true,
+			//MaxConnDuration:               clientCfg.MaxConnDuration,
+			//MaxConnWaitTimeout:            clientCfg.MaxConnWaitTimeout,
 		}
 
 		cp.mClients.Lock()
@@ -99,9 +98,9 @@ func addMissingPort(addr string, isTLS bool) string {
 	if n >= 0 {
 		return addr
 	}
-	port := 80
+	port := "80"
 	if isTLS {
-		port = 443
+		port = "443"
 	}
-	return net.JoinHostPort(addr, strconv.Itoa(port))
+	return net.JoinHostPort(addr, port)
 }
