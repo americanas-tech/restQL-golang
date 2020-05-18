@@ -19,6 +19,7 @@ import (
 
 func main() {
 	runtime.SetMutexProfileFraction(1)
+	runtime.SetBlockProfileRate(1)
 
 	if err := start(); err != nil {
 		fmt.Printf("[ERROR] failed to start api : %v", err)
