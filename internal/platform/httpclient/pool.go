@@ -15,7 +15,7 @@ import (
 type clientPool struct {
 	cfg      *conf.Config
 	dialer   *fasthttp.TCPDialer
-	clients  map[string]*fasthttp.PipelineClient
+	clients  map[string]*fasthttp.HostClient
 	mClients sync.Mutex
 }
 
@@ -55,34 +55,34 @@ func newClientPool(cfg *conf.Config) *clientPool {
 
 	return &clientPool{
 		cfg:     cfg,
-		clients: make(map[string]*fasthttp.PipelineClient),
+		clients: make(map[string]*fasthttp.HostClient),
 		dialer:  dialer,
 	}
 }
 
-func (cp *clientPool) Get(request domain.HttpRequest) *fasthttp.PipelineClient {
+func (cp *clientPool) Get(request domain.HttpRequest) *fasthttp.HostClient {
 	clientCfg := cp.cfg.Web.Client
 
 	host := request.Host
 	isTLS := request.Schema == "https"
 
-	var client *fasthttp.PipelineClient
+	var client *fasthttp.HostClient
 
 	client, found := cp.clients[host]
 	if !found {
-		client = &fasthttp.PipelineClient{
-			Addr:                addMissingPort(host, isTLS),
-			IsTLS:               isTLS,
-			Dial:                cp.dialer.Dial,
-			ReadTimeout:         clientCfg.ReadTimeout,
-			WriteTimeout:        clientCfg.WriteTimeout,
-			MaxConns:            clientCfg.MaxConnsPerHost,
-			MaxIdleConnDuration: clientCfg.MaxIdleConnDuration,
-			//Name:                          "restql-" + host,
-			//NoDefaultUserAgentHeader:      false,
-			//DisableHeaderNamesNormalizing: true,
-			//MaxConnDuration:               clientCfg.MaxConnDuration,
-			//MaxConnWaitTimeout:            clientCfg.MaxConnWaitTimeout,
+		client = &fasthttp.HostClient{
+			Addr:                          addMissingPort(host, isTLS),
+			Name:                          "restql-" + host,
+			NoDefaultUserAgentHeader:      false,
+			DisableHeaderNamesNormalizing: true,
+			IsTLS:                         isTLS,
+			Dial:                          cp.dialer.Dial,
+			ReadTimeout:                   clientCfg.ReadTimeout,
+			WriteTimeout:                  clientCfg.WriteTimeout,
+			MaxConns:                      clientCfg.MaxConnsPerHost,
+			MaxIdleConnDuration:           clientCfg.MaxIdleConnDuration,
+			MaxConnDuration:               clientCfg.MaxConnDuration,
+			MaxConnWaitTimeout:            clientCfg.MaxConnWaitTimeout,
 		}
 
 		cp.mClients.Lock()
