@@ -96,6 +96,7 @@ func (nc *nativeHttpClient) Do(ctx context.Context, request domain.HttpRequest) 
 		errorResponse := makeErrorResponse(requestUrl, duration, err)
 
 		if err, ok := err.(net.Error); ok && err.Timeout() {
+			nc.log.Info("request timed out", "url", requestUrl, "method", request.Method, "duration-ms", duration.Milliseconds())
 			return errorResponse, domain.ErrRequestTimeout
 		}
 
