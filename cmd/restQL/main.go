@@ -36,7 +36,7 @@ func start() error {
 		return err
 	}
 
-	if cfg.Web.Server.Env == "development" {
+	if cfg.Web.Server.EnableFullPprof {
 		runtime.SetMutexProfileFraction(1)
 		runtime.SetBlockProfileRate(1)
 	}
@@ -85,11 +85,11 @@ func start() error {
 		serverErrors <- health.ListenAndServe(":" + serverCfg.ApiHealthAddr)
 	}()
 
-	if serverCfg.Env == "development" {
+	if serverCfg.EnablePprof {
 		debug := &fasthttp.Server{Name: "debug", Handler: web.Debug(log, cfg)}
 		go func() {
-			log.Info("api debug listing", "port", serverCfg.DebugAddr)
-			serverErrors <- debug.ListenAndServe(":" + serverCfg.DebugAddr)
+			log.Info("api debug listing", "port", serverCfg.PropfAddr)
+			serverErrors <- debug.ListenAndServe(":" + serverCfg.PropfAddr)
 		}()
 	}
 

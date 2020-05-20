@@ -34,8 +34,9 @@ type Config struct {
 		Server struct {
 			ApiAddr                 string        `env:"RESTQL_PORT,required"`
 			ApiHealthAddr           string        `env:"RESTQL_HEALTH_PORT,required"`
-			DebugAddr               string        `env:"RESTQL_DEBUG_PORT"`
-			Env                     string        `env:"RESTQL_ENV"`
+			PropfAddr               string        `env:"RESTQL_PPROF_PORT"`
+			EnablePprof             bool          `env:"RESTQL_ENABLE_PPROF"`
+			EnableFullPprof         bool          `env:"RESTQL_ENABLE_FULL_PPROF"`
 			GracefulShutdownTimeout time.Duration `yaml:"gracefulShutdownTimeout"`
 			ReadTimeout             time.Duration `yaml:"readTimeout"`
 
