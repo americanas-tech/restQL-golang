@@ -93,7 +93,7 @@ type Config struct {
 	} `yaml:"plugins"`
 
 	Tenant               string        `env:"RESTQL_TENANT"`
-	ForwardPrefix        string        `yaml:"forwardPrefix" env:"FORWARD_PREFIX"`
+	ForwardPrefix        string        `yaml:"forwardPrefix" env:"RESTQL_FORWARD_PREFIX"`
 	GlobalQueryTimeout   time.Duration `env:"RESTQL_QUERY_GLOBAL_TIMEOUT" envDefault:"30s"`
 	QueryResourceTimeout time.Duration `env:"RESTQL_QUERY_RESOURCE_TIMEOUT" envDefault:"5s"`
 
