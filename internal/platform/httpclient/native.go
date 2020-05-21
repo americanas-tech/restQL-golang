@@ -45,13 +45,13 @@ func newNativeHttpClient(log *logger.Logger, pm plugins.Manager, cfg *conf.Confi
 			if err != nil {
 				return nil, err
 			}
-			ips, err := r.LookupHost(context.Background(), host)
+			ips, err := r.LookupHost(ctx, host)
 			if err != nil {
 				return nil, err
 			}
 			for _, ip := range ips {
 				var dialer net.Dialer
-				conn, err = dialer.Dial(network, net.JoinHostPort(ip, port))
+				conn, err = dialer.DialContext(ctx, network, net.JoinHostPort(ip, port))
 				if err == nil {
 					break
 				}
