@@ -4,18 +4,19 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"github.com/b2wdigital/restQL-golang/internal/domain"
-	"github.com/b2wdigital/restQL-golang/internal/platform/conf"
-	"github.com/b2wdigital/restQL-golang/internal/platform/logger"
-	"github.com/b2wdigital/restQL-golang/internal/platform/plugins"
-	"github.com/pkg/errors"
-	"github.com/rs/dnscache"
 	"io/ioutil"
 	"net"
 	"net/http"
 	"net/url"
 	"strconv"
 	"time"
+
+	"github.com/b2wdigital/restQL-golang/internal/domain"
+	"github.com/b2wdigital/restQL-golang/internal/platform/conf"
+	"github.com/b2wdigital/restQL-golang/internal/platform/logger"
+	"github.com/b2wdigital/restQL-golang/internal/platform/plugins"
+	"github.com/pkg/errors"
+	"github.com/rs/dnscache"
 )
 
 type nativeHttpClient struct {
@@ -25,7 +26,6 @@ type nativeHttpClient struct {
 }
 
 func newNativeHttpClient(log *logger.Logger, pm plugins.Manager, cfg *conf.Config) *nativeHttpClient {
-	clientCfg := cfg.Web.Client
 
 	r := &dnscache.Resolver{}
 	go func() {
@@ -37,12 +37,9 @@ func newNativeHttpClient(log *logger.Logger, pm plugins.Manager, cfg *conf.Confi
 	}()
 
 	t := &http.Transport{
-		Proxy:                 http.ProxyFromEnvironment,
-		MaxConnsPerHost:       clientCfg.MaxConnsPerHost,
-		MaxIdleConnsPerHost:   1024,
-		IdleConnTimeout:       clientCfg.MaxIdleConnDuration,
-		TLSHandshakeTimeout:   10 * time.Second,
-		ExpectContinueTimeout: time.Second,
+		MaxIdleConns:        800,
+		MaxIdleConnsPerHost: 400,
+		MaxConnsPerHost:     2000,
 		DialContext: func(ctx context.Context, network, addr string) (conn net.Conn, err error) {
 			host, port, err := net.SplitHostPort(addr)
 			if err != nil {
@@ -64,7 +61,6 @@ func newNativeHttpClient(log *logger.Logger, pm plugins.Manager, cfg *conf.Confi
 	}
 
 	c := &http.Client{
-		Timeout:   clientCfg.ReadTimeout,
 		Transport: t,
 	}
 
