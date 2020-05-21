@@ -11,7 +11,13 @@ import (
 
 var requestChannelPool = sync.Pool{
 	New: func() interface{} {
-		return make(chan request)
+		return make(chan request, 10)
+	},
+}
+
+var resultChannelPool = sync.Pool{
+	New: func() interface{} {
+		return make(chan result, 10)
 	},
 }
 
@@ -24,12 +30,6 @@ var outputChannelPool = sync.Pool{
 var errorChannelPool = sync.Pool{
 	New: func() interface{} {
 		return make(chan error)
-	},
-}
-
-var resultChannelPool = sync.Pool{
-	New: func() interface{} {
-		return make(chan result)
 	},
 }
 
@@ -50,9 +50,8 @@ func NewRunner(log restql.Logger, executor Executor, globalQueryTimeout time.Dur
 }
 
 func (r Runner) ExecuteQuery(ctx context.Context, query domain.Query, queryCtx domain.QueryContext) (domain.Resources, error) {
-	queryTimeout, ok := r.parseQueryTimeout(query)
-
 	var cancel context.CancelFunc
+	queryTimeout, ok := r.parseQueryTimeout(query)
 	if ok {
 		ctx, cancel = context.WithTimeout(ctx, queryTimeout)
 	} else {
@@ -101,7 +100,6 @@ func (r Runner) ExecuteQuery(ctx context.Context, query domain.Query, queryCtx d
 	case output := <-outputCh:
 		return output, nil
 	case err := <-errorCh:
-		cancel()
 		r.log.Debug("an error occurred when running the query", "error", err)
 		return nil, err
 	case <-ctx.Done():
