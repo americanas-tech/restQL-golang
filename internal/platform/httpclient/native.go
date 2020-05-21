@@ -37,9 +37,9 @@ func newNativeHttpClient(log *logger.Logger, pm plugins.Manager, cfg *conf.Confi
 	}()
 
 	t := &http.Transport{
-		MaxIdleConns:        800,
-		MaxIdleConnsPerHost: 400,
-		MaxConnsPerHost:     2000,
+		MaxIdleConns:        1600,
+		MaxIdleConnsPerHost: 800,
+		MaxConnsPerHost:     4000,
 		DialContext: func(ctx context.Context, network, addr string) (conn net.Conn, err error) {
 			host, port, err := net.SplitHostPort(addr)
 			if err != nil {
