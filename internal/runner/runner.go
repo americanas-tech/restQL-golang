@@ -169,7 +169,10 @@ func (sw *stateWorker) Run() {
 		for resourceId, stmt := range availableResources {
 			resourceId, stmt := resourceId, stmt
 			go func() {
-				sw.requestCh <- request{ResourceIdentifier: resourceId, Statement: stmt}
+				select {
+				case sw.requestCh <- request{ResourceIdentifier: resourceId, Statement: stmt}:
+				case <-sw.ctx.Done():
+				}
 			}()
 		}
 
@@ -207,7 +210,7 @@ func (rw *requestWorker) Run() {
 					if err != nil {
 						rw.errorCh <- err
 					}
-					rw.resultCh <- result{ResourceIdentifier: resourceId, Response: response}
+					writeResult(rw.ctx, rw.resultCh, result{ResourceIdentifier: resourceId, Response: response})
 				}()
 			case []interface{}:
 				go func() {
@@ -215,11 +218,18 @@ func (rw *requestWorker) Run() {
 					if err != nil {
 						rw.errorCh <- err
 					}
-					rw.resultCh <- result{ResourceIdentifier: resourceId, Response: responses}
+					writeResult(rw.ctx, rw.resultCh, result{ResourceIdentifier: resourceId, Response: responses})
 				}()
 			}
 		case <-rw.ctx.Done():
 			return
 		}
+	}
+}
+
+func writeResult(ctx context.Context, out chan result, r result) {
+	select {
+	case out <- r:
+	case <-ctx.Done():
 	}
 }

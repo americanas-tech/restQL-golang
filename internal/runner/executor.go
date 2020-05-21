@@ -9,8 +9,6 @@ import (
 	"time"
 )
 
-var errNoTimeoutProvided = errors.New("no timeout provided")
-
 type Executor struct {
 	client          domain.HttpClient
 	log             restql.Logger
@@ -64,11 +62,6 @@ func (e Executor) DoMultiplexedStatement(ctx context.Context, statements []inter
 	for i := range responseChans {
 		responseChans[i] = make(chan interface{}, 1)
 	}
-	defer func() {
-		for _, ch := range responseChans {
-			close(ch)
-		}
-	}()
 
 	var g errgroup.Group
 
@@ -101,17 +94,9 @@ func (e Executor) DoMultiplexedStatement(ctx context.Context, statements []inter
 func (e Executor) doCurrentStatement(stmt interface{}, ctx context.Context, queryCtx domain.QueryContext) (interface{}, error) {
 	switch stmt := stmt.(type) {
 	case domain.Statement:
-		r, err := e.DoStatement(ctx, stmt, queryCtx)
-		if err != nil {
-			return nil, err
-		}
-		return r, nil
+		return e.DoStatement(ctx, stmt, queryCtx)
 	case []interface{}:
-		r, err := e.DoMultiplexedStatement(ctx, stmt, queryCtx)
-		if err != nil {
-			return nil, err
-		}
-		return r, nil
+		return e.DoMultiplexedStatement(ctx, stmt, queryCtx)
 	default:
 		return nil, errors.Errorf("unknown statement type: %T", stmt)
 	}
