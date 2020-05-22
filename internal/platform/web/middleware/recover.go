@@ -23,6 +23,8 @@ func (r Recover) Apply(h fasthttp.RequestHandler) fasthttp.RequestHandler {
 				err := errors.Errorf("reason : %v", reason)
 				r.log.Error("application recovered from panic", err, "stack", string(debug.Stack()))
 
+				r.log.Error("returning 500 response", err)
+
 				ctx.SetStatusCode(http.StatusInternalServerError)
 			}
 		}()

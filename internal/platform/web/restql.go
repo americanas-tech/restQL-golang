@@ -44,7 +44,7 @@ func (r RestQl) ValidateQuery(ctx *fasthttp.RequestCtx) error {
 			Status: http.StatusUnprocessableEntity,
 		}
 
-		return RespondError(ctx, e)
+		return RespondError(ctx, e, r.log)
 	}
 
 	return Respond(ctx, nil, http.StatusOK, nil)
@@ -54,7 +54,7 @@ func (r RestQl) RunAdHocQuery(ctx *fasthttp.RequestCtx) error {
 	tenant, err := r.makeTenant(ctx)
 	if err != nil {
 		r.log.Error("failed to build query options", err)
-		return RespondError(ctx, NewRequestError(err, http.StatusUnprocessableEntity))
+		return RespondError(ctx, NewRequestError(err, http.StatusUnprocessableEntity), r.log)
 	}
 	options := domain.QueryOptions{Tenant: tenant}
 
@@ -69,15 +69,17 @@ func (r RestQl) RunAdHocQuery(ctx *fasthttp.RequestCtx) error {
 
 		switch err := err.(type) {
 		case eval.ValidationError:
-			return RespondError(ctx, NewRequestError(err, http.StatusUnprocessableEntity))
+			return RespondError(ctx, NewRequestError(err, http.StatusUnprocessableEntity), r.log)
 		case eval.NotFoundError:
-			return RespondError(ctx, NewRequestError(err, http.StatusNotFound))
+			return RespondError(ctx, NewRequestError(err, http.StatusNotFound), r.log)
 		case eval.ParserError:
-			return RespondError(ctx, NewRequestError(err, http.StatusInternalServerError))
+			r.log.Error("returning 500 response", err)
+			return RespondError(ctx, NewRequestError(err, http.StatusInternalServerError), r.log)
 		case eval.TimeoutError:
-			return RespondError(ctx, NewRequestError(err, http.StatusRequestTimeout))
+			return RespondError(ctx, NewRequestError(err, http.StatusRequestTimeout), r.log)
 		default:
-			return RespondError(ctx, err)
+			r.log.Error("returning 500 response", err)
+			return RespondError(ctx, err, r.log)
 		}
 	}
 
@@ -89,7 +91,7 @@ func (r RestQl) RunSavedQuery(ctx *fasthttp.RequestCtx) error {
 	options, err := r.makeQueryOptions(ctx)
 	if err != nil {
 		r.log.Error("failed to build query options", err)
-		return RespondError(ctx, NewRequestError(err, http.StatusUnprocessableEntity))
+		return RespondError(ctx, NewRequestError(err, http.StatusUnprocessableEntity), r.log)
 	}
 
 	input := r.makeQueryInput(ctx)
@@ -101,17 +103,19 @@ func (r RestQl) RunSavedQuery(ctx *fasthttp.RequestCtx) error {
 
 		switch err := err.(type) {
 		case eval.ValidationError:
-			return RespondError(ctx, NewRequestError(err, http.StatusUnprocessableEntity))
+			return RespondError(ctx, NewRequestError(err, http.StatusUnprocessableEntity), r.log)
 		case eval.NotFoundError:
-			return RespondError(ctx, NewRequestError(err, http.StatusNotFound))
+			return RespondError(ctx, NewRequestError(err, http.StatusNotFound), r.log)
 		case eval.ParserError:
-			return RespondError(ctx, NewRequestError(err, http.StatusInternalServerError))
+			r.log.Error("returning 500 response", err)
+			return RespondError(ctx, NewRequestError(err, http.StatusInternalServerError), r.log)
 		case eval.TimeoutError:
-			return RespondError(ctx, NewRequestError(err, http.StatusRequestTimeout))
+			return RespondError(ctx, NewRequestError(err, http.StatusRequestTimeout), r.log)
 		case eval.MappingError:
-			return RespondError(ctx, NewRequestError(err, http.StatusInternalServerError))
+			r.log.Error("returning 500 response", err)
+			return RespondError(ctx, NewRequestError(err, http.StatusInternalServerError), r.log)
 		default:
-			return RespondError(ctx, err)
+			return RespondError(ctx, err, r.log)
 		}
 	}
 

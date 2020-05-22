@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"github.com/b2wdigital/restQL-golang/internal/domain"
+	"github.com/b2wdigital/restQL-golang/internal/platform/logger"
 	"github.com/valyala/fasthttp"
 	"net/http"
 	"strconv"
@@ -26,7 +27,7 @@ func Respond(ctx *fasthttp.RequestCtx, data interface{}, statusCode int, headers
 	return nil
 }
 
-func RespondError(ctx *fasthttp.RequestCtx, err error) error {
+func RespondError(ctx *fasthttp.RequestCtx, err error, log *logger.Logger) error {
 
 	// If the error was of the type *Error, the handler has
 	// a specific status code and error to return.
@@ -39,6 +40,8 @@ func RespondError(ctx *fasthttp.RequestCtx, err error) error {
 		}
 		return nil
 	}
+
+	log.Error("returning 500 response", err)
 
 	er := ErrorResponse{
 		Error: http.StatusText(http.StatusInternalServerError),
