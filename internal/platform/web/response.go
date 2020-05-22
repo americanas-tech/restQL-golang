@@ -44,7 +44,7 @@ func RespondError(ctx *fasthttp.RequestCtx, err error, log *logger.Logger) error
 	log.Error("returning 500 response", err)
 
 	er := ErrorResponse{
-		Error: http.StatusText(http.StatusInternalServerError),
+		Error: err.Error(),
 	}
 	if err := Respond(ctx, er, http.StatusInternalServerError, nil); err != nil {
 		return err
