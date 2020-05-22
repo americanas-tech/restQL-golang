@@ -8,6 +8,7 @@ import (
 	"github.com/b2wdigital/restQL-golang/internal/platform/plugins"
 	"github.com/pkg/errors"
 	"github.com/valyala/fasthttp"
+	"net/http"
 	"sync"
 	"time"
 )
@@ -75,7 +76,7 @@ func (hc *fastHttpClient) Do(ctx context.Context, request domain.HttpRequest) (d
 	switch {
 	case hr.err == fasthttp.ErrTimeout:
 		hc.log.Info("request timed out", "url", hr.target, "method", request.Method, "duration-ms", hr.duration.Milliseconds())
-		response := makeErrorResponse(hr.target, hr.duration, hr.err)
+		response := makeErrorResponse(hr.target, hr.duration, http.StatusRequestTimeout)
 
 		fasthttp.ReleaseResponse(hr.response)
 
@@ -83,7 +84,7 @@ func (hc *fastHttpClient) Do(ctx context.Context, request domain.HttpRequest) (d
 
 		return response, domain.ErrRequestTimeout
 	case hr.err != nil:
-		response := makeErrorResponse(hr.target, hr.duration, hr.err)
+		response := makeErrorResponse(hr.target, hr.duration, 0)
 
 		if hr.response != nil {
 			fasthttp.ReleaseResponse(hr.response)
@@ -96,7 +97,7 @@ func (hc *fastHttpClient) Do(ctx context.Context, request domain.HttpRequest) (d
 
 	response, err := makeResponse(hr.target, hr.response, hr.duration)
 	if err != nil {
-		response = makeErrorResponse(hr.target, hr.duration, err)
+		response = makeErrorResponse(hr.target, hr.duration, 0)
 
 		fasthttp.ReleaseResponse(hr.response)
 

@@ -94,7 +94,7 @@ func (nc *nativeHttpClient) Do(ctx context.Context, request domain.HttpRequest) 
 	response, err := nc.client.Do(req)
 	duration := time.Since(start)
 	if err != nil {
-		errorResponse := makeErrorResponse(requestUrl, duration, err)
+		errorResponse := makeErrorResponse(requestUrl, duration, http.StatusRequestTimeout)
 
 		if err, ok := err.(net.Error); ok && err.Timeout() {
 			nc.log.Info("request timed out", "url", requestUrl, "method", request.Method, "duration-ms", duration.Milliseconds())
@@ -113,7 +113,7 @@ func (nc *nativeHttpClient) Do(ctx context.Context, request domain.HttpRequest) 
 
 	body, err := unmarshal(response)
 	if err != nil {
-		return makeErrorResponse(requestUrl, duration, err), err
+		return makeErrorResponse(requestUrl, duration, 0), err
 	}
 
 	hr := make(map[string]string)
