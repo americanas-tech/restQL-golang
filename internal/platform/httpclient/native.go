@@ -26,6 +26,7 @@ type nativeHttpClient struct {
 }
 
 func newNativeHttpClient(log *logger.Logger, pm plugins.Manager, cfg *conf.Config) *nativeHttpClient {
+	clientCfg := cfg.Web.Client
 
 	r := &dnscache.Resolver{}
 	go func() {
@@ -36,10 +37,14 @@ func newNativeHttpClient(log *logger.Logger, pm plugins.Manager, cfg *conf.Confi
 		}
 	}()
 
+	dialer := net.Dialer{
+		Timeout: clientCfg.ConnTimeout,
+	}
+
 	t := &http.Transport{
-		MaxIdleConns:        800,
-		MaxIdleConnsPerHost: 400,
-		MaxConnsPerHost:     3000,
+		MaxIdleConns:        clientCfg.MaxIdleConns,
+		MaxIdleConnsPerHost: clientCfg.MaxIdleConnsPerHost,
+		MaxConnsPerHost:     clientCfg.MaxConnsPerHost,
 		DialContext: func(ctx context.Context, network, addr string) (conn net.Conn, err error) {
 			host, port, err := net.SplitHostPort(addr)
 			if err != nil {
@@ -50,7 +55,6 @@ func newNativeHttpClient(log *logger.Logger, pm plugins.Manager, cfg *conf.Confi
 				return nil, err
 			}
 			for _, ip := range ips {
-				var dialer net.Dialer
 				conn, err = dialer.DialContext(ctx, network, net.JoinHostPort(ip, port))
 				if err == nil {
 					break
@@ -61,6 +65,7 @@ func newNativeHttpClient(log *logger.Logger, pm plugins.Manager, cfg *conf.Confi
 	}
 
 	c := &http.Client{
+		Timeout:   clientCfg.MaxRequestTimeout,
 		Transport: t,
 	}
 

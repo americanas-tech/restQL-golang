@@ -48,11 +48,16 @@ type Config struct {
 		} `yaml:"server"`
 
 		Client struct {
+			ConnTimeout         time.Duration `yaml:"connectionsTimeout"`
+			MaxRequestTimeout   time.Duration `yaml:"maxRequestTimeout"`
+			MaxConnsPerHost     int           `yaml:"maxConnectionsPerHost"`
+			MaxIdleConns        int           `yaml:"maxIdleConnections"`
+			MaxIdleConnsPerHost int           `yaml:"maxIdleConnectionsPerHost"`
+
 			ReadTimeout         time.Duration `yaml:"readTimeout"`
 			WriteTimeout        time.Duration `yaml:"writeTimeout"`
 			MaxConnDuration     time.Duration `yaml:"maxConnectionDuration"`
 			MaxConnWaitTimeout  time.Duration `yaml:"maxConnectionWaitTimeout"`
-			MaxConnsPerHost     int           `yaml:"maxConnectionsPerHost"`
 			MaxIdleConnDuration time.Duration `yaml:"maxIdleConnectionDuration"`
 		} `yaml:"client"`
 	} `yaml:"web"`
