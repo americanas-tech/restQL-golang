@@ -35,7 +35,7 @@ const lexerDefinition = `
 		Float = [+-]?[0-9]+[.]{1}[0-9]+
 		Int = [-+]?[0-9]+
 		String = ".*?"
-		Ident = [A-Za-z_-]+
+		Ident = [A-Za-z0-9_-]+
 
 		Equal = =
 		Comment = \/\/(.*)?
@@ -101,7 +101,7 @@ type Filter struct {
 }
 
 type WithItem struct {
-	Key     string `@Ident Equal`
+	Key     string `@(Ident (Dot Ident)*) Equal`
 	Value   Value  `@@ (Arrow (`
 	Flatten bool   `	@Flatten |`
 	Base64  bool   `	@Base64  |`

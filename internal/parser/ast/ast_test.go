@@ -85,12 +85,41 @@ func TestAstGenerator(t *testing.T) {
 			`from hero with id = 1 name = "batman"`,
 		},
 		{
-			"Get query with multiple parameters delimited by new line",
+			"Get query with multiple parameters delimited by comma and using key with dots",
 			ast.Query{Blocks: []ast.Block{{Method: ast.FromMethod, Resource: "hero", Qualifiers: []ast.Qualifier{{With: []ast.WithItem{
 				{Key: "id", Value: ast.Value{Primitive: &ast.Primitive{Int: Int(1)}}},
 				{Key: "name", Value: ast.Value{Primitive: &ast.Primitive{String: String("batman")}}},
 			}}}}}},
 			fmt.Sprintf("from hero with id = 1\nname = \"batman\""),
+		},
+		{
+			"Get query with string query parameters and key using dot",
+			ast.Query{Blocks: []ast.Block{{Method: ast.FromMethod, Resource: "cart", Qualifiers: []ast.Qualifier{{With: []ast.WithItem{{Key: "hero.name", Value: ast.Value{Primitive: &ast.Primitive{String: String("batman")}}}}}}}}},
+			`from cart with hero.name = "batman"`,
+		},
+		{
+			"Get query with multiple parameters keys using dot",
+			ast.Query{Blocks: []ast.Block{{Method: ast.FromMethod, Resource: "hero", Qualifiers: []ast.Qualifier{{With: []ast.WithItem{
+				{Key: "hero.id", Value: ast.Value{Primitive: &ast.Primitive{Int: Int(1)}}},
+				{Key: "hero.height", Value: ast.Value{Primitive: &ast.Primitive{Float: Float(10.5)}}},
+			}}}}}},
+			`from hero with hero.id = 1, hero.height = 10.5`,
+		},
+		{
+			"Get query with multiple parameters delimited by space and using keys with dots",
+			ast.Query{Blocks: []ast.Block{{Method: ast.FromMethod, Resource: "hero", Qualifiers: []ast.Qualifier{{With: []ast.WithItem{
+				{Key: "hero.id", Value: ast.Value{Primitive: &ast.Primitive{Int: Int(1)}}},
+				{Key: "hero.name", Value: ast.Value{Primitive: &ast.Primitive{String: String("batman")}}},
+			}}}}}},
+			`from hero with hero.id = 1 hero.name = "batman"`,
+		},
+		{
+			"Get query with multiple parameters delimited by new line and using keys with dots",
+			ast.Query{Blocks: []ast.Block{{Method: ast.FromMethod, Resource: "hero", Qualifiers: []ast.Qualifier{{With: []ast.WithItem{
+				{Key: "hero.id", Value: ast.Value{Primitive: &ast.Primitive{Int: Int(1)}}},
+				{Key: "hero.name", Value: ast.Value{Primitive: &ast.Primitive{String: String("batman")}}},
+			}}}}}},
+			fmt.Sprintf("from hero with hero.id = 1\nhero.name = \"batman\""),
 		},
 		{
 			"Get query with float query parameters",
