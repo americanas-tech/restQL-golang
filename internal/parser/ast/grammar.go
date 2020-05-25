@@ -13,7 +13,6 @@ const lexerDefinition = `
 		Hidden = hidden
 		IgnoreErrors = ignore-errors
 		MaxAge = max-age
-		CacheControl = cache-control
 		SMaxAge = s-max-age
 
 		Arrow = ->
@@ -67,7 +66,7 @@ type Query struct {
 }
 
 type Use struct {
-	Key   string   `(@MaxAge | @CacheControl | @SMaxAge | @Timeout) Equal`
+	Key   string   `(@MaxAge | @SMaxAge | @Timeout) Equal`
 	Value UseValue `@@`
 }
 
