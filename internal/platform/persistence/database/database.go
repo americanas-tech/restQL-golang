@@ -45,7 +45,7 @@ func WithDatabaseName(name string) Option {
 
 type Database interface {
 	FindMappingsForTenant(ctx context.Context, tenantId string) ([]domain.Mapping, error)
-	FindQuery(ctx context.Context, namespace string, name string, revision int) (string, error)
+	FindQuery(ctx context.Context, namespace string, name string, revision int) (domain.SavedQuery, error)
 }
 
 func New(log *logger.Logger, connectionString string, optionList ...Option) (Database, error) {
@@ -87,6 +87,6 @@ func (n noOpDatabase) FindMappingsForTenant(ctx context.Context, tenantId string
 	return []domain.Mapping{}, ErrNoDatabase
 }
 
-func (n noOpDatabase) FindQuery(ctx context.Context, namespace string, name string, revision int) (string, error) {
-	return "", ErrNoDatabase
+func (n noOpDatabase) FindQuery(ctx context.Context, namespace string, name string, revision int) (domain.SavedQuery, error) {
+	return domain.SavedQuery{}, ErrNoDatabase
 }

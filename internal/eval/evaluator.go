@@ -51,12 +51,16 @@ func (e Evaluator) SavedQuery(ctx context.Context, queryOpts domain.QueryOptions
 		return nil, err
 	}
 
-	queryTxt, err := e.queryReader.Get(ctx, queryOpts.Namespace, queryOpts.Id, queryOpts.Revision)
+	savedQuery, err := e.queryReader.Get(ctx, queryOpts.Namespace, queryOpts.Id, queryOpts.Revision)
 	if err != nil {
 		return nil, err
 	}
 
-	return e.evaluateQuery(ctx, queryTxt, queryOpts, queryInput)
+	if savedQuery.Deprecated {
+		return nil, domain.ErrQueryRevisionDeprecated{Revision: queryOpts.Revision}
+	}
+
+	return e.evaluateQuery(ctx, savedQuery.Text, queryOpts, queryInput)
 }
 
 func (e Evaluator) evaluateQuery(ctx context.Context, queryTxt string, queryOpts domain.QueryOptions, queryInput domain.QueryInput) (domain.Resources, error) {

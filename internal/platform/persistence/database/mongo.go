@@ -14,7 +14,8 @@ type tenant struct {
 }
 
 type revision struct {
-	Text string
+	Text       string
+	Deprecated bool
 }
 
 type query struct {
@@ -63,7 +64,7 @@ func (md mongoDatabase) FindMappingsForTenant(ctx context.Context, tenantId stri
 	return result, nil
 }
 
-func (md mongoDatabase) FindQuery(ctx context.Context, namespace string, name string, revision int) (string, error) {
+func (md mongoDatabase) FindQuery(ctx context.Context, namespace string, name string, revision int) (domain.SavedQuery, error) {
 	//todo: log if timeout is zero
 	queryTimeout := md.options.QueryTimeout
 	if queryTimeout > 0 {
@@ -76,14 +77,14 @@ func (md mongoDatabase) FindQuery(ctx context.Context, namespace string, name st
 	collection := md.client.Database(md.options.DatabaseName).Collection("query")
 	err := collection.FindOne(ctx, bson.M{"name": name, "namespace": namespace}).Decode(&q)
 	if err != nil {
-		return "", err
+		return domain.SavedQuery{}, err
 	}
 
 	if q.Size < revision || revision < 0 {
-		return "", errors.Errorf("invalid revision for query %s/%s : major revision %d : given revision %d", namespace, name, q.Size, revision)
+		return domain.SavedQuery{}, errors.Errorf("invalid revision for query %s/%s : major revision %d : given revision %d", namespace, name, q.Size, revision)
 	}
 
 	r := q.Revisions[revision-1]
 
-	return r.Text, nil
+	return domain.SavedQuery{Text: r.Text, Deprecated: r.Deprecated}, nil
 }

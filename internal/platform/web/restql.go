@@ -110,6 +110,8 @@ func (r RestQl) RunSavedQuery(ctx *fasthttp.RequestCtx) error {
 			return RespondError(ctx, NewRequestError(err, http.StatusRequestTimeout))
 		case eval.MappingError:
 			return RespondError(ctx, NewRequestError(err, http.StatusInternalServerError))
+		case domain.ErrQueryRevisionDeprecated:
+			return RespondError(ctx, NewRequestError(err, http.StatusBadRequest))
 		default:
 			return RespondError(ctx, err)
 		}

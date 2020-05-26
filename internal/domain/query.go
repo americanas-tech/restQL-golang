@@ -1,6 +1,9 @@
 package domain
 
-import "regexp"
+import (
+	"fmt"
+	"regexp"
+)
 
 const (
 	FromMethod   string = "from"
@@ -77,4 +80,17 @@ type QueryContext struct {
 	Mappings map[string]Mapping
 	Options  QueryOptions
 	Input    QueryInput
+}
+
+type SavedQuery struct {
+	Text       string
+	Deprecated bool
+}
+
+type ErrQueryRevisionDeprecated struct {
+	Revision int
+}
+
+func (e ErrQueryRevisionDeprecated) Error() string {
+	return fmt.Sprintf("the revision %d is deprecated", e.Revision)
 }

@@ -202,7 +202,7 @@ func (s stubDatabase) FindMappingsForTenant(ctx context.Context, tenantId string
 	return s.findMappingsForTenant, nil
 }
 
-func (s stubDatabase) FindQuery(ctx context.Context, namespace string, name string, revision int) (string, error) {
+func (s stubDatabase) FindQuery(ctx context.Context, namespace string, name string, revision int) (domain.SavedQuery, error) {
 	return s.findQuery, nil
 }
 

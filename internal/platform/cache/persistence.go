@@ -64,14 +64,14 @@ func NewQueryReaderCache(log *logger.Logger, qr persistence.QueryReader, c *Cach
 	return &QueryReaderCache{log: log, qr: qr, cache: c}
 }
 
-func (c *QueryReaderCache) Get(ctx context.Context, namespace, id string, revision int) (string, error) {
+func (c *QueryReaderCache) Get(ctx context.Context, namespace, id string, revision int) (domain.SavedQuery, error) {
 	cacheKey := cacheQueryKey{namespace: namespace, id: id, revision: revision}
 	result, err := c.cache.Get(ctx, cacheKey)
 	if err != nil {
-		return "", err
+		return domain.SavedQuery{}, err
 	}
 
-	query, ok := result.(string)
+	query, ok := result.(domain.SavedQuery)
 	if !ok {
 		c.log.Info("failed to convert cache content", "content", result)
 	}
