@@ -5,13 +5,13 @@ import (
 	"strconv"
 )
 
-func ResolveVariables(resources domain.Resources, params map[string]interface{}) domain.Resources {
+func ResolveVariables(resources domain.Resources, input domain.QueryInput) domain.Resources {
 	for key, statement := range resources {
 		if statement, ok := statement.(domain.Statement); ok {
-			statement.With = resolveWith(statement.With, params)
-			statement.Timeout = resolveTimeout(statement.Timeout, params)
-			statement.Headers = resolveHeaders(statement.Headers, params)
-			statement.CacheControl = resolveCacheControl(statement.CacheControl, params)
+			statement.With = resolveWith(statement.With, input)
+			statement.Timeout = resolveTimeout(statement.Timeout, input)
+			statement.Headers = resolveHeaders(statement.Headers, input)
+			statement.CacheControl = resolveCacheControl(statement.CacheControl, input)
 
 			resources[key] = statement
 		}
@@ -20,7 +20,7 @@ func ResolveVariables(resources domain.Resources, params map[string]interface{})
 	return resources
 }
 
-func resolveWith(with domain.Params, params map[string]interface{}) domain.Params {
+func resolveWith(with domain.Params, input domain.QueryInput) domain.Params {
 	if with == nil {
 		return nil
 	}
@@ -30,18 +30,18 @@ func resolveWith(with domain.Params, params map[string]interface{}) domain.Param
 	for key, value := range with {
 		switch value := value.(type) {
 		case domain.Variable:
-			paramValue, ok := params[value.Target]
+			resolvedValue, ok := getUniqueParamValue(value.Target, input)
 			if !ok {
 				continue
 			}
 
-			result[key] = paramValue
+			result[key] = resolvedValue
 		case domain.Chain:
-			result[key] = resolveChain(value, params)
+			result[key] = resolveChain(value, input)
 		case map[string]interface{}:
-			result[key] = resolveComplexWithParam(value, params)
+			result[key] = resolveComplexWithParam(value, input)
 		case []interface{}:
-			result[key] = resolveListWithParam(value, params)
+			result[key] = resolveListWithParam(value, input)
 		default:
 			result[key] = value
 		}
@@ -50,19 +50,19 @@ func resolveWith(with domain.Params, params map[string]interface{}) domain.Param
 	return result
 }
 
-func resolveListWithParam(list []interface{}, parameters map[string]interface{}) interface{} {
+func resolveListWithParam(list []interface{}, input domain.QueryInput) interface{} {
 	l := make([]interface{}, len(list))
 	for i, val := range list {
 		switch val := val.(type) {
 		case domain.Variable:
-			paramValue, ok := parameters[val.Target]
+			value, ok := getUniqueParamValue(val.Target, input)
 			if !ok {
 				continue
 			}
 
-			l[i] = paramValue
+			l[i] = value
 		case []interface{}:
-			l[i] = resolveListWithParam(val, parameters)
+			l[i] = resolveListWithParam(val, input)
 		default:
 			l[i] = val
 		}
@@ -71,19 +71,19 @@ func resolveListWithParam(list []interface{}, parameters map[string]interface{})
 	return l
 }
 
-func resolveComplexWithParam(object map[string]interface{}, parameters map[string]interface{}) interface{} {
+func resolveComplexWithParam(object map[string]interface{}, input domain.QueryInput) interface{} {
 	m := make(map[string]interface{})
 	for key, val := range object {
 		switch val := val.(type) {
 		case domain.Variable:
-			paramValue, ok := parameters[val.Target]
+			value, ok := getUniqueParamValue(val.Target, input)
 			if !ok {
 				continue
 			}
 
-			m[key] = paramValue
+			m[key] = value
 		case map[string]interface{}:
-			m[key] = resolveComplexWithParam(val, parameters)
+			m[key] = resolveComplexWithParam(val, input)
 		default:
 			m[key] = val
 		}
@@ -92,12 +92,12 @@ func resolveComplexWithParam(object map[string]interface{}, parameters map[strin
 	return m
 }
 
-func resolveChain(chain domain.Chain, params map[string]interface{}) domain.Chain {
+func resolveChain(chain domain.Chain, input domain.QueryInput) domain.Chain {
 	result := make(domain.Chain, len(chain))
 	for i, pathItem := range chain {
 		switch pathItem := pathItem.(type) {
 		case domain.Variable:
-			paramValue, ok := getUniqueParamValue(pathItem.Target, params)
+			paramValue, ok := getUniqueParamValue(pathItem.Target, input)
 			if !ok {
 				continue
 			}
@@ -111,12 +111,12 @@ func resolveChain(chain domain.Chain, params map[string]interface{}) domain.Chai
 	return result
 }
 
-func resolveCacheControl(cacheControl domain.CacheControl, params map[string]interface{}) domain.CacheControl {
+func resolveCacheControl(cacheControl domain.CacheControl, input domain.QueryInput) domain.CacheControl {
 	var result domain.CacheControl
 
 	switch value := cacheControl.MaxAge.(type) {
 	case domain.Variable:
-		paramValue, ok := getUniqueParamValue(value.Target, params)
+		paramValue, ok := getUniqueParamValue(value.Target, input)
 		if !ok {
 			result.MaxAge = nil
 		}
@@ -133,7 +133,7 @@ func resolveCacheControl(cacheControl domain.CacheControl, params map[string]int
 
 	switch value := cacheControl.SMaxAge.(type) {
 	case domain.Variable:
-		paramValue, ok := getUniqueParamValue(value.Target, params)
+		paramValue, ok := getUniqueParamValue(value.Target, input)
 		if !ok {
 			result.SMaxAge = nil
 		}
@@ -151,7 +151,7 @@ func resolveCacheControl(cacheControl domain.CacheControl, params map[string]int
 	return result
 }
 
-func resolveHeaders(headers map[string]interface{}, params map[string]interface{}) map[string]interface{} {
+func resolveHeaders(headers map[string]interface{}, input domain.QueryInput) map[string]interface{} {
 	if headers == nil {
 		return nil
 	}
@@ -161,7 +161,7 @@ func resolveHeaders(headers map[string]interface{}, params map[string]interface{
 	for key, value := range headers {
 		switch value := value.(type) {
 		case domain.Variable:
-			paramValue, ok := getUniqueParamValue(value.Target, params)
+			paramValue, ok := getUniqueParamValue(value.Target, input)
 			if !ok {
 				continue
 			}
@@ -175,10 +175,10 @@ func resolveHeaders(headers map[string]interface{}, params map[string]interface{
 	return result
 }
 
-func resolveTimeout(timeout interface{}, params map[string]interface{}) interface{} {
+func resolveTimeout(timeout interface{}, input domain.QueryInput) interface{} {
 	switch timeout := timeout.(type) {
 	case domain.Variable:
-		paramValue, ok := getUniqueParamValue(timeout.Target, params)
+		paramValue, ok := getUniqueParamValue(timeout.Target, input)
 		if !ok {
 			return nil
 		}
@@ -196,10 +196,11 @@ func resolveTimeout(timeout interface{}, params map[string]interface{}) interfac
 	}
 }
 
-func getUniqueParamValue(name string, params map[string]interface{}) (string, bool) {
-	value, ok := params[name]
+func getUniqueParamValue(name string, input domain.QueryInput) (string, bool) {
+	value, ok := input.Params[name]
 	if !ok {
-		return "", false
+		headerValue, found := input.Headers[name]
+		return headerValue, found
 	}
 
 	switch value := value.(type) {
