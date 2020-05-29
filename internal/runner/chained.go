@@ -96,10 +96,21 @@ func resolveWithMultiplexedRequests(path []string, doneRequests domain.DoneResou
 }
 
 func resolveWithSingleRequest(path []string, done domain.DoneResource) interface{} {
-	if done.Status > 199 && done.Status < 400 {
-		return getValue(path, done.ResponseBody)
+	if done.Status < 200 || done.Status >= 400 {
+		return EmptyChained
 	}
-	return EmptyChained
+
+	valueFromBody, found := getValueFromBody(path, done.ResponseBody)
+	if found {
+		return valueFromBody
+	}
+
+	valueFromHeader, found := done.ResponseHeaders[path[0]]
+	if found {
+		return valueFromHeader
+	}
+
+	return nil
 }
 
 func toPath(chain domain.Chain) []string {
@@ -110,21 +121,26 @@ func toPath(chain domain.Chain) []string {
 	return r
 }
 
-func getValue(pathToValue []string, b domain.Body) interface{} {
+func getValueFromBody(pathToValue []string, b domain.Body) (interface{}, bool) {
 	if len(pathToValue) == 0 {
-		return b
+		return b, true
 	}
 
 	switch body := b.(type) {
 	case map[string]interface{}:
-		return getValue(pathToValue[1:], body[pathToValue[0]])
+		v, found := body[pathToValue[0]]
+		if !found {
+			return nil, false
+		}
+
+		return getValueFromBody(pathToValue[1:], v)
 	case []interface{}:
 		result := make([]interface{}, len(body))
 		for i, v := range body {
-			result[i] = getValue(pathToValue, v)
+			result[i], _ = getValueFromBody(pathToValue, v)
 		}
-		return result
+		return result, true
 	default:
-		return body
+		return body, true
 	}
 }

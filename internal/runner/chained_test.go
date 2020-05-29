@@ -66,10 +66,19 @@ func TestResolveChainedValues(t *testing.T) {
 			}},
 		},
 		{
-			"Returns a statement with single list value",
+			"Returns a statement with single list value 01",
 			domain.Resources{"resource-name": domain.Statement{Resource: "resource-name", With: domain.Params{"id": []interface{}{float64(1), float64(2)}, "name": []interface{}{"a", "b"}}}},
 			domain.Resources{"resource-name": domain.Statement{Resource: "resource-name", With: domain.Params{"id": domain.Chain{"done-resource", "id"}, "name": []interface{}{"a", "b"}}}},
 			domain.Resources{"done-resource": domain.DoneResource{Status: 200, ResponseBody: test.Unmarshal(`{"id": [1,2]}`)}},
+		},
+		{
+			"Returns a statement with single list value",
+			domain.Resources{"resource-name": domain.Statement{Resource: "resource-name", With: domain.Params{"id": []interface{}{float64(1), nil}, "name": []interface{}{"a", "b"}}}},
+			domain.Resources{"resource-name": domain.Statement{Resource: "resource-name", With: domain.Params{"id": domain.Chain{"done-resource", "id"}, "name": []interface{}{"a", "b"}}}},
+			domain.Resources{"done-resource": domain.DoneResources{
+				domain.DoneResource{Status: 200, ResponseBody: test.Unmarshal(`{"id":1,"class":"rest"}`)},
+				domain.DoneResource{Status: 200, ResponseBody: test.Unmarshal(`{"id":null,"class":"rest"}`)},
+			}},
 		},
 		{
 			"Returns a statement with multiple list value",
@@ -85,15 +94,6 @@ func TestResolveChainedValues(t *testing.T) {
 			domain.Resources{"resource-name": domain.Statement{Resource: "resource-name", With: domain.Params{"id": domain.Chain{"done-resource", "sidekickId"}}}},
 			domain.Resources{"done-resource": domain.DoneResources{
 				domain.DoneResource{Status: 200, ResponseBody: test.Unmarshal(`[{"id":"A","sidekickId":[1,2]},{"id":"B","sidekickId":[3,4]}]`)},
-			}},
-		},
-		{
-			"Returns a statement with single list value",
-			domain.Resources{"resource-name": domain.Statement{Resource: "resource-name", With: domain.Params{"id": []interface{}{float64(1), nil}, "name": []interface{}{"a", "b"}}}},
-			domain.Resources{"resource-name": domain.Statement{Resource: "resource-name", With: domain.Params{"id": domain.Chain{"done-resource", "id"}, "name": []interface{}{"a", "b"}}}},
-			domain.Resources{"done-resource": domain.DoneResources{
-				domain.DoneResource{Status: 200, ResponseBody: test.Unmarshal(`{"id":1,"class":"rest"}`)},
-				domain.DoneResource{Status: 200, ResponseBody: test.Unmarshal(`{"id":null,"class":"rest"}`)},
 			}},
 		},
 		{
@@ -204,6 +204,12 @@ func TestResolveChainedValues(t *testing.T) {
 			domain.Resources{"resource-name": domain.Statement{Resource: "resource-name", With: domain.Params{"country": map[string]interface{}{"code": domain.Flatten{Target: "USA"}}}}},
 			domain.Resources{"resource-name": domain.Statement{Resource: "resource-name", With: domain.Params{"country": map[string]interface{}{"code": domain.Flatten{Target: domain.Chain{"done-resource", "hero", "origin"}}}}}},
 			domain.Resources{"done-resource": domain.DoneResource{Status: 200, ResponseBody: test.Unmarshal(`{"hero": {"origin": "USA"}}`)}},
+		},
+		{
+			"Returns a statement with single done resource value resolved from header",
+			domain.Resources{"resource-name": domain.Statement{Resource: "resource-name", With: domain.Params{"id": "abcdef"}}},
+			domain.Resources{"resource-name": domain.Statement{Resource: "resource-name", With: domain.Params{"id": domain.Chain{"done-resource", "location"}}}},
+			domain.Resources{"done-resource": domain.DoneResource{Status: 200, ResponseBody: test.Unmarshal(`{"id": "abcdef"}`), ResponseHeaders: map[string]string{"location": "abcdef"}}},
 		},
 	}
 
