@@ -46,7 +46,7 @@ func TestAstGenerator(t *testing.T) {
 		{
 			"Simple from resource query with use modifier",
 			ast.Query{Use: []ast.Use{{Key: "max-age", Value: ast.UseValue{Int: Int(600)}}, {Key: "s-max-age", Value: ast.UseValue{Int: Int(400)}}, {Key: "timeout", Value: ast.UseValue{Int: Int(8000)}}}, Blocks: []ast.Block{{Method: ast.FromMethod, Resource: "cart"}}},
-			`use max-age = 600 use s-max-age = 400 use timeout = 8000 from cart`,
+			`use max-age 600 use s-max-age 400 use timeout 8000 from cart`,
 		},
 		{
 			"Simple from resource query with resource name with hyphen",
@@ -240,12 +240,12 @@ func TestAstGenerator(t *testing.T) {
 		{
 			"Get query with max age",
 			ast.Query{Blocks: []ast.Block{{Method: ast.FromMethod, Resource: "hero", Qualifiers: []ast.Qualifier{{MaxAge: &ast.MaxAgeValue{Int: Int(2000)}}}}}},
-			`from hero max-age = 2000`,
+			`from hero max-age 2000`,
 		},
 		{
 			"Get query with cache control",
 			ast.Query{Blocks: []ast.Block{{Method: ast.FromMethod, Resource: "hero", Qualifiers: []ast.Qualifier{{SMaxAge: &ast.SMaxAgeValue{Int: Int(2000)}}}}}},
-			`from hero s-max-age = 2000`,
+			`from hero s-max-age 2000`,
 		},
 		{
 			"Get query with list query parameters flattened",

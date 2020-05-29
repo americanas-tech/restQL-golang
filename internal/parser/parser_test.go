@@ -98,12 +98,12 @@ func TestQueryParser(t *testing.T) {
 		{
 			"Unique from statement and max age",
 			domain.Query{Statements: []domain.Statement{{Method: "from", Resource: "hero", CacheControl: domain.CacheControl{MaxAge: 2000, SMaxAge: 4000}}}},
-			"from hero max-age = 2000 s-max-age = 4000",
+			"from hero max-age 2000 s-max-age 4000",
 		},
 		{
 			"Unique from statement and variable max age",
 			domain.Query{Statements: []domain.Statement{{Method: "from", Resource: "hero", CacheControl: domain.CacheControl{MaxAge: domain.Variable{"maxAge"}, SMaxAge: domain.Variable{"sMaxAge"}}}}},
-			"from hero max-age = $maxAge s-max-age = $sMaxAge",
+			"from hero max-age $maxAge s-max-age $sMaxAge",
 		},
 		{
 			"Unique from statement and flattened list parameters",
@@ -175,7 +175,7 @@ func TestQueryParser(t *testing.T) {
 					},
 				},
 			},
-			`use max-age = 600
+			`use max-age 600
 				from hero as h
 					headers
 						X-Trace-Id = "abcdef12345"

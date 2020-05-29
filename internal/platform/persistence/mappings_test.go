@@ -195,7 +195,7 @@ var noOpLogger = logger.New(ioutil.Discard, logger.LogOptions{})
 
 type stubDatabase struct {
 	findMappingsForTenant []domain.Mapping
-	findQuery             string
+	findQuery             domain.SavedQuery
 }
 
 func (s stubDatabase) FindMappingsForTenant(ctx context.Context, tenantId string) ([]domain.Mapping, error) {
