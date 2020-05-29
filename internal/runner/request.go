@@ -74,7 +74,11 @@ func makeHeaders(statement domain.Statement, queryCtx domain.QueryContext) map[s
 		}
 		headers[key] = str
 	}
-	headers["Content-Type"] = "application/json"
+
+	_, found := headers["Content-Type"]
+	if !found {
+		headers["Content-Type"] = "application/json"
+	}
 
 	return headers
 }
