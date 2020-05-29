@@ -21,9 +21,7 @@ func NewExecutor(log restql.Logger, client domain.HttpClient, resourceTimeout ti
 }
 
 func (e Executor) DoStatement(ctx context.Context, statement domain.Statement, queryCtx domain.QueryContext) (domain.DoneResource, error) {
-	debug := IsDebugEnabled(queryCtx)
 	drOptions := DoneResourceOptions{
-		Debugging:    debug,
 		IgnoreErrors: statement.IgnoreErrors,
 		MaxAge:       statement.CacheControl.MaxAge,
 		SMaxAge:      statement.CacheControl.SMaxAge,

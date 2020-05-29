@@ -27,7 +27,7 @@ func ApplyAggregators(query domain.Query, resources domain.Resources) domain.Res
 func aggregateOriginOnTarget(path []string, origin interface{}, target interface{}) {
 	switch target := target.(type) {
 	case domain.DoneResource:
-		aggregateOriginOnTarget(path, origin, target.Result)
+		aggregateOriginOnTarget(path, origin, target.ResponseBody)
 	case domain.DoneResources:
 		aggregateOriginOnListTarget(path, origin, target)
 	case []interface{}:
@@ -46,7 +46,7 @@ func aggregateOriginOnTarget(path []string, origin interface{}, target interface
 func aggregateOriginOnListTarget(path []string, origin interface{}, target []interface{}) {
 	switch origin := origin.(type) {
 	case domain.DoneResource:
-		aggregateOriginOnTarget(path, origin.Result, target)
+		aggregateOriginOnTarget(path, origin.ResponseBody, target)
 	case domain.DoneResources:
 		for i, t := range target {
 			aggregateOriginOnTarget(path, origin[i], t)
@@ -65,7 +65,7 @@ func aggregateOriginOnListTarget(path []string, origin interface{}, target []int
 func setOriginOnTarget(field string, origin interface{}, target interface{}) {
 	switch target := target.(type) {
 	case domain.DoneResource:
-		setOriginOnTarget(field, origin, target.Result)
+		setOriginOnTarget(field, origin, target.ResponseBody)
 	case map[string]interface{}:
 		target[field] = parseOrigin(origin)
 	}
@@ -74,7 +74,7 @@ func setOriginOnTarget(field string, origin interface{}, target interface{}) {
 func parseOrigin(origin interface{}) interface{} {
 	switch origin := origin.(type) {
 	case domain.DoneResource:
-		return origin.Result
+		return origin.ResponseBody
 	case domain.DoneResources:
 		result := make([]interface{}, len(origin))
 		for i, o := range origin {
@@ -89,7 +89,7 @@ func parseOrigin(origin interface{}) interface{} {
 func cleanOriginResult(origin interface{}) interface{} {
 	switch origin := origin.(type) {
 	case domain.DoneResource:
-		origin.Result = nil
+		origin.ResponseBody = nil
 		return origin
 	case domain.DoneResources:
 		result := make(domain.DoneResources, len(origin))

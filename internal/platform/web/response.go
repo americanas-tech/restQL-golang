@@ -81,10 +81,10 @@ type QueryResponse struct {
 	Headers    map[string]string
 }
 
-func MakeQueryResponse(queryResult domain.Resources) QueryResponse {
+func MakeQueryResponse(queryResult domain.Resources, debug bool) QueryResponse {
 	m := make(map[string]StatementResult)
-	for key, response := range queryResult {
-		m[string(key)] = parseResponse(response)
+	for key, resource := range queryResult {
+		m[string(key)] = parseResource(resource, debug)
 	}
 
 	statusCode := CalculateStatusCode(queryResult)
@@ -92,18 +92,18 @@ func MakeQueryResponse(queryResult domain.Resources) QueryResponse {
 	return QueryResponse{Body: m, StatusCode: statusCode, Headers: headers}
 }
 
-func parseResponse(response interface{}) StatementResult {
-	switch response := response.(type) {
+func parseResource(resource interface{}, debug bool) StatementResult {
+	switch resource := resource.(type) {
 	case domain.DoneResource:
-		return StatementResult{Details: parseDetails(response.Details), Result: response.Result}
+		return StatementResult{Details: parseDetails(resource, debug), Result: resource.ResponseBody}
 	case domain.DoneResources:
-		details := make([]interface{}, len(response))
-		results := make([]interface{}, len(response))
+		details := make([]interface{}, len(resource))
+		results := make([]interface{}, len(resource))
 
 		hasResult := false
 
-		for i, r := range response {
-			result := parseResponse(r)
+		for i, r := range resource {
+			result := parseResource(r, debug)
 
 			d := result.Details
 			if d != nil {
@@ -127,33 +127,34 @@ func parseResponse(response interface{}) StatementResult {
 	}
 }
 
-func parseDetails(details domain.Details) StatementDetails {
+func parseDetails(resource domain.DoneResource, debug bool) StatementDetails {
 	var metadata StatementMetadata
-	if details.IgnoreErrors {
+	if resource.IgnoreErrors {
 		metadata.IgnoreErrors = "ignore"
 	}
 
-	return StatementDetails{
-		Status:   details.Status,
-		Success:  details.Success,
+	sd := StatementDetails{
+		Status:   resource.Status,
+		Success:  resource.Success,
 		Metadata: metadata,
-		Debug:    parseDebug(details.Debug),
 	}
+
+	if debug {
+		sd.Debug = parseDebug(resource)
+	}
+
+	return sd
 }
 
-func parseDebug(debug *domain.Debugging) *StatementDebugging {
-	if debug == nil {
-		return nil
-	}
-
+func parseDebug(resource domain.DoneResource) *StatementDebugging {
 	return &StatementDebugging{
-		Method:          debug.Method,
-		Url:             debug.Url,
-		RequestHeaders:  debug.RequestHeaders,
-		ResponseHeaders: debug.ResponseHeaders,
-		Params:          debug.Params,
-		RequestBody:     debug.RequestBody,
-		ResponseTime:    debug.ResponseTime,
+		Method:          resource.Method,
+		Url:             resource.Url,
+		RequestHeaders:  resource.RequestHeaders,
+		ResponseHeaders: resource.ResponseHeaders,
+		Params:          resource.RequestParams,
+		RequestBody:     resource.RequestBody,
+		ResponseTime:    resource.ResponseTime,
 	}
 }
 
@@ -175,11 +176,11 @@ var statusNormalization = map[int]int{0: 500, 204: 200, 201: 200}
 func calculateResultStatusCode(result interface{}) int {
 	switch r := result.(type) {
 	case domain.DoneResource:
-		if r.Details.IgnoreErrors {
+		if r.IgnoreErrors {
 			return 200
 		}
 
-		status := r.Details.Status
+		status := r.Status
 		normalizedStatus, found := statusNormalization[status]
 		if found {
 			return normalizedStatus
@@ -267,7 +268,7 @@ func findMinCacheControl(results []interface{}) domain.ResourceCacheControl {
 func calculateResultCacheControl(result interface{}) domain.ResourceCacheControl {
 	switch result := result.(type) {
 	case domain.DoneResource:
-		return result.Details.CacheControl
+		return result.CacheControl
 	case domain.DoneResources:
 		return findMinCacheControl(result)
 	default:

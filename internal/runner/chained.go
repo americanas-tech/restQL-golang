@@ -96,8 +96,8 @@ func resolveWithMultiplexedRequests(path []string, doneRequests domain.DoneResou
 }
 
 func resolveWithSingleRequest(path []string, done domain.DoneResource) interface{} {
-	if done.Details.Status > 199 && done.Details.Status < 400 {
-		return getValue(path, done.Result)
+	if done.Status > 199 && done.Status < 400 {
+		return getValue(path, done.ResponseBody)
 	}
 	return EmptyChained
 }
