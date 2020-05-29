@@ -66,7 +66,7 @@ type Query struct {
 }
 
 type Use struct {
-	Key   string   `(@MaxAge | @SMaxAge | @Timeout) Equal`
+	Key   string   `(@MaxAge | @SMaxAge | @Timeout)`
 	Value UseValue `@@`
 }
 
@@ -89,8 +89,8 @@ type Qualifier struct {
 	Hidden       bool          `| (@Hidden)`
 	Timeout      *TimeoutValue `| (Timeout @@)`
 	Headers      []HeaderItem  `| (Headers @@+)`
-	MaxAge       *MaxAgeValue  `| (MaxAge Equal @@)`
-	SMaxAge      *SMaxAgeValue `| (SMaxAge Equal @@)`
+	MaxAge       *MaxAgeValue  `| (MaxAge @@)`
+	SMaxAge      *SMaxAgeValue `| (SMaxAge @@)`
 	IgnoreErrors bool          `| (@IgnoreErrors)`
 }
 
