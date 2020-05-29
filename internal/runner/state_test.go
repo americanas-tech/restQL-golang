@@ -130,13 +130,13 @@ func TestUpdateDone(t *testing.T) {
 		input := domain.Resources{"hero": doneStatement}
 
 		expectedDoneRequests := domain.Resources{
-			"hero": domain.DoneResource{Details: domain.Details{Status: 200}, Result: []byte{}},
+			"hero": domain.DoneResource{Status: 200, ResponseBody: []byte{}},
 		}
 		expectedRequestedStatements := domain.Resources{}
 
 		state := runner.NewState(input)
 
-		response := domain.DoneResource{Details: domain.Details{Status: 200}, Result: []byte{}}
+		response := domain.DoneResource{Status: 200, ResponseBody: []byte{}}
 
 		state.UpdateDone("hero", response)
 

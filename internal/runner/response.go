@@ -18,17 +18,18 @@ type DoneResourceOptions struct {
 
 func NewDoneResource(request domain.HttpRequest, response domain.HttpResponse, options DoneResourceOptions) domain.DoneResource {
 	dr := domain.DoneResource{
-		Details: domain.Details{
-			Status:       response.StatusCode,
-			Success:      response.StatusCode >= 200 && response.StatusCode < 400,
-			IgnoreErrors: options.IgnoreErrors,
-			CacheControl: makeCacheControl(response, options),
-		},
-		Result: response.Body,
-	}
-
-	if options.Debugging {
-		dr.Details.Debug = newDebugging(request, response)
+		Status:          response.StatusCode,
+		Success:         response.StatusCode >= 200 && response.StatusCode < 400,
+		IgnoreErrors:    options.IgnoreErrors,
+		CacheControl:    makeCacheControl(response, options),
+		Method:          request.Method,
+		Url:             response.Url,
+		RequestParams:   request.Query,
+		RequestBody:     request.Body,
+		RequestHeaders:  request.Headers,
+		ResponseHeaders: response.Headers,
+		ResponseBody:    response.Body,
+		ResponseTime:    response.Duration.Milliseconds(),
 	}
 
 	return dr
@@ -66,20 +67,19 @@ func IsDebugEnabled(queryCtx domain.QueryContext) bool {
 }
 
 func NewErrorResponse(err error, request domain.HttpRequest, response domain.HttpResponse, options DoneResourceOptions) domain.DoneResource {
-	dr := domain.DoneResource{
-		Details: domain.Details{
-			Status:       response.StatusCode,
-			Success:      false,
-			IgnoreErrors: options.IgnoreErrors,
-		},
-		Result: err.Error(),
+	return domain.DoneResource{
+		Status:          response.StatusCode,
+		Success:         false,
+		IgnoreErrors:    options.IgnoreErrors,
+		ResponseBody:    err.Error(),
+		Method:          request.Method,
+		Url:             response.Url,
+		RequestParams:   request.Query,
+		RequestBody:     request.Body,
+		RequestHeaders:  request.Headers,
+		ResponseHeaders: response.Headers,
+		ResponseTime:    response.Duration.Milliseconds(),
 	}
-
-	if options.Debugging {
-		dr.Details.Debug = newDebugging(request, response)
-	}
-
-	return dr
 }
 
 func NewEmptyChainedResponse(params []string, options DoneResourceOptions) domain.DoneResource {
@@ -94,8 +94,10 @@ func NewEmptyChainedResponse(params []string, options DoneResourceOptions) domai
 	buf.WriteString("} param value")
 
 	return domain.DoneResource{
-		Details: domain.Details{Status: 400, Success: false, IgnoreErrors: options.IgnoreErrors},
-		Result:  buf.String(),
+		Status:       400,
+		Success:      false,
+		IgnoreErrors: options.IgnoreErrors,
+		ResponseBody: buf.String(),
 	}
 }
 

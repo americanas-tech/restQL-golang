@@ -81,7 +81,8 @@ func (r RestQl) RunAdHocQuery(ctx *fasthttp.RequestCtx) error {
 		}
 	}
 
-	response := MakeQueryResponse(result)
+	debugEnabled := isDebugEnabled(input)
+	response := MakeQueryResponse(result, debugEnabled)
 	return Respond(ctx, response.Body, response.StatusCode, response.Headers)
 }
 
@@ -117,7 +118,8 @@ func (r RestQl) RunSavedQuery(ctx *fasthttp.RequestCtx) error {
 		}
 	}
 
-	response := MakeQueryResponse(result)
+	debugEnabled := isDebugEnabled(input)
+	response := MakeQueryResponse(result, debugEnabled)
 	return Respond(ctx, response.Body, response.StatusCode, response.Headers)
 }
 
@@ -232,4 +234,25 @@ func pathParamString(ctx *fasthttp.RequestCtx, name string) (string, error) {
 	}
 
 	return param, nil
+}
+
+const debugParamName = "_debug"
+
+func isDebugEnabled(queryInput domain.QueryInput) bool {
+	param, found := queryInput.Params[debugParamName]
+	if !found {
+		return false
+	}
+
+	debug, ok := param.(string)
+	if !ok {
+		return false
+	}
+
+	d, err := strconv.ParseBool(debug)
+	if err != nil {
+		return false
+	}
+
+	return d
 }

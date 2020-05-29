@@ -21,14 +21,14 @@ func TestNewDoneResource(t *testing.T) {
 			domain.HttpRequest{},
 			domain.HttpResponse{StatusCode: 200, Body: nil},
 			runner.DoneResourceOptions{},
-			domain.DoneResource{Details: domain.Details{Status: 200, Success: true, IgnoreErrors: false}, Result: nil},
+			domain.DoneResource{Status: 200, Success: true, IgnoreErrors: false, ResponseBody: nil},
 		},
 		{
 			"should create done resource for failed execution",
 			domain.HttpRequest{},
 			domain.HttpResponse{StatusCode: 400, Body: nil},
 			runner.DoneResourceOptions{},
-			domain.DoneResource{Details: domain.Details{Status: 400, Success: false, IgnoreErrors: false}, Result: nil},
+			domain.DoneResource{Status: 400, Success: false, IgnoreErrors: false, ResponseBody: nil},
 		},
 		{
 			"should create done resource with debug",
@@ -46,21 +46,17 @@ func TestNewDoneResource(t *testing.T) {
 				Headers:    map[string]string{"Content-Type": "application/json"},
 				Duration:   100 * time.Millisecond,
 			},
-			runner.DoneResourceOptions{Debugging: true},
+			runner.DoneResourceOptions{},
 			domain.DoneResource{
-				Details: domain.Details{
-					Status:       200,
-					Success:      true,
-					IgnoreErrors: false,
-					Debug: &domain.Debugging{
-						Url:             "http://hero.io/api",
-						RequestHeaders:  map[string]string{"X-TID": "12345abdef"},
-						ResponseHeaders: map[string]string{"Content-Type": "application/json"},
-						Params:          map[string]interface{}{"id": "123456"},
-						ResponseTime:    100,
-					},
-				},
-				Result: nil,
+				Status:          200,
+				Success:         true,
+				IgnoreErrors:    false,
+				Url:             "http://hero.io/api",
+				RequestHeaders:  map[string]string{"X-TID": "12345abdef"},
+				ResponseHeaders: map[string]string{"Content-Type": "application/json"},
+				RequestParams:   map[string]interface{}{"id": "123456"},
+				ResponseTime:    100,
+				ResponseBody:    nil,
 			},
 		},
 		{
@@ -68,7 +64,12 @@ func TestNewDoneResource(t *testing.T) {
 			domain.HttpRequest{},
 			domain.HttpResponse{StatusCode: 200, Body: nil},
 			runner.DoneResourceOptions{IgnoreErrors: true},
-			domain.DoneResource{Details: domain.Details{Status: 200, Success: true, IgnoreErrors: true}, Result: nil},
+			domain.DoneResource{
+				Status:       200,
+				Success:      true,
+				IgnoreErrors: true,
+				ResponseBody: nil,
+			},
 		},
 		{
 			"should create done resource with cache control information returned by resource",
@@ -76,16 +77,15 @@ func TestNewDoneResource(t *testing.T) {
 			domain.HttpResponse{StatusCode: 200, Body: nil, Headers: map[string]string{"Cache-Control": "max-age=400, s-maxage=600"}},
 			runner.DoneResourceOptions{},
 			domain.DoneResource{
-				Details: domain.Details{
-					Status:  200,
-					Success: true,
-					CacheControl: domain.ResourceCacheControl{
-						MaxAge:  domain.ResourceCacheControlValue{Exist: true, Time: 400},
-						SMaxAge: domain.ResourceCacheControlValue{Exist: true, Time: 600},
-					},
-					IgnoreErrors: false,
+				Status:  200,
+				Success: true,
+				CacheControl: domain.ResourceCacheControl{
+					MaxAge:  domain.ResourceCacheControlValue{Exist: true, Time: 400},
+					SMaxAge: domain.ResourceCacheControlValue{Exist: true, Time: 600},
 				},
-				Result: nil,
+				ResponseHeaders: map[string]string{"Cache-Control": "max-age=400, s-maxage=600"},
+				IgnoreErrors:    false,
+				ResponseBody:    nil,
 			},
 		},
 		{
@@ -94,15 +94,14 @@ func TestNewDoneResource(t *testing.T) {
 			domain.HttpResponse{StatusCode: 200, Body: nil, Headers: map[string]string{"Cache-Control": "no-cache"}},
 			runner.DoneResourceOptions{},
 			domain.DoneResource{
-				Details: domain.Details{
-					Status:  200,
-					Success: true,
-					CacheControl: domain.ResourceCacheControl{
-						NoCache: true,
-					},
-					IgnoreErrors: false,
+				Status:  200,
+				Success: true,
+				CacheControl: domain.ResourceCacheControl{
+					NoCache: true,
 				},
-				Result: nil,
+				ResponseHeaders: map[string]string{"Cache-Control": "no-cache"},
+				IgnoreErrors:    false,
+				ResponseBody:    nil,
 			},
 		},
 		{
@@ -111,16 +110,14 @@ func TestNewDoneResource(t *testing.T) {
 			domain.HttpResponse{StatusCode: 200, Body: nil},
 			runner.DoneResourceOptions{MaxAge: 100, SMaxAge: 300},
 			domain.DoneResource{
-				Details: domain.Details{
-					Status:  200,
-					Success: true,
-					CacheControl: domain.ResourceCacheControl{
-						MaxAge:  domain.ResourceCacheControlValue{Exist: true, Time: 100},
-						SMaxAge: domain.ResourceCacheControlValue{Exist: true, Time: 300},
-					},
-					IgnoreErrors: false,
+				Status:  200,
+				Success: true,
+				CacheControl: domain.ResourceCacheControl{
+					MaxAge:  domain.ResourceCacheControlValue{Exist: true, Time: 100},
+					SMaxAge: domain.ResourceCacheControlValue{Exist: true, Time: 300},
 				},
-				Result: nil,
+				IgnoreErrors: false,
+				ResponseBody: nil,
 			},
 		},
 		{
@@ -129,15 +126,13 @@ func TestNewDoneResource(t *testing.T) {
 			domain.HttpResponse{StatusCode: 200, Body: nil},
 			runner.DoneResourceOptions{MaxAge: 100},
 			domain.DoneResource{
-				Details: domain.Details{
-					Status:  200,
-					Success: true,
-					CacheControl: domain.ResourceCacheControl{
-						MaxAge: domain.ResourceCacheControlValue{Exist: true, Time: 100},
-					},
-					IgnoreErrors: false,
+				Status:  200,
+				Success: true,
+				CacheControl: domain.ResourceCacheControl{
+					MaxAge: domain.ResourceCacheControlValue{Exist: true, Time: 100},
 				},
-				Result: nil,
+				IgnoreErrors: false,
+				ResponseBody: nil,
 			},
 		},
 		{
@@ -146,16 +141,15 @@ func TestNewDoneResource(t *testing.T) {
 			domain.HttpResponse{StatusCode: 200, Body: nil, Headers: map[string]string{"Cache-Control": "max-age=100, s-maxage=600"}},
 			runner.DoneResourceOptions{MaxAge: 400, SMaxAge: 300},
 			domain.DoneResource{
-				Details: domain.Details{
-					Status:  200,
-					Success: true,
-					CacheControl: domain.ResourceCacheControl{
-						MaxAge:  domain.ResourceCacheControlValue{Exist: true, Time: 100},
-						SMaxAge: domain.ResourceCacheControlValue{Exist: true, Time: 300},
-					},
-					IgnoreErrors: false,
+				Status:  200,
+				Success: true,
+				CacheControl: domain.ResourceCacheControl{
+					MaxAge:  domain.ResourceCacheControlValue{Exist: true, Time: 100},
+					SMaxAge: domain.ResourceCacheControlValue{Exist: true, Time: 300},
 				},
-				Result: nil,
+				ResponseHeaders: map[string]string{"Cache-Control": "max-age=100, s-maxage=600"},
+				IgnoreErrors:    false,
+				ResponseBody:    nil,
 			},
 		},
 		{
@@ -164,15 +158,14 @@ func TestNewDoneResource(t *testing.T) {
 			domain.HttpResponse{StatusCode: 200, Body: nil, Headers: map[string]string{"Cache-Control": "no-cache"}},
 			runner.DoneResourceOptions{MaxAge: 400, SMaxAge: 300},
 			domain.DoneResource{
-				Details: domain.Details{
-					Status:  200,
-					Success: true,
-					CacheControl: domain.ResourceCacheControl{
-						NoCache: true,
-					},
-					IgnoreErrors: false,
+				Status:  200,
+				Success: true,
+				CacheControl: domain.ResourceCacheControl{
+					NoCache: true,
 				},
-				Result: nil,
+				ResponseHeaders: map[string]string{"Cache-Control": "no-cache"},
+				IgnoreErrors:    false,
+				ResponseBody:    nil,
 			},
 		},
 	}
@@ -199,16 +192,6 @@ func TestNewTimeoutResponse(t *testing.T) {
 	}{
 		{
 			"should create response for time outed execution",
-			domain.HttpRequest{},
-			domain.HttpResponse{StatusCode: 408},
-			runner.DoneResourceOptions{},
-			domain.DoneResource{
-				Details: domain.Details{Status: 408, Success: false, IgnoreErrors: false},
-				Result:  timeoutErr.Error(),
-			},
-		},
-		{
-			"should create response for time outed execution with debug",
 			domain.HttpRequest{
 				Schema:  "http",
 				Host:    "hero.io",
@@ -221,30 +204,42 @@ func TestNewTimeoutResponse(t *testing.T) {
 				Url:        "http://hero.io/api",
 				Duration:   100 * time.Millisecond,
 			},
-			runner.DoneResourceOptions{Debugging: true},
+			runner.DoneResourceOptions{},
 			domain.DoneResource{
-				Details: domain.Details{
-					Status:       408,
-					Success:      false,
-					IgnoreErrors: false,
-					Debug: &domain.Debugging{
-						Url:            "http://hero.io/api",
-						RequestHeaders: map[string]string{"X-TID": "12345abdef"},
-						Params:         map[string]interface{}{"id": "123456"},
-						ResponseTime:   100,
-					},
-				},
-				Result: timeoutErr.Error(),
+				Status:         408,
+				Success:        false,
+				IgnoreErrors:   false,
+				Url:            "http://hero.io/api",
+				RequestHeaders: map[string]string{"X-TID": "12345abdef"},
+				RequestParams:  map[string]interface{}{"id": "123456"},
+				ResponseTime:   100,
+				ResponseBody:   timeoutErr.Error(),
 			},
 		},
 		{
-			"should create response for time outed execution with debug",
-			domain.HttpRequest{},
-			domain.HttpResponse{StatusCode: 408},
+			"should create response for time outed execution with ignore errors",
+			domain.HttpRequest{
+				Schema:  "http",
+				Host:    "hero.io",
+				Path:    "/api",
+				Query:   map[string]interface{}{"id": "123456"},
+				Headers: map[string]string{"X-TID": "12345abdef"},
+			},
+			domain.HttpResponse{
+				StatusCode: 408,
+				Url:        "http://hero.io/api",
+				Duration:   100 * time.Millisecond,
+			},
 			runner.DoneResourceOptions{IgnoreErrors: true},
 			domain.DoneResource{
-				Details: domain.Details{Status: 408, Success: false, IgnoreErrors: true},
-				Result:  timeoutErr.Error(),
+				Status:         408,
+				Success:        false,
+				IgnoreErrors:   true,
+				Url:            "http://hero.io/api",
+				RequestHeaders: map[string]string{"X-TID": "12345abdef"},
+				RequestParams:  map[string]interface{}{"id": "123456"},
+				ResponseTime:   100,
+				ResponseBody:   timeoutErr.Error(),
 			},
 		},
 	}
@@ -264,8 +259,10 @@ func TestNewEmptyChainedResponse(t *testing.T) {
 		options := runner.DoneResourceOptions{}
 
 		expected := domain.DoneResource{
-			Details: domain.Details{Status: 400, Success: false, IgnoreErrors: false},
-			Result:  "The request was skipped due to missing { :id } param value",
+			Status:       400,
+			Success:      false,
+			IgnoreErrors: false,
+			ResponseBody: "The request was skipped due to missing { :id } param value",
 		}
 
 		got := runner.NewEmptyChainedResponse(params, options)
@@ -278,8 +275,10 @@ func TestNewEmptyChainedResponse(t *testing.T) {
 		options := runner.DoneResourceOptions{}
 
 		expected := domain.DoneResource{
-			Details: domain.Details{Status: 400, Success: false, IgnoreErrors: false},
-			Result:  "The request was skipped due to missing { :id :name :city } param value",
+			Status:       400,
+			Success:      false,
+			IgnoreErrors: false,
+			ResponseBody: "The request was skipped due to missing { :id :name :city } param value",
 		}
 
 		got := runner.NewEmptyChainedResponse(params, options)
@@ -292,8 +291,10 @@ func TestNewEmptyChainedResponse(t *testing.T) {
 		options := runner.DoneResourceOptions{IgnoreErrors: true}
 
 		expected := domain.DoneResource{
-			Details: domain.Details{Status: 400, Success: false, IgnoreErrors: true},
-			Result:  "The request was skipped due to missing { :id } param value",
+			Status:       400,
+			Success:      false,
+			IgnoreErrors: true,
+			ResponseBody: "The request was skipped due to missing { :id } param value",
 		}
 
 		got := runner.NewEmptyChainedResponse(params, options)

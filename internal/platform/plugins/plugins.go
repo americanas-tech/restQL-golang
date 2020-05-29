@@ -60,7 +60,7 @@ func (m manager) RunBeforeQuery(ctx context.Context, query string, queryCtx doma
 
 func (m manager) RunAfterQuery(ctx context.Context, query string, result domain.Resources) context.Context {
 	return m.executeAllPluginsWithContext("AfterQuery", ctx, func(currentCtx context.Context, p restql.Plugin) context.Context {
-		m := convertQueryResult(result)
+		m := DecodeQueryResult(result)
 		return p.AfterQuery(currentCtx, query, m)
 	})
 }
@@ -130,58 +130,6 @@ func (m manager) newTransactionResponse(ctx *fasthttp.RequestCtx) restql.Transac
 		Status: ctx.Response.StatusCode(),
 		Header: header,
 		Body:   ctx.Response.Body(),
-	}
-}
-
-func convertQueryResult(resource interface{}) map[string]interface{} {
-	switch resource := resource.(type) {
-	case domain.Resources:
-		m := make(map[string]interface{})
-		for k, v := range resource {
-			m[string(k)] = convertDoneResource(v)
-		}
-		return m
-	case domain.Details:
-		return map[string]interface{}{
-			"status":       resource.Status,
-			"success":      resource.Success,
-			"ignoreErrors": resource.IgnoreErrors,
-			"debugging":    convertQueryResult(resource.Debug),
-		}
-	case *domain.Debugging:
-		if resource == nil {
-			return nil
-		}
-
-		return map[string]interface{}{
-			"method":          resource.Method,
-			"url":             resource.Url,
-			"requestHeaders":  resource.RequestHeaders,
-			"responseHeaders": resource.ResponseHeaders,
-			"params":          resource.Params,
-			"requestBody":     resource.RequestBody,
-			"responseTime":    resource.ResponseTime,
-		}
-	default:
-		return nil
-	}
-}
-
-func convertDoneResource(doneResource interface{}) interface{} {
-	switch resource := doneResource.(type) {
-	case domain.DoneResource:
-		return map[string]interface{}{
-			"details": convertQueryResult(resource.Details),
-			"result":  resource.Result,
-		}
-	case domain.DoneResources:
-		l := make([]interface{}, len(resource))
-		for i, r := range resource {
-			l[i] = convertQueryResult(r)
-		}
-		return l
-	default:
-		return resource
 	}
 }
 

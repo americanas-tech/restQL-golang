@@ -34,11 +34,10 @@ func applyOnlyFilters(filters []interface{}, resourceResult interface{}) (interf
 
 	switch resourceResult := resourceResult.(type) {
 	case domain.DoneResource:
-		result := extractWithFilters(buildFilterTree(filters), resourceResult.Result)
-		return domain.DoneResource{
-			Details: resourceResult.Details,
-			Result:  result,
-		}, nil
+		result := extractWithFilters(buildFilterTree(filters), resourceResult.ResponseBody)
+		resourceResult.ResponseBody = result
+
+		return resourceResult, nil
 	case domain.DoneResources:
 		list := make(domain.DoneResources, len(resourceResult))
 		for i, r := range resourceResult {

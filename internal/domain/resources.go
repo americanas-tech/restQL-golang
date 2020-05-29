@@ -54,6 +54,19 @@ type Details struct {
 type DoneResource struct {
 	Details Details
 	Result  interface{}
+
+	Status          int
+	Success         bool
+	IgnoreErrors    bool
+	CacheControl    ResourceCacheControl
+	Method          string
+	Url             string
+	RequestParams   map[string]interface{}
+	RequestHeaders  map[string]string
+	RequestBody     interface{}
+	ResponseHeaders map[string]string
+	ResponseBody    interface{}
+	ResponseTime    int64
 }
 
 type DoneResources []interface{}
