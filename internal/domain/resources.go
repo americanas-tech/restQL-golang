@@ -52,9 +52,6 @@ type Details struct {
 }
 
 type DoneResource struct {
-	Details Details
-	Result  interface{}
-
 	Status          int
 	Success         bool
 	IgnoreErrors    bool
