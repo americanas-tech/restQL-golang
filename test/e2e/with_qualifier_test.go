@@ -650,9 +650,7 @@ from planets
 	test.Equal(t, body, test.Unmarshal(expectedResponse))
 }
 
-func TestWithQualifierDefaultBodyOnToStatement(t *testing.T) {
-	newPlanet := `{"name": "Yavin IV","rotation_period": 24.5,"orbital_period": "4818","diameter": "10200","climate": "temperate, tropical","gravity": "1 standard","terrain": { "north": "jungle", "south": "rainforests" },"surface_water": "8","population": 1000,"residents": ["john", "janne"]}`
-
+func TestWithQualifierDynamicBodyOnToStatement(t *testing.T) {
 	query := `
 to planets
 	with
@@ -661,7 +659,7 @@ to planets
 
 	planet := `
 {
-	"name": "Yavin IV",
+	"name": "Yavin",
 	"rotation_period": 24.5,
 	"orbital_period": "4818",
 	"diameter": "10200",
@@ -700,14 +698,14 @@ to planets
 
 		fmt.Printf("receveid body : %v\n", body)
 
-		test.Equal(t, test.Unmarshal(body), test.Unmarshal(planet))
+		test.Equal(t, test.Unmarshal(body), test.Unmarshal(removeWhitespaces(planet)))
 
 		w.WriteHeader(201)
 		io.WriteString(w, planet)
 	})
 	mockServer.Start()
 
-	target := fmt.Sprintf("%s&planet=%s", adHocQueryUrl, newPlanet)
+	target := fmt.Sprintf("%s&planet=%s", adHocQueryUrl, removeWhitespaces(planet))
 	response, err := httpClient.Post(target, "text/plain", strings.NewReader(query))
 	test.VerifyError(t, err)
 	defer response.Body.Close()
@@ -719,4 +717,423 @@ to planets
 	test.VerifyError(t, err)
 
 	test.Equal(t, body, test.Unmarshal(expectedResponse))
+}
+
+func TestWithQualifierMultiplexedDynamicBodyOnToStatement(t *testing.T) {
+	query := `
+to planets
+	with
+		$planet
+`
+
+	yavin := `
+{
+	"name": "Yavin",
+	"rotation_period": 24.5,
+	"orbital_period": "4818",
+	"diameter": "10200",
+	"climate": "temperate",
+	"gravity": "standard",
+	"terrain": { "north": "jungle", "south": "rainforests" },
+	"surface_water": "8",
+	"population": 1000,
+	"residents": ["john", "janne"]
+}`
+
+	tatooine := `
+{
+	"name": "Tatooine",
+	"rotation_period": "23",
+	"orbital_period": "304",
+	"diameter": "10465",
+	"climate": "arid",
+	"gravity": "standard",
+	"terrain": "desert",
+	"surface_water": "1",
+	"population": "200000",
+	"residents": ["william", "scarlet"]
+}`
+
+	expectedResponse := fmt.Sprintf(`
+	{
+		"planets": {
+			"details": [
+				{
+					"success": true,
+					"status": 201,
+					"metadata": {}
+				},
+				{
+					"success": true,
+					"status": 201,
+					"metadata": {}
+				}
+			],
+			"result": [%s, %s] 
+		}
+	}`, yavin, tatooine)
+
+	mockServer := test.NewMockServer(mockPort)
+	defer mockServer.Teardown()
+
+	mockServer.Mux().HandleFunc("/api/planets/", func(w http.ResponseWriter, r *http.Request) {
+		test.Equal(t, r.Method, http.MethodPost)
+
+		b, err := ioutil.ReadAll(r.Body)
+		test.VerifyError(t, err)
+
+		test.NotEqual(t, string(b), "")
+		body := test.Unmarshal(string(b)).(map[string]interface{})
+
+		if body["name"] == "Yavin" {
+			test.Equal(t, body, test.Unmarshal(yavin))
+
+			w.WriteHeader(201)
+			io.WriteString(w, yavin)
+			return
+		}
+
+		if body["name"] == "Tatooine" {
+			test.Equal(t, body, test.Unmarshal(tatooine))
+
+			w.WriteHeader(201)
+			io.WriteString(w, tatooine)
+		}
+	})
+	mockServer.Start()
+
+	target := fmt.Sprintf("%s&planet=%s&planet=%s", adHocQueryUrl, removeWhitespaces(yavin), removeWhitespaces(tatooine))
+	response, err := httpClient.Post(target, "text/plain", strings.NewReader(query))
+	test.VerifyError(t, err)
+	defer response.Body.Close()
+
+	test.Equal(t, response.StatusCode, 200)
+
+	var body map[string]interface{}
+	err = json.NewDecoder(response.Body).Decode(&body)
+	test.VerifyError(t, err)
+
+	test.Equal(t, body, test.Unmarshal(expectedResponse))
+}
+
+func TestWithQualifierFlattenedDynamicBodyOnToStatement(t *testing.T) {
+	query := `
+to planets
+	with
+		$planet -> flatten
+`
+
+	yavin := `
+{
+	"name": "Yavin",
+	"rotation_period": 24.5,
+	"orbital_period": "4818",
+	"diameter": "10200",
+	"climate": "temperate",
+	"gravity": "standard",
+	"terrain": { "north": "jungle", "south": "rainforests" },
+	"surface_water": "8",
+	"population": 1000,
+	"residents": ["john", "janne"]
+}`
+
+	tatooine := `
+{
+	"name": "Tatooine",
+	"rotation_period": "23",
+	"orbital_period": "304",
+	"diameter": "10465",
+	"climate": "arid",
+	"gravity": "standard",
+	"terrain": "desert",
+	"surface_water": "1",
+	"population": "200000",
+	"residents": ["william", "scarlet"]
+}`
+
+	expectedResponse := fmt.Sprintf(`
+	{
+		"planets": {
+			"details": {
+				"success": true,
+				"status": 201,
+				"metadata": {}
+			},
+			"result": [%s, %s] 
+		}
+	}`, yavin, tatooine)
+
+	mockServer := test.NewMockServer(mockPort)
+	defer mockServer.Teardown()
+
+	mockServer.Mux().HandleFunc("/api/planets/", func(w http.ResponseWriter, r *http.Request) {
+		test.Equal(t, r.Method, http.MethodPost)
+
+		b, err := ioutil.ReadAll(r.Body)
+		test.VerifyError(t, err)
+
+		body := string(b)
+
+		expectedBody := fmt.Sprintf(`[%s, %s]`, yavin, tatooine)
+
+		test.NotEqual(t, body, "")
+		test.Equal(t, test.Unmarshal(body), test.Unmarshal(expectedBody))
+
+		response := fmt.Sprintf(`[%s, %s]`, yavin, tatooine)
+
+		w.WriteHeader(201)
+		io.WriteString(w, response)
+	})
+	mockServer.Start()
+
+	target := fmt.Sprintf("%s&planet=%s&planet=%s", adHocQueryUrl, removeWhitespaces(yavin), removeWhitespaces(tatooine))
+	response, err := httpClient.Post(target, "text/plain", strings.NewReader(query))
+	test.VerifyError(t, err)
+	defer response.Body.Close()
+
+	test.Equal(t, response.StatusCode, 200)
+
+	var body map[string]interface{}
+	err = json.NewDecoder(response.Body).Decode(&body)
+	test.VerifyError(t, err)
+
+	test.Equal(t, body, test.Unmarshal(expectedResponse))
+}
+
+func TestWithQualifierDynamicBodyAsBase64OnToStatement(t *testing.T) {
+	query := `
+to planets
+	with
+		$planet -> base64
+`
+
+	planet := `
+{
+	"name": "Yavin",
+	"rotation_period": 24.5,
+	"orbital_period": "4818",
+	"diameter": "10200",
+	"climate": "temperate, tropical",
+	"gravity": "1 standard",
+	"terrain": { "north": "jungle", "south": "rainforests" },
+	"surface_water": "8",
+	"population": 1000,
+	"residents": ["john", "janne"]
+}
+`
+
+	expectedResponse := fmt.Sprintf(`
+	{
+		"planets": {
+			"details": {
+				"success": true,
+				"status": 201,
+				"metadata": {}
+			},
+			"result": %s 
+		}
+	}`, planet)
+
+	mockServer := test.NewMockServer(mockPort)
+	defer mockServer.Teardown()
+
+	mockServer.Mux().HandleFunc("/api/planets/", func(w http.ResponseWriter, r *http.Request) {
+		test.Equal(t, r.Method, http.MethodPost)
+
+		b, err := ioutil.ReadAll(r.Body)
+		test.VerifyError(t, err)
+
+		body := string(b)
+		test.Equal(t, body, "bWFwW2NsaW1hdGU6dGVtcGVyYXRlLHRyb3BpY2FsIGRpYW1ldGVyOjEwMjAwIGdyYXZpdHk6MXN0YW5kYXJkIG5hbWU6WWF2aW4gb3JiaXRhbF9wZXJpb2Q6NDgxOCBwb3B1bGF0aW9uOjEwMDAgcmVzaWRlbnRzOltqb2huIGphbm5lXSByb3RhdGlvbl9wZXJpb2Q6MjQuNSBzdXJmYWNlX3dhdGVyOjggdGVycmFpbjptYXBbbm9ydGg6anVuZ2xlIHNvdXRoOnJhaW5mb3Jlc3RzXV0=")
+
+		w.WriteHeader(201)
+		io.WriteString(w, planet)
+	})
+	mockServer.Start()
+
+	target := fmt.Sprintf("%s&planet=%s", adHocQueryUrl, removeWhitespaces(planet))
+	response, err := httpClient.Post(target, "text/plain", strings.NewReader(query))
+	test.VerifyError(t, err)
+	defer response.Body.Close()
+
+	test.Equal(t, response.StatusCode, 200)
+
+	var body map[string]interface{}
+	err = json.NewDecoder(response.Body).Decode(&body)
+	test.VerifyError(t, err)
+
+	test.Equal(t, body, test.Unmarshal(expectedResponse))
+}
+
+func TestWithQualifierDynamicBodyWithJsonEncoderOnToStatement(t *testing.T) {
+	query := `
+to planets
+	with
+		$planet -> json
+`
+
+	planet := `
+{
+	"name": "Yavin",
+	"rotation_period": 24.5,
+	"orbital_period": "4818",
+	"diameter": "10200",
+	"climate": "temperate, tropical",
+	"gravity": "1 standard",
+	"terrain": { "north": "jungle", "south": "rainforests" },
+	"surface_water": "8",
+	"population": 1000,
+	"residents": ["john", "janne"]
+}
+`
+
+	expectedResponse := fmt.Sprintf(`
+	{
+		"planets": {
+			"details": {
+				"success": true,
+				"status": 201,
+				"metadata": {}
+			},
+			"result": %s 
+		}
+	}`, planet)
+
+	mockServer := test.NewMockServer(mockPort)
+	defer mockServer.Teardown()
+
+	mockServer.Mux().HandleFunc("/api/planets/", func(w http.ResponseWriter, r *http.Request) {
+		test.Equal(t, r.Method, http.MethodPost)
+
+		b, err := ioutil.ReadAll(r.Body)
+		test.VerifyError(t, err)
+
+		body := string(b)
+		test.NotEqual(t, body, "")
+
+		test.Equal(t, test.Unmarshal(body), test.Unmarshal(removeWhitespaces(planet)))
+
+		w.WriteHeader(201)
+		io.WriteString(w, planet)
+	})
+	mockServer.Start()
+
+	target := fmt.Sprintf("%s&planet=%s", adHocQueryUrl, removeWhitespaces(planet))
+	response, err := httpClient.Post(target, "text/plain", strings.NewReader(query))
+	test.VerifyError(t, err)
+	defer response.Body.Close()
+
+	test.Equal(t, response.StatusCode, 200)
+
+	var body map[string]interface{}
+	err = json.NewDecoder(response.Body).Decode(&body)
+	test.VerifyError(t, err)
+
+	test.Equal(t, body, test.Unmarshal(expectedResponse))
+}
+
+func TestWithQualifierMultiplexedDynamicBodyAndMultiplexPathParamOnToStatement(t *testing.T) {
+	query := `
+to planets
+	with
+		$planet
+		id = ["Yavin", "Tatooine"]
+`
+
+	yavin := `
+{
+	"name": "Yavin",
+	"rotation_period": 24.5,
+	"orbital_period": "4818",
+	"diameter": "10200",
+	"climate": "temperate",
+	"gravity": "standard",
+	"terrain": { "north": "jungle", "south": "rainforests" },
+	"surface_water": "8",
+	"population": 1000,
+	"residents": ["john", "janne"]
+}`
+
+	tatooine := `
+{
+	"name": "Tatooine",
+	"rotation_period": "23",
+	"orbital_period": "304",
+	"diameter": "10465",
+	"climate": "arid",
+	"gravity": "standard",
+	"terrain": "desert",
+	"surface_water": "1",
+	"population": "200000",
+	"residents": ["william", "scarlet"]
+}`
+
+	expectedResponse := fmt.Sprintf(`
+	{
+		"planets": {
+			"details": [
+				{
+					"success": true,
+					"status": 201,
+					"metadata": {}
+				},
+				{
+					"success": true,
+					"status": 201,
+					"metadata": {}
+				}
+			],
+			"result": [%s, %s] 
+		}
+	}`, yavin, tatooine)
+
+	mockServer := test.NewMockServer(mockPort)
+	defer mockServer.Teardown()
+
+	mockServer.Mux().HandleFunc("/api/planets/Yavin", func(w http.ResponseWriter, r *http.Request) {
+		test.Equal(t, r.Method, http.MethodPost)
+
+		b, err := ioutil.ReadAll(r.Body)
+		test.VerifyError(t, err)
+
+		body := string(b)
+
+		test.NotEqual(t, body, "")
+		test.Equal(t, test.Unmarshal(body), test.Unmarshal(yavin))
+
+		w.WriteHeader(201)
+		io.WriteString(w, yavin)
+	})
+	mockServer.Mux().HandleFunc("/api/planets/Tatooine", func(w http.ResponseWriter, r *http.Request) {
+		test.Equal(t, r.Method, http.MethodPost)
+
+		b, err := ioutil.ReadAll(r.Body)
+		test.VerifyError(t, err)
+
+		body := string(b)
+
+		test.NotEqual(t, body, "")
+		test.Equal(t, test.Unmarshal(body), test.Unmarshal(tatooine))
+
+		w.WriteHeader(201)
+		io.WriteString(w, tatooine)
+	})
+	mockServer.Start()
+
+	target := fmt.Sprintf("%s&planet=%s&planet=%s", adHocQueryUrl, removeWhitespaces(yavin), removeWhitespaces(tatooine))
+	response, err := httpClient.Post(target, "text/plain", strings.NewReader(query))
+	test.VerifyError(t, err)
+	defer response.Body.Close()
+
+	test.Equal(t, response.StatusCode, 200)
+
+	var body map[string]interface{}
+	err = json.NewDecoder(response.Body).Decode(&body)
+	test.VerifyError(t, err)
+
+	test.Equal(t, body, test.Unmarshal(expectedResponse))
+}
+
+func removeWhitespaces(s string) string {
+	return strings.Join(strings.Fields(s), "")
 }
