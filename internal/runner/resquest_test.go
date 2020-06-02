@@ -23,19 +23,19 @@ func TestMakeRequest(t *testing.T) {
 		},
 		{
 			"should make post request with url",
-			domain.Statement{Method: domain.ToMethod, Resource: "hero", With: map[string]interface{}{"id": 1}},
+			domain.Statement{Method: domain.ToMethod, Resource: "hero", With: domain.Params{Values: map[string]interface{}{"id": 1}}},
 			domain.QueryContext{Mappings: map[string]domain.Mapping{"hero": {Schema: "http", Host: "hero.io", Path: "/api"}}},
 			domain.HttpRequest{Method: http.MethodPost, Schema: "http", Host: "hero.io", Path: "/api", Query: map[string]interface{}{}, Body: map[string]interface{}{"id": 1}, Headers: map[string]string{"Content-Type": "application/json"}},
 		},
 		{
 			"should make patch request with url",
-			domain.Statement{Method: domain.UpdateMethod, Resource: "hero", With: map[string]interface{}{"id": 1}},
+			domain.Statement{Method: domain.UpdateMethod, Resource: "hero", With: domain.Params{Values: map[string]interface{}{"id": 1}}},
 			domain.QueryContext{Mappings: map[string]domain.Mapping{"hero": {Schema: "http", Host: "hero.io", Path: "/api"}}},
 			domain.HttpRequest{Method: http.MethodPatch, Schema: "http", Host: "hero.io", Path: "/api", Query: map[string]interface{}{}, Body: map[string]interface{}{"id": 1}, Headers: map[string]string{"Content-Type": "application/json"}},
 		},
 		{
 			"should make put request with url",
-			domain.Statement{Method: domain.IntoMethod, Resource: "hero", With: map[string]interface{}{"id": 1}},
+			domain.Statement{Method: domain.IntoMethod, Resource: "hero", With: domain.Params{Values: map[string]interface{}{"id": 1}}},
 			domain.QueryContext{Mappings: map[string]domain.Mapping{"hero": {Schema: "http", Host: "hero.io", Path: "/api"}}},
 			domain.HttpRequest{Method: http.MethodPut, Schema: "http", Host: "hero.io", Path: "/api", Query: map[string]interface{}{}, Body: map[string]interface{}{"id": 1}, Headers: map[string]string{"Content-Type": "application/json"}},
 		},
@@ -47,7 +47,7 @@ func TestMakeRequest(t *testing.T) {
 		},
 		{
 			"should make request with url and query params from statement",
-			domain.Statement{Method: domain.FromMethod, Resource: "hero", With: map[string]interface{}{"id": "123456"}},
+			domain.Statement{Method: domain.FromMethod, Resource: "hero", With: domain.Params{Values: map[string]interface{}{"id": "123456"}}},
 			domain.QueryContext{Mappings: map[string]domain.Mapping{"hero": {Schema: "http", Host: "hero.io", Path: "/api"}}},
 			domain.HttpRequest{Method: http.MethodGet, Schema: "http", Host: "hero.io", Path: "/api", Query: map[string]interface{}{"id": "123456"}, Headers: map[string]string{"Content-Type": "application/json"}},
 		},
@@ -59,7 +59,7 @@ func TestMakeRequest(t *testing.T) {
 		},
 		{
 			"should make request with url path params resolved",
-			domain.Statement{Method: domain.FromMethod, Resource: "hero", With: map[string]interface{}{"id": "123456"}},
+			domain.Statement{Method: domain.FromMethod, Resource: "hero", With: domain.Params{Values: map[string]interface{}{"id": "123456"}}},
 			domain.QueryContext{Mappings: map[string]domain.Mapping{"hero": {
 				Schema:        "http",
 				Host:          "hero.io",
@@ -71,7 +71,7 @@ func TestMakeRequest(t *testing.T) {
 		},
 		{
 			"should make request with url, query params from statement and forward query params",
-			domain.Statement{Method: domain.FromMethod, Resource: "hero", With: map[string]interface{}{"id": "123456"}},
+			domain.Statement{Method: domain.FromMethod, Resource: "hero", With: domain.Params{Values: map[string]interface{}{"id": "123456"}}},
 			domain.QueryContext{
 				Mappings: map[string]domain.Mapping{"hero": {Schema: "http", Host: "hero.io", Path: "/api"}},
 				Input:    domain.QueryInput{Params: map[string]interface{}{"c_universe": "dc", "test": "test"}},

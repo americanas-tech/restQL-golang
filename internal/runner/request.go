@@ -28,7 +28,7 @@ func MakeRequest(defaultResourceTimeout time.Duration, forwardPrefix string, sta
 	mapping := queryCtx.Mappings[statement.Resource]
 	method := queryMethodToHttpMethod[statement.Method]
 	headers := makeHeaders(statement, queryCtx)
-	path := mapping.PathWithParams(statement.With)
+	path := mapping.PathWithParams(statement.With.Values)
 	timeout := parseTimeout(defaultResourceTimeout, statement)
 
 	req := domain.HttpRequest{
@@ -54,8 +54,12 @@ func MakeRequest(defaultResourceTimeout time.Duration, forwardPrefix string, sta
 }
 
 func makeBody(statement domain.Statement, mapping domain.Mapping) domain.Body {
+	if statement.With.Body != nil {
+		return statement.With.Body
+	}
+
 	result := make(map[string]interface{})
-	for key, value := range statement.With {
+	for key, value := range statement.With.Values {
 		if mapping.HasParam(key) {
 			continue
 		}
@@ -95,7 +99,7 @@ func getForwardHeaders(queryCtx domain.QueryContext) map[string]string {
 
 func makeQueryParams(forwardPrefix string, statement domain.Statement, mapping domain.Mapping, queryCtx domain.QueryContext) map[string]interface{} {
 	queryArgs := getForwardParams(forwardPrefix, queryCtx)
-	for key, value := range statement.With {
+	for key, value := range statement.With.Values {
 		if mapping.HasParam(key) {
 			continue
 		}
@@ -105,6 +109,10 @@ func makeQueryParams(forwardPrefix string, statement domain.Statement, mapping d
 }
 
 func getForwardParams(forwardPrefix string, queryCtx domain.QueryContext) map[string]interface{} {
+	if forwardPrefix == "" {
+		return nil
+	}
+
 	r := make(map[string]interface{})
 	for k, v := range queryCtx.Input.Params {
 		if strings.HasPrefix(k, forwardPrefix) {

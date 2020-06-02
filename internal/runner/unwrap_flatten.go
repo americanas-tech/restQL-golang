@@ -28,16 +28,28 @@ func unwrapResource(resource interface{}) interface{} {
 }
 
 func unwrapStatement(statement domain.Statement) domain.Statement {
-	params := statement.With
+	params := statement.With.Values
 	for key, value := range params {
 		result := unwrapValue(value)
 
 		params[key] = result
 	}
 
-	statement.With = params
+	body := unwrapBody(statement.With.Body)
+
+	statement.With.Body = body
+	statement.With.Values = params
 
 	return statement
+}
+
+func unwrapBody(body interface{}) interface{} {
+	switch body := body.(type) {
+	case domain.Flatten:
+		return body.Target
+	default:
+		return body
+	}
 }
 
 func unwrapValue(value interface{}) interface{} {

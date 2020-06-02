@@ -9,7 +9,7 @@ import (
 
 func TestAvailableResources(t *testing.T) {
 	t.Run("should return resource with no parameter or static parameters", func(t *testing.T) {
-		statement := domain.Statement{Method: "from", Resource: "hero", With: map[string]interface{}{"id": "123456"}}
+		statement := domain.Statement{Method: "from", Resource: "hero", With: domain.Params{Values: map[string]interface{}{"id": "123456"}}}
 
 		input := domain.Resources{"hero": statement}
 
@@ -24,7 +24,7 @@ func TestAvailableResources(t *testing.T) {
 	})
 
 	t.Run("should return resource with no parameter or static parameters using alias as resource id", func(t *testing.T) {
-		statement := domain.Statement{Method: "from", Resource: "hero", Alias: "h", With: map[string]interface{}{"id": "123456"}}
+		statement := domain.Statement{Method: "from", Resource: "hero", Alias: "h", With: domain.Params{Values: map[string]interface{}{"id": "123456"}}}
 
 		input := domain.Resources{"h": statement}
 
@@ -39,10 +39,10 @@ func TestAvailableResources(t *testing.T) {
 	})
 
 	t.Run("should not return resource with unresolved dependency", func(t *testing.T) {
-		heroStatement := domain.Statement{Method: "from", Resource: "hero", With: map[string]interface{}{"id": "123456"}}
-		sidekickStatement := domain.Statement{Method: "from", Resource: "sidekick", With: map[string]interface{}{"id": domain.Chain{"hero", "sidekick", "id"}}}
-		villainStatement := domain.Statement{Method: "from", Resource: "villain", With: map[string]interface{}{"id": []interface{}{domain.Chain{"hero", "villain", "id"}}}}
-		crossoverStatement := domain.Statement{Method: "from", Resource: "crossover", With: map[string]interface{}{"id": map[string]interface{}{"heroes": domain.Chain{"hero", "id"}}}}
+		heroStatement := domain.Statement{Method: "from", Resource: "hero", With: domain.Params{Values: map[string]interface{}{"id": "123456"}}}
+		sidekickStatement := domain.Statement{Method: "from", Resource: "sidekick", With: domain.Params{Values: map[string]interface{}{"id": domain.Chain{"hero", "sidekick", "id"}}}}
+		villainStatement := domain.Statement{Method: "from", Resource: "villain", With: domain.Params{Values: map[string]interface{}{"id": []interface{}{domain.Chain{"hero", "villain", "id"}}}}}
+		crossoverStatement := domain.Statement{Method: "from", Resource: "crossover", With: domain.Params{Values: map[string]interface{}{"id": map[string]interface{}{"heroes": domain.Chain{"hero", "id"}}}}}
 
 		input := domain.Resources{
 			"hero":      heroStatement,
@@ -62,10 +62,10 @@ func TestAvailableResources(t *testing.T) {
 	})
 
 	t.Run("should return resource with resolved dependency inside complex param", func(t *testing.T) {
-		heroStatement := domain.Statement{Method: "from", Resource: "hero", With: map[string]interface{}{"id": "123456"}}
-		sidekickStatement := domain.Statement{Method: "from", Resource: "sidekick", With: map[string]interface{}{"id": domain.Chain{"hero", "sidekick", "id"}}}
-		villainStatement := domain.Statement{Method: "from", Resource: "villain", With: map[string]interface{}{"id": []interface{}{domain.Chain{"hero", "villain", "id"}}}}
-		crossoverStatement := domain.Statement{Method: "from", Resource: "crossover", With: map[string]interface{}{"id": map[string]interface{}{"heroes": domain.Chain{"hero", "id"}}}}
+		heroStatement := domain.Statement{Method: "from", Resource: "hero", With: domain.Params{Values: map[string]interface{}{"id": "123456"}}}
+		sidekickStatement := domain.Statement{Method: "from", Resource: "sidekick", With: domain.Params{Values: map[string]interface{}{"id": domain.Chain{"hero", "sidekick", "id"}}}}
+		villainStatement := domain.Statement{Method: "from", Resource: "villain", With: domain.Params{Values: map[string]interface{}{"id": []interface{}{domain.Chain{"hero", "villain", "id"}}}}}
+		crossoverStatement := domain.Statement{Method: "from", Resource: "crossover", With: domain.Params{Values: map[string]interface{}{"id": map[string]interface{}{"heroes": domain.Chain{"hero", "id"}}}}}
 
 		input := domain.Resources{
 			"hero":      heroStatement,
@@ -92,8 +92,8 @@ func TestAvailableResources(t *testing.T) {
 
 func TestSetAsRequested(t *testing.T) {
 	t.Run("should add resource to requested and remove from available", func(t *testing.T) {
-		heroStatement := domain.Statement{Method: "from", Resource: "hero", With: map[string]interface{}{"id": "987654"}}
-		sidekickStatement := domain.Statement{Method: "from", Resource: "sidekick", With: map[string]interface{}{"id": "123456"}}
+		heroStatement := domain.Statement{Method: "from", Resource: "hero", With: domain.Params{Values: map[string]interface{}{"id": "987654"}}}
+		sidekickStatement := domain.Statement{Method: "from", Resource: "sidekick", With: domain.Params{Values: map[string]interface{}{"id": "123456"}}}
 
 		input := domain.Resources{"hero": heroStatement, "sidekick": sidekickStatement}
 
@@ -126,7 +126,7 @@ func TestSetAsRequested(t *testing.T) {
 
 func TestUpdateDone(t *testing.T) {
 	t.Run("should add completed resource to done and remove from requested", func(t *testing.T) {
-		doneStatement := domain.Statement{Method: "from", Resource: "hero", With: map[string]interface{}{"id": "123456"}}
+		doneStatement := domain.Statement{Method: "from", Resource: "hero", With: domain.Params{Values: map[string]interface{}{"id": "123456"}}}
 		input := domain.Resources{"hero": doneStatement}
 
 		expectedDoneRequests := domain.Resources{

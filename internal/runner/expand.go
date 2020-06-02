@@ -29,7 +29,7 @@ func MultiplexStatements(resources domain.Resources) domain.Resources {
 }
 
 func multiplex(statement domain.Statement) interface{} {
-	params := statement.With
+	params := statement.With.Values
 	if params == nil {
 		return statement
 	}
@@ -45,7 +45,7 @@ func multiplex(statement domain.Statement) interface{} {
 	for i, parameters := range statementsParameters {
 		newStmt := copyStatement(statement)
 		for _, p := range parameters {
-			setParameterOnStatement(newStmt.With, p.path, p.value)
+			setParameterOnStatement(newStmt.With.Values, p.path, p.value)
 		}
 
 		result[i] = multiplex(newStmt)
@@ -55,20 +55,7 @@ func multiplex(statement domain.Statement) interface{} {
 }
 
 func setParameterOnStatement(params interface{}, path []string, value interface{}) {
-	switch params := params.(type) {
-	case domain.Params:
-		if len(path) == 1 {
-			params[path[0]] = value
-			return
-		}
-
-		field, ok := params[path[0]]
-		if !ok {
-			return
-		}
-
-		setParameterOnStatement(field, path[1:], value)
-	case map[string]interface{}:
+	if params, ok := params.(map[string]interface{}); ok {
 		if len(path) == 1 {
 			params[path[0]] = value
 			return
@@ -150,10 +137,10 @@ func copyStatement(statement domain.Statement) domain.Statement {
 		}
 	}
 
-	if statement.With != nil {
-		newStatement.With = make(map[string]interface{}, len(statement.With))
-		for k, v := range statement.With {
-			newStatement.With[k] = copyValue(v)
+	if statement.With.Values != nil {
+		newStatement.With.Values = make(map[string]interface{}, len(statement.With.Values))
+		for k, v := range statement.With.Values {
+			newStatement.With.Values[k] = copyValue(v)
 		}
 	}
 

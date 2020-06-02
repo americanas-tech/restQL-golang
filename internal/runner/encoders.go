@@ -19,16 +19,30 @@ func ApplyEncoders(resources domain.Resources, log restql.Logger) domain.Resourc
 }
 
 func applyEncoderToStatement(log restql.Logger, statement domain.Statement) domain.Statement {
-	params := statement.With
-	for key, value := range params {
+	values := statement.With.Values
+	for key, value := range values {
 		result := applyEncoderToValue(log, value)
 
-		params[key] = result
+		values[key] = result
 	}
 
-	statement.With = params
+	body := applyEncoderToBody(statement.With.Body)
+
+	statement.With.Body = body
+	statement.With.Values = values
 
 	return statement
+}
+
+func applyEncoderToBody(body interface{}) interface{} {
+	switch body := body.(type) {
+	case domain.Base64:
+		return applyBase64encoder(body)
+	case domain.Json:
+		return body.Target
+	default:
+		return body
+	}
 }
 
 func applyEncoderToValue(log restql.Logger, value interface{}) interface{} {

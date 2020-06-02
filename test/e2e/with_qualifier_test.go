@@ -87,7 +87,7 @@ from planets
 	test.Equal(t, body, test.Unmarshal(expectedResponse))
 }
 
-func TestWithQualifierOnPostStatement(t *testing.T) {
+func TestWithQualifierOnToStatement(t *testing.T) {
 	query := `
 to planets
 	with 
@@ -638,6 +638,77 @@ from planets
 	mockServer.Start()
 
 	response, err := httpClient.Post(adHocQueryUrl, "text/plain", strings.NewReader(query))
+	test.VerifyError(t, err)
+	defer response.Body.Close()
+
+	test.Equal(t, response.StatusCode, 200)
+
+	var body map[string]interface{}
+	err = json.NewDecoder(response.Body).Decode(&body)
+	test.VerifyError(t, err)
+
+	test.Equal(t, body, test.Unmarshal(expectedResponse))
+}
+
+func TestWithQualifierDefaultBodyOnToStatement(t *testing.T) {
+	newPlanet := `{"name": "Yavin IV","rotation_period": 24.5,"orbital_period": "4818","diameter": "10200","climate": "temperate, tropical","gravity": "1 standard","terrain": { "north": "jungle", "south": "rainforests" },"surface_water": "8","population": 1000,"residents": ["john", "janne"]}`
+
+	query := `
+to planets
+	with
+		$planet
+`
+
+	planet := `
+{
+	"name": "Yavin IV",
+	"rotation_period": 24.5,
+	"orbital_period": "4818",
+	"diameter": "10200",
+	"climate": "temperate, tropical",
+	"gravity": "1 standard",
+	"terrain": { "north": "jungle", "south": "rainforests" },
+	"surface_water": "8",
+	"population": 1000,
+	"residents": ["john", "janne"]
+}
+`
+
+	expectedResponse := fmt.Sprintf(`
+	{
+		"planets": {
+			"details": {
+				"success": true,
+				"status": 201,
+				"metadata": {}
+			},
+			"result": %s 
+		}
+	}`, planet)
+
+	mockServer := test.NewMockServer(mockPort)
+	defer mockServer.Teardown()
+
+	mockServer.Mux().HandleFunc("/api/planets/", func(w http.ResponseWriter, r *http.Request) {
+		test.Equal(t, r.Method, http.MethodPost)
+
+		b, err := ioutil.ReadAll(r.Body)
+		test.VerifyError(t, err)
+
+		body := string(b)
+		test.NotEqual(t, body, "")
+
+		fmt.Printf("receveid body : %v\n", body)
+
+		test.Equal(t, test.Unmarshal(body), test.Unmarshal(planet))
+
+		w.WriteHeader(201)
+		io.WriteString(w, planet)
+	})
+	mockServer.Start()
+
+	target := fmt.Sprintf("%s&planet=%s", adHocQueryUrl, newPlanet)
+	response, err := httpClient.Post(target, "text/plain", strings.NewReader(query))
 	test.VerifyError(t, err)
 	defer response.Body.Close()
 

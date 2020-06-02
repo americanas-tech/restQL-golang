@@ -31,33 +31,35 @@ func TestQueryParser(t *testing.T) {
 				Method:   "from",
 				Resource: "hero",
 				With: domain.Params{
-					"id":      1,
-					"name":    "batman",
-					"weapons": []interface{}{"belt", "hands"},
-					"family": map[string]interface{}{
-						"father":       "Thomas Wayne",
-						"grandparents": []interface{}{"John", "William"},
-						"familyName":   domain.Variable{Target: "familyName"},
+					Values: map[string]interface{}{
+						"id":      1,
+						"name":    "batman",
+						"weapons": []interface{}{"belt", "hands"},
+						"family": map[string]interface{}{
+							"father":       "Thomas Wayne",
+							"grandparents": []interface{}{"John", "William"},
+							"familyName":   domain.Variable{Target: "familyName"},
+						},
+						"height":   10.5,
+						"universe": domain.Variable{"universe"},
 					},
-					"height":   10.5,
-					"universe": domain.Variable{"universe"},
 				},
 			}}},
 			`from hero with id = 1, name = "batman", weapons = ["belt", "hands"], family = { "father": "Thomas Wayne", "grandparents": ["John", "William"], "familyName": $familyName }, height = 10.5, universe = $universe`,
 		},
 		{
 			"Unique from statement and chained with parameters",
-			domain.Query{Statements: []domain.Statement{{Method: "from", Resource: "hero", With: domain.Params{"id": domain.Chain{"done-resource", "id"}}}}},
+			domain.Query{Statements: []domain.Statement{{Method: "from", Resource: "hero", With: domain.Params{Values: map[string]interface{}{"id": domain.Chain{"done-resource", "id"}}}}}},
 			"from hero with id = done-resource.id",
 		},
 		{
 			"Unique from statement and list of chained with parameters",
-			domain.Query{Statements: []domain.Statement{{Method: "from", Resource: "hero", With: domain.Params{"id": []interface{}{domain.Chain{"done-resource", "id"}}}}}},
+			domain.Query{Statements: []domain.Statement{{Method: "from", Resource: "hero", With: domain.Params{Values: map[string]interface{}{"id": []interface{}{domain.Chain{"done-resource", "id"}}}}}}},
 			"from hero with id = [done-resource.id]",
 		},
 		{
 			"Unique from statement and parameterized chained with parameters",
-			domain.Query{Statements: []domain.Statement{{Method: "from", Resource: "hero", With: domain.Params{"id": domain.Chain{"done-resource", domain.Variable{"field"}, "id"}}}}},
+			domain.Query{Statements: []domain.Statement{{Method: "from", Resource: "hero", With: domain.Params{Values: map[string]interface{}{"id": domain.Chain{"done-resource", domain.Variable{"field"}, "id"}}}}}},
 			"from hero with id = done-resource.$field.id",
 		},
 		{
@@ -107,18 +109,23 @@ func TestQueryParser(t *testing.T) {
 		},
 		{
 			"Unique from statement and flattened list parameters",
-			domain.Query{Statements: []domain.Statement{{Method: "from", Resource: "hero", With: domain.Params{"id": domain.Flatten{[]interface{}{1, 2}}}}}},
+			domain.Query{Statements: []domain.Statement{{Method: "from", Resource: "hero", With: domain.Params{Values: map[string]interface{}{"id": domain.Flatten{[]interface{}{1, 2}}}}}}},
 			"from hero with id = [1, 2] -> flatten",
 		},
 		{
 			"Unique from statement and object parameter encoded as json",
-			domain.Query{Statements: []domain.Statement{{Method: "from", Resource: "hero", With: domain.Params{"id": domain.Json{map[string]interface{}{"internal": 1}}}}}},
+			domain.Query{Statements: []domain.Statement{{Method: "from", Resource: "hero", With: domain.Params{Values: map[string]interface{}{"id": domain.Json{map[string]interface{}{"internal": 1}}}}}}},
 			`from hero with id = { "internal": 1 } -> json`,
 		},
 		{
 			"Unique from statement and parameter encoded as base64",
-			domain.Query{Statements: []domain.Statement{{Method: "from", Resource: "hero", With: domain.Params{"id": domain.Base64{"abdcef12345"}}}}},
+			domain.Query{Statements: []domain.Statement{{Method: "from", Resource: "hero", With: domain.Params{Values: map[string]interface{}{"id": domain.Base64{"abdcef12345"}}}}}},
 			`from hero with id = "abdcef12345" -> base64`,
+		},
+		{
+			"Unique to statement with default body value and custom parameter",
+			domain.Query{Statements: []domain.Statement{{Method: "to", Resource: "hero", With: domain.Params{Body: domain.Variable{Target: "hero"}, Values: map[string]interface{}{"name": "batman"}}}}},
+			`to hero with $hero, name = "batman"`,
 		},
 		{
 			"Unique from statement and only filters with match function",
@@ -143,13 +150,13 @@ func TestQueryParser(t *testing.T) {
 						Resource: "hero",
 						Alias:    "h",
 						Headers:  map[string]interface{}{"X-Trace-Id": "abcdef12345"},
-						With: map[string]interface{}{
+						With: domain.Params{Values: map[string]interface{}{
 							"id":      1,
 							"name":    "batman",
 							"weapons": []interface{}{"belt", "hands"},
 							"family":  map[string]interface{}{"father": "Thomas Wayne"},
 							"height":  10.5,
-						},
+						}},
 						Only: []interface{}{[]string{"id"}, []string{"name"}},
 					},
 					{
@@ -158,13 +165,13 @@ func TestQueryParser(t *testing.T) {
 						Alias:    "s",
 						In:       []string{"hero", "sidekick"},
 						Headers:  map[string]interface{}{"X-Trace-Id": "abcdef12345"},
-						With: map[string]interface{}{
+						With: domain.Params{Values: map[string]interface{}{
 							"id":      1,
 							"name":    "batman",
 							"weapons": []interface{}{"belt", "hands"},
 							"family":  map[string]interface{}{"father": "Thomas Wayne"},
 							"height":  10.5,
-						},
+						}},
 						Hidden:       true,
 						IgnoreErrors: true,
 					},

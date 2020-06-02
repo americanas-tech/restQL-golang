@@ -102,8 +102,8 @@ func makeStatement(block ast.Block) (domain.Statement, error) {
 }
 
 func makeParams(wq ast.Qualifier) domain.Params {
-	p := domain.Params{}
-	for _, item := range wq.With {
+	values := make(map[string]interface{})
+	for _, item := range wq.With.KeyValues {
 		v := getValue(item.Value)
 
 		if item.Flatten {
@@ -118,8 +118,34 @@ func makeParams(wq ast.Qualifier) domain.Params {
 			v = domain.Base64{v}
 		}
 
-		p[item.Key] = v
+		values[item.Key] = v
 	}
+
+	p := domain.Params{
+		Values: values,
+	}
+
+	parameterBody := wq.With.Body
+	if parameterBody == nil {
+		return p
+	}
+
+	var body interface{}
+	body = domain.Variable{Target: parameterBody.Target}
+
+	if parameterBody.Flatten {
+		body = domain.Flatten{Target: body}
+	}
+
+	if parameterBody.Json {
+		body = domain.Json{Target: body}
+	}
+
+	if parameterBody.Base64 {
+		body = domain.Base64{Target: body}
+	}
+
+	p.Body = body
 
 	return p
 }

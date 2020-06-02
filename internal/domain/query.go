@@ -34,7 +34,10 @@ type Statement struct {
 	IgnoreErrors bool
 }
 
-type Params map[string]interface{}
+type Params struct {
+	Body   interface{}
+	Values map[string]interface{}
+}
 
 type CacheControl struct {
 	MaxAge  interface{}

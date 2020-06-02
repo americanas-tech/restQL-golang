@@ -26,12 +26,12 @@ func TestMultiplexStatements(t *testing.T) {
 					Resource: "hero",
 					Alias:    "h",
 					Headers:  map[string]interface{}{"X-Trace-Id": "abcdef12345"},
-					With: map[string]interface{}{
+					With: domain.Params{Values: map[string]interface{}{
 						"id":     1,
 						"name":   "batman",
 						"family": map[string]interface{}{"father": "Thomas Wayne"},
 						"height": 10.5,
-					},
+					}},
 					Only: []interface{}{"id", "name"},
 				},
 				"s": domain.Statement{
@@ -39,12 +39,12 @@ func TestMultiplexStatements(t *testing.T) {
 					Resource: "sidekick",
 					Alias:    "s",
 					Headers:  map[string]interface{}{"X-Trace-Id": "abcdef12345"},
-					With: map[string]interface{}{
+					With: domain.Params{Values: map[string]interface{}{
 						"id":     1,
 						"name":   "batman",
 						"family": map[string]interface{}{"father": "Thomas Wayne"},
 						"height": 10.5,
-					},
+					}},
 					Hidden:       true,
 					IgnoreErrors: true,
 				},
@@ -60,12 +60,12 @@ func TestMultiplexStatements(t *testing.T) {
 					Resource: "hero",
 					Alias:    "h",
 					Headers:  map[string]interface{}{"X-Trace-Id": "abcdef12345"},
-					With: map[string]interface{}{
+					With: domain.Params{Values: map[string]interface{}{
 						"id":     1,
 						"name":   "batman",
 						"family": map[string]interface{}{"father": "Thomas Wayne"},
 						"height": 10.5,
-					},
+					}},
 					Only: []interface{}{"id", "name"},
 				},
 				"s": domain.Statement{
@@ -73,12 +73,12 @@ func TestMultiplexStatements(t *testing.T) {
 					Resource: "sidekick",
 					Alias:    "s",
 					Headers:  map[string]interface{}{"X-Trace-Id": "abcdef12345"},
-					With: map[string]interface{}{
+					With: domain.Params{Values: map[string]interface{}{
 						"id":     1,
 						"name":   "batman",
 						"family": map[string]interface{}{"father": "Thomas Wayne"},
 						"height": 10.5,
-					},
+					}},
 					Hidden:       true,
 					IgnoreErrors: true,
 				},
@@ -92,12 +92,12 @@ func TestMultiplexStatements(t *testing.T) {
 		{
 			"should make nested new statements for each list value",
 			domain.Resources{
-				"hero": domain.Statement{Method: "from", Resource: "hero", With: map[string]interface{}{"id": []interface{}{"12345", "67890"}}},
+				"hero": domain.Statement{Method: "from", Resource: "hero", With: domain.Params{Values: map[string]interface{}{"id": []interface{}{"12345", "67890"}}}},
 			},
 			domain.Resources{
 				"hero": []interface{}{
-					domain.Statement{Method: "from", Resource: "hero", With: map[string]interface{}{"id": "12345"}},
-					domain.Statement{Method: "from", Resource: "hero", With: map[string]interface{}{"id": "67890"}},
+					domain.Statement{Method: "from", Resource: "hero", With: domain.Params{Values: map[string]interface{}{"id": "12345"}}},
+					domain.Statement{Method: "from", Resource: "hero", With: domain.Params{Values: map[string]interface{}{"id": "67890"}}},
 				},
 			},
 		},
@@ -107,26 +107,26 @@ func TestMultiplexStatements(t *testing.T) {
 				"hero": domain.Statement{
 					Method:   "from",
 					Resource: "hero",
-					With:     map[string]interface{}{"id": []interface{}{[]interface{}{"12345"}, []interface{}{"67890"}}},
+					With:     domain.Params{Values: map[string]interface{}{"id": []interface{}{[]interface{}{"12345"}, []interface{}{"67890"}}}},
 				},
 			},
 			domain.Resources{
 				"hero": []interface{}{
-					[]interface{}{domain.Statement{Method: "from", Resource: "hero", With: map[string]interface{}{"id": "12345"}}},
-					[]interface{}{domain.Statement{Method: "from", Resource: "hero", With: map[string]interface{}{"id": "67890"}}},
+					[]interface{}{domain.Statement{Method: "from", Resource: "hero", With: domain.Params{Values: map[string]interface{}{"id": "12345"}}}},
+					[]interface{}{domain.Statement{Method: "from", Resource: "hero", With: domain.Params{Values: map[string]interface{}{"id": "67890"}}}},
 				},
 			},
 		},
 		{
 			"should make a new statement for each list value",
 			domain.Resources{
-				"hero": domain.Statement{Method: "from", Resource: "hero", With: map[string]interface{}{"id": []interface{}{"12345", "67890", "19283"}}},
+				"hero": domain.Statement{Method: "from", Resource: "hero", With: domain.Params{Values: map[string]interface{}{"id": []interface{}{"12345", "67890", "19283"}}}},
 			},
 			domain.Resources{
 				"hero": []interface{}{
-					domain.Statement{Method: "from", Resource: "hero", With: map[string]interface{}{"id": "12345"}},
-					domain.Statement{Method: "from", Resource: "hero", With: map[string]interface{}{"id": "67890"}},
-					domain.Statement{Method: "from", Resource: "hero", With: map[string]interface{}{"id": "19283"}},
+					domain.Statement{Method: "from", Resource: "hero", With: domain.Params{Values: map[string]interface{}{"id": "12345"}}},
+					domain.Statement{Method: "from", Resource: "hero", With: domain.Params{Values: map[string]interface{}{"id": "67890"}}},
+					domain.Statement{Method: "from", Resource: "hero", With: domain.Params{Values: map[string]interface{}{"id": "19283"}}},
 				},
 			},
 		},
@@ -136,58 +136,58 @@ func TestMultiplexStatements(t *testing.T) {
 				"hero": domain.Statement{
 					Method:   "from",
 					Resource: "hero",
-					With:     map[string]interface{}{"id": []interface{}{"12345", "67890"}, "name": "batman", "age": 45},
+					With:     domain.Params{Values: map[string]interface{}{"id": []interface{}{"12345", "67890"}, "name": "batman", "age": 45}},
 				},
 			},
 			domain.Resources{
 				"hero": []interface{}{
-					domain.Statement{Method: "from", Resource: "hero", With: map[string]interface{}{"id": "12345", "name": "batman", "age": 45}},
-					domain.Statement{Method: "from", Resource: "hero", With: map[string]interface{}{"id": "67890", "name": "batman", "age": 45}},
+					domain.Statement{Method: "from", Resource: "hero", With: domain.Params{Values: map[string]interface{}{"id": "12345", "name": "batman", "age": 45}}},
+					domain.Statement{Method: "from", Resource: "hero", With: domain.Params{Values: map[string]interface{}{"id": "67890", "name": "batman", "age": 45}}},
 				},
 			},
 		},
 		{
 			"should make a new statement for each list value only on statement with list param",
 			domain.Resources{
-				"hero":    domain.Statement{Method: "from", Resource: "hero", With: map[string]interface{}{"id": "12345"}},
-				"villain": domain.Statement{Method: "from", Resource: "villain", With: map[string]interface{}{"id": []interface{}{"abcdef", "ghijkl"}}},
+				"hero":    domain.Statement{Method: "from", Resource: "hero", With: domain.Params{Values: map[string]interface{}{"id": "12345"}}},
+				"villain": domain.Statement{Method: "from", Resource: "villain", With: domain.Params{Values: map[string]interface{}{"id": []interface{}{"abcdef", "ghijkl"}}}},
 			},
 			domain.Resources{
-				"hero": domain.Statement{Method: "from", Resource: "hero", With: map[string]interface{}{"id": "12345"}},
+				"hero": domain.Statement{Method: "from", Resource: "hero", With: domain.Params{Values: map[string]interface{}{"id": "12345"}}},
 				"villain": []interface{}{
-					domain.Statement{Method: "from", Resource: "villain", With: map[string]interface{}{"id": "abcdef"}},
-					domain.Statement{Method: "from", Resource: "villain", With: map[string]interface{}{"id": "ghijkl"}},
+					domain.Statement{Method: "from", Resource: "villain", With: domain.Params{Values: map[string]interface{}{"id": "abcdef"}}},
+					domain.Statement{Method: "from", Resource: "villain", With: domain.Params{Values: map[string]interface{}{"id": "ghijkl"}}},
 				},
 			},
 		},
 		{
 			"should make a new statement for each list value in each statement",
 			domain.Resources{
-				"hero":    domain.Statement{Method: "from", Resource: "hero", With: map[string]interface{}{"id": []interface{}{"12345", "67890"}}},
-				"villain": domain.Statement{Method: "from", Resource: "villain", With: map[string]interface{}{"id": []interface{}{"abcdef", "ghijkl"}}},
+				"hero":    domain.Statement{Method: "from", Resource: "hero", With: domain.Params{Values: map[string]interface{}{"id": []interface{}{"12345", "67890"}}}},
+				"villain": domain.Statement{Method: "from", Resource: "villain", With: domain.Params{Values: map[string]interface{}{"id": []interface{}{"abcdef", "ghijkl"}}}},
 			},
 			domain.Resources{
 				"hero": []interface{}{
-					domain.Statement{Method: "from", Resource: "hero", With: map[string]interface{}{"id": "12345"}},
-					domain.Statement{Method: "from", Resource: "hero", With: map[string]interface{}{"id": "67890"}},
+					domain.Statement{Method: "from", Resource: "hero", With: domain.Params{Values: map[string]interface{}{"id": "12345"}}},
+					domain.Statement{Method: "from", Resource: "hero", With: domain.Params{Values: map[string]interface{}{"id": "67890"}}},
 				},
 				"villain": []interface{}{
-					domain.Statement{Method: "from", Resource: "villain", With: map[string]interface{}{"id": "abcdef"}},
-					domain.Statement{Method: "from", Resource: "villain", With: map[string]interface{}{"id": "ghijkl"}},
+					domain.Statement{Method: "from", Resource: "villain", With: domain.Params{Values: map[string]interface{}{"id": "abcdef"}}},
+					domain.Statement{Method: "from", Resource: "villain", With: domain.Params{Values: map[string]interface{}{"id": "ghijkl"}}},
 				},
 			},
 		},
 		{
 			"should not make a new statement if list is flattened",
 			domain.Resources{
-				"hero":    domain.Statement{Method: "from", Resource: "hero", With: map[string]interface{}{"id": domain.Flatten{[]interface{}{"12345", "67890"}}}},
-				"villain": domain.Statement{Method: "from", Resource: "villain", With: map[string]interface{}{"id": []interface{}{"abcdef", "ghijkl"}}},
+				"hero":    domain.Statement{Method: "from", Resource: "hero", With: domain.Params{Values: map[string]interface{}{"id": domain.Flatten{[]interface{}{"12345", "67890"}}}}},
+				"villain": domain.Statement{Method: "from", Resource: "villain", With: domain.Params{Values: map[string]interface{}{"id": []interface{}{"abcdef", "ghijkl"}}}},
 			},
 			domain.Resources{
-				"hero": domain.Statement{Method: "from", Resource: "hero", With: map[string]interface{}{"id": domain.Flatten{[]interface{}{"12345", "67890"}}}},
+				"hero": domain.Statement{Method: "from", Resource: "hero", With: domain.Params{Values: map[string]interface{}{"id": domain.Flatten{[]interface{}{"12345", "67890"}}}}},
 				"villain": []interface{}{
-					domain.Statement{Method: "from", Resource: "villain", With: map[string]interface{}{"id": "abcdef"}},
-					domain.Statement{Method: "from", Resource: "villain", With: map[string]interface{}{"id": "ghijkl"}},
+					domain.Statement{Method: "from", Resource: "villain", With: domain.Params{Values: map[string]interface{}{"id": "abcdef"}}},
+					domain.Statement{Method: "from", Resource: "villain", With: domain.Params{Values: map[string]interface{}{"id": "ghijkl"}}},
 				},
 			},
 		},
@@ -197,19 +197,19 @@ func TestMultiplexStatements(t *testing.T) {
 				"hero": domain.Statement{
 					Method:   "from",
 					Resource: "hero",
-					With: map[string]interface{}{
+					With: domain.Params{Values: map[string]interface{}{
 						"obj": map[string]interface{}{
 							"id": []interface{}{"12345", "67890"},
 						},
 						"name": "batman",
 						"age":  45,
-					},
+					}},
 				},
 			},
 			domain.Resources{
 				"hero": []interface{}{
-					domain.Statement{Method: "from", Resource: "hero", With: map[string]interface{}{"obj": map[string]interface{}{"id": "12345"}, "name": "batman", "age": 45}},
-					domain.Statement{Method: "from", Resource: "hero", With: map[string]interface{}{"obj": map[string]interface{}{"id": "67890"}, "name": "batman", "age": 45}},
+					domain.Statement{Method: "from", Resource: "hero", With: domain.Params{Values: map[string]interface{}{"obj": map[string]interface{}{"id": "12345"}, "name": "batman", "age": 45}}},
+					domain.Statement{Method: "from", Resource: "hero", With: domain.Params{Values: map[string]interface{}{"obj": map[string]interface{}{"id": "67890"}, "name": "batman", "age": 45}}},
 				},
 			},
 		},
@@ -219,13 +219,13 @@ func TestMultiplexStatements(t *testing.T) {
 				"hero": domain.Statement{
 					Method:   "from",
 					Resource: "hero",
-					With:     map[string]interface{}{"id": []interface{}{"12345", "67890"}, "name": []interface{}{"batman", "superman"}},
+					With:     domain.Params{Values: map[string]interface{}{"id": []interface{}{"12345", "67890"}, "name": []interface{}{"batman", "superman"}}},
 				},
 			},
 			domain.Resources{
 				"hero": []interface{}{
-					domain.Statement{Method: "from", Resource: "hero", With: map[string]interface{}{"id": "12345", "name": "batman"}},
-					domain.Statement{Method: "from", Resource: "hero", With: map[string]interface{}{"id": "67890", "name": "superman"}},
+					domain.Statement{Method: "from", Resource: "hero", With: domain.Params{Values: map[string]interface{}{"id": "12345", "name": "batman"}}},
+					domain.Statement{Method: "from", Resource: "hero", With: domain.Params{Values: map[string]interface{}{"id": "67890", "name": "superman"}}},
 				},
 			},
 		},
@@ -235,13 +235,13 @@ func TestMultiplexStatements(t *testing.T) {
 				"hero": domain.Statement{
 					Method:   "from",
 					Resource: "hero",
-					With:     map[string]interface{}{"id": []interface{}{"12345", "67890"}, "name": []interface{}{"batman", "superman"}, "age": []interface{}{45, 38}},
+					With:     domain.Params{Values: map[string]interface{}{"id": []interface{}{"12345", "67890"}, "name": []interface{}{"batman", "superman"}, "age": []interface{}{45, 38}}},
 				},
 			},
 			domain.Resources{
 				"hero": []interface{}{
-					domain.Statement{Method: "from", Resource: "hero", With: map[string]interface{}{"id": "12345", "name": "batman", "age": 45}},
-					domain.Statement{Method: "from", Resource: "hero", With: map[string]interface{}{"id": "67890", "name": "superman", "age": 38}},
+					domain.Statement{Method: "from", Resource: "hero", With: domain.Params{Values: map[string]interface{}{"id": "12345", "name": "batman", "age": 45}}},
+					domain.Statement{Method: "from", Resource: "hero", With: domain.Params{Values: map[string]interface{}{"id": "67890", "name": "superman", "age": 38}}},
 				},
 			},
 		},
@@ -251,13 +251,13 @@ func TestMultiplexStatements(t *testing.T) {
 				"hero": domain.Statement{
 					Method:   "from",
 					Resource: "hero",
-					With:     map[string]interface{}{"id": []interface{}{"12345", "67890"}, "name": []interface{}{"wonder woman", "batman", "superman"}},
+					With:     domain.Params{Values: map[string]interface{}{"id": []interface{}{"12345", "67890"}, "name": []interface{}{"wonder woman", "batman", "superman"}}},
 				},
 			},
 			domain.Resources{
 				"hero": []interface{}{
-					domain.Statement{Method: "from", Resource: "hero", With: map[string]interface{}{"id": "12345", "name": "wonder woman"}},
-					domain.Statement{Method: "from", Resource: "hero", With: map[string]interface{}{"id": "67890", "name": "batman"}},
+					domain.Statement{Method: "from", Resource: "hero", With: domain.Params{Values: map[string]interface{}{"id": "12345", "name": "wonder woman"}}},
+					domain.Statement{Method: "from", Resource: "hero", With: domain.Params{Values: map[string]interface{}{"id": "67890", "name": "batman"}}},
 				},
 			},
 		},
@@ -267,13 +267,13 @@ func TestMultiplexStatements(t *testing.T) {
 				"hero": domain.Statement{
 					Method:   "from",
 					Resource: "hero",
-					With:     map[string]interface{}{"id": []interface{}{"12345", "67890"}, "name": []interface{}{"batman", "superman"}, "universe": "dc"},
+					With:     domain.Params{Values: map[string]interface{}{"id": []interface{}{"12345", "67890"}, "name": []interface{}{"batman", "superman"}, "universe": "dc"}},
 				},
 			},
 			domain.Resources{
 				"hero": []interface{}{
-					domain.Statement{Method: "from", Resource: "hero", With: map[string]interface{}{"id": "12345", "name": "batman", "universe": "dc"}},
-					domain.Statement{Method: "from", Resource: "hero", With: map[string]interface{}{"id": "67890", "name": "superman", "universe": "dc"}},
+					domain.Statement{Method: "from", Resource: "hero", With: domain.Params{Values: map[string]interface{}{"id": "12345", "name": "batman", "universe": "dc"}}},
+					domain.Statement{Method: "from", Resource: "hero", With: domain.Params{Values: map[string]interface{}{"id": "67890", "name": "superman", "universe": "dc"}}},
 				},
 			},
 		},

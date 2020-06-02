@@ -84,7 +84,7 @@ type Block struct {
 }
 
 type Qualifier struct {
-	With         []WithItem    `(With @@+)`
+	With         *Parameters   `(With @@)`
 	Only         []Filter      `| (Only @@+)`
 	Hidden       bool          `| (@Hidden)`
 	Timeout      *TimeoutValue `| (Timeout @@)`
@@ -100,6 +100,26 @@ type Filter struct {
 }
 
 type WithItem struct {
+	Key     string `@(Ident (Dot Ident)*) Equal`
+	Value   Value  `@@ (Arrow (`
+	Flatten bool   `	@Flatten |`
+	Base64  bool   `	@Base64  |`
+	Json    bool   `	@Json))?`
+}
+
+type Parameters struct {
+	Body      *ParameterBody `(Dollar @@)?`
+	KeyValues []KeyValue     `@@*`
+}
+
+type ParameterBody struct {
+	Target  string `@Ident (Arrow (`
+	Flatten bool   `	@Flatten |`
+	Base64  bool   `	@Base64  |`
+	Json    bool   `	@Json))?`
+}
+
+type KeyValue struct {
 	Key     string `@(Ident (Dot Ident)*) Equal`
 	Value   Value  `@@ (Arrow (`
 	Flatten bool   `	@Flatten |`

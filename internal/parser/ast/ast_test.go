@@ -60,135 +60,188 @@ func TestAstGenerator(t *testing.T) {
 		},
 		{
 			"Get query with integer query parameters",
-			ast.Query{Blocks: []ast.Block{{Method: ast.FromMethod, Resource: "cart", Qualifiers: []ast.Qualifier{{With: []ast.WithItem{{Key: "id", Value: ast.Value{Primitive: &ast.Primitive{Int: Int(1)}}}}}}}}},
+			ast.Query{Blocks: []ast.Block{{Method: ast.FromMethod, Resource: "cart", Qualifiers: []ast.Qualifier{{With: &ast.Parameters{KeyValues: []ast.KeyValue{{Key: "id", Value: ast.Value{Primitive: &ast.Primitive{Int: Int(1)}}}}}}}}}},
 			`from cart with id = 1`,
 		},
 		{
 			"Get query with string query parameters",
-			ast.Query{Blocks: []ast.Block{{Method: ast.FromMethod, Resource: "cart", Qualifiers: []ast.Qualifier{{With: []ast.WithItem{{Key: "name", Value: ast.Value{Primitive: &ast.Primitive{String: String("batman")}}}}}}}}},
+			ast.Query{Blocks: []ast.Block{{Method: ast.FromMethod, Resource: "cart", Qualifiers: []ast.Qualifier{{With: &ast.Parameters{KeyValues: []ast.KeyValue{{Key: "name", Value: ast.Value{Primitive: &ast.Primitive{String: String("batman")}}}}}}}}}},
 			`from cart with name = "batman"`,
 		},
 		{
 			"Get query with multiple parameters delimited by comma",
-			ast.Query{Blocks: []ast.Block{{Method: ast.FromMethod, Resource: "hero", Qualifiers: []ast.Qualifier{{With: []ast.WithItem{
+			ast.Query{Blocks: []ast.Block{{Method: ast.FromMethod, Resource: "hero", Qualifiers: []ast.Qualifier{{With: &ast.Parameters{KeyValues: []ast.KeyValue{
 				{Key: "id", Value: ast.Value{Primitive: &ast.Primitive{Int: Int(1)}}},
 				{Key: "name", Value: ast.Value{Primitive: &ast.Primitive{String: String("batman")}}},
-			}}}}}},
+			}}}}}}},
 			`from hero with id = 1, name = "batman"`,
 		},
 		{
 			"Get query with multiple parameters delimited by space",
-			ast.Query{Blocks: []ast.Block{{Method: ast.FromMethod, Resource: "hero", Qualifiers: []ast.Qualifier{{With: []ast.WithItem{
+			ast.Query{Blocks: []ast.Block{{Method: ast.FromMethod, Resource: "hero", Qualifiers: []ast.Qualifier{{With: &ast.Parameters{KeyValues: []ast.KeyValue{
 				{Key: "id", Value: ast.Value{Primitive: &ast.Primitive{Int: Int(1)}}},
 				{Key: "name", Value: ast.Value{Primitive: &ast.Primitive{String: String("batman")}}},
-			}}}}}},
+			}}}}}}},
 			`from hero with id = 1 name = "batman"`,
 		},
 		{
+			"Get query with default body value",
+			ast.Query{Blocks: []ast.Block{{Method: ast.ToMethod, Resource: "hero", Qualifiers: []ast.Qualifier{{With: &ast.Parameters{Body: &ast.ParameterBody{Target: "hero"}}}}}}},
+			`to hero with $hero`,
+		},
+		{
+			"Get query with default body value and key-value parameter",
+			ast.Query{Blocks: []ast.Block{{Method: ast.ToMethod, Resource: "hero", Qualifiers: []ast.Qualifier{{With: &ast.Parameters{
+				Body: &ast.ParameterBody{Target: "hero"},
+				KeyValues: []ast.KeyValue{
+					{Key: "name", Value: ast.Value{Primitive: &ast.Primitive{String: String("batman")}}},
+				},
+			}}}}}},
+			`to hero with $hero, name = "batman"`,
+		},
+		{
+			"Get query with default body value flattened and key-value parameter",
+			ast.Query{Blocks: []ast.Block{{Method: ast.ToMethod, Resource: "hero", Qualifiers: []ast.Qualifier{{With: &ast.Parameters{
+				Body: &ast.ParameterBody{Target: "hero", Flatten: true},
+				KeyValues: []ast.KeyValue{
+					{Key: "name", Value: ast.Value{Primitive: &ast.Primitive{String: String("batman")}}},
+				},
+			}}}}}},
+			`to hero with $hero -> flatten, name = "batman"`,
+		},
+		{
 			"Get query with multiple parameters delimited by comma and using key with dots",
-			ast.Query{Blocks: []ast.Block{{Method: ast.FromMethod, Resource: "hero", Qualifiers: []ast.Qualifier{{With: []ast.WithItem{
+			ast.Query{Blocks: []ast.Block{{Method: ast.FromMethod, Resource: "hero", Qualifiers: []ast.Qualifier{{With: &ast.Parameters{KeyValues: []ast.KeyValue{
 				{Key: "id", Value: ast.Value{Primitive: &ast.Primitive{Int: Int(1)}}},
 				{Key: "name", Value: ast.Value{Primitive: &ast.Primitive{String: String("batman")}}},
-			}}}}}},
+			}}}}}}},
 			fmt.Sprintf("from hero with id = 1\nname = \"batman\""),
 		},
 		{
 			"Get query with string query parameters and key using dot",
-			ast.Query{Blocks: []ast.Block{{Method: ast.FromMethod, Resource: "cart", Qualifiers: []ast.Qualifier{{With: []ast.WithItem{{Key: "hero.name", Value: ast.Value{Primitive: &ast.Primitive{String: String("batman")}}}}}}}}},
+			ast.Query{Blocks: []ast.Block{{Method: ast.FromMethod, Resource: "cart", Qualifiers: []ast.Qualifier{{With: &ast.Parameters{KeyValues: []ast.KeyValue{
+				{Key: "hero.name", Value: ast.Value{Primitive: &ast.Primitive{String: String("batman")}}},
+			}}}}}}},
 			`from cart with hero.name = "batman"`,
 		},
 		{
 			"Get query with multiple parameters keys using dot",
-			ast.Query{Blocks: []ast.Block{{Method: ast.FromMethod, Resource: "hero", Qualifiers: []ast.Qualifier{{With: []ast.WithItem{
+			ast.Query{Blocks: []ast.Block{{Method: ast.FromMethod, Resource: "hero", Qualifiers: []ast.Qualifier{{With: &ast.Parameters{KeyValues: []ast.KeyValue{
 				{Key: "hero.id", Value: ast.Value{Primitive: &ast.Primitive{Int: Int(1)}}},
 				{Key: "hero.height", Value: ast.Value{Primitive: &ast.Primitive{Float: Float(10.5)}}},
-			}}}}}},
+			}}}}}}},
 			`from hero with hero.id = 1, hero.height = 10.5`,
 		},
 		{
 			"Get query with multiple parameters delimited by space and using keys with dots",
-			ast.Query{Blocks: []ast.Block{{Method: ast.FromMethod, Resource: "hero", Qualifiers: []ast.Qualifier{{With: []ast.WithItem{
+			ast.Query{Blocks: []ast.Block{{Method: ast.FromMethod, Resource: "hero", Qualifiers: []ast.Qualifier{{With: &ast.Parameters{KeyValues: []ast.KeyValue{
 				{Key: "hero.id", Value: ast.Value{Primitive: &ast.Primitive{Int: Int(1)}}},
 				{Key: "hero.name", Value: ast.Value{Primitive: &ast.Primitive{String: String("batman")}}},
-			}}}}}},
+			}}}}}}},
 			`from hero with hero.id = 1 hero.name = "batman"`,
 		},
 		{
 			"Get query with multiple parameters delimited by new line and using keys with dots",
-			ast.Query{Blocks: []ast.Block{{Method: ast.FromMethod, Resource: "hero", Qualifiers: []ast.Qualifier{{With: []ast.WithItem{
+			ast.Query{Blocks: []ast.Block{{Method: ast.FromMethod, Resource: "hero", Qualifiers: []ast.Qualifier{{With: &ast.Parameters{KeyValues: []ast.KeyValue{
 				{Key: "hero.id", Value: ast.Value{Primitive: &ast.Primitive{Int: Int(1)}}},
 				{Key: "hero.name", Value: ast.Value{Primitive: &ast.Primitive{String: String("batman")}}},
-			}}}}}},
+			}}}}}}},
 			fmt.Sprintf("from hero with hero.id = 1\nhero.name = \"batman\""),
 		},
 		{
 			"Get query with float query parameters",
-			ast.Query{Blocks: []ast.Block{{Method: ast.FromMethod, Resource: "hero", Qualifiers: []ast.Qualifier{{With: []ast.WithItem{{Key: "height", Value: ast.Value{Primitive: &ast.Primitive{Float: Float(10.5)}}}}}}}}},
+			ast.Query{Blocks: []ast.Block{{Method: ast.FromMethod, Resource: "hero", Qualifiers: []ast.Qualifier{{With: &ast.Parameters{KeyValues: []ast.KeyValue{{Key: "height", Value: ast.Value{Primitive: &ast.Primitive{Float: Float(10.5)}}}}}}}}}},
 			`from hero with height = 10.5`,
 		},
 		{
 			"Get query with list query parameters",
-			ast.Query{Blocks: []ast.Block{{Method: ast.FromMethod, Resource: "hero", Qualifiers: []ast.Qualifier{{With: []ast.WithItem{{Key: "weapons", Value: ast.Value{List: []*ast.Value{{Primitive: &ast.Primitive{String: String("sword")}}, {Primitive: &ast.Primitive{String: String("shield")}}}}}}}}}}},
+			ast.Query{Blocks: []ast.Block{{Method: ast.FromMethod, Resource: "hero", Qualifiers: []ast.Qualifier{{With: &ast.Parameters{
+				KeyValues: []ast.KeyValue{{Key: "weapons", Value: ast.Value{List: []*ast.Value{{Primitive: &ast.Primitive{String: String("sword")}}, {Primitive: &ast.Primitive{String: String("shield")}}}}}},
+			}}}}}},
 			`from hero with weapons = ["sword", "shield"]`,
 		},
 		{
 			"Get query with nested list query parameters",
-			ast.Query{Blocks: []ast.Block{{Method: ast.FromMethod, Resource: "hero", Qualifiers: []ast.Qualifier{{With: []ast.WithItem{{Key: "weapons", Value: ast.Value{List: []*ast.Value{{List: []*ast.Value{{Primitive: &ast.Primitive{String: String("sword")}}}}, {List: []*ast.Value{{Primitive: &ast.Primitive{String: String("shield")}}}}}}}}}}}}},
+			ast.Query{Blocks: []ast.Block{{Method: ast.FromMethod, Resource: "hero", Qualifiers: []ast.Qualifier{{With: &ast.Parameters{
+				KeyValues: []ast.KeyValue{{Key: "weapons", Value: ast.Value{List: []*ast.Value{{List: []*ast.Value{{Primitive: &ast.Primitive{String: String("sword")}}}}, {List: []*ast.Value{{Primitive: &ast.Primitive{String: String("shield")}}}}}}}},
+			}}}}}},
 			`from hero with weapons = [["sword"], ["shield"]]`,
 		},
 		{
 			"Get query with list query parameters delimited by new line",
-			ast.Query{Blocks: []ast.Block{{Method: ast.FromMethod, Resource: "hero", Qualifiers: []ast.Qualifier{{With: []ast.WithItem{{Key: "weapons", Value: ast.Value{List: []*ast.Value{{Primitive: &ast.Primitive{String: String("sword")}}, {Primitive: &ast.Primitive{String: String("shield")}}}}}}}}}}},
+			ast.Query{Blocks: []ast.Block{{Method: ast.FromMethod, Resource: "hero", Qualifiers: []ast.Qualifier{{With: &ast.Parameters{
+				KeyValues: []ast.KeyValue{{Key: "weapons", Value: ast.Value{List: []*ast.Value{{Primitive: &ast.Primitive{String: String("sword")}}, {Primitive: &ast.Primitive{String: String("shield")}}}}}},
+			}}}}}},
 			fmt.Sprintf("from hero with weapons = [\"sword\"\n\"shield\"]"),
 		},
 		{
 			"Get query with object query parameters",
-			ast.Query{Blocks: []ast.Block{{Method: ast.FromMethod, Resource: "hero", Qualifiers: []ast.Qualifier{{With: []ast.WithItem{{Key: "id", Value: ast.Value{Object: []ast.ObjectEntry{{Key: "id", Value: ast.ObjectValue{Primitive: &ast.Primitive{String: String("1")}}}}}}}}}}}},
+			ast.Query{Blocks: []ast.Block{{Method: ast.FromMethod, Resource: "hero", Qualifiers: []ast.Qualifier{{With: &ast.Parameters{
+				KeyValues: []ast.KeyValue{{Key: "id", Value: ast.Value{Object: []ast.ObjectEntry{{Key: "id", Value: ast.ObjectValue{Primitive: &ast.Primitive{String: String("1")}}}}}}},
+			}}}}}},
 			`from hero with id = { "id": "1" }`,
 		},
 		{
 			"Get query with object query parameters",
-			ast.Query{Blocks: []ast.Block{{Method: ast.FromMethod, Resource: "hero", Qualifiers: []ast.Qualifier{{With: []ast.WithItem{{Key: "id", Value: ast.Value{Object: []ast.ObjectEntry{{Key: "id", Value: ast.ObjectValue{Primitive: &ast.Primitive{String: String("1")}}}}}}}}}}}},
+			ast.Query{Blocks: []ast.Block{{Method: ast.FromMethod, Resource: "hero", Qualifiers: []ast.Qualifier{{With: &ast.Parameters{
+				KeyValues: []ast.KeyValue{{Key: "id", Value: ast.Value{Object: []ast.ObjectEntry{{Key: "id", Value: ast.ObjectValue{Primitive: &ast.Primitive{String: String("1")}}}}}}},
+			}}}}}},
 			`from hero with id = { id: "1" }`,
 		},
 		{
 			"Get query with object query parameters using list value",
-			ast.Query{Blocks: []ast.Block{{Method: ast.FromMethod, Resource: "hero", Qualifiers: []ast.Qualifier{{With: []ast.WithItem{{Key: "id", Value: ast.Value{Object: []ast.ObjectEntry{{Key: "names", Value: ast.ObjectValue{List: []*ast.ObjectValue{{Primitive: &ast.Primitive{String: String("batman")}}, {Primitive: &ast.Primitive{String: String("wonder woman")}}}}}}}}}}}}}},
+			ast.Query{Blocks: []ast.Block{{Method: ast.FromMethod, Resource: "hero", Qualifiers: []ast.Qualifier{{With: &ast.Parameters{
+				KeyValues: []ast.KeyValue{{Key: "id", Value: ast.Value{Object: []ast.ObjectEntry{{Key: "names", Value: ast.ObjectValue{List: []*ast.ObjectValue{{Primitive: &ast.Primitive{String: String("batman")}}, {Primitive: &ast.Primitive{String: String("wonder woman")}}}}}}}}},
+			}}}}}},
 			`from hero with id = { names: ["batman", "wonder woman"] }`,
 		},
 		{
 			"Get query with object query parameters using a variable value",
-			ast.Query{Blocks: []ast.Block{{Method: ast.FromMethod, Resource: "hero", Qualifiers: []ast.Qualifier{{With: []ast.WithItem{{Key: "id", Value: ast.Value{Object: []ast.ObjectEntry{{Key: "id", Value: ast.ObjectValue{Variable: String("id")}}}}}}}}}}},
+			ast.Query{Blocks: []ast.Block{{Method: ast.FromMethod, Resource: "hero", Qualifiers: []ast.Qualifier{{With: &ast.Parameters{
+				KeyValues: []ast.KeyValue{{Key: "id", Value: ast.Value{Object: []ast.ObjectEntry{{Key: "id", Value: ast.ObjectValue{Variable: String("id")}}}}}},
+			}}}}}},
 			`from hero with id = { id: $id }`,
 		},
 		{
 			"Get query with object query parameters with multiple key/values",
-			ast.Query{Blocks: []ast.Block{{Method: ast.FromMethod, Resource: "hero", Qualifiers: []ast.Qualifier{{With: []ast.WithItem{{Key: "id", Value: ast.Value{Object: []ast.ObjectEntry{{Key: "id", Value: ast.ObjectValue{Primitive: &ast.Primitive{String: String("1")}}}, {Key: "name", Value: ast.ObjectValue{Primitive: &ast.Primitive{String: String("batman")}}}}}}}}}}}},
+			ast.Query{Blocks: []ast.Block{{Method: ast.FromMethod, Resource: "hero", Qualifiers: []ast.Qualifier{{With: &ast.Parameters{
+				KeyValues: []ast.KeyValue{{Key: "id", Value: ast.Value{Object: []ast.ObjectEntry{{Key: "id", Value: ast.ObjectValue{Primitive: &ast.Primitive{String: String("1")}}}, {Key: "name", Value: ast.ObjectValue{Primitive: &ast.Primitive{String: String("batman")}}}}}}},
+			}}}}}},
 			`from hero with id = { "id": "1", "name": "batman" }`,
 		},
 		{
 			"Get query with object query parameters with multiple key/values delimited by new line",
-			ast.Query{Blocks: []ast.Block{{Method: ast.FromMethod, Resource: "hero", Qualifiers: []ast.Qualifier{{With: []ast.WithItem{{Key: "id", Value: ast.Value{Object: []ast.ObjectEntry{{Key: "id", Value: ast.ObjectValue{Primitive: &ast.Primitive{String: String("1")}}}, {Key: "name", Value: ast.ObjectValue{Primitive: &ast.Primitive{String: String("batman")}}}}}}}}}}}},
+			ast.Query{Blocks: []ast.Block{{Method: ast.FromMethod, Resource: "hero", Qualifiers: []ast.Qualifier{{With: &ast.Parameters{
+				KeyValues: []ast.KeyValue{{Key: "id", Value: ast.Value{Object: []ast.ObjectEntry{{Key: "id", Value: ast.ObjectValue{Primitive: &ast.Primitive{String: String("1")}}}, {Key: "name", Value: ast.ObjectValue{Primitive: &ast.Primitive{String: String("batman")}}}}}}},
+			}}}}}},
 			fmt.Sprintf("from hero with id = { \"id\": \"1\"\n\"name\": \"batman\" }"),
 		},
 		{
 			"Get query with nested object query parameters",
-			ast.Query{Blocks: []ast.Block{{Method: ast.FromMethod, Resource: "hero", Qualifiers: []ast.Qualifier{{With: []ast.WithItem{{Key: "id", Value: ast.Value{Object: []ast.ObjectEntry{{Key: "id", Value: ast.ObjectValue{Nested: []ast.ObjectEntry{{Key: "internal", Value: ast.ObjectValue{Primitive: &ast.Primitive{String: String("1")}}}, {Key: "version", Value: ast.ObjectValue{Primitive: &ast.Primitive{Int: Int(10)}}}}}}}}}}}}}}},
+			ast.Query{Blocks: []ast.Block{{Method: ast.FromMethod, Resource: "hero", Qualifiers: []ast.Qualifier{{With: &ast.Parameters{
+				KeyValues: []ast.KeyValue{{Key: "id", Value: ast.Value{Object: []ast.ObjectEntry{{Key: "id", Value: ast.ObjectValue{Nested: []ast.ObjectEntry{{Key: "internal", Value: ast.ObjectValue{Primitive: &ast.Primitive{String: String("1")}}}, {Key: "version", Value: ast.ObjectValue{Primitive: &ast.Primitive{Int: Int(10)}}}}}}}}}},
+			}}}}}},
 			`from hero with id = { "id": { "internal": "1", "version": 10 } }`,
 		},
 		{
 			"Get query with chained query parameters",
-			ast.Query{Blocks: []ast.Block{{Method: ast.FromMethod, Resource: "hero", Qualifiers: []ast.Qualifier{{With: []ast.WithItem{{Key: "id", Value: ast.Value{Primitive: &ast.Primitive{Chain: []ast.Chained{{PathItem: "done-resource"}, {PathItem: "id"}}}}}}}}}}},
+			ast.Query{Blocks: []ast.Block{{Method: ast.FromMethod, Resource: "hero", Qualifiers: []ast.Qualifier{{With: &ast.Parameters{
+				KeyValues: []ast.KeyValue{{Key: "id", Value: ast.Value{Primitive: &ast.Primitive{Chain: []ast.Chained{{PathItem: "done-resource"}, {PathItem: "id"}}}}}},
+			}}}}}},
 			`from hero with id = done-resource.id`,
 		},
 		{
 			"Get query with variable query parameters",
-			ast.Query{Blocks: []ast.Block{{Method: ast.FromMethod, Resource: "hero", Qualifiers: []ast.Qualifier{{With: []ast.WithItem{{Key: "id", Value: ast.Value{Variable: String("id")}}}}}}}},
+			ast.Query{Blocks: []ast.Block{{Method: ast.FromMethod, Resource: "hero", Qualifiers: []ast.Qualifier{{With: &ast.Parameters{
+				KeyValues: []ast.KeyValue{{Key: "id", Value: ast.Value{Variable: String("id")}}},
+			}}}}}},
 			`from hero with id = $id`,
 		},
 		{
 			"Get query with variable chained query parameters",
-			ast.Query{Blocks: []ast.Block{{Method: ast.FromMethod, Resource: "hero", Qualifiers: []ast.Qualifier{{With: []ast.WithItem{{Key: "id", Value: ast.Value{Primitive: &ast.Primitive{Chain: []ast.Chained{{PathItem: "done-resource"}, {PathVariable: "path"}, {PathItem: "id"}}}}}}}}}}},
+			ast.Query{Blocks: []ast.Block{{Method: ast.FromMethod, Resource: "hero", Qualifiers: []ast.Qualifier{{With: &ast.Parameters{
+				KeyValues: []ast.KeyValue{{Key: "id", Value: ast.Value{Primitive: &ast.Primitive{Chain: []ast.Chained{{PathItem: "done-resource"}, {PathVariable: "path"}, {PathItem: "id"}}}}}},
+			}}}}}},
 			`from hero with id = done-resource.$path.id`,
 		},
 		{
@@ -253,15 +306,20 @@ func TestAstGenerator(t *testing.T) {
 				Method:   ast.FromMethod,
 				Resource: "hero",
 				Qualifiers: []ast.Qualifier{
-					{With: []ast.WithItem{
-						{
-							Key: "weapons",
-							Value: ast.Value{List: []*ast.Value{
-								{Primitive: &ast.Primitive{String: String("sword")}},
-								{Primitive: &ast.Primitive{String: String("shield")}},
-							}},
-							Flatten: true,
-						}}},
+					{
+						With: &ast.Parameters{
+							KeyValues: []ast.KeyValue{
+								{
+									Key: "weapons",
+									Value: ast.Value{List: []*ast.Value{
+										{Primitive: &ast.Primitive{String: String("sword")}},
+										{Primitive: &ast.Primitive{String: String("shield")}},
+									}},
+									Flatten: true,
+								},
+							},
+						},
+					},
 				},
 			}}},
 			`from hero with weapons = ["sword", "shield"] -> flatten`,
@@ -272,11 +330,13 @@ func TestAstGenerator(t *testing.T) {
 				Method:   ast.FromMethod,
 				Resource: "hero",
 				Qualifiers: []ast.Qualifier{{
-					With: []ast.WithItem{
-						{
-							Key:     "id",
-							Value:   ast.Value{Primitive: &ast.Primitive{Chain: []ast.Chained{{PathItem: "done-resource"}, {PathItem: "id"}}}},
-							Flatten: true,
+					With: &ast.Parameters{
+						KeyValues: []ast.KeyValue{
+							{
+								Key:     "id",
+								Value:   ast.Value{Primitive: &ast.Primitive{Chain: []ast.Chained{{PathItem: "done-resource"}, {PathItem: "id"}}}},
+								Flatten: true,
+							},
 						},
 					},
 				}},
@@ -289,11 +349,13 @@ func TestAstGenerator(t *testing.T) {
 				Method:   ast.FromMethod,
 				Resource: "hero",
 				Qualifiers: []ast.Qualifier{{
-					With: []ast.WithItem{
-						{
-							Key:    "id",
-							Value:  ast.Value{Primitive: &ast.Primitive{String: String("abcdefg12345")}},
-							Base64: true,
+					With: &ast.Parameters{
+						KeyValues: []ast.KeyValue{
+							{
+								Key:    "id",
+								Value:  ast.Value{Primitive: &ast.Primitive{String: String("abcdefg12345")}},
+								Base64: true,
+							},
 						},
 					},
 				}},
@@ -306,11 +368,13 @@ func TestAstGenerator(t *testing.T) {
 				Method:   ast.FromMethod,
 				Resource: "hero",
 				Qualifiers: []ast.Qualifier{{
-					With: []ast.WithItem{{
-						Key:   "id",
-						Value: ast.Value{Object: []ast.ObjectEntry{{Key: "id", Value: ast.ObjectValue{Primitive: &ast.Primitive{String: String("1")}}}}},
-						Json:  true,
-					}},
+					With: &ast.Parameters{
+						KeyValues: []ast.KeyValue{{
+							Key:   "id",
+							Value: ast.Value{Object: []ast.ObjectEntry{{Key: "id", Value: ast.ObjectValue{Primitive: &ast.Primitive{String: String("1")}}}}},
+							Json:  true,
+						}},
+					},
 				}},
 			}}},
 			`from hero with id = { "id": "1" } -> json`,
@@ -357,23 +421,25 @@ func TestAstGenerator(t *testing.T) {
 							Only: []ast.Filter{{Field: []string{"id"}}, {Field: []string{"name"}}},
 						},
 						{
-							With: []ast.WithItem{
-								{Key: "id", Value: ast.Value{Primitive: &ast.Primitive{Int: Int(1)}}},
-								{Key: "name", Value: ast.Value{Primitive: &ast.Primitive{String: String("batman")}}},
-								{
-									Key: "weapons",
-									Value: ast.Value{List: []*ast.Value{
-										{Primitive: &ast.Primitive{String: String("belt")}}, {Primitive: &ast.Primitive{String: String("hands")}},
-									}},
+							With: &ast.Parameters{
+								KeyValues: []ast.KeyValue{
+									{Key: "id", Value: ast.Value{Primitive: &ast.Primitive{Int: Int(1)}}},
+									{Key: "name", Value: ast.Value{Primitive: &ast.Primitive{String: String("batman")}}},
+									{
+										Key: "weapons",
+										Value: ast.Value{List: []*ast.Value{
+											{Primitive: &ast.Primitive{String: String("belt")}}, {Primitive: &ast.Primitive{String: String("hands")}},
+										}},
+									},
+									{
+										Key: "family",
+										Value: ast.Value{Object: []ast.ObjectEntry{
+											{Key: "father", Value: ast.ObjectValue{Primitive: &ast.Primitive{String: String("Thomas Wayne")}}},
+										}},
+									},
+									{Key: "height", Value: ast.Value{Primitive: &ast.Primitive{Float: Float(10.5)}}},
+									{Key: "var", Value: ast.Value{Variable: String("myvar")}},
 								},
-								{
-									Key: "family",
-									Value: ast.Value{Object: []ast.ObjectEntry{
-										{Key: "father", Value: ast.ObjectValue{Primitive: &ast.Primitive{String: String("Thomas Wayne")}}},
-									}},
-								},
-								{Key: "height", Value: ast.Value{Primitive: &ast.Primitive{Float: Float(10.5)}}},
-								{Key: "var", Value: ast.Value{Variable: String("myvar")}},
 							},
 						},
 					},
@@ -385,22 +451,25 @@ func TestAstGenerator(t *testing.T) {
 					In:       []string{"hero", "sidekick"},
 					Qualifiers: []ast.Qualifier{
 						{
-							With: []ast.WithItem{
-								{Key: "id", Value: ast.Value{Primitive: &ast.Primitive{Int: Int(1)}}},
-								{Key: "name", Value: ast.Value{Primitive: &ast.Primitive{String: String("batman")}}},
-								{
-									Key: "weapons",
-									Value: ast.Value{List: []*ast.Value{
-										{Primitive: &ast.Primitive{String: String("belt")}}, {Primitive: &ast.Primitive{String: String("hands")}},
-									}},
+							With: &ast.Parameters{
+								KeyValues: []ast.KeyValue{
+									{Key: "id", Value: ast.Value{Primitive: &ast.Primitive{Int: Int(1)}}},
+									{Key: "name", Value: ast.Value{Primitive: &ast.Primitive{String: String("batman")}}},
+									{
+										Key: "weapons",
+										Value: ast.Value{List: []*ast.Value{
+											{Primitive: &ast.Primitive{String: String("belt")}}, {Primitive: &ast.Primitive{String: String("hands")}},
+										}},
+									},
+									{
+										Key: "family",
+										Value: ast.Value{Object: []ast.ObjectEntry{
+											{Key: "father", Value: ast.ObjectValue{Primitive: &ast.Primitive{String: String("Thomas Wayne")}}},
+										}},
+									},
+									{Key: "height", Value: ast.Value{Primitive: &ast.Primitive{Float: Float(10.5)}}},
 								},
-								{
-									Key: "family",
-									Value: ast.Value{Object: []ast.ObjectEntry{
-										{Key: "father", Value: ast.ObjectValue{Primitive: &ast.Primitive{String: String("Thomas Wayne")}}},
-									}},
-								},
-								{Key: "height", Value: ast.Value{Primitive: &ast.Primitive{Float: Float(10.5)}}}},
+							},
 						},
 						{
 							Headers: []ast.HeaderItem{
@@ -454,8 +523,10 @@ func TestAstGenerator(t *testing.T) {
 					Resource: "cart",
 					Qualifiers: []ast.Qualifier{
 						{
-							With: []ast.WithItem{
-								{Key: "id", Value: ast.Value{Variable: String("id")}},
+							With: &ast.Parameters{
+								KeyValues: []ast.KeyValue{
+									{Key: "id", Value: ast.Value{Variable: String("id")}},
+								},
 							},
 						},
 						{
@@ -468,8 +539,10 @@ func TestAstGenerator(t *testing.T) {
 					Resource: "sku",
 					Qualifiers: []ast.Qualifier{
 						{
-							With: []ast.WithItem{
-								{Key: "sku", Value: ast.Value{Primitive: &ast.Primitive{Chain: []ast.Chained{{PathItem: "cart"}, {PathItem: "lines"}, {PathItem: "productSku"}}}}},
+							With: &ast.Parameters{
+								KeyValues: []ast.KeyValue{
+									{Key: "sku", Value: ast.Value{Primitive: &ast.Primitive{Chain: []ast.Chained{{PathItem: "cart"}, {PathItem: "lines"}, {PathItem: "productSku"}}}}},
+								},
 							},
 						},
 					},

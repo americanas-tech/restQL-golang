@@ -15,10 +15,10 @@ func TestParseValidation(t *testing.T) {
 					Resource: "hero",
 					Qualifiers: []ast.Qualifier{
 						{
-							With: []ast.WithItem{{Key: "id", Value: ast.Value{Primitive: &ast.Primitive{Int: Int(1)}}}},
+							With: &ast.Parameters{KeyValues: []ast.KeyValue{{Key: "id", Value: ast.Value{Primitive: &ast.Primitive{Int: Int(1)}}}}},
 						},
 						{
-							With: []ast.WithItem{{Key: "name", Value: ast.Value{Primitive: &ast.Primitive{String: String("batman")}}}},
+							With: &ast.Parameters{KeyValues: []ast.KeyValue{{Key: "name", Value: ast.Value{Primitive: &ast.Primitive{String: String("batman")}}}}},
 						},
 					},
 				},

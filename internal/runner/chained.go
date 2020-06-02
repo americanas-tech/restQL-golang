@@ -17,7 +17,7 @@ func ResolveChainedValues(resources domain.Resources, doneResources domain.Resou
 func resolveStatement(stmt interface{}, doneResources domain.Resources) interface{} {
 	switch stmt := stmt.(type) {
 	case domain.Statement:
-		params := stmt.With
+		params := stmt.With.Values
 		for paramName, value := range params {
 			params[paramName] = resolveParam(value, doneResources)
 		}

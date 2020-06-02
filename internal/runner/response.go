@@ -7,8 +7,6 @@ import (
 	"strconv"
 )
 
-const debugParamName = "_debug"
-
 type DoneResourceOptions struct {
 	Debugging    bool
 	IgnoreErrors bool
@@ -33,37 +31,6 @@ func NewDoneResource(request domain.HttpRequest, response domain.HttpResponse, o
 	}
 
 	return dr
-}
-
-func newDebugging(request domain.HttpRequest, response domain.HttpResponse) *domain.Debugging {
-	return &domain.Debugging{
-		Method:          request.Method,
-		Url:             response.Url,
-		Params:          request.Query,
-		RequestBody:     request.Body,
-		RequestHeaders:  request.Headers,
-		ResponseHeaders: response.Headers,
-		ResponseTime:    response.Duration.Milliseconds(),
-	}
-}
-
-func IsDebugEnabled(queryCtx domain.QueryContext) bool {
-	param, found := queryCtx.Input.Params[debugParamName]
-	if !found {
-		return false
-	}
-
-	debug, ok := param.(string)
-	if !ok {
-		return false
-	}
-
-	d, err := strconv.ParseBool(debug)
-	if err != nil {
-		return false
-	}
-
-	return d
 }
 
 func NewErrorResponse(err error, request domain.HttpRequest, response domain.HttpResponse, options DoneResourceOptions) domain.DoneResource {
@@ -103,7 +70,7 @@ func NewEmptyChainedResponse(params []string, options DoneResourceOptions) domai
 
 func GetEmptyChainedParams(statement domain.Statement) []string {
 	var r []string
-	for key, value := range statement.With {
+	for key, value := range statement.With.Values {
 		if isEmptyChained(value) {
 			r = append(r, key)
 		}
