@@ -1,6 +1,7 @@
 package runner
 
 import (
+	"fmt"
 	"github.com/b2wdigital/restQL-golang/internal/domain"
 	"net/http"
 	"strings"
@@ -55,6 +56,7 @@ func MakeRequest(defaultResourceTimeout time.Duration, forwardPrefix string, sta
 
 func makeBody(statement domain.Statement, mapping domain.Mapping) domain.Body {
 	if statement.With.Body != nil {
+		fmt.Printf("body : %+#v\n", statement.With.Body)
 		return statement.With.Body
 	}
 
@@ -109,11 +111,11 @@ func makeQueryParams(forwardPrefix string, statement domain.Statement, mapping d
 }
 
 func getForwardParams(forwardPrefix string, queryCtx domain.QueryContext) map[string]interface{} {
+	r := make(map[string]interface{})
 	if forwardPrefix == "" {
-		return nil
+		return r
 	}
 
-	r := make(map[string]interface{})
 	for k, v := range queryCtx.Input.Params {
 		if strings.HasPrefix(k, forwardPrefix) {
 			r[k] = v

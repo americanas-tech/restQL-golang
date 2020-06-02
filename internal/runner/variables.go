@@ -61,13 +61,7 @@ func resolveWithBody(body interface{}, input domain.QueryInput) interface{} {
 			return nil
 		}
 
-		jsonValue, ok := p.(string)
-		if !ok {
-			return p
-		}
-
-		var b interface{}
-		err := json.Unmarshal([]byte(jsonValue), &b)
+		b, err := unmarshalValue(p)
 		if err != nil {
 			return p
 		}
@@ -81,6 +75,31 @@ func resolveWithBody(body interface{}, input domain.QueryInput) interface{} {
 		return domain.Base64{Target: resolveWithBody(body.Target, input)}
 	default:
 		return nil
+	}
+}
+
+func unmarshalValue(value interface{}) (interface{}, error) {
+	switch value := value.(type) {
+	case string:
+		var result interface{}
+		err := json.Unmarshal([]byte(value), &result)
+		if err != nil {
+			return nil, err
+		}
+		return result, nil
+	case []interface{}:
+		result := make([]interface{}, len(value))
+		for i, v := range value {
+			u, err := unmarshalValue(v)
+			if err != nil {
+				return nil, err
+			}
+
+			result[i] = u
+		}
+		return result, nil
+	default:
+		return value, nil
 	}
 }
 

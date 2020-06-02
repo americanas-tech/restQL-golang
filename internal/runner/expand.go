@@ -5,14 +5,21 @@ import (
 	"math"
 )
 
+const (
+	valuesParamType string = "values"
+	bodyParamType          = "body"
+)
+
 type parameter struct {
-	path  []string
-	value interface{}
+	paramType string
+	path      []string
+	value     interface{}
 }
 
 type listParameters struct {
-	path  []string
-	value []interface{}
+	paramType string
+	path      []string
+	value     []interface{}
 }
 
 func MultiplexStatements(resources domain.Resources) domain.Resources {
@@ -29,12 +36,17 @@ func MultiplexStatements(resources domain.Resources) domain.Resources {
 }
 
 func multiplex(statement domain.Statement) interface{} {
-	params := statement.With.Values
-	if params == nil {
+	values := statement.With.Values
+	body := statement.With.Body
+	if values == nil && body == nil {
 		return statement
 	}
 
-	listParams := getListParams(params)
+	listParams := getListParamsFromValues(values)
+
+	bodyParams := getListParamsFromBody(body)
+
+	listParams = append(listParams, bodyParams...)
 	if len(listParams) == 0 {
 		return statement
 	}
@@ -45,10 +57,25 @@ func multiplex(statement domain.Statement) interface{} {
 	for i, parameters := range statementsParameters {
 		newStmt := copyStatement(statement)
 		for _, p := range parameters {
-			setParameterOnStatement(newStmt.With.Values, p.path, p.value)
+			if p.paramType == valuesParamType {
+				setParameterOnStatement(newStmt.With.Values, p.path, p.value)
+			}
+
+			if p.paramType == bodyParamType {
+				newStmt.With.Body = p.value
+			}
 		}
 
 		result[i] = multiplex(newStmt)
+	}
+
+	return result
+}
+
+func getListParamsFromBody(body interface{}) []listParameters {
+	var result []listParameters
+	if body, ok := body.([]interface{}); ok {
+		result = append(result, listParameters{paramType: bodyParamType, value: body})
 	}
 
 	return result
@@ -70,9 +97,9 @@ func setParameterOnStatement(params interface{}, path []string, value interface{
 	}
 }
 
-func getListParams(params map[string]interface{}) []listParameters {
+func getListParamsFromValues(values map[string]interface{}) []listParameters {
 	var result []listParameters
-	for key, val := range params {
+	for key, val := range values {
 		lp := findListParameters([]string{key}, val)
 		result = append(result, lp...)
 	}
@@ -92,7 +119,7 @@ func findListParameters(path []string, val interface{}) []listParameters {
 		}
 		return result
 	case []interface{}:
-		return []listParameters{{path: path, value: val}}
+		return []listParameters{{path: path, paramType: valuesParamType, value: val}}
 	default:
 		return []listParameters{}
 	}
@@ -106,7 +133,7 @@ func zipListParams(listParams []listParameters) [][]parameter {
 	for i = 0; i < statementCount; i++ {
 		statementParameters := make([]parameter, len(listParams))
 		for j, lp := range listParams {
-			statementParameters[j] = parameter{path: lp.path, value: lp.value[i]}
+			statementParameters[j] = parameter{path: lp.path, paramType: lp.paramType, value: lp.value[i]}
 		}
 
 		result[i] = statementParameters

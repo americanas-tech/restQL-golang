@@ -277,6 +277,19 @@ func TestMultiplexStatements(t *testing.T) {
 				},
 			},
 		},
+		{
+			"should make a new statement for each list value in with body",
+			domain.Resources{
+				"hero": domain.Statement{Method: "to", Resource: "hero", With: domain.Params{Body: []interface{}{"12345", "67890", "19283"}}},
+			},
+			domain.Resources{
+				"hero": []interface{}{
+					domain.Statement{Method: "to", Resource: "hero", With: domain.Params{Body: "12345"}},
+					domain.Statement{Method: "to", Resource: "hero", With: domain.Params{Body: "67890"}},
+					domain.Statement{Method: "to", Resource: "hero", With: domain.Params{Body: "19283"}},
+				},
+			},
+		},
 	}
 
 	for _, tt := range tests {

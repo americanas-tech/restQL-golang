@@ -4,11 +4,13 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"io"
 	"io/ioutil"
 	"net"
 	"net/http"
 	"net/url"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/b2wdigital/restQL-golang/internal/domain"
@@ -139,12 +141,12 @@ func (nc *nativeHttpClient) makeRequest(request domain.HttpRequest) (*http.Reque
 	}
 
 	if request.Method == http.MethodPost || request.Method == http.MethodPut || request.Method == http.MethodPatch {
-		data, err := json.Marshal(request.Body)
+		body, err := nc.makeBody(request)
 		if err != nil {
-			return nil, errors.Wrap(err, "failed to marshal request body")
+			return nil, err
 		}
 
-		req.Body = ioutil.NopCloser(bytes.NewReader(data))
+		req.Body = body
 	}
 
 	if len(request.Headers) > 0 {
@@ -155,6 +157,22 @@ func (nc *nativeHttpClient) makeRequest(request domain.HttpRequest) (*http.Reque
 	}
 
 	return &req, nil
+}
+
+func (nc *nativeHttpClient) makeBody(request domain.HttpRequest) (io.ReadCloser, error) {
+	body := request.Body
+
+	if body, ok := body.(string); ok {
+		return ioutil.NopCloser(strings.NewReader(body)), nil
+	}
+
+	data, err := json.Marshal(body)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to marshal request body")
+	}
+
+	r := ioutil.NopCloser(bytes.NewReader(data))
+	return r, nil
 }
 
 func makeUrl(request domain.HttpRequest) *url.URL {
