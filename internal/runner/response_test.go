@@ -311,22 +311,22 @@ func TestGetEmptyChainedParams(t *testing.T) {
 	}{
 		{
 			"should return nothing if there is no empty chained param",
-			domain.Statement{With: map[string]interface{}{"id": "12345"}},
+			domain.Statement{With: domain.Params{Values: map[string]interface{}{"id": "12345"}}},
 			nil,
 		},
 		{
 			"should return name of empty chained param",
-			domain.Statement{With: map[string]interface{}{"id": "12345", "name": runner.EmptyChained}},
+			domain.Statement{With: domain.Params{Values: map[string]interface{}{"id": "12345", "name": runner.EmptyChained}}},
 			[]string{"name"},
 		},
 		{
 			"should return name of empty chained param inside list",
-			domain.Statement{With: map[string]interface{}{"id": "12345", "name": []interface{}{runner.EmptyChained}}},
+			domain.Statement{With: domain.Params{Values: map[string]interface{}{"id": "12345", "name": []interface{}{runner.EmptyChained}}}},
 			[]string{"name"},
 		},
 		{
 			"should return name of empty chained param inside map",
-			domain.Statement{With: map[string]interface{}{"id": "12345", "name": map[string]interface{}{"first": runner.EmptyChained}}},
+			domain.Statement{With: domain.Params{Values: map[string]interface{}{"id": "12345", "name": map[string]interface{}{"first": runner.EmptyChained}}}},
 			[]string{"name"},
 		},
 	}

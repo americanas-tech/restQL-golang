@@ -1,6 +1,7 @@
 package runner
 
 import (
+	"encoding/json"
 	"github.com/b2wdigital/restQL-golang/internal/domain"
 	"strconv"
 )
@@ -21,13 +22,15 @@ func ResolveVariables(resources domain.Resources, input domain.QueryInput) domai
 }
 
 func resolveWith(with domain.Params, input domain.QueryInput) domain.Params {
-	if with == nil {
-		return nil
+	if with.Values == nil && with.Body == nil {
+		return with
 	}
 
-	result := make(domain.Params)
+	body := resolveWithBody(with.Body, input)
 
-	for key, value := range with {
+	result := make(map[string]interface{})
+
+	for key, value := range with.Values {
 		switch value := value.(type) {
 		case domain.Variable:
 			resolvedValue, ok := getUniqueParamValue(value.Target, input)
@@ -47,7 +50,38 @@ func resolveWith(with domain.Params, input domain.QueryInput) domain.Params {
 		}
 	}
 
-	return result
+	return domain.Params{Body: body, Values: result}
+}
+
+func resolveWithBody(body interface{}, input domain.QueryInput) interface{} {
+	switch body := body.(type) {
+	case domain.Variable:
+		p, found := input.Params[body.Target]
+		if !found {
+			return nil
+		}
+
+		jsonValue, ok := p.(string)
+		if !ok {
+			return p
+		}
+
+		var b interface{}
+		err := json.Unmarshal([]byte(jsonValue), &b)
+		if err != nil {
+			return p
+		}
+
+		return b
+	case domain.Flatten:
+		return domain.Flatten{Target: resolveWithBody(body.Target, input)}
+	case domain.Json:
+		return domain.Json{Target: resolveWithBody(body.Target, input)}
+	case domain.Base64:
+		return domain.Base64{Target: resolveWithBody(body.Target, input)}
+	default:
+		return nil
+	}
 }
 
 func resolveListWithParam(list []interface{}, input domain.QueryInput) interface{} {

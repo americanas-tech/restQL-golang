@@ -47,7 +47,7 @@ func (s *State) canRequestMultiplexedGroup(statements []interface{}) bool {
 }
 
 func (s *State) canRequest(statement domain.Statement) bool {
-	for _, v := range statement.With {
+	for _, v := range statement.With.Values {
 		if !s.isValueResolved(v) {
 			return false
 		}

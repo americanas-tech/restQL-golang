@@ -32,25 +32,31 @@ func TestResolveVariables(t *testing.T) {
 				"hero": domain.Statement{
 					Method:   "from",
 					Resource: "hero",
-					With: map[string]interface{}{
-						"id":       "1234567890",
-						"name":     domain.Variable{"name"},
-						"weapons":  domain.Chain{"done-resource", domain.Variable{"field"}, "id"},
-						"sidekick": []interface{}{[]interface{}{domain.Variable{"sidekick"}}},
-						"places":   map[string]interface{}{"city": map[string]interface{}{"name": domain.Variable{"city"}}},
+					With: domain.Params{
+						Body: domain.Variable{Target: "heroInfo"},
+						Values: map[string]interface{}{
+							"id":       "1234567890",
+							"name":     domain.Variable{"name"},
+							"weapons":  domain.Chain{"done-resource", domain.Variable{"field"}, "id"},
+							"sidekick": []interface{}{[]interface{}{domain.Variable{"sidekick"}}},
+							"places":   map[string]interface{}{"city": map[string]interface{}{"name": domain.Variable{"city"}}},
+						},
 					},
 				}},
-			domain.QueryInput{Params: map[string]interface{}{"name": "batman", "field": "weapon", "sidekick": "robbin", "city": "Gotham"}},
+			domain.QueryInput{Params: map[string]interface{}{"name": "batman", "field": "weapon", "sidekick": "robbin", "city": "Gotham", "heroInfo": `{"id": "test"}`}},
 			domain.Resources{
 				"hero": domain.Statement{
 					Method:   "from",
 					Resource: "hero",
-					With: map[string]interface{}{
-						"id":       "1234567890",
-						"name":     "batman",
-						"weapons":  domain.Chain{"done-resource", "weapon", "id"},
-						"sidekick": []interface{}{[]interface{}{"robbin"}},
-						"places":   map[string]interface{}{"city": map[string]interface{}{"name": "Gotham"}},
+					With: domain.Params{
+						Body: map[string]interface{}{"id": "test"},
+						Values: map[string]interface{}{
+							"id":       "1234567890",
+							"name":     "batman",
+							"weapons":  domain.Chain{"done-resource", "weapon", "id"},
+							"sidekick": []interface{}{[]interface{}{"robbin"}},
+							"places":   map[string]interface{}{"city": map[string]interface{}{"name": "Gotham"}},
+						},
 					},
 				},
 			},
@@ -61,26 +67,26 @@ func TestResolveVariables(t *testing.T) {
 				"hero": domain.Statement{
 					Method:   "from",
 					Resource: "hero",
-					With: map[string]interface{}{
+					With: domain.Params{Values: map[string]interface{}{
 						"id":       "1234567890",
 						"name":     domain.Variable{"name"},
 						"weapons":  domain.Chain{"done-resource", domain.Variable{"field"}, "id"},
 						"sidekick": []interface{}{[]interface{}{domain.Variable{"sidekick"}}},
 						"places":   map[string]interface{}{"city": map[string]interface{}{"name": domain.Variable{"city"}}},
-					},
+					}},
 				}},
 			domain.QueryInput{Headers: map[string]string{"name": "batman", "field": "weapon", "sidekick": "robbin", "city": "Gotham"}},
 			domain.Resources{
 				"hero": domain.Statement{
 					Method:   "from",
 					Resource: "hero",
-					With: map[string]interface{}{
+					With: domain.Params{Values: map[string]interface{}{
 						"id":       "1234567890",
 						"name":     "batman",
 						"weapons":  domain.Chain{"done-resource", "weapon", "id"},
 						"sidekick": []interface{}{[]interface{}{"robbin"}},
 						"places":   map[string]interface{}{"city": map[string]interface{}{"name": "Gotham"}},
-					},
+					}},
 				},
 			},
 		},
