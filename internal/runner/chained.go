@@ -21,6 +21,12 @@ func resolveStatement(stmt interface{}, doneResources domain.Resources) interfac
 		for paramName, value := range params {
 			params[paramName] = resolveParam(value, doneResources)
 		}
+	case []interface{}:
+		result := make([]interface{}, len(stmt))
+		for i, s := range stmt {
+			result[i] = resolveStatement(s, doneResources)
+		}
+		return result
 	}
 
 	return stmt

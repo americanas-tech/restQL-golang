@@ -211,6 +211,18 @@ func TestResolveChainedValues(t *testing.T) {
 			domain.Resources{"resource-name": domain.Statement{Resource: "resource-name", With: domain.Params{Values: map[string]interface{}{"id": domain.Chain{"done-resource", "location"}}}}},
 			domain.Resources{"done-resource": domain.DoneResource{Status: 200, ResponseBody: test.Unmarshal(`{"id": "abcdef"}`), ResponseHeaders: map[string]string{"location": "abcdef"}}},
 		},
+		{
+			"Returns a multiplexed statement with single done resource value",
+			domain.Resources{"resource-name": []interface{}{
+				domain.Statement{Resource: "resource-name", With: domain.Params{Values: map[string]interface{}{"id": "abcdef"}}},
+				domain.Statement{Resource: "resource-name", With: domain.Params{Values: map[string]interface{}{"id": "abcdef"}}},
+			}},
+			domain.Resources{"resource-name": []interface{}{
+				domain.Statement{Resource: "resource-name", With: domain.Params{Values: map[string]interface{}{"id": domain.Chain{"done-resource", "id"}}}},
+				domain.Statement{Resource: "resource-name", With: domain.Params{Values: map[string]interface{}{"id": domain.Chain{"done-resource", "id"}}}},
+			}},
+			domain.Resources{"done-resource": domain.DoneResource{Status: 200, ResponseBody: test.Unmarshal(`{"id": "abcdef"}`)}},
+		},
 	}
 
 	for _, tt := range tests {
