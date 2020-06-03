@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"net"
@@ -113,9 +114,9 @@ func (nc *nativeHttpClient) Do(ctx context.Context, request domain.HttpRequest) 
 		}
 	}()
 
-	body, err := unmarshal(response)
+	body, err := nc.unmarshalBody(response)
 	if err != nil {
-		return makeErrorResponse(requestUrl, duration, 0), err
+		return makeErrorResponse(requestUrl, duration, 0), fmt.Errorf("%w: %v", domain.ErrInvalidResponseBody, body)
 	}
 
 	hr := make(map[string]string)
@@ -175,6 +176,24 @@ func (nc *nativeHttpClient) makeBody(request domain.HttpRequest) (io.ReadCloser,
 	return r, nil
 }
 
+func (nc *nativeHttpClient) unmarshalBody(response *http.Response) (interface{}, error) {
+	var responseBody interface{}
+	err := json.NewDecoder(response.Body).Decode(&responseBody)
+	if err != nil {
+		nc.log.Error("failed to unmarshal response body", err)
+
+		body, readErr := ioutil.ReadAll(response.Body)
+		if readErr != nil {
+			nc.log.Error("failed to read response body", readErr)
+			return nil, readErr
+		}
+
+		return string(body), err
+	}
+
+	return responseBody, nil
+}
+
 func makeUrl(request domain.HttpRequest) *url.URL {
 	u := &url.URL{
 		Host:   request.Host,
@@ -229,11 +248,10 @@ func parseMapParam(value map[string]interface{}) string {
 	return url.QueryEscape(string(data))
 }
 
-func unmarshal(response *http.Response) (interface{}, error) {
-	var responseBody interface{}
-	err := json.NewDecoder(response.Body).Decode(&responseBody)
-	if err != nil {
-		return nil, errors.Wrapf(err, "failed to unmarshal response. error: %v", err)
+func makeErrorResponse(requestUrl string, responseTime time.Duration, statusCode int) domain.HttpResponse {
+	return domain.HttpResponse{
+		Url:        requestUrl,
+		StatusCode: statusCode,
+		Duration:   responseTime,
 	}
-	return responseBody, nil
 }

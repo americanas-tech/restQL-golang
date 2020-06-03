@@ -16,6 +16,15 @@ type HttpClient interface {
 }
 
 var ErrRequestTimeout = errors.New("request timed out")
+var ErrInvalidResponseBody = errors.New("failed to unmarshal response body")
+
+//type ErrInvalidResponseBody struct {
+//	Body interface{}
+//}
+//
+//func (e ErrInvalidResponseBody) Error() string {
+//	return fmt.Sprintf("failed to unmarshal response Body: %v", e.Body)
+//}
 
 type Headers map[string]string
 type Body interface{}

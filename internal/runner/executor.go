@@ -43,6 +43,9 @@ func (e Executor) DoStatement(ctx context.Context, statement domain.Statement, q
 	switch {
 	case err == domain.ErrRequestTimeout:
 		return NewErrorResponse(err, request, response, drOptions), nil
+	case errors.Is(err, domain.ErrInvalidResponseBody):
+		e.log.Debug("err is ErrInvalidResponseBody")
+		return NewErrorResponse(err, request, response, drOptions), nil
 	case err != nil:
 		e.log.Debug("request execution failed", "error", err)
 		return NewErrorResponse(err, request, response, drOptions), err
