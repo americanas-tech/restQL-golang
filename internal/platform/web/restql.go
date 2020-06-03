@@ -73,7 +73,7 @@ func (r RestQl) RunAdHocQuery(ctx *fasthttp.RequestCtx) error {
 		case eval.NotFoundError:
 			return RespondError(ctx, NewRequestError(err, http.StatusNotFound))
 		case eval.ParserError:
-			return RespondError(ctx, NewRequestError(err, http.StatusInternalServerError))
+			return RespondError(ctx, NewRequestError(err, http.StatusBadRequest))
 		case eval.TimeoutError:
 			return RespondError(ctx, NewRequestError(err, http.StatusRequestTimeout))
 		default:
