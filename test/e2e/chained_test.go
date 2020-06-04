@@ -125,6 +125,62 @@ from people
 	test.Equal(t, body, test.Unmarshal(expectedResponse))
 }
 
+func TestChainInterruptionWhenResourceFailOnFromStatement(t *testing.T) {
+	query := `
+from planets
+	with 
+		name = "Yavin"
+
+from people
+	with
+		name = planets.leader
+`
+
+	expectedResponse := `
+	{
+		"planets": {
+			"details": {
+				"success": false,
+				"status": 500,
+				"metadata": {}
+			},
+			"result": {} 
+		},
+		"people": {
+			"details": {
+				"success": false,
+				"status": 400,
+				"metadata": {}
+			},
+			"result": "The request was skipped due to missing { :name } param value"
+		}
+	}`
+
+	mockServer := test.NewMockServer(mockPort)
+	defer mockServer.Teardown()
+
+	mockServer.Mux().HandleFunc("/api/planets/", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(500)
+		io.WriteString(w, "{}")
+	})
+	mockServer.Mux().HandleFunc("/api/people/", func(w http.ResponseWriter, r *http.Request) {
+		t.Fatalf("Resource /api/people called. Expected no call.")
+	})
+	mockServer.Start()
+
+	response, err := httpClient.Post(adHocQueryUrl, "text/plain", strings.NewReader(query))
+	test.VerifyError(t, err)
+	defer response.Body.Close()
+
+	test.Equal(t, response.StatusCode, 500)
+
+	var body map[string]interface{}
+	err = json.NewDecoder(response.Body).Decode(&body)
+	test.VerifyError(t, err)
+
+	test.Equal(t, body, test.Unmarshal(expectedResponse))
+}
+
 func TestChainedParamOnToStatement(t *testing.T) {
 	query := `
 from planets
