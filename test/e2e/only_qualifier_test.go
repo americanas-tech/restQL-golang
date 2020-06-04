@@ -78,6 +78,282 @@ from planets
 	test.Equal(t, body, test.Unmarshal(expectedResponse))
 }
 
+func TestOnlyQualifierOnToStatement(t *testing.T) {
+	query := `
+to planets
+	with id = 1
+		only
+			id
+			name
+			gravity
+			residents -> matches("^j")
+`
+
+	planetResponse := `
+{
+	"id": 1,
+	"name": "Yavin IV",
+	"rotation_period": 24.5,
+	"orbital_period": "4818",
+	"diameter": "10200",
+	"climate": "temperate, tropical",
+	"gravity": "1 standard",
+	"terrain": { "north": "jungle", "south": "rainforests" },
+	"surface_water": "8",
+	"population": "1000",
+	"residents": ["john", "janne", "kyle"],
+	"films": [1]
+}
+`
+
+	expectedResponse := `
+	{
+		"planets": {
+			"details": {
+				"success": true,
+				"status": 200,
+				"metadata": {}
+			},
+			"result": {
+				"id": 1,
+				"name": "Yavin IV",
+				"gravity": "1 standard",
+				"residents": ["john", "janne"]
+			}
+		}
+	}`
+
+	mockServer := test.NewMockServer(mockPort)
+	defer mockServer.Teardown()
+
+	mockServer.Mux().HandleFunc("/api/planets/1", func(w http.ResponseWriter, r *http.Request) {
+		test.Equal(t, r.Method, http.MethodPost)
+
+		w.WriteHeader(200)
+		io.WriteString(w, planetResponse)
+	})
+	mockServer.Start()
+
+	response, err := httpClient.Post(adHocQueryUrl, "text/plain", strings.NewReader(query))
+	test.VerifyError(t, err)
+	defer response.Body.Close()
+
+	test.Equal(t, response.StatusCode, 200)
+
+	var body map[string]interface{}
+	err = json.NewDecoder(response.Body).Decode(&body)
+	test.VerifyError(t, err)
+
+	test.Equal(t, body, test.Unmarshal(expectedResponse))
+}
+
+func TestOnlyQualifierOnIntoStatement(t *testing.T) {
+	query := `
+into planets
+	with id = 1
+		only
+			id
+			name
+			gravity
+			residents -> matches("^j")
+`
+
+	planetResponse := `
+{
+	"id": 1,
+	"name": "Yavin IV",
+	"rotation_period": 24.5,
+	"orbital_period": "4818",
+	"diameter": "10200",
+	"climate": "temperate, tropical",
+	"gravity": "1 standard",
+	"terrain": { "north": "jungle", "south": "rainforests" },
+	"surface_water": "8",
+	"population": "1000",
+	"residents": ["john", "janne", "kyle"],
+	"films": [1]
+}
+`
+
+	expectedResponse := `
+	{
+		"planets": {
+			"details": {
+				"success": true,
+				"status": 200,
+				"metadata": {}
+			},
+			"result": {
+				"id": 1,
+				"name": "Yavin IV",
+				"gravity": "1 standard",
+				"residents": ["john", "janne"]
+			}
+		}
+	}`
+
+	mockServer := test.NewMockServer(mockPort)
+	defer mockServer.Teardown()
+
+	mockServer.Mux().HandleFunc("/api/planets/1", func(w http.ResponseWriter, r *http.Request) {
+		test.Equal(t, r.Method, http.MethodPut)
+
+		w.WriteHeader(200)
+		io.WriteString(w, planetResponse)
+	})
+	mockServer.Start()
+
+	response, err := httpClient.Post(adHocQueryUrl, "text/plain", strings.NewReader(query))
+	test.VerifyError(t, err)
+	defer response.Body.Close()
+
+	test.Equal(t, response.StatusCode, 200)
+
+	var body map[string]interface{}
+	err = json.NewDecoder(response.Body).Decode(&body)
+	test.VerifyError(t, err)
+
+	test.Equal(t, body, test.Unmarshal(expectedResponse))
+}
+
+func TestOnlyQualifierOnUpdateStatement(t *testing.T) {
+	query := `
+update planets
+	with id = 1
+		only
+			id
+			name
+			gravity
+			residents -> matches("^j")
+`
+
+	planetResponse := `
+{
+	"id": 1,
+	"name": "Yavin IV",
+	"rotation_period": 24.5,
+	"orbital_period": "4818",
+	"diameter": "10200",
+	"climate": "temperate, tropical",
+	"gravity": "1 standard",
+	"terrain": { "north": "jungle", "south": "rainforests" },
+	"surface_water": "8",
+	"population": "1000",
+	"residents": ["john", "janne", "kyle"],
+	"films": [1]
+}
+`
+
+	expectedResponse := `
+	{
+		"planets": {
+			"details": {
+				"success": true,
+				"status": 200,
+				"metadata": {}
+			},
+			"result": {
+				"id": 1,
+				"name": "Yavin IV",
+				"gravity": "1 standard",
+				"residents": ["john", "janne"]
+			}
+		}
+	}`
+
+	mockServer := test.NewMockServer(mockPort)
+	defer mockServer.Teardown()
+
+	mockServer.Mux().HandleFunc("/api/planets/1", func(w http.ResponseWriter, r *http.Request) {
+		test.Equal(t, r.Method, http.MethodPatch)
+
+		w.WriteHeader(200)
+		io.WriteString(w, planetResponse)
+	})
+	mockServer.Start()
+
+	response, err := httpClient.Post(adHocQueryUrl, "text/plain", strings.NewReader(query))
+	test.VerifyError(t, err)
+	defer response.Body.Close()
+
+	test.Equal(t, response.StatusCode, 200)
+
+	var body map[string]interface{}
+	err = json.NewDecoder(response.Body).Decode(&body)
+	test.VerifyError(t, err)
+
+	test.Equal(t, body, test.Unmarshal(expectedResponse))
+}
+
+func TestOnlyQualifierOnDeleteStatement(t *testing.T) {
+	query := `
+delete planets
+	with id = 1
+		only
+			id
+			name
+			gravity
+			residents -> matches("^j")
+`
+
+	planetResponse := `
+{
+	"id": 1,
+	"name": "Yavin IV",
+	"rotation_period": 24.5,
+	"orbital_period": "4818",
+	"diameter": "10200",
+	"climate": "temperate, tropical",
+	"gravity": "1 standard",
+	"terrain": { "north": "jungle", "south": "rainforests" },
+	"surface_water": "8",
+	"population": "1000",
+	"residents": ["john", "janne", "kyle"],
+	"films": [1]
+}
+`
+
+	expectedResponse := `
+	{
+		"planets": {
+			"details": {
+				"success": true,
+				"status": 200,
+				"metadata": {}
+			},
+			"result": {
+				"id": 1,
+				"name": "Yavin IV",
+				"gravity": "1 standard",
+				"residents": ["john", "janne"]
+			}
+		}
+	}`
+
+	mockServer := test.NewMockServer(mockPort)
+	defer mockServer.Teardown()
+
+	mockServer.Mux().HandleFunc("/api/planets/1", func(w http.ResponseWriter, r *http.Request) {
+		test.Equal(t, r.Method, http.MethodDelete)
+
+		w.WriteHeader(200)
+		io.WriteString(w, planetResponse)
+	})
+	mockServer.Start()
+
+	response, err := httpClient.Post(adHocQueryUrl, "text/plain", strings.NewReader(query))
+	test.VerifyError(t, err)
+	defer response.Body.Close()
+
+	test.Equal(t, response.StatusCode, 200)
+
+	var body map[string]interface{}
+	err = json.NewDecoder(response.Body).Decode(&body)
+	test.VerifyError(t, err)
+
+	test.Equal(t, body, test.Unmarshal(expectedResponse))
+}
+
 func TestHiddenQualifierOnFromStatement(t *testing.T) {
 	query := `
 from planets
