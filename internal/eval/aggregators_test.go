@@ -42,6 +42,21 @@ func TestApplyAggregators(t *testing.T) {
 			},
 		},
 		{
+			"should aggregate one resource inside other in deep location",
+			domain.Query{Statements: []domain.Statement{
+				{Resource: "hero"},
+				{Resource: "sidekick", In: []string{"hero", "info", "partners", "sidekick"}},
+			}},
+			domain.Resources{
+				"hero":     domain.DoneResource{ResponseBody: test.Unmarshal(`{ "id": 1, "name": "batman" }`)},
+				"sidekick": domain.DoneResource{ResponseBody: test.Unmarshal(`{ "id": 10, "name": "robin" }`)},
+			},
+			domain.Resources{
+				"hero":     domain.DoneResource{ResponseBody: test.Unmarshal(`{ "id": 1, "name": "batman", "info": { "partners": { "sidekick": { "id": 10, "name": "robin" } } } }`)},
+				"sidekick": domain.DoneResource{ResponseBody: nil},
+			},
+		},
+		{
 			"should aggregate one list resource inside other",
 			domain.Query{Statements: []domain.Statement{
 				{Resource: "hero"},

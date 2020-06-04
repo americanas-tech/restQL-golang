@@ -34,10 +34,17 @@ func aggregateOriginOnTarget(path []string, origin interface{}, target interface
 		aggregateOriginOnListTarget(path, origin, target)
 	case map[string]interface{}:
 		field := path[0]
+
+		nextTarget, found := target[field]
+		if !found {
+			nextTarget = make(map[string]interface{})
+			target[field] = nextTarget
+		}
+
 		if len(path) == 1 {
 			setOriginOnTarget(field, origin, target)
 		} else {
-			aggregateOriginOnTarget(path[1:], origin, target[field])
+			aggregateOriginOnTarget(path[1:], origin, nextTarget)
 		}
 
 	}
