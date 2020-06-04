@@ -108,6 +108,8 @@ func (e Evaluator) evaluateQuery(ctx context.Context, queryTxt string, queryOpts
 
 	queryCtx = e.pluginsManager.RunAfterQuery(queryCtx, queryTxt, resources)
 
+	resources = ApplyHidden(query, resources)
+
 	return resources, nil
 }
 

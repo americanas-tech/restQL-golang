@@ -4,7 +4,6 @@ import (
 	"github.com/b2wdigital/restQL-golang/internal/domain"
 	"github.com/b2wdigital/restQL-golang/internal/eval"
 	"github.com/b2wdigital/restQL-golang/test"
-	"reflect"
 	"regexp"
 	"testing"
 )
@@ -24,11 +23,9 @@ func TestHiddenFilter(t *testing.T) {
 		"sidekick": domain.DoneResource{ResponseBody: nil},
 	}
 
-	got, _ := eval.ApplyFilters(query, resources)
+	got := eval.ApplyHidden(query, resources)
 
-	if !reflect.DeepEqual(got, expectedResources) {
-		t.Fatalf("ApplyFilters = %+#v, want = %+#v", got, expectedResources)
-	}
+	test.Equal(t, got, expectedResources)
 }
 
 func TestOnlyFilters(t *testing.T) {

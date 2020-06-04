@@ -10,9 +10,6 @@ func ApplyFilters(query domain.Query, resources domain.Resources) (domain.Resour
 	result := make(domain.Resources)
 
 	for _, stmt := range query.Statements {
-		if stmt.Hidden {
-			continue
-		}
 		resourceId := domain.NewResourceId(stmt)
 		dr := resources[resourceId]
 
@@ -218,4 +215,20 @@ func parsePath(s interface{}) []interface{} {
 	default:
 		return nil
 	}
+}
+
+func ApplyHidden(query domain.Query, resources domain.Resources) domain.Resources {
+	result := make(domain.Resources)
+
+	for _, stmt := range query.Statements {
+		if stmt.Hidden {
+			continue
+		}
+		resourceId := domain.NewResourceId(stmt)
+		dr := resources[resourceId]
+
+		result[resourceId] = dr
+	}
+
+	return result
 }
