@@ -696,8 +696,6 @@ to planets
 		body := string(b)
 		test.NotEqual(t, body, "")
 
-		fmt.Printf("receveid body : %v\n", body)
-
 		test.Equal(t, test.Unmarshal(body), test.Unmarshal(removeWhitespaces(planet)))
 
 		w.WriteHeader(201)
