@@ -74,8 +74,8 @@ type Config struct {
 		Name             string `yaml:"name" env:"RESTQL_DATABASE_NAME"`
 		Timeouts         struct {
 			Connection time.Duration `yaml:"connection" env:"RESTQL_DATABASE_CONNECTION_TIMEOUT"`
-			Mappings   time.Duration `yaml:"mappings"`
-			Query      time.Duration `yaml:"query"`
+			Mappings   time.Duration `yaml:"mappings" env:"RESTQL_DATABASE_MAPPINGS_READ_TIMEOUT"`
+			Query      time.Duration `yaml:"query" env:"RESTQL_DATABASE_QUERY_READ_TIMEOUT"`
 		} `yaml:"timeouts"`
 	} `yaml:"database"`
 
