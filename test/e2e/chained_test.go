@@ -775,3 +775,36 @@ from people
 
 	test.Equal(t, body, test.Unmarshal(expectedResponse))
 }
+
+func TestChainedParamTargetingUnknownStatementOnFromStatement(t *testing.T) {
+	query := `
+from planets
+	with 
+		name = "Yavin"
+		population = 1000
+		residents = ["john", "janne"] -> flatten
+		rotation_period = 24.5
+		terrain = { "north": "jungle", "south": "rainforests" }
+
+from people
+	with
+		name = foo.leader
+`
+
+	expectedResponse := `
+	{
+		"error": "chained parameter targeting unknown statement : foo.leader"
+	}`
+
+	response, err := httpClient.Post(adHocQueryUrl, "text/plain", strings.NewReader(query))
+	test.VerifyError(t, err)
+	defer response.Body.Close()
+
+	test.Equal(t, response.StatusCode, 400)
+
+	var body map[string]interface{}
+	err = json.NewDecoder(response.Body).Decode(&body)
+	test.VerifyError(t, err)
+
+	test.Equal(t, body, test.Unmarshal(expectedResponse))
+}

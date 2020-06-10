@@ -12,7 +12,7 @@ var (
 
 func validateQuery(q *ast.Query) error {
 	for _, block := range q.Blocks {
-		err := validateBlock(block)
+		err := validateOccurrences(block)
 		if err != nil {
 			return err
 		}
@@ -21,7 +21,7 @@ func validateQuery(q *ast.Query) error {
 	return nil
 }
 
-func validateBlock(block ast.Block) error {
+func validateOccurrences(block ast.Block) error {
 	occurrences := reduceBlockToOccurrences(block)
 
 	for _, occurrence := range occurrences {

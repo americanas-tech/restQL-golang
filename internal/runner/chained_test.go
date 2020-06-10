@@ -1,6 +1,7 @@
 package runner_test
 
 import (
+	"fmt"
 	"github.com/b2wdigital/restQL-golang/internal/domain"
 	"github.com/b2wdigital/restQL-golang/internal/runner"
 	"github.com/b2wdigital/restQL-golang/test"
@@ -229,6 +230,111 @@ func TestResolveChainedValues(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			got := runner.ResolveChainedValues(tt.statementWithUnresolvedParam, tt.doneResources)
 			test.Equal(t, got, tt.expected)
+		})
+	}
+}
+
+func TestValidateChainedValues(t *testing.T) {
+	tests := []struct {
+		name      string
+		expected  error
+		resources domain.Resources
+	}{
+		{
+			"Do nothing if there is no with chained",
+			nil,
+			domain.Resources{
+				"resource-name": domain.Statement{
+					Method:   "from",
+					Resource: "resource-name",
+					With:     domain.Params{Values: map[string]interface{}{"id": "abcdef12345"}},
+				},
+			},
+		},
+		{
+			"Fail validation if chained parameter target unknown resource",
+			fmt.Errorf("%w : done-resource.id", runner.ErrInvalidChainedParameter),
+			domain.Resources{
+				"resource-name": domain.Statement{
+					Method:   "from",
+					Resource: "resource-name",
+					With:     domain.Params{Values: map[string]interface{}{"id": domain.Chain{"done-resource", "id"}}},
+				},
+			},
+		},
+		{
+			"Fail validation if chained parameter inside list target unknown resource",
+			fmt.Errorf("%w : done-resource.id", runner.ErrInvalidChainedParameter),
+			domain.Resources{
+				"resource-name": domain.Statement{
+					Method:   "from",
+					Resource: "resource-name",
+					With:     domain.Params{Values: map[string]interface{}{"id": []interface{}{[]interface{}{domain.Chain{"done-resource", "id"}}}}},
+				},
+			},
+		},
+		{
+			"Fail validation if chained parameter inside object target unknown resource",
+			fmt.Errorf("%w : done-resource.id", runner.ErrInvalidChainedParameter),
+			domain.Resources{
+				"resource-name": domain.Statement{
+					Method:   "from",
+					Resource: "resource-name",
+					With: domain.Params{Values: map[string]interface{}{
+						"id": map[string]interface{}{
+							"universal": map[string]interface{}{
+								"value": domain.Chain{"done-resource", "id"},
+							},
+						},
+					}},
+				},
+			},
+		},
+		{
+			"Fail validation if chained parameter inside flatten target unknown resource",
+			fmt.Errorf("%w : done-resource.id", runner.ErrInvalidChainedParameter),
+			domain.Resources{
+				"resource-name": domain.Statement{
+					Method:   "from",
+					Resource: "resource-name",
+					With: domain.Params{Values: map[string]interface{}{
+						"id": domain.Flatten{Target: domain.Chain{"done-resource", "id"}},
+					}},
+				},
+			},
+		},
+		{
+			"Fail validation if chained parameter inside base64 target unknown resource",
+			fmt.Errorf("%w : done-resource.id", runner.ErrInvalidChainedParameter),
+			domain.Resources{
+				"resource-name": domain.Statement{
+					Method:   "from",
+					Resource: "resource-name",
+					With: domain.Params{Values: map[string]interface{}{
+						"id": domain.Base64{Target: domain.Chain{"done-resource", "id"}},
+					}},
+				},
+			},
+		},
+		{
+			"Fail validation if chained parameter inside json target unknown resource",
+			fmt.Errorf("%w : done-resource.id", runner.ErrInvalidChainedParameter),
+			domain.Resources{
+				"resource-name": domain.Statement{
+					Method:   "from",
+					Resource: "resource-name",
+					With: domain.Params{Values: map[string]interface{}{
+						"id": domain.Json{Target: domain.Chain{"done-resource", "id"}},
+					}},
+				},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := runner.ValidateChainedValues(tt.resources)
+			test.Equal(t, fmt.Sprintf("%s", got), fmt.Sprintf("%s", tt.expected))
 		})
 	}
 }

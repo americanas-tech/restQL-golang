@@ -59,7 +59,10 @@ func (r Runner) ExecuteQuery(ctx context.Context, query domain.Query, queryCtx d
 	}
 	defer cancel()
 
-	resources := r.initializeResources(query, queryCtx)
+	resources, err := r.initializeResources(query, queryCtx)
+	if err != nil {
+		return nil, err
+	}
 
 	state := NewState(resources)
 
@@ -122,15 +125,20 @@ func (r Runner) parseQueryTimeout(query domain.Query) (time.Duration, bool) {
 	return time.Millisecond * time.Duration(duration), true
 }
 
-func (r Runner) initializeResources(query domain.Query, queryCtx domain.QueryContext) domain.Resources {
+func (r Runner) initializeResources(query domain.Query, queryCtx domain.QueryContext) (domain.Resources, error) {
 	resources := domain.NewResources(query.Statements)
 
 	resources = ResolveVariables(resources, queryCtx.Input)
+	err := ValidateChainedValues(resources)
+	if err != nil {
+		return nil, err
+	}
+
 	resources = ApplyModifiers(resources, query.Use)
 	resources = ApplyEncoders(resources, r.log)
 	resources = MultiplexStatements(resources)
 
-	return resources
+	return resources, nil
 }
 
 type request struct {
