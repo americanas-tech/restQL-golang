@@ -2,7 +2,7 @@ web:
   server:
     middlewares:
       timeout:
-        duration: 8s
+        duration: 10m
 
 logging:
   enable: true

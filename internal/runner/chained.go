@@ -1,10 +1,17 @@
 package runner
 
-import "github.com/b2wdigital/restQL-golang/internal/domain"
+import (
+	"fmt"
+	"github.com/b2wdigital/restQL-golang/internal/domain"
+	"github.com/pkg/errors"
+	"strings"
+)
 
 const (
 	EmptyChained = "__EMPTY_CHAINED__"
 )
+
+var ErrInvalidChainedParameter = errors.New("chained parameter targeting unknown statement")
 
 func ResolveChainedValues(resources domain.Resources, doneResources domain.Resources) domain.Resources {
 	for resourceId, stmt := range resources {
@@ -149,4 +156,92 @@ func getValueFromBody(pathToValue []string, b domain.Body) (interface{}, bool) {
 	default:
 		return body, true
 	}
+}
+
+func ValidateChainedValues(resources domain.Resources) error {
+	for _, stmt := range resources {
+		err := validateStatement(stmt, resources)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func validateStatement(stmt interface{}, resources domain.Resources) error {
+	switch stmt := stmt.(type) {
+	case domain.Statement:
+		params := stmt.With.Values
+		for _, value := range params {
+			err := validateParam(value, resources)
+			if err != nil {
+				return err
+			}
+		}
+		return nil
+	case []interface{}:
+		for _, s := range stmt {
+			err := validateStatement(s, resources)
+			if err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+
+	return nil
+}
+
+func validateParam(value interface{}, resources domain.Resources) error {
+	switch param := value.(type) {
+	case domain.Chain:
+		return validateChainParam(param, resources)
+	case domain.Flatten:
+		return validateParam(param.Target, resources)
+	case domain.Json:
+		return validateParam(param.Target, resources)
+	case domain.Base64:
+		return validateParam(param.Target, resources)
+	case []interface{}:
+		return validateListParam(param, resources)
+	case map[string]interface{}:
+		return validateObjectParam(param, resources)
+	default:
+		return nil
+	}
+}
+
+func validateObjectParam(objectParam map[string]interface{}, resources domain.Resources) error {
+	for _, value := range objectParam {
+		err := validateParam(value, resources)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func validateListParam(listParam []interface{}, resources domain.Resources) error {
+	for _, value := range listParam {
+		err := validateParam(value, resources)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func validateChainParam(chain domain.Chain, resources domain.Resources) error {
+	path := toPath(chain)
+	resourceId := domain.ResourceId(path[0])
+
+	_, found := resources[resourceId]
+	if !found {
+		return fmt.Errorf("%w : %s", ErrInvalidChainedParameter, strings.Join(path, "."))
+	}
+
+	return nil
 }

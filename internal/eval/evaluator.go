@@ -94,6 +94,8 @@ func (e Evaluator) evaluateQuery(ctx context.Context, queryTxt string, queryOpts
 	switch {
 	case err == runner.ErrQueryTimedOut:
 		return nil, TimeoutError{Err: err}
+	case errors.Is(err, runner.ErrInvalidChainedParameter):
+		return nil, ParserError{Err: err}
 	case err != nil:
 		return nil, err
 	}
