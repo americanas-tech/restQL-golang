@@ -19,6 +19,7 @@ from planets
 			id
 			name
 			gravity
+			terrain.north
 			residents -> matches("^j")
 `
 
@@ -51,6 +52,7 @@ from planets
 				"id": 1,
 				"name": "Yavin IV",
 				"gravity": "1 standard",
+				"terrain": { "north": "jungle" },
 				"residents": ["john", "janne"]
 			}
 		}
