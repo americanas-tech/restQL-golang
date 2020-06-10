@@ -31,10 +31,11 @@ func Optimize(queryAst *ast.Query) (domain.Query, error) {
 func makeUse(queryAst *ast.Query) map[string]interface{} {
 	result := map[string]interface{}{}
 	for _, use := range queryAst.Use {
+		key := strings.Trim(use.Key, " ")
 		if use.Value.String != nil {
-			result[use.Key] = *use.Value.String
+			result[key] = *use.Value.String
 		} else {
-			result[use.Key] = *use.Value.Int
+			result[key] = *use.Value.Int
 		}
 	}
 	return result

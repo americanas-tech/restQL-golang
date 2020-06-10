@@ -45,7 +45,7 @@ func TestAstGenerator(t *testing.T) {
 		},
 		{
 			"Simple from resource query with use modifier",
-			ast.Query{Use: []ast.Use{{Key: "max-age", Value: ast.UseValue{Int: Int(600)}}, {Key: "s-max-age", Value: ast.UseValue{Int: Int(400)}}, {Key: "timeout", Value: ast.UseValue{Int: Int(8000)}}}, Blocks: []ast.Block{{Method: ast.FromMethod, Resource: "cart"}}},
+			ast.Query{Use: []ast.Use{{Key: ast.MaxAgeKeyword, Value: ast.UseValue{Int: Int(600)}}, {Key: ast.SmaxAgeKeyword, Value: ast.UseValue{Int: Int(400)}}, {Key: ast.TimeoutKeyword, Value: ast.UseValue{Int: Int(8000)}}}, Blocks: []ast.Block{{Method: ast.FromMethod, Resource: "cart"}}},
 			`use max-age 600 use s-max-age 400 use timeout 8000 from cart`,
 		},
 		{

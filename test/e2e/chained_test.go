@@ -658,3 +658,120 @@ from people
 
 	test.Equal(t, body, test.Unmarshal(expectedResponse))
 }
+
+func TestChainedParameterUsingKeyword(t *testing.T) {
+	query := `
+from planets as withLeader
+	with 
+		name = "Yavin"
+		population = 1000
+		residents = ["john", "janne"] -> flatten
+		rotation_period = 24.5
+		terrain = { "north": "jungle", "south": "rainforests" }
+
+from people
+	with
+		name = withLeader.with.leader
+`
+
+	planetResponse := `
+{
+	"name": "Yavin",
+	"rotation_period": 24.5,
+	"orbital_period": "4818",
+	"diameter": "10200",
+	"climate": "temperate, tropical",
+	"gravity": "1 standard",
+	"terrain": { "north": "jungle", "south": "rainforests" },
+	"surface_water": "8",
+	"population": "1000",
+	"with": { "leader": "Yavin King" },
+	"residents": ["john", "janne"],
+	"films": [1]
+}
+`
+
+	peopleResponse := `
+{
+	"name": "Yavin King",
+	"height": "172",
+	"mass": "77",
+	"hair_color": "blond",
+	"skin_color": "fair",
+	"eye_color": "blue",
+	"birth_year": "19BBY",
+	"gender": "male",
+	"homeworld": 1,
+	"films": [1, 2, 3, 6]
+}
+`
+
+	expectedResponse := fmt.Sprintf(`
+	{
+		"withLeader": {
+			"details": {
+				"success": true,
+				"status": 200,
+				"metadata": {}
+			},
+			"result": %s
+		},
+		"people": {
+			"details": {
+				"success": true,
+				"status": 200,
+				"metadata": {}
+			},
+			"result": %s
+		}
+	}`, planetResponse, peopleResponse)
+
+	mockServer := test.NewMockServer(mockPort)
+	defer mockServer.Teardown()
+
+	mockServer.Mux().HandleFunc("/api/planets/", func(w http.ResponseWriter, r *http.Request) {
+		params := r.URL.Query()
+
+		test.Equal(t, params["population"][0], "1000")
+		test.Equal(t, params["rotation_period"][0], "24.5")
+		test.Equal(t, params["residents"], []string{"john", "janne"})
+
+		name, err := url.QueryUnescape(params["name"][0])
+		test.VerifyError(t, err)
+		test.Equal(t, name, "Yavin")
+
+		terrain, err := url.QueryUnescape(params["terrain"][0])
+		test.VerifyError(t, err)
+		test.Equal(t, terrain, `{"north":"jungle","south":"rainforests"}`)
+
+		w.WriteHeader(200)
+		io.WriteString(w, planetResponse)
+	})
+	mockServer.Mux().HandleFunc("/api/people/", func(w http.ResponseWriter, r *http.Request) {
+		params := r.URL.Query()
+
+		name, err := url.QueryUnescape(params["name"][0])
+		test.VerifyError(t, err)
+		test.Equal(t, name, "Yavin King")
+
+		w.WriteHeader(200)
+		io.WriteString(w, peopleResponse)
+	})
+	mockServer.Start()
+
+	response, err := httpClient.Post(adHocQueryUrl, "text/plain", strings.NewReader(query))
+	test.VerifyError(t, err)
+	defer response.Body.Close()
+
+	//bytes, err := ioutil.ReadAll(response.Body)
+	//test.VerifyError(t, err)
+
+	//fmt.Printf("response : %s\n", string(bytes))
+	test.Equal(t, response.StatusCode, 200)
+
+	var body map[string]interface{}
+	err = json.NewDecoder(response.Body).Decode(&body)
+	test.VerifyError(t, err)
+
+	test.Equal(t, body, test.Unmarshal(expectedResponse))
+}

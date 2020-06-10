@@ -1,19 +1,19 @@
 package ast
 
 const lexerDefinition = `
-		Use = use
+		Use = use\s+
 		Method = ^from\s+|^into\s+|^update\s+|^to\s+|^delete\s+
-		As = as
+		As = as\s+
 		In = in\s+
 
-		Headers = headers
-		With = with
-		Only = only
-		Timeout = timeout
-		Hidden = hidden
-		IgnoreErrors = ignore-errors
-		MaxAge = max-age
-		SMaxAge = s-max-age
+		Headers = headers\s+
+		With = with\s+
+		Only = only\s+
+		Timeout = timeout\s+
+		Hidden = hidden($|\s+)
+		IgnoreErrors = ignore-errors($|\s+)
+		MaxAge = max-age\s+
+		SMaxAge = s-max-age\s+
 
 		Arrow = ->
 		Flatten = flatten
@@ -42,21 +42,18 @@ const lexerDefinition = `
 `
 
 const (
-	FromMethod   = "from "
-	IntoMethod   = "into "
-	UpdateMethod = "update "
-	ToMethod     = "to "
-	DeleteMethod = "delete "
-)
-
-const (
+	FromMethod          = "from "
+	IntoMethod          = "into "
+	UpdateMethod        = "update "
+	ToMethod            = "to "
+	DeleteMethod        = "delete "
 	WithKeyword         = "with"
 	OnlyKeyword         = "only"
-	TimeoutKeyword      = "timeout"
 	HeadersKeyword      = "headers"
 	HiddenKeyword       = "hidden"
-	MaxAgeKeyword       = "max-age"
-	SmaxAgeKeyword      = "s-max-age"
+	TimeoutKeyword      = "timeout "
+	MaxAgeKeyword       = "max-age "
+	SmaxAgeKeyword      = "s-max-age "
 	IgnoreErrorsKeyword = "ignore-errors"
 )
 
