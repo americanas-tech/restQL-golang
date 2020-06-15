@@ -228,6 +228,8 @@ func parseQueryValue(value interface{}) string {
 	switch value := value.(type) {
 	case string:
 		return url.QueryEscape(value)
+	case bool:
+		return url.QueryEscape(strconv.FormatBool(value))
 	case int:
 		return url.QueryEscape(strconv.Itoa(value))
 	case float64:

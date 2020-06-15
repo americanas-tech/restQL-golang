@@ -15,16 +15,43 @@ import (
 func TestWithQualifierOnFromStatement(t *testing.T) {
 	query := `
 from planets
-	with 
+	with
+		planets = "5m"
 		name = "Yavin IV"
 		population = 1000
 		residents = ["john", "janne"] -> flatten
 		rotation_period = 24.5
 		terrain = { "north": "jungle", "south": "rainforests" }
+		hot = true
+		timestamp = null
+
+from planets as second
+	with
+		to = planets.from
+		planets = "5m"
+		name = "Yavin IV"
+		population = 1000
+		residents = ["john", "janne"] -> flatten
+		rotation_period = 24.5
+		terrain = { "north": "jungle", "south": "rainforests" }
+		hot = true
+		timestamp = null
+
+from planets as third
+	with
+		to = second.from
+		planets = "5m"
+		name = "Yavin IV"
+		population = 1000
+		residents = ["john", "janne"] -> flatten
+		rotation_period = 24.5
+		terrain = { "north": "jungle", "south": "rainforests" }
+		hot = true
+		timestamp = null
 `
 
 	planetResponse := `
-[{
+{
 	"name": "Yavin IV",
 	"rotation_period": 24.5,
 	"orbital_period": "4818",
@@ -35,8 +62,9 @@ from planets
 	"surface_water": "8",
 	"population": "1000",
 	"residents": ["john", "janne"],
-	"films": [1]
-}]
+	"films": [1],
+	"from": "sector A"
+}
 `
 
 	expectedResponse := fmt.Sprintf(`
@@ -47,9 +75,25 @@ from planets
 				"status": 200,
 				"metadata": {}
 			},
-			"result": %s 
+			"result": %s
+		},
+		"second": {
+			"details": {
+				"success": true,
+				"status": 200,
+				"metadata": {}
+			},
+			"result": %s
+		},
+		"third": {
+			"details": {
+				"success": true,
+				"status": 200,
+				"metadata": {}
+			},
+			"result": %s
 		}
-	}`, planetResponse)
+	}`, planetResponse, planetResponse, planetResponse)
 
 	mockServer := test.NewMockServer(mockPort)
 	defer mockServer.Teardown()
@@ -57,6 +101,13 @@ from planets
 	mockServer.Mux().HandleFunc("/api/planets/", func(w http.ResponseWriter, r *http.Request) {
 		params := r.URL.Query()
 
+		fmt.Printf("params : %+#v\n", params)
+
+		var expectedTimestamp []string
+
+		test.Equal(t, params["timestamp"], expectedTimestamp)
+		test.Equal(t, params["planets"][0], "5m")
+		test.Equal(t, params["hot"][0], "true")
 		test.Equal(t, params["population"][0], "1000")
 		test.Equal(t, params["rotation_period"][0], "24.5")
 		test.Equal(t, params["residents"], []string{"john", "janne"})
@@ -86,6 +137,81 @@ from planets
 
 	test.Equal(t, body, test.Unmarshal(expectedResponse))
 }
+
+//func TestWithQualifierOnFromStatement(t *testing.T) {
+//	query := `
+//from planets
+//	with
+//		name = "Yavin IV"
+//		population = 1000
+//		residents = ["john", "janne"] -> flatten
+//		rotation_period = 24.5
+//		terrain = { "north": "jungle", "south": "rainforests" }
+//`
+//
+//	planetResponse := `
+//[{
+//	"name": "Yavin IV",
+//	"rotation_period": 24.5,
+//	"orbital_period": "4818",
+//	"diameter": "10200",
+//	"climate": "temperate, tropical",
+//	"gravity": "1 standard",
+//	"terrain": { "north": "jungle", "south": "rainforests" },
+//	"surface_water": "8",
+//	"population": "1000",
+//	"residents": ["john", "janne"],
+//	"films": [1]
+//}]
+//`
+//
+//	expectedResponse := fmt.Sprintf(`
+//	{
+//		"planets": {
+//			"details": {
+//				"success": true,
+//				"status": 200,
+//				"metadata": {}
+//			},
+//			"result": %s
+//		}
+//	}`, planetResponse)
+//
+//	mockServer := test.NewMockServer(mockPort)
+//	defer mockServer.Teardown()
+//
+//	mockServer.Mux().HandleFunc("/api/planets/", func(w http.ResponseWriter, r *http.Request) {
+//		params := r.URL.Query()
+//
+//		test.Equal(t, params["population"][0], "1000")
+//		test.Equal(t, params["rotation_period"][0], "24.5")
+//		test.Equal(t, params["residents"], []string{"john", "janne"})
+//
+//		name, err := url.QueryUnescape(params["name"][0])
+//		test.VerifyError(t, err)
+//		test.Equal(t, name, "Yavin IV")
+//
+//		terrain, err := url.QueryUnescape(params["terrain"][0])
+//		test.VerifyError(t, err)
+//		test.Equal(t, terrain, `{"north":"jungle","south":"rainforests"}`)
+//
+//		w.WriteHeader(200)
+//		io.WriteString(w, planetResponse)
+//	})
+//	mockServer.Start()
+//
+//	response, err := httpClient.Post(adHocQueryUrl, "text/plain", strings.NewReader(query))
+//	test.VerifyError(t, err)
+//	defer response.Body.Close()
+//
+//	test.Equal(t, response.StatusCode, 200)
+//
+//	var body map[string]interface{}
+//	err = json.NewDecoder(response.Body).Decode(&body)
+//	test.VerifyError(t, err)
+//
+//	test.Equal(t, body, test.Unmarshal(expectedResponse))
+//}
 
 func TestWithQualifierOnToStatement(t *testing.T) {
 	query := `
