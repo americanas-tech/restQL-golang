@@ -3,6 +3,7 @@ package test
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/google/go-cmp/cmp"
 	"log"
 	"net"
 	"net/http"
@@ -21,8 +22,8 @@ func Unmarshal(body string) interface{} {
 }
 
 func Equal(t *testing.T, got, expected interface{}) {
-	if !reflect.DeepEqual(got, expected) {
-		t.Fatalf("got = %+#v, want = %+#v", got, expected)
+	if !cmp.Equal(got, expected) {
+		t.Fatalf("got = %+#v, want = %+#v\nMismatch (-want +got):\n%s", got, expected, cmp.Diff(expected, got))
 	}
 }
 
