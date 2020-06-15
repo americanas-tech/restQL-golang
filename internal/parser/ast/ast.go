@@ -1,50 +1,141 @@
 package ast
 
-import (
-	"fmt"
-	"github.com/alecthomas/participle"
-	"github.com/alecthomas/participle/lexer/regex"
-	"github.com/pkg/errors"
+const (
+	FromMethod          = "from"
+	IntoMethod          = "into"
+	UpdateMethod        = "update"
+	ToMethod            = "to"
+	DeleteMethod        = "delete"
+	WithKeyword         = "with"
+	OnlyKeyword         = "only"
+	HeadersKeyword      = "headers"
+	HiddenKeyword       = "hidden"
+	TimeoutKeyword      = "timeout"
+	MaxAgeKeyword       = "max-age"
+	SmaxAgeKeyword      = "s-max-age"
+	IgnoreErrorsKeyword = "ignore-errors"
+	Flatten             = "flatten"
+	Base64              = "base64"
+	Json                = "json"
 )
 
+type Query struct {
+	Use    []Use
+	Blocks []Block
+}
+
+type Use struct {
+	Key   string
+	Value UseValue
+}
+
+type UseValue struct {
+	Int    *int
+	String *string
+}
+
+type Block struct {
+	Method     string
+	Resource   string
+	Alias      string
+	In         []string
+	Qualifiers []Qualifier
+}
+
+type Qualifier struct {
+	With         *Parameters
+	Only         []Filter
+	Headers      []HeaderItem
+	Hidden       bool
+	Timeout      *TimeoutValue
+	MaxAge       *MaxAgeValue
+	SMaxAge      *SMaxAgeValue
+	IgnoreErrors bool
+}
+
+type Filter struct {
+	Field []string
+	Match string
+}
+
+type Parameters struct {
+	Body      *ParameterBody
+	KeyValues []KeyValue
+}
+
+type ParameterBody struct {
+	Target  string
+	Flatten bool
+	Base64  bool
+	Json    bool
+}
+
+type KeyValue struct {
+	Key     string
+	Value   Value
+	Flatten bool
+	Base64  bool
+	Json    bool
+}
+
+type Value struct {
+	List      []Value
+	Object    []ObjectEntry
+	Variable  *string
+	Primitive *Primitive
+}
+
+type ObjectEntry struct {
+	Key   string
+	Value Value
+}
+
+type Primitive struct {
+	String *string
+	Int    *int
+	Float  *float64
+	Chain  []Chained
+}
+
+type Chained struct {
+	PathVariable string
+	PathItem     string
+}
+
+type HeaderItem struct {
+	Key   string
+	Value HeaderValue
+}
+
+type HeaderValue struct {
+	Variable *string
+	String   *string
+}
+
+type variableOrInt struct {
+	Variable *string
+	Int      *int
+}
+
+type TimeoutValue variableOrInt
+type MaxAgeValue variableOrInt
+type SMaxAgeValue variableOrInt
+
 type Generator struct {
-	participleParser *participle.Parser
 }
 
 func New() (Generator, error) {
-	newParser, err := makeParser()
-	if err != nil {
-		return Generator{}, err
-	}
-
-	return Generator{participleParser: newParser}, nil
+	return Generator{}, nil
 }
 
-func (g Generator) Parse(query string) (q *Query, err error) {
-	q = &Query{}
-	if err = g.participleParser.ParseString(query, q); err != nil {
-		return nil, errors.Wrap(err, fmt.Sprintf("failed to parse query: %s", query))
-	}
+const noFilename = ""
 
-	return q, nil
-}
-
-func makeParser() (*participle.Parser, error) {
-	QUERY := &Query{}
-	definition, err := regex.New(lexerDefinition)
+func (g Generator) Parse(query string) (*Query, error) {
+	parse, err := Parse(noFilename, []byte(query))
 	if err != nil {
-		return nil, errors.Wrap(err, fmt.Sprintf("failed to compile lexer definition"))
+		return nil, err
 	}
 
-	parser, err := participle.Build(
-		QUERY,
-		participle.Lexer(definition),
-		participle.Unquote("String"),
-		participle.Elide("Comment"),
-	)
-	if err != nil {
-		return nil, errors.Wrap(err, fmt.Sprintf("failed to compile parser definition"))
-	}
-
-	return parser, nil
+	q := parse.(Query)
+	return &q, nil
 }

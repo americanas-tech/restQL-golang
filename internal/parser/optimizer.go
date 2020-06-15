@@ -9,11 +9,6 @@ import (
 )
 
 func Optimize(queryAst *ast.Query) (domain.Query, error) {
-	err := validateQuery(queryAst)
-	if err != nil {
-		return domain.Query{}, err
-	}
-
 	statements, err := mapToStatements(queryAst.Blocks)
 	if err != nil {
 		return domain.Query{}, err
@@ -240,7 +235,7 @@ func getValue(value ast.Value) interface{} {
 	if value.List != nil {
 		result := make([]interface{}, len(value.List))
 		for i, v := range value.List {
-			result[i] = getValue(*v)
+			result[i] = getValue(v)
 		}
 
 		return result
@@ -257,29 +252,10 @@ func getMap(entries []ast.ObjectEntry) map[string]interface{} {
 	result := map[string]interface{}{}
 
 	for _, entry := range entries {
-		result[entry.Key] = getMapValue(entry.Value)
+		result[entry.Key] = getValue(entry.Value)
 	}
 
 	return result
-}
-
-func getMapValue(objectValue ast.ObjectValue) interface{} {
-	switch {
-	case objectValue.Primitive != nil:
-		return getPrimitive(objectValue.Primitive)
-	case objectValue.Variable != nil:
-		return domain.Variable{Target: *objectValue.Variable}
-	case objectValue.List != nil:
-		l := make([]interface{}, len(objectValue.List))
-		for i, v := range objectValue.List {
-			l[i] = getMapValue(*v)
-		}
-		return l
-	case objectValue.Nested != nil:
-		return getMap(objectValue.Nested)
-	default:
-		return nil
-	}
 }
 
 func getPrimitive(primitive *ast.Primitive) interface{} {

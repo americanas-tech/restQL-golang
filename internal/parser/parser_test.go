@@ -23,7 +23,8 @@ func TestQueryParser(t *testing.T) {
 		{
 			"Multiple from statement",
 			domain.Query{Statements: []domain.Statement{{Method: "from", Resource: "hero"}, {Method: "from", Resource: "sidekick"}}},
-			"from hero from sidekick",
+			`from hero 
+					from sidekick`,
 		},
 		{
 			"Unique from statement and with parameters",
@@ -138,7 +139,10 @@ func TestQueryParser(t *testing.T) {
 				{Method: "from", Resource: "hero"},
 				{Method: "from", Resource: "sidekick", In: []string{"hero", "sidekick"}},
 			}},
-			"from hero from sidekick in hero.sidekick",
+			`
+					from hero 
+					from sidekick in hero.sidekick
+			`,
 		},
 		{
 			"Full query",
@@ -197,14 +201,14 @@ func TestQueryParser(t *testing.T) {
 						name
 		
 				 from sidekick as s in hero.sidekick
+					headers
+						X-Trace-Id = "abcdef12345"
 					with
 						id = 1
 						name = "batman"
 						weapons = ["belt", "hands"]
 						family = { "father": "Thomas Wayne" }
 						height = 10.5
-					headers
-						X-Trace-Id = "abcdef12345"
 					hidden
 					ignore-errors
 		
