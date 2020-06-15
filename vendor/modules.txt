@@ -1,9 +1,5 @@
 # github.com/BurntSushi/toml v0.3.1
 github.com/BurntSushi/toml
-# github.com/alecthomas/participle v0.4.1
-github.com/alecthomas/participle
-github.com/alecthomas/participle/lexer
-github.com/alecthomas/participle/lexer/regex
 # github.com/bluele/gcache v0.0.0-20190518031135-bc40bd653833
 github.com/bluele/gcache
 # github.com/buaazp/fasthttprouter v0.1.1

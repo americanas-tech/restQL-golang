@@ -1,0 +1,204 @@
+{
+package ast
+
+import (
+	"bytes"
+	"errors"
+	"fmt"
+	"io"
+	"io/ioutil"
+	"os"
+	"strconv"
+	"strings"
+	"unicode"
+	"unicode/utf8"
+)
+}
+
+QUERY <- WS LS* WS us:(USE)* firstBlock:BLOCK otherBlocks:((WS LS WS)+ BLOCK)* WS LS* WS EOF {
+	return newQuery(us, firstBlock, otherBlocks)
+}
+
+USE <- "use" WS_MAND r:(USE_RULE) WS v:(USE_VALUE) WS LS* WS {
+	return newUse(r, v)
+}
+
+USE_RULE <- ("timeout" / "max-age" / "s-max-age") {
+	return string(c.text), nil
+}
+
+USE_VALUE <- v:(String / Integer) {
+	return newUseValue(v)
+}
+
+BLOCK <- action:(ACTION_RULE) m:(MODIFIER_RULE?) w:(WITH_RULE?) f:(ONLY_RULE / HIDDEN_RULE)? fl:(FLAG_RULE?) WS {
+	return newBlock(action, m, w, f, fl)
+}
+
+ACTION_RULE <- m:(METHOD) WS_MAND r:(IDENT) a:(ALIAS?) i:(IN?) {
+	return newActionRule(m, r, a, i)
+}
+
+METHOD <- m:("from" / "to" / "into"/ "update" / "delete") {
+	return newMethod(m), nil
+}
+
+ALIAS <- WS_MAND "as" WS_MAND a:(IDENT) {
+	return a, nil
+}
+
+IN <- WS_MAND "in" WS_MAND t:(IDENT_WITH_DOT) {
+	return newIn(t)
+}
+
+MODIFIER_RULE <- m:(HEADERS / TIMEOUT / MAX_AGE / S_MAX_AGE)+ {
+	return m, nil
+}
+
+WITH_RULE <- WS_MAND "with" WS_MAND pb:PARAMETER_BODY? kvs:KEY_VALUE_LIST? {
+	return newWith(pb, kvs)
+}
+
+PARAMETER_BODY <- '$' t:(IDENT) fn:(APPLY_FN?) WS LS? WS {
+	return newParameterBody(t, fn)
+}
+
+KEY_VALUE_LIST <- first:KEY_VALUE others:(WS LS WS KEY_VALUE)* {
+	return newKeyValueList(first, others)
+}
+
+KEY_VALUE <- k:(IDENT_WITH_DOT) WS '=' WS v:(VALUE) fn:(APPLY_FN?) {
+	return newKeyValue(k, v, fn)
+}
+
+APPLY_FN <- WS "->" WS? fn:(FUNCTION) {
+	return fn, nil
+}
+
+FUNCTION <- ("flatten" / "base64" / "json") {
+	return string(c.text), nil
+}
+
+VALUE <- v:(LIST / OBJECT / VARIABLE / PRIMITIVE) {
+	return newValue(v)
+}
+
+LIST <- l:(EMPTY_LIST / POPULATED_LIST) {
+	return l, nil
+}
+
+EMPTY_LIST <- '[' WS ']' {
+	return newEmptyList()
+}
+
+POPULATED_LIST <- '[' WS i:VALUE ii:(WS LS WS VALUE)* WS ']' {
+	return newList(i, ii)
+}
+
+OBJECT <- o:(EMPTY_OBJ / POPULATED_OBJ) {
+	return o, nil
+}
+
+EMPTY_OBJ <- '{' WS '}' {
+	return newEmptyObject()
+}
+
+POPULATED_OBJ <- '{' WS oe:(OBJ_ENTRY) oes:(WS ',' LS* WS OBJ_ENTRY)* WS '}' {
+	return newPopulatedObject(oe, oes)
+}
+
+OBJ_ENTRY <- k:(String / IDENT) WS ':' WS v:(VALUE) {
+	return newObjectEntry(k, v)
+}
+
+PRIMITIVE <- p:(String / Float / Integer / CHAIN) {
+	return newPrimitive(p)
+}
+
+CHAIN <- i:(CHAINED_ITEM) ii:('.' CHAINED_ITEM)* {
+	return newChain(i, ii)
+}
+
+CHAINED_ITEM <- ci:(VARIABLE / IDENT) {
+	return newChained(ci)
+}
+
+ONLY_RULE <- WS_MAND "only" WS_MAND f:(FILTER) fs:(WS LS WS FILTER)* {
+	return newOnly(f, fs)
+}
+
+FILTER <- f:(IDENT_WITH_DOT) fn:(MATCHES_FN?) {
+	return newFilter(f, fn)
+}
+
+MATCHES_FN <- WS "->" WS "matches" "(" arg:(String) ")" {
+	return newMatchesFunction(arg)
+}
+
+HEADERS <- WS_MAND "headers" WS_MAND h:(HEADER) hs:(WS LS WS HEADER)* {
+	return newHeaders(h, hs)
+}
+
+HEADER <- n:(IDENT) WS '=' WS v:(VARIABLE / String) {
+	return newHeader(n, v)
+}
+
+HIDDEN_RULE <- WS_MAND "hidden" {
+	return newHidden()
+}
+
+TIMEOUT <- WS_MAND "timeout" WS_MAND t:(VARIABLE / Integer) {
+	return newTimeout(t)
+}
+
+MAX_AGE <- WS_MAND "max-age" WS_MAND t:(VARIABLE / Integer) {
+	return newMaxAge(t)
+}
+
+S_MAX_AGE <- WS_MAND "s-max-age" WS_MAND t:(VARIABLE / Integer) {
+	return newSmaxAge(t)
+}
+
+FLAG_RULE <- WS_MAND "ignore-errors" {
+	return newIgnoreErrors()
+}
+
+VARIABLE <- '$' v:(IDENT) {
+	return newVariable(v)
+}
+
+IDENT <- [A-Za-z0-9_-]+ {
+	return string(c.text), nil
+}
+
+IDENT_WITH_DOT <- [A-Za-z0-9-_.]+ {
+	return string(c.text), nil
+}
+
+String <- '"' ( !'"' . )* '"' {
+	return strconv.Unquote(string(c.text))
+}
+
+Float <- ('+' / '-')? Natural '.' Natural {
+	return strconv.ParseFloat(string(c.text), 64)
+}
+
+Integer <- ('+' / '-')? Natural {
+	return strconv.ParseInt(string(c.text), 10, 64)
+}
+
+Natural ← '0' / NonZeroDecimalDigit DecimalDigit*
+
+DecimalDigit ← [0-9]
+NonZeroDecimalDigit ← [1-9]
+
+SPACE <- [ \t]
+NL "new-line" <- [\n\r]
+
+LS "line-separator" <- (NL / ',' / COMMENT)
+WS "whitespace" <- (SPACE / COMMENT)*
+WS_MAND "mandatory-whitespace" <- (SPACE / COMMENT / NL)+
+
+COMMENT <- "//" ( !'\n' . )* ('\n' / EOF)
+
+EOF <- !.

@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"reflect"
+	"regexp"
 	"testing"
 )
 
@@ -21,9 +22,13 @@ func Unmarshal(body string) interface{} {
 	return f
 }
 
+var regexComparer = cmp.Comparer(func(x, y *regexp.Regexp) bool {
+	return x.String() == y.String()
+})
+
 func Equal(t *testing.T, got, expected interface{}) {
-	if !cmp.Equal(got, expected) {
-		t.Fatalf("got = %+#v, want = %+#v\nMismatch (-want +got):\n%s", got, expected, cmp.Diff(expected, got))
+	if !cmp.Equal(got, expected, regexComparer) {
+		t.Fatalf("got = %+#v, want = %+#v\nMismatch (-want +got):\n%s", got, expected, cmp.Diff(expected, got, regexComparer))
 	}
 }
 
