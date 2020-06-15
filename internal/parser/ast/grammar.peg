@@ -8,7 +8,6 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
-	"strconv"
 	"strings"
 	"unicode"
 	"unicode/utf8"
@@ -19,12 +18,12 @@ QUERY <- WS LS* WS us:(USE)* firstBlock:BLOCK otherBlocks:((WS LS WS)+ BLOCK)* W
 	return newQuery(us, firstBlock, otherBlocks)
 }
 
-USE <- "use" WS_MAND r:(USE_RULE) WS v:(USE_VALUE) WS LS* WS {
+USE <- "use" WS_MAND r:(USE_ACTION) WS v:(USE_VALUE) WS LS* WS {
 	return newUse(r, v)
 }
 
-USE_RULE <- ("timeout" / "max-age" / "s-max-age") {
-	return string(c.text), nil
+USE_ACTION <- ("timeout" / "max-age" / "s-max-age") {
+	return stringify(c.text)
 }
 
 USE_VALUE <- v:(String / Integer) {
@@ -76,7 +75,7 @@ APPLY_FN <- WS "->" WS? fn:(FUNCTION) {
 }
 
 FUNCTION <- ("flatten" / "base64" / "json") {
-	return string(c.text), nil
+	return stringify(c.text)
 }
 
 VALUE <- v:(LIST / OBJECT / VARIABLE / PRIMITIVE) {
@@ -111,7 +110,7 @@ OBJ_ENTRY <- k:(String / IDENT) WS ':' WS v:(VALUE) {
 	return newObjectEntry(k, v)
 }
 
-PRIMITIVE <- p:(String / Float / Integer / CHAIN) {
+PRIMITIVE <- p:(Null / Boolean / String / Float / Integer / CHAIN) {
 	return newPrimitive(p)
 }
 
@@ -168,23 +167,31 @@ VARIABLE <- '$' v:(IDENT) {
 }
 
 IDENT <- [A-Za-z0-9_-]+ {
-	return string(c.text), nil
+	return stringify(c.text)
 }
 
 IDENT_WITH_DOT <- [A-Za-z0-9-_.]+ {
-	return string(c.text), nil
+	return stringify(c.text)
+}
+
+Null <- "null" {
+	return newNull()
+}
+
+Boolean <- ("true" / "false") {
+	return newBoolean(c.text)
 }
 
 String <- '"' ( !'"' . )* '"' {
-	return strconv.Unquote(string(c.text))
+	return newString(c.text)
 }
 
 Float <- ('+' / '-')? Natural '.' Natural {
-	return strconv.ParseFloat(string(c.text), 64)
+	return newFloat(c.text)
 }
 
 Integer <- ('+' / '-')? Natural {
-	return strconv.ParseInt(string(c.text), 10, 64)
+	return newInteger(c.text)
 }
 
 Natural ← '0' / NonZeroDecimalDigit DecimalDigit*

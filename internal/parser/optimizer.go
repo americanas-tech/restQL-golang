@@ -259,8 +259,16 @@ func getMap(entries []ast.ObjectEntry) map[string]interface{} {
 }
 
 func getPrimitive(primitive *ast.Primitive) interface{} {
+	if primitive.Null {
+		return nil
+	}
+
 	if primitive.Int != nil {
 		return *primitive.Int
+	}
+
+	if primitive.Boolean != nil {
+		return *primitive.Boolean
 	}
 
 	if primitive.String != nil {
