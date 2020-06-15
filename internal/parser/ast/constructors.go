@@ -3,6 +3,7 @@ package ast
 import (
 	"fmt"
 	"github.com/pkg/errors"
+	"strconv"
 	"strings"
 )
 
@@ -60,10 +61,9 @@ func newUse(rule, value interface{}) (Use, error) {
 }
 
 func newUseValue(value interface{}) (UseValue, error) {
-	vInt, ok := value.(int64)
+	vInt, ok := value.(int)
 	if ok {
-		i := int(vInt)
-		return UseValue{Int: &i}, nil
+		return UseValue{Int: &vInt}, nil
 	}
 
 	sInt, ok := value.(string)
@@ -382,15 +382,18 @@ func newPrimitive(value interface{}) (*Primitive, error) {
 	var p Primitive
 
 	switch value := value.(type) {
-	case int64:
-		i := int(value)
-		p.Int = &i
+	case int:
+		p.Int = &value
 	case string:
 		p.String = &value
 	case float64:
 		p.Float = &value
+	case bool:
+		p.Boolean = &value
 	case []Chained:
 		p.Chain = value
+	case null:
+		p.Null = true
 	}
 
 	return &p, nil
@@ -489,9 +492,8 @@ func newTimeout(value interface{}) (*TimeoutValue, error) {
 	case variable:
 		v := string(value)
 		return &TimeoutValue{Variable: &v}, nil
-	case int64:
-		v := int(value)
-		return &TimeoutValue{Int: &v}, nil
+	case int:
+		return &TimeoutValue{Int: &value}, nil
 	default:
 		return &TimeoutValue{}, fmt.Errorf("got an unknown type : %T", value)
 	}
@@ -502,9 +504,8 @@ func newMaxAge(value interface{}) (*MaxAgeValue, error) {
 	case variable:
 		v := string(value)
 		return &MaxAgeValue{Variable: &v}, nil
-	case int64:
-		v := int(value)
-		return &MaxAgeValue{Int: &v}, nil
+	case int:
+		return &MaxAgeValue{Int: &value}, nil
 	default:
 		return &MaxAgeValue{}, fmt.Errorf("got an unknown type : %T", value)
 	}
@@ -515,9 +516,8 @@ func newSmaxAge(value interface{}) (*SMaxAgeValue, error) {
 	case variable:
 		v := string(value)
 		return &SMaxAgeValue{Variable: &v}, nil
-	case int64:
-		v := int(value)
-		return &SMaxAgeValue{Int: &v}, nil
+	case int:
+		return &SMaxAgeValue{Int: &value}, nil
 	default:
 		return &SMaxAgeValue{}, fmt.Errorf("got an unknown type : %T", value)
 	}
@@ -527,6 +527,37 @@ type ignoreErrors bool
 
 func newIgnoreErrors() (ignoreErrors, error) {
 	return true, nil
+}
+
+func newBoolean(boolean []byte) (bool, error) {
+	return strconv.ParseBool(string(boolean))
+}
+
+func newString(str []byte) (string, error) {
+	return strconv.Unquote(string(str))
+}
+
+func newFloat(float []byte) (float64, error) {
+	return strconv.ParseFloat(string(float), 64)
+}
+
+func newInteger(integer []byte) (int, error) {
+	i, err := strconv.ParseInt(string(integer), 10, 64)
+	if err != nil {
+		return 0, err
+	}
+
+	return int(i), nil
+}
+
+type null struct{}
+
+func newNull() (null, error) {
+	return struct{}{}, nil
+}
+
+func stringify(s []byte) (string, error) {
+	return string(s), nil
 }
 
 func flatten(ii []interface{}) []interface{} {

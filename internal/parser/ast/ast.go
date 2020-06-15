@@ -91,10 +91,12 @@ type ObjectEntry struct {
 }
 
 type Primitive struct {
-	String *string
-	Int    *int
-	Float  *float64
-	Chain  []Chained
+	String  *string
+	Int     *int
+	Float   *float64
+	Boolean *bool
+	Chain   []Chained
+	Null    bool
 }
 
 type Chained struct {

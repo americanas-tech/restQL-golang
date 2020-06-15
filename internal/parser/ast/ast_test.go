@@ -19,6 +19,10 @@ func Float(f float64) *float64 {
 	return &f
 }
 
+func Boolean(b bool) *bool {
+	return &b
+}
+
 func TestAstGenerator(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -121,6 +125,40 @@ func TestAstGenerator(t *testing.T) {
 			ast.Query{Blocks: []ast.Block{{Method: ast.FromMethod, Resource: "hero", Qualifiers: []ast.Qualifier{{With: &ast.Parameters{
 				KeyValues: []ast.KeyValue{{Key: "id", Value: ast.Value{Variable: String("id")}}},
 			}}}}}},
+		},
+		{
+			"Get query with null query parameters",
+			`from hero with id = null`,
+			ast.Query{Blocks: []ast.Block{{Method: ast.FromMethod, Resource: "hero", Qualifiers: []ast.Qualifier{{With: &ast.Parameters{
+				KeyValues: []ast.KeyValue{{Key: "id", Value: ast.Value{Primitive: &ast.Primitive{Null: true}}}},
+			}}}}}},
+		},
+		{
+			"Get query with boolean query parameters",
+			`
+					from hero with marvel = true
+					from sidekick with marvel = false
+			`,
+			ast.Query{Blocks: []ast.Block{
+				{
+					Method:   ast.FromMethod,
+					Resource: "hero",
+					Qualifiers: []ast.Qualifier{{
+						With: &ast.Parameters{
+							KeyValues: []ast.KeyValue{{Key: "marvel", Value: ast.Value{Primitive: &ast.Primitive{Boolean: Boolean(true)}}}},
+						},
+					}},
+				},
+				{
+					Method:   ast.FromMethod,
+					Resource: "sidekick",
+					Qualifiers: []ast.Qualifier{{
+						With: &ast.Parameters{
+							KeyValues: []ast.KeyValue{{Key: "marvel", Value: ast.Value{Primitive: &ast.Primitive{Boolean: Boolean(false)}}}},
+						},
+					}},
+				},
+			}},
 		},
 		{
 			"Get query with list query parameters",
