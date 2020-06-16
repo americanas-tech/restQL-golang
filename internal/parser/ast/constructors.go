@@ -138,11 +138,6 @@ func newBlock(action, modifiers, with, filter, ignore interface{}) (Block, error
 	return block, nil
 }
 
-func newMethod(method interface{}) string {
-	m := method.([]byte)
-	return string(m)
-}
-
 type actionRule struct {
 	Method   string
 	Resource string
@@ -399,25 +394,50 @@ func newPrimitive(value interface{}) (*Primitive, error) {
 	return &p, nil
 }
 
-func newOnly(first, others interface{}) ([]Filter, error) {
-	ff := first.(Filter)
-	filters := []Filter{ff}
+func newOnly(filterList interface{}) ([]Filter, error) {
+	//ff := first.(Filter)
+	//filters := []Filter{ff}
+	//
+	//if others != nil {
+	//	fs := others.([]interface{})
+	//	if len(fs) > 0 {
+	//		fs = flatten(fs)
+	//
+	//		for _, f := range fs {
+	//			if f, ok := f.(Filter); ok {
+	//				filters = append(filters, f)
+	//			}
+	//		}
+	//
+	//	}
+	//}
 
-	if others != nil {
-		fs := others.([]interface{})
-		if len(fs) > 0 {
-			fs = flatten(fs)
-
-			for _, f := range fs {
-				if f, ok := f.(Filter); ok {
-					filters = append(filters, f)
-				}
-			}
-
-		}
-	}
+	filters := filterList.([]Filter)
 
 	return filters, nil
+}
+
+func newFilterList(filters interface{}) ([]Filter, error) {
+	//fmt.Printf("list : %s", cmp.Diff([]interface{}{}, filters))
+
+	fs := filters.([]interface{})
+	if len(fs) > 0 {
+		var result []Filter
+
+		fs = flatten(fs)
+		for _, f := range fs {
+			switch f := f.(type) {
+			case Filter:
+				result = append(result, f)
+			case []Filter:
+				result = append(result, f...)
+			}
+		}
+
+		return result, nil
+	}
+
+	return nil, errors.New("empty list of filters in only clause is not allowed")
 }
 
 func newFilter(identifier, matchArg interface{}) (Filter, error) {
@@ -524,6 +544,11 @@ func newSmaxAge(value interface{}) (*SMaxAgeValue, error) {
 }
 
 type ignoreErrors bool
+
+func newFlags(ignoreFlag, others interface{}) (ignoreErrors, error) {
+	i := ignoreFlag.(ignoreErrors)
+	return i, nil
+}
 
 func newIgnoreErrors() (ignoreErrors, error) {
 	return true, nil
