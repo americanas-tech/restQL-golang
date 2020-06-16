@@ -394,50 +394,25 @@ func newPrimitive(value interface{}) (*Primitive, error) {
 	return &p, nil
 }
 
-func newOnly(filterList interface{}) ([]Filter, error) {
-	//ff := first.(Filter)
-	//filters := []Filter{ff}
-	//
-	//if others != nil {
-	//	fs := others.([]interface{})
-	//	if len(fs) > 0 {
-	//		fs = flatten(fs)
-	//
-	//		for _, f := range fs {
-	//			if f, ok := f.(Filter); ok {
-	//				filters = append(filters, f)
-	//			}
-	//		}
-	//
-	//	}
-	//}
+func newOnly(first, others interface{}) ([]Filter, error) {
+	ff := first.(Filter)
+	filters := []Filter{ff}
 
-	filters := filterList.([]Filter)
+	if others != nil {
+		fs := others.([]interface{})
+		if len(fs) > 0 {
+			fs = flatten(fs)
 
-	return filters, nil
-}
-
-func newFilterList(filters interface{}) ([]Filter, error) {
-	//fmt.Printf("list : %s", cmp.Diff([]interface{}{}, filters))
-
-	fs := filters.([]interface{})
-	if len(fs) > 0 {
-		var result []Filter
-
-		fs = flatten(fs)
-		for _, f := range fs {
-			switch f := f.(type) {
-			case Filter:
-				result = append(result, f)
-			case []Filter:
-				result = append(result, f...)
+			for _, f := range fs {
+				if f, ok := f.(Filter); ok {
+					filters = append(filters, f)
+				}
 			}
-		}
 
-		return result, nil
+		}
 	}
 
-	return nil, errors.New("empty list of filters in only clause is not allowed")
+	return filters, nil
 }
 
 func newFilter(identifier, matchArg interface{}) (Filter, error) {

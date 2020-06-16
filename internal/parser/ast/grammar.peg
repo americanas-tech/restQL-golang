@@ -122,12 +122,8 @@ CHAINED_ITEM <- ci:(VARIABLE / IDENT) {
 	return newChained(ci)
 }
 
-ONLY_RULE <- WS_MAND "only" WS_MAND fs:(FILTER_LIST) {
-	return newOnly(fs)
-}
-
-FILTER_LIST <- fl:(FILTER WS !(FLAGS_RULE / WS LS WS BLOCK) LS WS FILTER_LIST / FILTER WS) {
-	return newFilterList(fl)
+ONLY_RULE <- WS_MAND "only" WS_MAND f:(FILTER) fs:(WS !(FLAGS_RULE / WS LS WS BLOCK) LS WS FILTER)* {
+	return newOnly(f, fs)
 }
 
 FILTER <- f:(IDENT_WITH_DOT) fn:(MATCHES_FN?) {
