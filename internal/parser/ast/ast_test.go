@@ -37,18 +37,18 @@ func TestAstGenerator(t *testing.T) {
 		{
 			"Simple from resource query with comment",
 			`// a comment
-				  from cart // some other comment`,
+						  from cart // some other comment`,
 			ast.Query{Blocks: []ast.Block{{Method: ast.FromMethod, Resource: "cart"}}},
 		},
 		{
 			"Simple from resource query with use modifier",
 			`
-					use max-age 600
-					use s-max-age 400
-					use timeout 8000
-
-					from cart
-			`,
+							use max-age 600
+							use s-max-age 400
+							use timeout 8000
+							
+							from cart
+					`,
 			ast.Query{
 				Use: []ast.Use{
 					{Key: ast.MaxAgeKeyword, Value: ast.UseValue{Int: Int(600)}},
@@ -61,9 +61,9 @@ func TestAstGenerator(t *testing.T) {
 		{
 			"Query with two from statements",
 			`
-					from cart
-					from hero
-			`,
+							from cart
+							from hero
+					`,
 			ast.Query{Blocks: []ast.Block{{Method: ast.FromMethod, Resource: "cart"}, {Method: ast.FromMethod, Resource: "hero"}}},
 		},
 		{
@@ -136,9 +136,9 @@ func TestAstGenerator(t *testing.T) {
 		{
 			"Get query with boolean query parameters",
 			`
-					from hero with marvel = true
-					from sidekick with marvel = false
-			`,
+							from hero with marvel = true
+							from sidekick with marvel = false
+					`,
 			ast.Query{Blocks: []ast.Block{
 				{
 					Method:   ast.FromMethod,
@@ -372,17 +372,17 @@ func TestAstGenerator(t *testing.T) {
 		{
 			"Get query with dynamic body parameter and multiple statements",
 			`from hero
-					with
-						$update
-						id = 1
-						from = "5m"
-						timeout = 100
-
-					from sidekick
-						with
-							id = 1
-							from = "5m"
-							timeout = 100`,
+							with
+								$update
+								id = 1
+								from = "5m"
+								timeout = 100
+		
+							from sidekick
+								with
+									id = 1
+									from = "5m"
+									timeout = 100`,
 			ast.Query{
 				Blocks: []ast.Block{
 					{
@@ -451,11 +451,11 @@ func TestAstGenerator(t *testing.T) {
 		{
 			"Multiple gets with select filter",
 			`from hero
-only
-	name
-	weapons
-
-from sidekick`,
+		only
+			name
+			weapons
+		
+		from sidekick`,
 			ast.Query{Blocks: []ast.Block{
 				{Method: ast.FromMethod, Resource: "hero", Qualifiers: []ast.Qualifier{{Only: []ast.Filter{{Field: []string{"name"}}, {Field: []string{"weapons"}}}}}},
 				{Method: ast.FromMethod, Resource: "sidekick"},
@@ -464,9 +464,9 @@ from sidekick`,
 		{
 			"Get query with select filters and match function",
 			`from hero
-						only
-								name -> matches("^Super")
-								weapons`,
+								only
+										name -> matches("^Super")
+										weapons`,
 			ast.Query{Blocks: []ast.Block{{
 				Method:   ast.FromMethod,
 				Resource: "hero",
@@ -519,9 +519,9 @@ from sidekick`,
 		{
 			"Simple from resource query with aggregation",
 			`
-					from hero 
-					from sidekick in hero.sidekick
-				`,
+							from hero
+							from sidekick in hero.sidekick
+						`,
 			ast.Query{Blocks: []ast.Block{
 				{Method: ast.FromMethod, Resource: "hero"},
 				{Method: ast.FromMethod, Resource: "sidekick", In: []string{"hero", "sidekick"}},
@@ -530,6 +530,7 @@ from sidekick`,
 		{
 			"Full query",
 			`from hero as h
+							timeout 200
 							headers
 								X-Trace-Id = "abcdef12345"
 							with
@@ -539,13 +540,13 @@ from sidekick`,
 								family = { "father": "Thomas Wayne" }
 								height = 10.5
 								var = $myvar
-							only
+							only 
 								from
 								name
-
 						 from sidekick as s in hero.sidekick
 							headers
 								X-Trace-Id = "abcdef12345"
+							timeout $timeout
 							with
 								id = 1
 								hero.name = "batman"
@@ -555,14 +556,21 @@ from sidekick`,
 								chain = hero.with.foo
 							hidden
 							ignore-errors
-				
-						from villain as v`,
+
+						from villain as v
+							only
+								ignore-errors
+								name
+							ignore-errors`,
 			ast.Query{Blocks: []ast.Block{
 				{
 					Method:   ast.FromMethod,
 					Resource: "hero",
 					Alias:    "h",
 					Qualifiers: []ast.Qualifier{
+						{
+							Timeout: &ast.TimeoutValue{Int: Int(200)},
+						},
 						{
 							Headers: []ast.HeaderItem{
 								{Key: "X-Trace-Id", Value: ast.HeaderValue{String: String("abcdef12345")}},
@@ -607,6 +615,9 @@ from sidekick`,
 							},
 						},
 						{
+							Timeout: &ast.TimeoutValue{Variable: String("timeout")},
+						},
+						{
 							With: &ast.Parameters{
 								KeyValues: []ast.KeyValue{
 									{Key: "id", Value: ast.Value{Primitive: &ast.Primitive{Int: Int(1)}}},
@@ -636,6 +647,15 @@ from sidekick`,
 					Method:   ast.FromMethod,
 					Resource: "villain",
 					Alias:    "v",
+					Qualifiers: []ast.Qualifier{
+						{
+							Only: []ast.Filter{
+								{Field: []string{"ignore-errors"}},
+								{Field: []string{"name"}},
+							},
+						},
+						{IgnoreErrors: true},
+					},
 				},
 			}},
 		},
@@ -645,10 +665,10 @@ from sidekick`,
 				from cart
 				with
 					id = $id
-				only 
+				only
 					total
 					opn
-
+		
 				from sku
 				with
 					sku = cart.lines.productSku

@@ -14,7 +14,7 @@ import (
 )
 }
 
-QUERY <- WS LS* WS us:(USE)* firstBlock:BLOCK otherBlocks:((WS LS WS)+ BLOCK)* WS LS* WS EOF {
+QUERY <- WS LS* WS us:(USE)* WS LS* WS firstBlock:BLOCK otherBlocks:((WS LS WS)+ BLOCK)* WS LS* WS EOF {
 	return newQuery(us, firstBlock, otherBlocks)
 }
 
@@ -30,7 +30,7 @@ USE_VALUE <- v:(String / Integer) {
 	return newUseValue(v)
 }
 
-BLOCK <- action:(ACTION_RULE) m:(MODIFIER_RULE?) w:(WITH_RULE?) f:(ONLY_RULE / HIDDEN_RULE)? fl:(FLAG_RULE?) WS {
+BLOCK <- action:(ACTION_RULE) m:(MODIFIER_RULE?) w:(WITH_RULE?) f:(HIDDEN_RULE / ONLY_RULE)? fl:(FLAGS_RULE?) WS {
 	return newBlock(action, m, w, f, fl)
 }
 
@@ -38,8 +38,8 @@ ACTION_RULE <- m:(METHOD) WS_MAND r:(IDENT) a:(ALIAS?) i:(IN?) {
 	return newActionRule(m, r, a, i)
 }
 
-METHOD <- m:("from" / "to" / "into"/ "update" / "delete") {
-	return newMethod(m), nil
+METHOD <- ("from" / "to" / "into"/ "update" / "delete") {
+	return stringify(c.text)
 }
 
 ALIAS <- WS_MAND "as" WS_MAND a:(IDENT) {
@@ -90,7 +90,7 @@ EMPTY_LIST <- '[' WS ']' {
 	return newEmptyList()
 }
 
-POPULATED_LIST <- '[' WS i:VALUE ii:(WS LS WS VALUE)* WS ']' {
+POPULATED_LIST <- '[' WS i:VALUE ii:(WS LS* WS VALUE)* WS ']' {
 	return newList(i, ii)
 }
 
@@ -122,8 +122,12 @@ CHAINED_ITEM <- ci:(VARIABLE / IDENT) {
 	return newChained(ci)
 }
 
-ONLY_RULE <- WS_MAND "only" WS_MAND f:(FILTER) fs:(WS LS WS FILTER)* {
-	return newOnly(f, fs)
+ONLY_RULE <- WS_MAND "only" WS_MAND fs:(FILTER_LIST) {
+	return newOnly(fs)
+}
+
+FILTER_LIST <- fl:(FILTER WS !(FLAGS_RULE / WS LS WS BLOCK) LS WS FILTER_LIST / FILTER WS) {
+	return newFilterList(fl)
 }
 
 FILTER <- f:(IDENT_WITH_DOT) fn:(MATCHES_FN?) {
@@ -158,7 +162,11 @@ S_MAX_AGE <- WS_MAND "s-max-age" WS_MAND t:(VARIABLE / Integer) {
 	return newSmaxAge(t)
 }
 
-FLAG_RULE <- WS_MAND "ignore-errors" {
+FLAGS_RULE <- WS_MAND i:IGNORE_FLAG is:(WS LS WS IGNORE_FLAG)* {
+	return newFlags(i, is)
+}
+
+IGNORE_FLAG <- "ignore-errors" {
 	return newIgnoreErrors()
 }
 
@@ -170,7 +178,7 @@ IDENT <- [A-Za-z0-9_-]+ {
 	return stringify(c.text)
 }
 
-IDENT_WITH_DOT <- [A-Za-z0-9-_.]+ {
+IDENT_WITH_DOT <- [a-zA-Z0-9-_.]+ {
 	return stringify(c.text)
 }
 
@@ -200,11 +208,10 @@ DecimalDigit ← [0-9]
 NonZeroDecimalDigit ← [1-9]
 
 SPACE <- [ \t]
-NL "new-line" <- [\n\r]
-
-LS "line-separator" <- (NL / ',' / COMMENT)
-WS "whitespace" <- (SPACE / COMMENT)*
 WS_MAND "mandatory-whitespace" <- (SPACE / COMMENT / NL)+
+WS "whitespace" <- (SPACE / COMMENT)*
+LS "line-separator" <- (NL / ',' / COMMENT)
+NL "new-line" <- '\n'
 
 COMMENT <- "//" ( !'\n' . )* ('\n' / EOF)
 
