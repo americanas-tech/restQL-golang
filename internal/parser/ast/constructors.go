@@ -428,6 +428,17 @@ func newFilter(identifier, matchArg interface{}) (Filter, error) {
 	return filter, nil
 }
 
+func newFilterValue(value interface{}) (string, error) {
+	switch value := value.(type) {
+	case string:
+		return value, nil
+	case []byte:
+		return stringify(value)
+	default:
+		return "", fmt.Errorf("got an unknown type : %T", value)
+	}
+}
+
 func newMatchesFunction(arg interface{}) (string, error) {
 	a := arg.(string)
 	return a, nil

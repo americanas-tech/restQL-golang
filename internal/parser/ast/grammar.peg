@@ -126,8 +126,12 @@ ONLY_RULE <- WS_MAND "only" WS_MAND f:(FILTER) fs:(WS !(FLAGS_RULE / WS LS WS BL
 	return newOnly(f, fs)
 }
 
-FILTER <- f:(IDENT_WITH_DOT) fn:(MATCHES_FN?) {
+FILTER <- f:(FILTER_VALUE) fn:(MATCHES_FN?) {
 	return newFilter(f, fn)
+}
+
+FILTER_VALUE <- fv:(IDENT_WITH_DOT / '*') {
+	return newFilterValue(fv)
 }
 
 MATCHES_FN <- WS "->" WS "matches" "(" arg:(String) ")" {

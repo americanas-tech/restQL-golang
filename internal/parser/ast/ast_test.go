@@ -440,8 +440,8 @@ func TestAstGenerator(t *testing.T) {
 		},
 		{
 			"Get query with select filter",
-			`from hero only name, to, weapons`,
-			ast.Query{Blocks: []ast.Block{{Method: ast.FromMethod, Resource: "hero", Qualifiers: []ast.Qualifier{{Only: []ast.Filter{{Field: []string{"name"}}, {Field: []string{"to"}}, {Field: []string{"weapons"}}}}}}}},
+			`from hero only *, name, to, weapons`,
+			ast.Query{Blocks: []ast.Block{{Method: ast.FromMethod, Resource: "hero", Qualifiers: []ast.Qualifier{{Only: []ast.Filter{{Field: []string{"*"}}, {Field: []string{"name"}}, {Field: []string{"to"}}, {Field: []string{"weapons"}}}}}}}},
 		},
 		{
 			"Get query with select filter delimited by new line",
