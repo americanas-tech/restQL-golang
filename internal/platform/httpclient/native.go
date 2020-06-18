@@ -48,6 +48,7 @@ func newNativeHttpClient(log *logger.Logger, pm plugins.Manager, cfg *conf.Confi
 		MaxIdleConns:        clientCfg.MaxIdleConns,
 		MaxIdleConnsPerHost: clientCfg.MaxIdleConnsPerHost,
 		MaxConnsPerHost:     clientCfg.MaxConnsPerHost,
+		IdleConnTimeout:     clientCfg.MaxIdleConnDuration,
 		DialContext: func(ctx context.Context, network, addr string) (conn net.Conn, err error) {
 			host, port, err := net.SplitHostPort(addr)
 			if err != nil {

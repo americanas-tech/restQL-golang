@@ -214,7 +214,11 @@ func (rw *requestWorker) Run() {
 				go func() {
 					response, err := rw.executor.DoStatement(rw.ctx, statement, rw.queryCtx)
 					if err != nil {
-						rw.errorCh <- err
+						select {
+						case rw.errorCh <- err:
+						case <-rw.ctx.Done():
+							break
+						}
 					}
 					writeResult(rw.ctx, rw.resultCh, result{ResourceIdentifier: resourceId, Response: response})
 				}()
@@ -222,7 +226,11 @@ func (rw *requestWorker) Run() {
 				go func() {
 					responses, err := rw.executor.DoMultiplexedStatement(rw.ctx, statement, rw.queryCtx)
 					if err != nil {
-						rw.errorCh <- err
+						select {
+						case rw.errorCh <- err:
+						case <-rw.ctx.Done():
+							break
+						}
 					}
 					writeResult(rw.ctx, rw.resultCh, result{ResourceIdentifier: resourceId, Response: responses})
 				}()

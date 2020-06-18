@@ -53,11 +53,6 @@ type Config struct {
 			MaxConnsPerHost     int           `yaml:"maxConnectionsPerHost"`
 			MaxIdleConns        int           `yaml:"maxIdleConnections"`
 			MaxIdleConnsPerHost int           `yaml:"maxIdleConnectionsPerHost"`
-
-			ReadTimeout         time.Duration `yaml:"readTimeout"`
-			WriteTimeout        time.Duration `yaml:"writeTimeout"`
-			MaxConnDuration     time.Duration `yaml:"maxConnectionDuration"`
-			MaxConnWaitTimeout  time.Duration `yaml:"maxConnectionWaitTimeout"`
 			MaxIdleConnDuration time.Duration `yaml:"maxIdleConnectionDuration"`
 		} `yaml:"client"`
 	} `yaml:"web"`
