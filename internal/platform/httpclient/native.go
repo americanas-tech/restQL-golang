@@ -23,6 +23,8 @@ import (
 	"github.com/rs/dnscache"
 )
 
+const poolSize = 20
+
 type nativeHttpClient struct {
 	clients       []*http.Client
 	log           *logger.Logger
@@ -41,9 +43,9 @@ func newNativeHttpClient(log *logger.Logger, pm plugins.Manager, cfg *conf.Confi
 		}
 	}()
 
-	clients := make([]*http.Client, 10)
+	clients := make([]*http.Client, poolSize)
 
-	for i := 0; i < 10; i++ {
+	for i := 0; i < poolSize; i++ {
 		dialer := net.Dialer{
 			Timeout: clientCfg.ConnTimeout,
 		}
@@ -146,7 +148,7 @@ func (nc *nativeHttpClient) Do(ctx context.Context, request domain.HttpRequest) 
 }
 
 func (nc *nativeHttpClient) peekClient() *http.Client {
-	n := rand.Intn(10)
+	n := rand.Intn(poolSize)
 	return nc.clients[n]
 }
 
