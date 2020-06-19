@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"math/rand"
 	"net"
 	"net/http"
 	"net/url"
@@ -23,7 +24,7 @@ import (
 )
 
 type nativeHttpClient struct {
-	client        *http.Client
+	clients       []*http.Client
 	log           *logger.Logger
 	pluginManager plugins.Manager
 }
@@ -40,41 +41,47 @@ func newNativeHttpClient(log *logger.Logger, pm plugins.Manager, cfg *conf.Confi
 		}
 	}()
 
-	dialer := net.Dialer{
-		Timeout: clientCfg.ConnTimeout,
-	}
+	clients := make([]*http.Client, 10)
 
-	t := &http.Transport{
-		MaxIdleConns:        clientCfg.MaxIdleConns,
-		MaxIdleConnsPerHost: clientCfg.MaxIdleConnsPerHost,
-		MaxConnsPerHost:     clientCfg.MaxConnsPerHost,
-		IdleConnTimeout:     clientCfg.MaxIdleConnDuration,
-		DialContext: func(ctx context.Context, network, addr string) (conn net.Conn, err error) {
-			host, port, err := net.SplitHostPort(addr)
-			if err != nil {
-				return nil, err
-			}
-			ips, err := r.LookupHost(ctx, host)
-			if err != nil {
-				return nil, err
-			}
-			for _, ip := range ips {
-				conn, err = dialer.DialContext(ctx, network, net.JoinHostPort(ip, port))
-				if err == nil {
-					break
+	for i := 0; i < 10; i++ {
+		dialer := net.Dialer{
+			Timeout: clientCfg.ConnTimeout,
+		}
+
+		t := &http.Transport{
+			MaxIdleConns:        clientCfg.MaxIdleConns,
+			MaxIdleConnsPerHost: clientCfg.MaxIdleConnsPerHost,
+			MaxConnsPerHost:     clientCfg.MaxConnsPerHost,
+			IdleConnTimeout:     clientCfg.MaxIdleConnDuration,
+			DialContext: func(ctx context.Context, network, addr string) (conn net.Conn, err error) {
+				host, port, err := net.SplitHostPort(addr)
+				if err != nil {
+					return nil, err
 				}
-			}
-			return
-		},
-	}
+				ips, err := r.LookupHost(ctx, host)
+				if err != nil {
+					return nil, err
+				}
+				for _, ip := range ips {
+					conn, err = dialer.DialContext(ctx, network, net.JoinHostPort(ip, port))
+					if err == nil {
+						break
+					}
+				}
+				return
+			},
+		}
 
-	c := &http.Client{
-		Timeout:   clientCfg.MaxRequestTimeout,
-		Transport: t,
+		c := &http.Client{
+			Timeout:   clientCfg.MaxRequestTimeout,
+			Transport: t,
+		}
+
+		clients[i] = c
 	}
 
 	return &nativeHttpClient{
-		client:        c,
+		clients:       clients,
 		log:           log,
 		pluginManager: pm,
 	}
@@ -94,8 +101,10 @@ func (nc *nativeHttpClient) Do(ctx context.Context, request domain.HttpRequest) 
 
 	nc.log.Debug("request created", "request-url", req.URL.String())
 
+	client := nc.peekClient()
+
 	start := time.Now()
-	response, err := nc.client.Do(req)
+	response, err := client.Do(req)
 	duration := time.Since(start)
 	if err != nil {
 		errorResponse := makeErrorResponse(requestUrl, duration, http.StatusRequestTimeout)
@@ -134,6 +143,11 @@ func (nc *nativeHttpClient) Do(ctx context.Context, request domain.HttpRequest) 
 	}
 
 	return httpResponse, nil
+}
+
+func (nc *nativeHttpClient) peekClient() *http.Client {
+	n := rand.Intn(10)
+	return nc.clients[n]
 }
 
 func (nc *nativeHttpClient) makeRequest(request domain.HttpRequest) (*http.Request, error) {
