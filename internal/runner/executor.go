@@ -14,13 +14,20 @@ type Executor struct {
 	log             restql.Logger
 	resourceTimeout time.Duration
 	forwardPrefix   string
+	sem             chan struct{}
 }
 
-func NewExecutor(log restql.Logger, client domain.HttpClient, resourceTimeout time.Duration, forwardPrefix string) Executor {
-	return Executor{client: client, log: log, resourceTimeout: resourceTimeout, forwardPrefix: forwardPrefix}
+func NewExecutor(log restql.Logger, client domain.HttpClient, resourceTimeout time.Duration, forwardPrefix string, concurrency int) Executor {
+	sem := make(chan struct{}, concurrency)
+	return Executor{client: client, log: log, resourceTimeout: resourceTimeout, forwardPrefix: forwardPrefix, sem: sem}
 }
 
 func (e Executor) DoStatement(ctx context.Context, statement domain.Statement, queryCtx domain.QueryContext) (domain.DoneResource, error) {
+	e.sem <- struct{}{}
+	defer func() {
+		<-e.sem
+	}()
+
 	drOptions := DoneResourceOptions{
 		IgnoreErrors: statement.IgnoreErrors,
 		MaxAge:       statement.CacheControl.MaxAge,

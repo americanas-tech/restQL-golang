@@ -48,6 +48,7 @@ type Config struct {
 		} `yaml:"server"`
 
 		Client struct {
+			Concurrency         int           `yaml:"concurrency"`
 			ConnTimeout         time.Duration `yaml:"connectionsTimeout"`
 			MaxRequestTimeout   time.Duration `yaml:"maxRequestTimeout"`
 			MaxConnsPerHost     int           `yaml:"maxConnectionsPerHost"`
