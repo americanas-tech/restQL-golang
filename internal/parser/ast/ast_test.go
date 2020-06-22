@@ -537,11 +537,11 @@ func TestAstGenerator(t *testing.T) {
 							headers
 								X-Trace-Id = "abcdef12345"
 							with
-								id = 1
-								name = "batman"
-								weapons = ["belt", "hands"]
-								family = { "father": "Thomas Wayne" }
-								height = 10.5
+								id = 1,   
+								name = "batman",    
+								weapons = ["belt", "hands"],   		
+								family = { "father": "Thomas Wayne" },		
+								height = 10.5,		
 								var = $myvar
 							only 
 								from

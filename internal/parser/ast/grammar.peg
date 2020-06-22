@@ -62,7 +62,7 @@ PARAMETER_BODY <- '$' t:(IDENT) fn:(APPLY_FN?) WS LS? WS {
 	return newParameterBody(t, fn)
 }
 
-KEY_VALUE_LIST <- first:KEY_VALUE others:(WS LS WS KEY_VALUE)* {
+KEY_VALUE_LIST <- first:KEY_VALUE others:(WS (LS (WS NL WS)* / LS) WS KEY_VALUE)* {
 	return newKeyValueList(first, others)
 }
 
