@@ -14,7 +14,7 @@ import (
 )
 }
 
-QUERY <- WS LS* WS us:(USE)* WS LS* WS firstBlock:BLOCK otherBlocks:((WS LS WS)+ BLOCK)* WS LS* WS EOF {
+QUERY <- (NL / SPACE / COMMENT)* us:(USE)* WS LS* WS firstBlock:BLOCK otherBlocks:((WS LS WS)+ BLOCK)* (NL / SPACE / COMMENT)* EOF {
 	return newQuery(us, firstBlock, otherBlocks)
 }
 
@@ -98,11 +98,11 @@ OBJECT <- o:(EMPTY_OBJ / POPULATED_OBJ) {
 	return o, nil
 }
 
-EMPTY_OBJ <- '{' WS '}' {
+EMPTY_OBJ <- '{' WS NL* WS '}' {
 	return newEmptyObject()
 }
 
-POPULATED_OBJ <- '{' WS oe:(OBJ_ENTRY) oes:(WS ',' LS* WS OBJ_ENTRY)* WS '}' {
+POPULATED_OBJ <- '{' WS NL* WS oe:(OBJ_ENTRY) oes:(WS ',' WS NL* WS OBJ_ENTRY)* WS NL* WS '}' {
 	return newPopulatedObject(oe, oes)
 }
 
