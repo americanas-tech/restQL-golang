@@ -14,7 +14,7 @@ import (
 )
 }
 
-QUERY <- (NL / SPACE / COMMENT)* us:(USE)* WS LS* WS firstBlock:BLOCK otherBlocks:((WS LS WS)+ BLOCK)* (NL / SPACE / COMMENT)* EOF {
+QUERY <- (NL / SPACE / COMMENT)* us:(USE)* WS (NL / COMMENT)* WS firstBlock:BLOCK otherBlocks:(BS BLOCK)* (NL / SPACE / COMMENT)* EOF {
 	return newQuery(us, firstBlock, otherBlocks)
 }
 
@@ -122,7 +122,7 @@ CHAINED_ITEM <- ci:(VARIABLE / IDENT) {
 	return newChained(ci)
 }
 
-ONLY_RULE <- WS_MAND "only" WS_MAND f:(FILTER) fs:(WS !(FLAGS_RULE / WS LS WS BLOCK) LS WS FILTER)* {
+ONLY_RULE <- WS_MAND "only" WS_MAND f:(FILTER) fs:(WS !(FLAGS_RULE / BS BLOCK) (LS (WS NL WS)* / LS) WS FILTER)* {
 	return newOnly(f, fs)
 }
 
@@ -211,6 +211,7 @@ SPACE <- [ \t]
 WS_MAND "mandatory-whitespace" <- (SPACE / COMMENT / NL)+
 WS "whitespace" <- (SPACE / COMMENT)*
 LS "line-separator" <- (NL / ',' / COMMENT)
+BS "block-separator" <- (WS (NL / COMMENT) WS)+
 NL "new-line" <- '\n'
 
 COMMENT <- "//" ( !'\n' . )* ('\n' / EOF)
