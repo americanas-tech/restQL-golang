@@ -64,18 +64,14 @@ type Parameters struct {
 }
 
 type ParameterBody struct {
-	Target  string
-	Flatten bool
-	Base64  bool
-	Json    bool
+	Target    string
+	Functions []string
 }
 
 type KeyValue struct {
-	Key     string
-	Value   Value
-	Flatten bool
-	Base64  bool
-	Json    bool
+	Key       string
+	Value     Value
+	Functions []string
 }
 
 type Value struct {

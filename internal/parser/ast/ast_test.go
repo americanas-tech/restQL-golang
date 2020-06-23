@@ -306,7 +306,7 @@ func TestAstGenerator(t *testing.T) {
 										{Primitive: &ast.Primitive{String: String("sword")}},
 										{Primitive: &ast.Primitive{String: String("shield")}},
 									}},
-									Flatten: true,
+									Functions: []string{"flatten"},
 								},
 							},
 						},
@@ -324,9 +324,9 @@ func TestAstGenerator(t *testing.T) {
 					With: &ast.Parameters{
 						KeyValues: []ast.KeyValue{
 							{
-								Key:     "id",
-								Value:   ast.Value{Primitive: &ast.Primitive{Chain: []ast.Chained{{PathItem: "done-resource"}, {PathItem: "id"}}}},
-								Flatten: true,
+								Key:       "id",
+								Value:     ast.Value{Primitive: &ast.Primitive{Chain: []ast.Chained{{PathItem: "done-resource"}, {PathItem: "id"}}}},
+								Functions: []string{"flatten"},
 							},
 						},
 					},
@@ -343,9 +343,9 @@ func TestAstGenerator(t *testing.T) {
 					With: &ast.Parameters{
 						KeyValues: []ast.KeyValue{
 							{
-								Key:    "id",
-								Value:  ast.Value{Primitive: &ast.Primitive{String: String("abcdefg12345")}},
-								Base64: true,
+								Key:       "id",
+								Value:     ast.Value{Primitive: &ast.Primitive{String: String("abcdefg12345")}},
+								Functions: []string{"base64"},
 							},
 						},
 					},
@@ -361,9 +361,26 @@ func TestAstGenerator(t *testing.T) {
 				Qualifiers: []ast.Qualifier{{
 					With: &ast.Parameters{
 						KeyValues: []ast.KeyValue{{
-							Key:   "id",
-							Value: ast.Value{Object: []ast.ObjectEntry{{Key: "id", Value: ast.Value{Primitive: &ast.Primitive{String: String("1")}}}}},
-							Json:  true,
+							Key:       "id",
+							Value:     ast.Value{Object: []ast.ObjectEntry{{Key: "id", Value: ast.Value{Primitive: &ast.Primitive{String: String("1")}}}}},
+							Functions: []string{"json"},
+						}},
+					},
+				}},
+			}}},
+		},
+		{
+			"Get query with parameter using multiple functions",
+			`from hero with id = [1,2,3] -> flatten -> json`,
+			ast.Query{Blocks: []ast.Block{{
+				Method:   ast.FromMethod,
+				Resource: "hero",
+				Qualifiers: []ast.Qualifier{{
+					With: &ast.Parameters{
+						KeyValues: []ast.KeyValue{{
+							Key:       "id",
+							Value:     ast.Value{List: []ast.Value{{Primitive: &ast.Primitive{Int: Int(1)}}, {Primitive: &ast.Primitive{Int: Int(2)}}, {Primitive: &ast.Primitive{Int: Int(3)}}}},
+							Functions: []string{"flatten", "json"},
 						}},
 					},
 				}},
@@ -430,7 +447,10 @@ func TestAstGenerator(t *testing.T) {
 						Qualifiers: []ast.Qualifier{
 							{
 								With: &ast.Parameters{
-									Body: &ast.ParameterBody{Target: "body", Flatten: true},
+									Body: &ast.ParameterBody{
+										Target:    "body",
+										Functions: []string{"flatten"},
+									},
 								},
 							},
 						},

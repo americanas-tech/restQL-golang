@@ -58,7 +58,7 @@ WITH_RULE <- WS_MAND "with" WS_MAND pb:PARAMETER_BODY? kvs:KEY_VALUE_LIST? {
 	return newWith(pb, kvs)
 }
 
-PARAMETER_BODY <- '$' t:(IDENT) fn:(APPLY_FN?) WS LS? WS {
+PARAMETER_BODY <- '$' t:(IDENT) fn:(APPLY_FN)* WS LS? WS {
 	return newParameterBody(t, fn)
 }
 
@@ -66,7 +66,7 @@ KEY_VALUE_LIST <- first:KEY_VALUE others:(WS (LS (WS NL WS)* / LS) WS KEY_VALUE)
 	return newKeyValueList(first, others)
 }
 
-KEY_VALUE <- k:(IDENT_WITH_DOT) WS '=' WS v:(VALUE) fn:(APPLY_FN?) {
+KEY_VALUE <- k:(IDENT_WITH_DOT) WS '=' WS v:(VALUE) fn:(APPLY_FN)* {
 	return newKeyValue(k, v, fn)
 }
 
