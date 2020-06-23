@@ -37,57 +37,59 @@ func applyEncoderToStatement(log restql.Logger, statement domain.Statement) doma
 func applyEncoderToBody(body interface{}) interface{} {
 	switch body := body.(type) {
 	case domain.Base64:
-		return applyBase64encoder(body)
+		return applyBase64encoder(applyEncoderToBody(body.Target))
 	case domain.Json:
-		return body.Target
+		return applyEncoderToBody(body.Target)
+	case domain.Flatten:
+		return domain.Flatten{Target: applyEncoderToBody(body.Target)}
 	default:
 		return body
 	}
 }
 
 func applyEncoderToValue(log restql.Logger, value interface{}) interface{} {
-	var result interface{}
 	switch value := value.(type) {
 	case domain.Base64:
-		result = applyBase64encoder(value)
+		if _, ok := value.Target.(domain.Chain); ok {
+			return value
+		}
+
+		return applyBase64encoder(applyEncoderToValue(log, value.Target))
 	case domain.Json:
-		result = applyJsonEncoder(log, value)
+		if _, ok := value.Target.(domain.Chain); ok {
+			return value
+		}
+
+		return applyJsonEncoder(log, applyEncoderToValue(log, value.Target))
+	case domain.Flatten:
+		return domain.Flatten{Target: applyEncoderToValue(log, value.Target)}
 	case map[string]interface{}:
 		m := make(map[string]interface{})
 		for k, v := range value {
 			m[k] = applyEncoderToValue(log, v)
 		}
-		result = m
+		return m
 	case []interface{}:
 		l := make([]interface{}, len(value))
 		for i, v := range value {
 			l[i] = applyEncoderToValue(log, v)
 		}
-		result = l
+		return l
 	default:
-		result = value
-	}
-	return result
-}
-
-func applyJsonEncoder(log restql.Logger, value domain.Json) interface{} {
-	if _, ok := value.Target.(domain.Chain); ok {
 		return value
 	}
+}
 
-	data, err := json.Marshal(value.Target)
+func applyJsonEncoder(log restql.Logger, value interface{}) interface{} {
+	data, err := json.Marshal(value)
 	if err != nil {
-		log.Debug("failed to apply json encoder", "target", value.Target)
+		log.Debug("failed to apply json encoder", "target", value)
 	}
 
 	return string(data)
 }
 
-func applyBase64encoder(value domain.Base64) interface{} {
-	if _, ok := value.Target.(domain.Chain); ok {
-		return value
-	}
-
-	data := []byte(fmt.Sprintf("%v", value.Target))
+func applyBase64encoder(value interface{}) interface{} {
+	data := []byte(fmt.Sprintf("%v", value))
 	return base64.StdEncoding.EncodeToString(data)
 }
