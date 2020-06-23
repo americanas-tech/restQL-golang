@@ -102,17 +102,7 @@ func makeParams(wq ast.Qualifier) domain.Params {
 	for _, item := range wq.With.KeyValues {
 		v := getValue(item.Value)
 
-		if item.Flatten {
-			v = domain.Flatten{v}
-		}
-
-		if item.Json {
-			v = domain.Json{v}
-		}
-
-		if item.Base64 {
-			v = domain.Base64{v}
-		}
+		v = applyFunctions(v, item.Functions)
 
 		values[item.Key] = v
 	}
@@ -129,21 +119,27 @@ func makeParams(wq ast.Qualifier) domain.Params {
 	var body interface{}
 	body = domain.Variable{Target: parameterBody.Target}
 
-	if parameterBody.Flatten {
-		body = domain.Flatten{Target: body}
-	}
-
-	if parameterBody.Json {
-		body = domain.Json{Target: body}
-	}
-
-	if parameterBody.Base64 {
-		body = domain.Base64{Target: body}
-	}
+	body = applyFunctions(body, parameterBody.Functions)
 
 	p.Body = body
 
 	return p
+}
+
+func applyFunctions(v interface{}, functions []string) interface{} {
+	for i := len(functions) - 1; i >= 0; i-- {
+		fn := functions[i]
+		switch fn {
+		case "flatten":
+			v = domain.Flatten{Target: v}
+		case "base64":
+			v = domain.Base64{Target: v}
+		case "json":
+			v = domain.Json{Target: v}
+		}
+	}
+
+	return v
 }
 
 func makeOnlyFilter(onlyQualifier ast.Qualifier) ([]interface{}, error) {

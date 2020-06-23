@@ -192,20 +192,13 @@ func newWith(parameterBody, keyValues interface{}) (*Parameters, error) {
 	return &p, nil
 }
 
-func newParameterBody(target, function interface{}) (*ParameterBody, error) {
+func newParameterBody(target, functions interface{}) (*ParameterBody, error) {
 	t := target.(string)
 	pb := ParameterBody{Target: t}
 
-	if function != nil {
-		fn := function.(string)
-		switch fn {
-		case Flatten:
-			pb.Flatten = true
-		case Base64:
-			pb.Base64 = true
-		case Json:
-			pb.Json = true
-		}
+	if functions != nil {
+		fns := newFunctionList(functions)
+		pb.Functions = fns
 	}
 
 	return &pb, nil
@@ -243,25 +236,30 @@ func castKeyValueList(kvs []interface{}) []KeyValue {
 	return result
 }
 
-func newKeyValue(key, value, function interface{}) (KeyValue, error) {
+func newKeyValue(key, value, functions interface{}) (KeyValue, error) {
 	k := key.(string)
 	v := value.(Value)
 
 	kv := KeyValue{Key: k, Value: v}
 
-	if function != nil {
-		fn := function.(string)
-		switch fn {
-		case Flatten:
-			kv.Flatten = true
-		case Base64:
-			kv.Base64 = true
-		case Json:
-			kv.Json = true
-		}
+	if functions != nil {
+		kv.Functions = newFunctionList(functions)
 	}
 
 	return kv, nil
+}
+
+func newFunctionList(functions interface{}) []string {
+	fns := functions.([]interface{})
+	var result []string
+
+	for _, fn := range fns {
+		if fn, ok := fn.(string); ok {
+			result = append(result, fn)
+		}
+	}
+
+	return result
 }
 
 func newValue(value interface{}) (Value, error) {
