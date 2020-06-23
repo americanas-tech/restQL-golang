@@ -78,6 +78,29 @@ func TestApplyEncoders(t *testing.T) {
 			}},
 		},
 		{
+			"should apply multiple encoders to with body",
+			domain.Resources{"hero": domain.Statement{
+				Method:   "from",
+				Resource: "hero",
+				With: domain.Params{
+					Body: domain.Flatten{Target: domain.Json{Target: map[string]interface{}{"id": "test"}}},
+					Values: map[string]interface{}{
+						"id": domain.Base64{Target: "12345abcdef"},
+					},
+				},
+			}},
+			domain.Resources{"hero": domain.Statement{
+				Method:   "from",
+				Resource: "hero",
+				With: domain.Params{
+					Body: domain.Flatten{Target: map[string]interface{}{"id": "test"}},
+					Values: map[string]interface{}{
+						"id": "MTIzNDVhYmNkZWY=",
+					},
+				},
+			}},
+		},
+		{
 			"should unwrap json encoder in with body",
 			domain.Resources{"hero": domain.Statement{
 				Method:   "from",
@@ -114,6 +137,40 @@ func TestApplyEncoders(t *testing.T) {
 				Resource: "hero",
 				With: domain.Params{Values: map[string]interface{}{
 					"weapons": `{"id":1,"name":"sword"}`,
+				}},
+			}},
+		},
+		{
+			"should apply nested encoders to with value",
+			domain.Resources{"hero": domain.Statement{
+				Method:   "from",
+				Resource: "hero",
+				With: domain.Params{Values: map[string]interface{}{
+					"weapons": domain.Base64{Target: domain.Json{Target: map[string]interface{}{"id": 1, "name": "sword"}}},
+				}},
+			}},
+			domain.Resources{"hero": domain.Statement{
+				Method:   "from",
+				Resource: "hero",
+				With: domain.Params{Values: map[string]interface{}{
+					"weapons": "eyJpZCI6MSwibmFtZSI6InN3b3JkIn0=",
+				}},
+			}},
+		},
+		{
+			"should apply encoder nested with flatten to with value",
+			domain.Resources{"hero": domain.Statement{
+				Method:   "from",
+				Resource: "hero",
+				With: domain.Params{Values: map[string]interface{}{
+					"weapons": domain.Flatten{Target: domain.Json{Target: []interface{}{"id", "name"}}},
+				}},
+			}},
+			domain.Resources{"hero": domain.Statement{
+				Method:   "from",
+				Resource: "hero",
+				With: domain.Params{Values: map[string]interface{}{
+					"weapons": domain.Flatten{Target: `["id","name"]`},
 				}},
 			}},
 		},
