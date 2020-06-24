@@ -118,8 +118,12 @@ CHAIN <- i:(CHAINED_ITEM) ii:('.' CHAINED_ITEM)* {
 	return newChain(i, ii)
 }
 
-CHAINED_ITEM <- ci:(VARIABLE / IDENT) {
+CHAINED_ITEM <- ci:(PATH_VARIABLE / IDENT) {
 	return newChained(ci)
+}
+
+PATH_VARIABLE <- '$' i:(IDENT) {
+	return newChainPathVariable(i)
 }
 
 ONLY_RULE <- WS_MAND "only" WS_MAND f:(FILTER) fs:(WS !(FLAGS_RULE / BS BLOCK) (LS (WS NL WS)* / LS) WS FILTER)* {
@@ -170,7 +174,7 @@ IGNORE_FLAG <- "ignore-errors" {
 	return newIgnoreErrors()
 }
 
-VARIABLE <- '$' v:(IDENT) {
+VARIABLE <- '$' v:(IDENT_WITH_DOT) {
 	return newVariable(v)
 }
 
