@@ -127,6 +127,13 @@ func TestAstGenerator(t *testing.T) {
 			}}}}}},
 		},
 		{
+			"Get query with variable (using dot) query parameters",
+			`from hero with id = $hero.id`,
+			ast.Query{Blocks: []ast.Block{{Method: ast.FromMethod, Resource: "hero", Qualifiers: []ast.Qualifier{{With: &ast.Parameters{
+				KeyValues: []ast.KeyValue{{Key: "id", Value: ast.Value{Variable: String("hero.id")}}},
+			}}}}}},
+		},
+		{
 			"Get query with null query parameters",
 			`from hero with id = null`,
 			ast.Query{Blocks: []ast.Block{{Method: ast.FromMethod, Resource: "hero", Qualifiers: []ast.Qualifier{{With: &ast.Parameters{

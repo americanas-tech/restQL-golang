@@ -366,6 +366,10 @@ func newChained(chainItem interface{}) (Chained, error) {
 
 type variable string
 
+func newChainPathVariable(pathVariable interface{}) (variable, error) {
+	return newVariable(pathVariable)
+}
+
 func newVariable(v interface{}) (variable, error) {
 	vStr := v.(string)
 	return variable(vStr), nil
