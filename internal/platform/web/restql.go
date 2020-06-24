@@ -1,6 +1,7 @@
 package web
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/b2wdigital/restQL-golang/internal/domain"
 	"github.com/b2wdigital/restQL-golang/internal/eval"
@@ -13,6 +14,8 @@ import (
 	"net/http"
 	"strconv"
 )
+
+var jsonContentType = "application/json"
 
 var (
 	ErrInvalidNamespace    = errors.New("invalid namespace")
@@ -54,11 +57,14 @@ func (r RestQl) RunAdHocQuery(ctx *fasthttp.RequestCtx) error {
 	tenant, err := r.makeTenant(ctx)
 	if err != nil {
 		r.log.Error("failed to build query options", err)
-		return RespondError(ctx, NewRequestError(err, http.StatusUnprocessableEntity))
+		return RespondError(ctx, NewRequestError(err, http.StatusBadRequest))
 	}
 	options := domain.QueryOptions{Tenant: tenant}
 
-	input := r.makeQueryInput(ctx)
+	input, err := r.makeQueryInput(ctx)
+	if err != nil {
+		return RespondError(ctx, NewRequestError(err, http.StatusBadRequest))
+	}
 	context := middleware.GetNativeContext(ctx)
 
 	queryTxt := string(ctx.PostBody())
@@ -90,10 +96,13 @@ func (r RestQl) RunSavedQuery(ctx *fasthttp.RequestCtx) error {
 	options, err := r.makeQueryOptions(ctx)
 	if err != nil {
 		r.log.Error("failed to build query options", err)
-		return RespondError(ctx, NewRequestError(err, http.StatusUnprocessableEntity))
+		return RespondError(ctx, NewRequestError(err, http.StatusBadRequest))
 	}
 
-	input := r.makeQueryInput(ctx)
+	input, err := r.makeQueryInput(ctx)
+	if err != nil {
+		return RespondError(ctx, NewRequestError(err, http.StatusBadRequest))
+	}
 	context := middleware.GetNativeContext(ctx)
 
 	result, err := r.evaluator.SavedQuery(context, options, input)
@@ -179,7 +188,7 @@ func (r RestQl) makeTenant(ctx *fasthttp.RequestCtx) (string, error) {
 	return tenant, nil
 }
 
-func (r RestQl) makeQueryInput(ctx *fasthttp.RequestCtx) domain.QueryInput {
+func (r RestQl) makeQueryInput(ctx *fasthttp.RequestCtx) (domain.QueryInput, error) {
 	params := make(map[string]interface{})
 	ctx.Request.URI().QueryArgs().VisitAll(func(keyByte, valueByte []byte) {
 		key := string(keyByte)
@@ -207,10 +216,27 @@ func (r RestQl) makeQueryInput(ctx *fasthttp.RequestCtx) domain.QueryInput {
 		headers[string(key)] = string(value)
 	})
 
-	return domain.QueryInput{
+	input := domain.QueryInput{
 		Params:  params,
 		Headers: headers,
 	}
+
+	contentType := string(ctx.Request.Header.ContentType())
+	if contentType == jsonContentType {
+		requestBody := ctx.Request.Body()
+		if len(requestBody) > 0 {
+			var b interface{}
+			err := json.Unmarshal(requestBody, &b)
+			if err != nil {
+				r.log.Error("failed to unmarshal request body", err)
+				return domain.QueryInput{}, err
+			}
+
+			input.Body = b
+		}
+	}
+
+	return input, nil
 }
 
 var paramNameToError = map[string]error{

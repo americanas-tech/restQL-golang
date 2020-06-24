@@ -64,6 +64,7 @@ func API(log *logger.Logger, cfg *conf.Config) (fasthttp.RequestHandler, error) 
 	app.Handle(http.MethodPost, "/validate-query", restQl.ValidateQuery)
 	app.Handle(http.MethodPost, "/run-query", restQl.RunAdHocQuery)
 	app.Handle(http.MethodGet, "/run-query/:namespace/:queryId/:revision", restQl.RunSavedQuery)
+	app.Handle(http.MethodPost, "/run-query/:namespace/:queryId/:revision", restQl.RunSavedQuery)
 
 	return app.RequestHandler(), nil
 }

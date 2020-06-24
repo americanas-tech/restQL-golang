@@ -15,3 +15,12 @@ mappings:
   people: http://localhost:65000/api/people/:id
   planets-prod: https://swapi.dev/api/planets/:id
   people-prod: https://swapi.dev/api//people/:id
+
+queries:
+  test:
+    variable-resolution:
+      - |
+        from planets
+          with
+            name = $name
+            residents = $residents -> flatten
