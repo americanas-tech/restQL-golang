@@ -56,6 +56,8 @@ func (e Evaluator) SavedQuery(ctx context.Context, queryOpts domain.QueryOptions
 		return nil, err
 	}
 
+	e.log.Debug("Saved query retrieved", "query", savedQuery)
+
 	if savedQuery.Deprecated {
 		return nil, domain.ErrQueryRevisionDeprecated{Revision: queryOpts.Revision}
 	}

@@ -31,32 +31,45 @@ func resolveWith(with domain.Params, input domain.QueryInput) domain.Params {
 	result := make(map[string]interface{})
 
 	for key, value := range with.Values {
-		switch value := value.(type) {
-		case domain.Variable:
-			resolvedValue, ok := getUniqueParamValue(value.Target, input)
-			if !ok {
-				continue
-			}
-
-			result[key] = resolvedValue
-		case domain.Chain:
-			result[key] = resolveChain(value, input)
-		case map[string]interface{}:
-			result[key] = resolveComplexWithParam(value, input)
-		case []interface{}:
-			result[key] = resolveListWithParam(value, input)
-		default:
-			result[key] = value
+		resolvedValue, ok := resolveWithParamValue(value, input)
+		if !ok {
+			continue
 		}
+
+		result[key] = resolvedValue
 	}
 
 	return domain.Params{Body: body, Values: result}
 }
 
+func resolveWithParamValue(value interface{}, input domain.QueryInput) (interface{}, bool) {
+	switch value := value.(type) {
+	case domain.Variable:
+		return getUniqueParamValue(value.Target, input)
+	case domain.Chain:
+		return resolveChain(value, input)
+	case domain.Flatten:
+		v, ok := resolveWithParamValue(value.Target, input)
+		return domain.Flatten{Target: v}, ok
+	case domain.Base64:
+		v, ok := resolveWithParamValue(value.Target, input)
+		return domain.Base64{Target: v}, ok
+	case domain.Json:
+		v, ok := resolveWithParamValue(value.Target, input)
+		return domain.Json{Target: v}, ok
+	case map[string]interface{}:
+		return resolveComplexWithParam(value, input), true
+	case []interface{}:
+		return resolveListWithParam(value, input), true
+	default:
+		return value, true
+	}
+}
+
 func resolveWithBody(body interface{}, input domain.QueryInput) interface{} {
 	switch body := body.(type) {
 	case domain.Variable:
-		p, found := input.Params[body.Target]
+		p, found := getUniqueParamValue(body.Target, input)
 		if !found {
 			return nil
 		}
@@ -145,14 +158,14 @@ func resolveComplexWithParam(object map[string]interface{}, input domain.QueryIn
 	return m
 }
 
-func resolveChain(chain domain.Chain, input domain.QueryInput) domain.Chain {
+func resolveChain(chain domain.Chain, input domain.QueryInput) (domain.Chain, bool) {
 	result := make(domain.Chain, len(chain))
 	for i, pathItem := range chain {
 		switch pathItem := pathItem.(type) {
 		case domain.Variable:
 			paramValue, ok := getUniqueParamValue(pathItem.Target, input)
 			if !ok {
-				continue
+				return nil, false
 			}
 
 			result[i] = paramValue
@@ -161,7 +174,7 @@ func resolveChain(chain domain.Chain, input domain.QueryInput) domain.Chain {
 		}
 	}
 
-	return result
+	return result, true
 }
 
 func resolveCacheControl(cacheControl domain.CacheControl, input domain.QueryInput) domain.CacheControl {
@@ -169,14 +182,14 @@ func resolveCacheControl(cacheControl domain.CacheControl, input domain.QueryInp
 
 	switch value := cacheControl.MaxAge.(type) {
 	case domain.Variable:
-		paramValue, ok := getUniqueParamValue(value.Target, input)
-		if !ok {
+		paramValue, found := getUniqueParamValue(value.Target, input)
+		if !found {
 			result.MaxAge = nil
 		}
 
-		maxAge, err := strconv.Atoi(paramValue)
-		if err != nil {
-			result.MaxAge = nil
+		maxAge, ok := castToInt(paramValue)
+		if !ok {
+			return domain.CacheControl{}
 		}
 
 		result.MaxAge = maxAge
@@ -186,17 +199,17 @@ func resolveCacheControl(cacheControl domain.CacheControl, input domain.QueryInp
 
 	switch value := cacheControl.SMaxAge.(type) {
 	case domain.Variable:
-		paramValue, ok := getUniqueParamValue(value.Target, input)
+		paramValue, found := getUniqueParamValue(value.Target, input)
+		if !found {
+			result.SMaxAge = nil
+		}
+
+		smaxAge, ok := castToInt(paramValue)
 		if !ok {
-			result.SMaxAge = nil
+			return domain.CacheControl{}
 		}
 
-		maxAge, err := strconv.Atoi(paramValue)
-		if err != nil {
-			result.SMaxAge = nil
-		}
-
-		result.SMaxAge = maxAge
+		result.SMaxAge = smaxAge
 	case int:
 		result.SMaxAge = value
 	}
@@ -231,13 +244,13 @@ func resolveHeaders(headers map[string]interface{}, input domain.QueryInput) map
 func resolveTimeout(timeout interface{}, input domain.QueryInput) interface{} {
 	switch timeout := timeout.(type) {
 	case domain.Variable:
-		paramValue, ok := getUniqueParamValue(timeout.Target, input)
-		if !ok {
+		paramValue, found := getUniqueParamValue(timeout.Target, input)
+		if !found {
 			return nil
 		}
 
-		result, err := strconv.Atoi(paramValue)
-		if err != nil {
+		result, ok := castToInt(paramValue)
+		if !ok {
 			return nil
 		}
 
@@ -249,19 +262,42 @@ func resolveTimeout(timeout interface{}, input domain.QueryInput) interface{} {
 	}
 }
 
-func getUniqueParamValue(name string, input domain.QueryInput) (string, bool) {
-	value, ok := input.Params[name]
-	if !ok {
-		headerValue, found := input.Headers[name]
-		return headerValue, found
-	}
-
+func castToInt(value interface{}) (int, bool) {
 	switch value := value.(type) {
-	case []string:
-		return value[0], true
 	case string:
+		result, err := strconv.Atoi(value)
+		if err != nil {
+			return 0, false
+		}
+		return result, true
+	case int:
 		return value, true
 	default:
-		return "", false
+		return 0, false
 	}
+}
+
+func getUniqueParamValue(name string, input domain.QueryInput) (interface{}, bool) {
+	bodyValue, ok := getUniqueParamValueFromBody(name, input.Body)
+	if ok {
+		return bodyValue, true
+	}
+
+	value, ok := input.Params[name]
+	if ok {
+		return value, true
+	}
+
+	headerValue, found := input.Headers[name]
+	return headerValue, found
+}
+
+func getUniqueParamValueFromBody(name string, body interface{}) (interface{}, bool) {
+	b, ok := body.(map[string]interface{})
+	if !ok {
+		return nil, false
+	}
+
+	value, found := b[name]
+	return value, found
 }

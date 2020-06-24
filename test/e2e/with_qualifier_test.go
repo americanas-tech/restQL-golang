@@ -101,8 +101,6 @@ from planets as third
 	mockServer.Mux().HandleFunc("/api/planets/", func(w http.ResponseWriter, r *http.Request) {
 		params := r.URL.Query()
 
-		fmt.Printf("params : %+#v\n", params)
-
 		var expectedTimestamp []string
 
 		test.Equal(t, params["timestamp"], expectedTimestamp)

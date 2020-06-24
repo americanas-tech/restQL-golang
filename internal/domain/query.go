@@ -76,6 +76,7 @@ type QueryOptions struct {
 
 type QueryInput struct {
 	Params  map[string]interface{}
+	Body    interface{}
 	Headers map[string]string
 }
 

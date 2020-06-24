@@ -61,16 +61,18 @@ func start() error {
 	}
 
 	api := &fasthttp.Server{
-		Name:         "api",
-		Handler:      apiHandler,
-		TCPKeepalive: false,
-		ReadTimeout:  serverCfg.ReadTimeout,
+		Name:                          "restql",
+		Handler:                       apiHandler,
+		TCPKeepalive:                  false,
+		ReadTimeout:                   serverCfg.ReadTimeout,
+		DisableHeaderNamesNormalizing: true,
 	}
 	health := &fasthttp.Server{
-		Name:         "health",
-		Handler:      web.Health(log, cfg),
-		TCPKeepalive: false,
-		ReadTimeout:  serverCfg.ReadTimeout,
+		Name:                          "health",
+		Handler:                       web.Health(log, cfg),
+		TCPKeepalive:                  false,
+		ReadTimeout:                   serverCfg.ReadTimeout,
+		DisableHeaderNamesNormalizing: true,
 	}
 
 	serverErrors := make(chan error, 1)
