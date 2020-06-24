@@ -349,7 +349,7 @@ func TestFlatteningWithStaticParameterOnFromStatement(t *testing.T) {
 	query := `
 from planets
 	with
-		residents = ["john", "janne"] -> flatten
+		residents = ["john", "janne"] -> no-multiplex
 `
 
 	planetResponse := `
@@ -414,7 +414,7 @@ from planets
 
 from people
 	with
-		name = planets.residents -> flatten
+		name = planets.residents -> no-multiplex
 `
 
 	planetResponse := `
@@ -523,7 +523,7 @@ from planets
 
 from people
 	with
-		profile = { name: planets.residents } -> flatten
+		profile = { name: planets.residents } -> no-multiplex
 `
 
 	planetResponse := `

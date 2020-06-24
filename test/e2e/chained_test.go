@@ -18,7 +18,7 @@ from planets
 	with 
 		name = "Yavin"
 		population = 1000
-		residents = ["john", "janne"] -> flatten
+		residents = ["john", "janne"] -> no-multiplex
 		rotation_period = 24.5
 		terrain = { "north": "jungle", "south": "rainforests" }
 
@@ -665,7 +665,7 @@ from planets as withLeader
 	with 
 		name = "Yavin"
 		population = 1000
-		residents = ["john", "janne"] -> flatten
+		residents = ["john", "janne"] -> no-multiplex
 		rotation_period = 24.5
 		terrain = { "north": "jungle", "south": "rainforests" }
 
@@ -782,7 +782,7 @@ from planets
 	with 
 		name = "Yavin"
 		population = 1000
-		residents = ["john", "janne"] -> flatten
+		residents = ["john", "janne"] -> no-multiplex
 		rotation_period = 24.5
 		terrain = { "north": "jungle", "south": "rainforests" }
 

@@ -43,12 +43,10 @@ func resolveParam(value interface{}, doneResources domain.Resources) interface{}
 	switch param := value.(type) {
 	case domain.Chain:
 		return resolveChainParam(param, doneResources)
-	case domain.Flatten:
-		return domain.Flatten{Target: resolveParam(param.Target, doneResources)}
-	case domain.Json:
-		return domain.Json{Target: resolveParam(param.Target, doneResources)}
-	case domain.Base64:
-		return domain.Base64{Target: resolveParam(param.Target, doneResources)}
+	case domain.Function:
+		return param.Map(func(target interface{}) interface{} {
+			return resolveParam(target, doneResources)
+		})
 	case []interface{}:
 		return resolveListParam(param, doneResources)
 	case map[string]interface{}:
@@ -197,12 +195,8 @@ func validateParam(value interface{}, resources domain.Resources) error {
 	switch param := value.(type) {
 	case domain.Chain:
 		return validateChainParam(param, resources)
-	case domain.Flatten:
-		return validateParam(param.Target, resources)
-	case domain.Json:
-		return validateParam(param.Target, resources)
-	case domain.Base64:
-		return validateParam(param.Target, resources)
+	case domain.Function:
+		return validateParam(param.Target(), resources)
 	case []interface{}:
 		return validateListParam(param, resources)
 	case map[string]interface{}:

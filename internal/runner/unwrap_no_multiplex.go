@@ -4,7 +4,7 @@ import (
 	"github.com/b2wdigital/restQL-golang/internal/domain"
 )
 
-func UnwrapFlatten(resources domain.Resources) domain.Resources {
+func UnwrapNoMultiplex(resources domain.Resources) domain.Resources {
 	for resourceId, resource := range resources {
 		resources[resourceId] = unwrapResource(resource)
 	}
@@ -45,8 +45,8 @@ func unwrapStatement(statement domain.Statement) domain.Statement {
 
 func unwrapBody(body interface{}) interface{} {
 	switch body := body.(type) {
-	case domain.Flatten:
-		return body.Target
+	case domain.NoMultiplex:
+		return body.Target()
 	default:
 		return body
 	}
@@ -54,8 +54,8 @@ func unwrapBody(body interface{}) interface{} {
 
 func unwrapValue(value interface{}) interface{} {
 	switch value := value.(type) {
-	case domain.Flatten:
-		return value.Target
+	case domain.NoMultiplex:
+		return value.Target()
 	case map[string]interface{}:
 		m := make(map[string]interface{})
 		for k, v := range value {

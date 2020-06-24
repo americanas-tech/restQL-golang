@@ -190,20 +190,20 @@ func TestResolveChainedValues(t *testing.T) {
 		},
 		{
 			"Returns a statement with flattened chained value",
-			domain.Resources{"resource-name": domain.Statement{Resource: "resource-name", With: domain.Params{Values: map[string]interface{}{"id": domain.Flatten{Target: []interface{}{"abcdef", "12345"}}}}}},
-			domain.Resources{"resource-name": domain.Statement{Resource: "resource-name", With: domain.Params{Values: map[string]interface{}{"id": domain.Flatten{Target: domain.Chain{"done-resource", "id"}}}}}},
+			domain.Resources{"resource-name": domain.Statement{Resource: "resource-name", With: domain.Params{Values: map[string]interface{}{"id": domain.NoMultiplex{Value: []interface{}{"abcdef", "12345"}}}}}},
+			domain.Resources{"resource-name": domain.Statement{Resource: "resource-name", With: domain.Params{Values: map[string]interface{}{"id": domain.NoMultiplex{Value: domain.Chain{"done-resource", "id"}}}}}},
 			domain.Resources{"done-resource": domain.DoneResource{Status: 200, ResponseBody: test.Unmarshal(`{"id": ["abcdef", "12345"]}`)}},
 		},
 		{
 			"Returns a statement with single flattened list value",
-			domain.Resources{"resource-name": domain.Statement{Resource: "resource-name", With: domain.Params{Values: map[string]interface{}{"id": domain.Flatten{Target: []interface{}{float64(1), float64(2)}}, "name": []interface{}{"a", "b"}}}}},
-			domain.Resources{"resource-name": domain.Statement{Resource: "resource-name", With: domain.Params{Values: map[string]interface{}{"id": domain.Flatten{Target: domain.Chain{"done-resource", "id"}}, "name": []interface{}{"a", "b"}}}}},
+			domain.Resources{"resource-name": domain.Statement{Resource: "resource-name", With: domain.Params{Values: map[string]interface{}{"id": domain.NoMultiplex{Value: []interface{}{float64(1), float64(2)}}, "name": []interface{}{"a", "b"}}}}},
+			domain.Resources{"resource-name": domain.Statement{Resource: "resource-name", With: domain.Params{Values: map[string]interface{}{"id": domain.NoMultiplex{Value: domain.Chain{"done-resource", "id"}}, "name": []interface{}{"a", "b"}}}}},
 			domain.Resources{"done-resource": domain.DoneResource{Status: 200, ResponseBody: test.Unmarshal(`{"id": [1,2]}`)}},
 		},
 		{
 			"Returns a statement with flattened chained param inside object",
-			domain.Resources{"resource-name": domain.Statement{Resource: "resource-name", With: domain.Params{Values: map[string]interface{}{"country": map[string]interface{}{"code": domain.Flatten{Target: "USA"}}}}}},
-			domain.Resources{"resource-name": domain.Statement{Resource: "resource-name", With: domain.Params{Values: map[string]interface{}{"country": map[string]interface{}{"code": domain.Flatten{Target: domain.Chain{"done-resource", "hero", "origin"}}}}}}},
+			domain.Resources{"resource-name": domain.Statement{Resource: "resource-name", With: domain.Params{Values: map[string]interface{}{"country": map[string]interface{}{"code": domain.NoMultiplex{Value: "USA"}}}}}},
+			domain.Resources{"resource-name": domain.Statement{Resource: "resource-name", With: domain.Params{Values: map[string]interface{}{"country": map[string]interface{}{"code": domain.NoMultiplex{Value: domain.Chain{"done-resource", "hero", "origin"}}}}}}},
 			domain.Resources{"done-resource": domain.DoneResource{Status: 200, ResponseBody: test.Unmarshal(`{"hero": {"origin": "USA"}}`)}},
 		},
 		{
@@ -298,7 +298,7 @@ func TestValidateChainedValues(t *testing.T) {
 					Method:   "from",
 					Resource: "resource-name",
 					With: domain.Params{Values: map[string]interface{}{
-						"id": domain.Flatten{Target: domain.Chain{"done-resource", "id"}},
+						"id": domain.NoMultiplex{Value: domain.Chain{"done-resource", "id"}},
 					}},
 				},
 			},
@@ -311,7 +311,7 @@ func TestValidateChainedValues(t *testing.T) {
 					Method:   "from",
 					Resource: "resource-name",
 					With: domain.Params{Values: map[string]interface{}{
-						"id": domain.Base64{Target: domain.Chain{"done-resource", "id"}},
+						"id": domain.Base64{Value: domain.Chain{"done-resource", "id"}},
 					}},
 				},
 			},
@@ -324,7 +324,7 @@ func TestValidateChainedValues(t *testing.T) {
 					Method:   "from",
 					Resource: "resource-name",
 					With: domain.Params{Values: map[string]interface{}{
-						"id": domain.Json{Target: domain.Chain{"done-resource", "id"}},
+						"id": domain.Json{Value: domain.Chain{"done-resource", "id"}},
 					}},
 				},
 			},

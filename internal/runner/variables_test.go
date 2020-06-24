@@ -43,7 +43,7 @@ func TestResolveVariables(t *testing.T) {
 						Values: map[string]interface{}{
 							"id":           "1234567890",
 							"name":         domain.Variable{"name"},
-							"affiliations": domain.Flatten{Target: domain.Variable{"affiliations"}},
+							"affiliations": domain.NoMultiplex{Value: domain.Variable{"affiliations"}},
 							"weapons":      domain.Chain{"done-resource", domain.Variable{"field"}, "id"},
 							"sidekick":     []interface{}{[]interface{}{domain.Variable{"sidekick"}}},
 							"places":       map[string]interface{}{"city": map[string]interface{}{"name": domain.Variable{"city"}}},
@@ -67,7 +67,7 @@ func TestResolveVariables(t *testing.T) {
 						Values: map[string]interface{}{
 							"id":           "1234567890",
 							"name":         "batman",
-							"affiliations": domain.Flatten{Target: []string{"justice league", "batman family"}},
+							"affiliations": domain.NoMultiplex{Value: []string{"justice league", "batman family"}},
 							"weapons":      domain.Chain{"done-resource", "weapon", "id"},
 							"sidekick":     []interface{}{[]interface{}{"robbin"}},
 							"places":       map[string]interface{}{"city": map[string]interface{}{"name": "Gotham"}},

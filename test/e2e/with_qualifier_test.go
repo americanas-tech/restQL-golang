@@ -19,7 +19,7 @@ from planets
 		planets = "5m"
 		name = "Yavin IV"
 		population = 1000
-		residents = ["john", "janne"] -> flatten
+		residents = ["john", "janne"] -> no-multiplex
 		rotation_period = 24.5
 		terrain = { "north": "jungle", "south": "rainforests" }
 		hot = true
@@ -31,7 +31,7 @@ from planets as second
 		planets = "5m"
 		name = "Yavin IV"
 		population = 1000
-		residents = ["john", "janne"] -> flatten
+		residents = ["john", "janne"] -> no-multiplex
 		rotation_period = 24.5
 		terrain = { "north": "jungle", "south": "rainforests" }
 		hot = true
@@ -43,7 +43,7 @@ from planets as third
 		planets = "5m"
 		name = "Yavin IV"
 		population = 1000
-		residents = ["john", "janne"] -> flatten
+		residents = ["john", "janne"] -> no-multiplex
 		rotation_period = 24.5
 		terrain = { "north": "jungle", "south": "rainforests" }
 		hot = true
@@ -144,7 +144,7 @@ to planets
 		population = 1000
 		rotation_period = 24.5
 		terrain = { "north": "jungle", "south": "rainforests" }
-		residents = ["john", "janne"] -> flatten
+		residents = ["john", "janne"] -> no-multiplex
 `
 
 	planetResponse := `
@@ -225,7 +225,7 @@ into planets
 		population = 1000
 		rotation_period = 24.5
 		terrain = { "north": "jungle", "south": "rainforests" }
-		residents = ["john", "janne"] -> flatten
+		residents = ["john", "janne"] -> no-multiplex
 `
 
 	planetResponse := `
@@ -306,7 +306,7 @@ update planets
 		population = 1000
 		rotation_period = 24.5
 		terrain = { "north": "jungle", "south": "rainforests" }
-		residents = ["john", "janne"] -> flatten
+		residents = ["john", "janne"] -> no-multiplex
 `
 
 	planetResponse := `
@@ -385,7 +385,7 @@ delete planets
 	with 
 		name = "Yavin IV"
 		population = 1000
-		residents = ["john", "janne"] -> flatten
+		residents = ["john", "janne"] -> no-multiplex
 		rotation_period = 24.5
 		terrain = { "north": "jungle", "south": "rainforests" }
 `
@@ -446,7 +446,7 @@ from planets
 	with 
 		name = $name
 		population = 1000
-		residents = ["john", "janne"] -> flatten
+		residents = ["john", "janne"] -> no-multiplex
 		rotation_period = 24.5
 		terrain = { "north": "jungle", "south": "rainforests" }
 `
@@ -521,7 +521,7 @@ from planets
 	with 
 		name = "Yavin"
 		population = 1000
-		residents = ["john", "janne"] -> flatten
+		residents = ["john", "janne"] -> no-multiplex
 		rotation_period = 24.5
 		terrain = { "north": "jungle", "south": "rainforests" }
 
@@ -635,7 +635,7 @@ from planets
 		name = "Yavin IV" -> base64
 		population = 1000
 		residents = ["john", "janne"] -> json
-		films = [1, 2, 3] -> flatten -> json
+		films = [1, 2, 3] -> no-multiplex -> json
 `
 
 	planetResponse := `
@@ -872,7 +872,7 @@ func TestWithQualifierFlattenedDynamicBodyOnToStatement(t *testing.T) {
 	query := `
 to planets
 	with
-		$planet -> flatten
+		$planet -> no-multiplex
 `
 
 	yavin := `

@@ -165,7 +165,12 @@ func buildPathInTree(path []interface{}, tree map[string]interface{}) {
 		field = f
 		leaf = nil
 	case domain.Match:
-		field = f.Target[0]
+		fields, ok := f.Target().([]string)
+		if !ok {
+			return
+		}
+
+		field = fields[0]
 		leaf = f
 	}
 
@@ -201,12 +206,15 @@ func parsePath(s interface{}) []interface{} {
 		}
 		return result
 	case domain.Match:
-		items := s.Target
+		items, ok := s.Target().([]string)
+		if !ok {
+			return nil
+		}
 
 		result := make([]interface{}, len(items))
 		for i, item := range items {
 			if i == len(items)-1 {
-				result[i] = domain.Match{Target: []string{item}, Arg: s.Arg}
+				result[i] = domain.Match{Value: []string{item}, Arg: s.Arg}
 			} else {
 				result[i] = item
 			}

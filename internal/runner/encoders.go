@@ -37,11 +37,13 @@ func applyEncoderToStatement(log restql.Logger, statement domain.Statement) doma
 func applyEncoderToBody(body interface{}) interface{} {
 	switch body := body.(type) {
 	case domain.Base64:
-		return applyBase64encoder(applyEncoderToBody(body.Target))
+		return applyBase64encoder(applyEncoderToBody(body.Target()))
 	case domain.Json:
-		return applyEncoderToBody(body.Target)
-	case domain.Flatten:
-		return domain.Flatten{Target: applyEncoderToBody(body.Target)}
+		return applyEncoderToBody(body.Target())
+	case domain.Function:
+		return body.Map(func(target interface{}) interface{} {
+			return applyEncoderToBody(target)
+		})
 	default:
 		return body
 	}
@@ -50,19 +52,23 @@ func applyEncoderToBody(body interface{}) interface{} {
 func applyEncoderToValue(log restql.Logger, value interface{}) interface{} {
 	switch value := value.(type) {
 	case domain.Base64:
-		if _, ok := value.Target.(domain.Chain); ok {
+		target := value.Target()
+		if _, ok := target.(domain.Chain); ok {
 			return value
 		}
 
-		return applyBase64encoder(applyEncoderToValue(log, value.Target))
+		return applyBase64encoder(applyEncoderToValue(log, value.Target()))
 	case domain.Json:
-		if _, ok := value.Target.(domain.Chain); ok {
+		target := value.Target()
+		if _, ok := target.(domain.Chain); ok {
 			return value
 		}
 
-		return applyJsonEncoder(log, applyEncoderToValue(log, value.Target))
-	case domain.Flatten:
-		return domain.Flatten{Target: applyEncoderToValue(log, value.Target)}
+		return applyJsonEncoder(log, applyEncoderToValue(log, value.Target()))
+	case domain.Function:
+		return value.Map(func(target interface{}) interface{} {
+			return applyEncoderToValue(log, target)
+		})
 	case map[string]interface{}:
 		m := make(map[string]interface{})
 		for k, v := range value {

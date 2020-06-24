@@ -180,11 +180,11 @@ func TestMultiplexStatements(t *testing.T) {
 		{
 			"should not make a new statement if list is flattened",
 			domain.Resources{
-				"hero":    domain.Statement{Method: "from", Resource: "hero", With: domain.Params{Values: map[string]interface{}{"id": domain.Flatten{[]interface{}{"12345", "67890"}}}}},
+				"hero":    domain.Statement{Method: "from", Resource: "hero", With: domain.Params{Values: map[string]interface{}{"id": domain.NoMultiplex{[]interface{}{"12345", "67890"}}}}},
 				"villain": domain.Statement{Method: "from", Resource: "villain", With: domain.Params{Values: map[string]interface{}{"id": []interface{}{"abcdef", "ghijkl"}}}},
 			},
 			domain.Resources{
-				"hero": domain.Statement{Method: "from", Resource: "hero", With: domain.Params{Values: map[string]interface{}{"id": domain.Flatten{[]interface{}{"12345", "67890"}}}}},
+				"hero": domain.Statement{Method: "from", Resource: "hero", With: domain.Params{Values: map[string]interface{}{"id": domain.NoMultiplex{[]interface{}{"12345", "67890"}}}}},
 				"villain": []interface{}{
 					domain.Statement{Method: "from", Resource: "villain", With: domain.Params{Values: map[string]interface{}{"id": "abcdef"}}},
 					domain.Statement{Method: "from", Resource: "villain", With: domain.Params{Values: map[string]interface{}{"id": "ghijkl"}}},

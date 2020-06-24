@@ -48,15 +48,10 @@ func resolveWithParamValue(value interface{}, input domain.QueryInput) (interfac
 		return getUniqueParamValue(value.Target, input)
 	case domain.Chain:
 		return resolveChain(value, input)
-	case domain.Flatten:
-		v, ok := resolveWithParamValue(value.Target, input)
-		return domain.Flatten{Target: v}, ok
-	case domain.Base64:
-		v, ok := resolveWithParamValue(value.Target, input)
-		return domain.Base64{Target: v}, ok
-	case domain.Json:
-		v, ok := resolveWithParamValue(value.Target, input)
-		return domain.Json{Target: v}, ok
+	case domain.Function:
+		v, ok := resolveWithParamValue(value.Target(), input)
+		fnValue := value.Map(func(target interface{}) interface{} { return v })
+		return fnValue, ok
 	case map[string]interface{}:
 		return resolveComplexWithParam(value, input), true
 	case []interface{}:
@@ -80,12 +75,10 @@ func resolveWithBody(body interface{}, input domain.QueryInput) interface{} {
 		}
 
 		return b
-	case domain.Flatten:
-		return domain.Flatten{Target: resolveWithBody(body.Target, input)}
-	case domain.Json:
-		return domain.Json{Target: resolveWithBody(body.Target, input)}
-	case domain.Base64:
-		return domain.Base64{Target: resolveWithBody(body.Target, input)}
+	case domain.Function:
+		return body.Map(func(target interface{}) interface{} {
+			return resolveWithBody(target, input)
+		})
 	default:
 		return nil
 	}

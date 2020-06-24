@@ -130,12 +130,12 @@ func applyFunctions(v interface{}, functions []string) interface{} {
 	for i := len(functions) - 1; i >= 0; i-- {
 		fn := functions[i]
 		switch fn {
-		case "flatten":
-			v = domain.Flatten{Target: v}
-		case "base64":
-			v = domain.Base64{Target: v}
-		case "json":
-			v = domain.Json{Target: v}
+		case ast.NoMultiplex:
+			v = domain.NoMultiplex{Value: v}
+		case ast.Base64:
+			v = domain.Base64{Value: v}
+		case ast.Json:
+			v = domain.Json{Value: v}
 		}
 	}
 
@@ -152,7 +152,7 @@ func makeOnlyFilter(onlyQualifier ast.Qualifier) ([]interface{}, error) {
 			if err != nil {
 				return nil, errors.Wrap(err, "matches function regex argument is invalid")
 			}
-			result[i] = domain.Match{Target: f.Field, Arg: regex}
+			result[i] = domain.Match{Value: f.Field, Arg: regex}
 		} else {
 			result[i] = f.Field
 		}

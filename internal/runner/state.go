@@ -66,12 +66,8 @@ func (s *State) isValueResolved(value interface{}) bool {
 
 		_, found := s.done[domain.ResourceId(resourceTarget)]
 		return found
-	case domain.Flatten:
-		return s.isValueResolved(value.Target)
-	case domain.Base64:
-		return s.isValueResolved(value.Target)
-	case domain.Json:
-		return s.isValueResolved(value.Target)
+	case domain.Function:
+		return s.isValueResolved(value.Target())
 	case map[string]interface{}:
 		for _, v := range value {
 			if !s.isValueResolved(v) {

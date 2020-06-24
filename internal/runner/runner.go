@@ -170,7 +170,7 @@ func (sw *stateWorker) Run() {
 		availableResources = ResolveChainedValues(availableResources, sw.state.Done())
 		availableResources = ApplyEncoders(availableResources, sw.log)
 		availableResources = MultiplexStatements(availableResources)
-		availableResources = UnwrapFlatten(availableResources)
+		availableResources = UnwrapNoMultiplex(availableResources)
 
 		for resourceId, stmt := range availableResources {
 			resourceId, stmt := resourceId, stmt
