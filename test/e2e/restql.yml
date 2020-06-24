@@ -23,4 +23,4 @@ queries:
         from planets
           with
             name = $name
-            residents = $residents -> flatten
+            residents = $residents -> no-multiplex

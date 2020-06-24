@@ -109,7 +109,7 @@ func getListParamsFromValues(values map[string]interface{}) []listParameters {
 
 func findListParameters(path []string, val interface{}) []listParameters {
 	switch val := val.(type) {
-	case domain.Flatten:
+	case domain.NoMultiplex:
 		return []listParameters{}
 	case map[string]interface{}:
 		var result []listParameters

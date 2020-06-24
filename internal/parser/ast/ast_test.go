@@ -299,7 +299,7 @@ func TestAstGenerator(t *testing.T) {
 		},
 		{
 			"Get query with list query parameters flattened",
-			`from hero with weapons = ["sword", "shield"] -> flatten`,
+			`from hero with weapons = ["sword", "shield"] -> no-multiplex`,
 			ast.Query{Blocks: []ast.Block{{
 				Method:   ast.FromMethod,
 				Resource: "hero",
@@ -313,7 +313,7 @@ func TestAstGenerator(t *testing.T) {
 										{Primitive: &ast.Primitive{String: String("sword")}},
 										{Primitive: &ast.Primitive{String: String("shield")}},
 									}},
-									Functions: []string{"flatten"},
+									Functions: []string{"no-multiplex"},
 								},
 							},
 						},
@@ -323,7 +323,7 @@ func TestAstGenerator(t *testing.T) {
 		},
 		{
 			"Get query with chained query parameters flattened",
-			`from hero with id = done-resource.id -> flatten`,
+			`from hero with id = done-resource.id -> no-multiplex`,
 			ast.Query{Blocks: []ast.Block{{
 				Method:   ast.FromMethod,
 				Resource: "hero",
@@ -333,7 +333,7 @@ func TestAstGenerator(t *testing.T) {
 							{
 								Key:       "id",
 								Value:     ast.Value{Primitive: &ast.Primitive{Chain: []ast.Chained{{PathItem: "done-resource"}, {PathItem: "id"}}}},
-								Functions: []string{"flatten"},
+								Functions: []string{"no-multiplex"},
 							},
 						},
 					},
@@ -378,7 +378,7 @@ func TestAstGenerator(t *testing.T) {
 		},
 		{
 			"Get query with parameter using multiple functions",
-			`from hero with id = [1,2,3] -> flatten -> json`,
+			`from hero with id = [1,2,3] -> no-multiplex -> json`,
 			ast.Query{Blocks: []ast.Block{{
 				Method:   ast.FromMethod,
 				Resource: "hero",
@@ -387,7 +387,7 @@ func TestAstGenerator(t *testing.T) {
 						KeyValues: []ast.KeyValue{{
 							Key:       "id",
 							Value:     ast.Value{List: []ast.Value{{Primitive: &ast.Primitive{Int: Int(1)}}, {Primitive: &ast.Primitive{Int: Int(2)}}, {Primitive: &ast.Primitive{Int: Int(3)}}}},
-							Functions: []string{"flatten", "json"},
+							Functions: []string{"no-multiplex", "json"},
 						}},
 					},
 				}},
@@ -445,7 +445,7 @@ func TestAstGenerator(t *testing.T) {
 		},
 		{
 			"Get query with dynamic body parameter flattened",
-			`from hero with $body -> flatten`,
+			`from hero with $body -> no-multiplex`,
 			ast.Query{
 				Blocks: []ast.Block{
 					{
@@ -456,7 +456,7 @@ func TestAstGenerator(t *testing.T) {
 								With: &ast.Parameters{
 									Body: &ast.ParameterBody{
 										Target:    "body",
-										Functions: []string{"flatten"},
+										Functions: []string{"no-multiplex"},
 									},
 								},
 							},

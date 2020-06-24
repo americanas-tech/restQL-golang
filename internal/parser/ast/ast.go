@@ -14,7 +14,7 @@ const (
 	MaxAgeKeyword       = "max-age"
 	SmaxAgeKeyword      = "s-max-age"
 	IgnoreErrorsKeyword = "ignore-errors"
-	Flatten             = "flatten"
+	NoMultiplex         = "no-multiplex"
 	Base64              = "base64"
 	Json                = "json"
 )
