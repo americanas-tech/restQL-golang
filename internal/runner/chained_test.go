@@ -208,9 +208,9 @@ func TestResolveChainedValues(t *testing.T) {
 		},
 		{
 			"Returns a statement with single done resource value resolved from header",
-			domain.Resources{"resource-name": domain.Statement{Resource: "resource-name", With: domain.Params{Values: map[string]interface{}{"id": "abcdef"}}}},
-			domain.Resources{"resource-name": domain.Statement{Resource: "resource-name", With: domain.Params{Values: map[string]interface{}{"id": domain.Chain{"done-resource", "location"}}}}},
-			domain.Resources{"done-resource": domain.DoneResource{Status: 200, ResponseBody: test.Unmarshal(`{"id": "abcdef"}`), ResponseHeaders: map[string]string{"location": "abcdef"}}},
+			domain.Resources{"resource-name": domain.Statement{Resource: "resource-name", With: domain.Params{Values: map[string]interface{}{"id": "abcdef", "xtid": "12345678"}}}},
+			domain.Resources{"resource-name": domain.Statement{Resource: "resource-name", With: domain.Params{Values: map[string]interface{}{"id": domain.Chain{"done-resource", "location"}, "xtid": domain.Chain{"done-resource", "x-tid"}}}}},
+			domain.Resources{"done-resource": domain.DoneResource{Status: 200, ResponseBody: test.Unmarshal(`{"id": "abcdef"}`), ResponseHeaders: map[string]string{"location": "abcdef", "X-TID": "12345678"}}},
 		},
 		{
 			"Returns a multiplexed statement with single done resource value",

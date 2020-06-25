@@ -116,7 +116,7 @@ func resolveWithSingleRequest(path []string, done domain.DoneResource) interface
 		return valueFromBody
 	}
 
-	valueFromHeader, found := done.ResponseHeaders[path[0]]
+	valueFromHeader, found := getValueFromHeader(path[0], done.ResponseHeaders)
 	if found {
 		return valueFromHeader
 	}
@@ -133,6 +133,10 @@ func toPath(chain domain.Chain) []string {
 }
 
 func getValueFromBody(pathToValue []string, b domain.Body) (interface{}, bool) {
+	if b == nil {
+		return nil, false
+	}
+
 	if len(pathToValue) == 0 {
 		return b, true
 	}
@@ -154,6 +158,17 @@ func getValueFromBody(pathToValue []string, b domain.Body) (interface{}, bool) {
 	default:
 		return body, true
 	}
+}
+
+func getValueFromHeader(name string, headers map[string]string) (string, bool) {
+	name = strings.ToLower(name)
+	for k, v := range headers {
+		if strings.ToLower(k) == name {
+			return v, true
+		}
+	}
+
+	return "", false
 }
 
 func ValidateChainedValues(resources domain.Resources) error {
