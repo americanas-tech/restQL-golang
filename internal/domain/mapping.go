@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-var pathParamRegex = regexp.MustCompile("/:(.+)")
+var pathParamRegex = regexp.MustCompile(":([^/]+)/?")
 var urlRegex = regexp.MustCompile("(https?)://([-a-zA-Z0-9@:%._+~#=]+)([-a-zA-Z0-9@:%_+.~#?&/=]*)")
 
 type Mapping struct {
