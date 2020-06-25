@@ -195,7 +195,12 @@ func (nc *nativeHttpClient) makeBody(request domain.HttpRequest) (io.ReadCloser,
 
 func (nc *nativeHttpClient) unmarshalBody(response *http.Response) (interface{}, error) {
 	var responseBody interface{}
-	err := json.NewDecoder(response.Body).Decode(&responseBody)
+	decoder := json.NewDecoder(response.Body)
+	if !decoder.More() {
+		return nil, nil
+	}
+
+	err := decoder.Decode(&responseBody)
 	if err != nil {
 		nc.log.Error("failed to unmarshal response body", err)
 
