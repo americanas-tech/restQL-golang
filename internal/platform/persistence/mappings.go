@@ -59,7 +59,7 @@ func getMappingsFromEnv(log *logger.Logger, envSource domain.EnvSource) map[stri
 
 	for key, value := range env {
 		matches := envMappingRegex.FindAllStringSubmatch(key, -1)
-		if len(matches) > 0 {
+		if len(matches) > 0 && len(matches[0]) >= 2 {
 			resource := strings.ToLower(matches[0][1])
 			mapping, err := domain.NewMapping(resource, value)
 			if err != nil {

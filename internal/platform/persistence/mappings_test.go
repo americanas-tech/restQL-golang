@@ -16,6 +16,7 @@ func TestMappingsReader_Env(t *testing.T) {
 		getAll: map[string]string{
 			"RESTQL_MAPPING_HERO":     "http://hero.api/",
 			"RESTQL_MAPPING_SIDEKICK": "http://sidekick.api/",
+			"RESTQL_MAPPING_":         "http://failed.api/",
 			"TEST_VAR":                "foo",
 		},
 	}
