@@ -40,7 +40,7 @@ func (qr QueryReader) Get(ctx context.Context, namespace, id string, revision in
 	localQuery, err := qr.getQueryFromLocal(namespace, id, revision)
 	if err != nil {
 		qr.log.Info("query not found in local", "namespace", namespace, "name", id, "revision", revision)
-		return domain.SavedQuery{}, err
+		return domain.SavedQuery{}, eval.NotFoundError{Err: errors.Errorf("query not found: %s/%s/%d", namespace, id, revision)}
 	}
 
 	return domain.SavedQuery{Text: localQuery}, nil
