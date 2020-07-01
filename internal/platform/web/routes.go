@@ -41,8 +41,8 @@ func API(log *logger.Logger, cfg *conf.Config) (fasthttp.RequestHandler, error) 
 
 	app := NewApp(log, cfg, pluginManager)
 	client := httpclient.New(log, pluginManager, cfg)
-	executor := runner.NewExecutor(log, client, cfg.QueryResourceTimeout, cfg.ForwardPrefix)
-	r := runner.NewRunner(log, executor, cfg.GlobalQueryTimeout)
+	executor := runner.NewExecutor(log, client, cfg.Http.QueryResourceTimeout, cfg.Http.ForwardPrefix)
+	r := runner.NewRunner(log, executor, cfg.Http.GlobalQueryTimeout)
 
 	mr := persistence.NewMappingReader(log, cfg.Env, cfg.Mappings, db)
 	tenantCache := cache.New(log, cfg.Cache.Mappings.MaxSize,

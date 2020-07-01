@@ -33,7 +33,7 @@ func Apply(h fasthttp.RequestHandler, mws []Middleware, log *logger.Logger) fast
 func FetchEnabled(log *logger.Logger, cfg *conf.Config, pm plugins.Manager) []Middleware {
 	mws := []Middleware{NewRecover(log), NewNativeContext(), NewTransaction(pm)}
 
-	mwCfg := cfg.Web.Server.Middlewares
+	mwCfg := cfg.Http.Server.Middlewares
 	if mwCfg.Timeout != nil {
 		mws = append(mws, NewTimeout(mwCfg.Timeout.Duration, log))
 	}

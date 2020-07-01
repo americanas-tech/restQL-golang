@@ -32,7 +32,7 @@ type nativeHttpClient struct {
 }
 
 func newNativeHttpClient(log *logger.Logger, pm plugins.Manager, cfg *conf.Config) *nativeHttpClient {
-	clientCfg := cfg.Web.Client
+	clientCfg := cfg.Http.Client
 
 	r := &dnscache.Resolver{}
 	go func() {

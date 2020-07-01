@@ -36,7 +36,7 @@ func start() error {
 		return err
 	}
 
-	if cfg.Web.Server.EnableFullPprof {
+	if cfg.Http.Server.EnableFullPprof {
 		runtime.SetMutexProfileFraction(1)
 		runtime.SetBlockProfileRate(1)
 	}
@@ -54,7 +54,7 @@ func start() error {
 	shutdownSignal := make(chan os.Signal, 1)
 	signal.Notify(shutdownSignal, os.Interrupt, syscall.SIGTERM)
 
-	serverCfg := cfg.Web.Server
+	serverCfg := cfg.Http.Server
 	apiHandler, err := web.API(log, cfg)
 	if err != nil {
 		return err

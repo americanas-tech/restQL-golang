@@ -30,7 +30,11 @@ type corsConf struct {
 }
 
 type Config struct {
-	Web struct {
+	Http struct {
+		ForwardPrefix        string        `yaml:"forwardPrefix" env:"RESTQL_FORWARD_PREFIX"`
+		GlobalQueryTimeout   time.Duration `env:"RESTQL_QUERY_GLOBAL_TIMEOUT" envDefault:"30s"`
+		QueryResourceTimeout time.Duration `env:"RESTQL_QUERY_RESOURCE_TIMEOUT" envDefault:"5s"`
+
 		Server struct {
 			ApiAddr                 string        `env:"RESTQL_PORT,required"`
 			ApiHealthAddr           string        `env:"RESTQL_HEALTH_PORT,required"`
@@ -55,7 +59,7 @@ type Config struct {
 			MaxIdleConnsPerHost int           `yaml:"maxIdleConnectionsPerHost"`
 			MaxIdleConnDuration time.Duration `yaml:"maxIdleConnectionDuration"`
 		} `yaml:"client"`
-	} `yaml:"web"`
+	} `yaml:"http"`
 
 	Logging struct {
 		Enable    bool   `yaml:"enable"`
@@ -93,10 +97,7 @@ type Config struct {
 		Location string `yaml:"location" env:"RESTQL_PLUGINS_LOCATION"`
 	} `yaml:"plugins"`
 
-	Tenant               string        `env:"RESTQL_TENANT"`
-	ForwardPrefix        string        `yaml:"forwardPrefix" env:"RESTQL_FORWARD_PREFIX"`
-	GlobalQueryTimeout   time.Duration `env:"RESTQL_QUERY_GLOBAL_TIMEOUT" envDefault:"30s"`
-	QueryResourceTimeout time.Duration `env:"RESTQL_QUERY_RESOURCE_TIMEOUT" envDefault:"5s"`
+	Tenant string `env:"RESTQL_TENANT"`
 
 	Mappings map[string]string `yaml:"mappings"`
 
