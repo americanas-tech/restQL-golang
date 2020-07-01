@@ -23,10 +23,10 @@ type timeoutConf struct {
 }
 
 type corsConf struct {
-	AllowOrigin   string `yaml:"allow_origin" env:"RESTQL_CORS_ALLOW_ORIGIN"`
-	AllowMethods  string `yaml:"allow_methods" env:"RESTQL_CORS_ALLOW_METHODS"`
-	AllowHeaders  string `yaml:"allow_headers" env:"RESTQL_CORS_ALLOW_HEADERS"`
-	ExposeHeaders string `yaml:"expose_headers" env:"RESTQL_CORS_EXPOSE_HEADERS"`
+	AllowOrigin   string `yaml:"allowOrigin" env:"RESTQL_CORS_ALLOW_ORIGIN"`
+	AllowMethods  string `yaml:"allowMethods" env:"RESTQL_CORS_ALLOW_METHODS"`
+	AllowHeaders  string `yaml:"allowHeaders" env:"RESTQL_CORS_ALLOW_HEADERS"`
+	ExposeHeaders string `yaml:"exposeHeaders" env:"RESTQL_CORS_EXPOSE_HEADERS"`
 }
 
 type Config struct {
@@ -48,7 +48,7 @@ type Config struct {
 		} `yaml:"server"`
 
 		Client struct {
-			ConnTimeout         time.Duration `yaml:"connectionsTimeout"`
+			ConnTimeout         time.Duration `yaml:"connectionTimeout"`
 			MaxRequestTimeout   time.Duration `yaml:"maxRequestTimeout"`
 			MaxConnsPerHost     int           `yaml:"maxConnectionsPerHost"`
 			MaxIdleConns        int           `yaml:"maxIdleConnections"`
