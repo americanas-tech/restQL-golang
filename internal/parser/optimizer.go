@@ -175,6 +175,10 @@ func makeHeaders(qualifier ast.Qualifier) map[string]interface{} {
 		if v.Variable != nil {
 			result[k] = domain.Variable{Target: *v.Variable}
 		}
+
+		if v.Chain != nil {
+			result[k] = makeChain(v.Chain)
+		}
 	}
 
 	return result
@@ -276,15 +280,15 @@ func getPrimitive(primitive *ast.Primitive) interface{} {
 	}
 
 	if primitive.Chain != nil {
-		return makeChain(primitive)
+		return makeChain(primitive.Chain)
 	}
 
 	return nil
 }
 
-func makeChain(primitive *ast.Primitive) domain.Chain {
-	result := make(domain.Chain, len(primitive.Chain))
-	for i, chained := range primitive.Chain {
+func makeChain(chainedValue []ast.Chained) domain.Chain {
+	result := make(domain.Chain, len(chainedValue))
+	for i, chained := range chainedValue {
 		if chained.PathVariable != "" {
 			result[i] = domain.Variable{Target: chained.PathVariable}
 		}

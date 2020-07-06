@@ -53,6 +53,12 @@ func (s *State) canRequest(statement domain.Statement) bool {
 		}
 	}
 
+	for _, v := range statement.Headers {
+		if !s.isValueResolved(v) {
+			return false
+		}
+	}
+
 	return true
 }
 

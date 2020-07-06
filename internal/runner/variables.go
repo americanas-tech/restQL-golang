@@ -151,25 +151,6 @@ func resolveComplexWithParam(object map[string]interface{}, input domain.QueryIn
 	return m
 }
 
-func resolveChain(chain domain.Chain, input domain.QueryInput) (domain.Chain, bool) {
-	result := make(domain.Chain, len(chain))
-	for i, pathItem := range chain {
-		switch pathItem := pathItem.(type) {
-		case domain.Variable:
-			paramValue, ok := getUniqueParamValue(pathItem.Target, input)
-			if !ok {
-				return nil, false
-			}
-
-			result[i] = paramValue
-		default:
-			result[i] = pathItem
-		}
-	}
-
-	return result, true
-}
-
 func resolveCacheControl(cacheControl domain.CacheControl, input domain.QueryInput) domain.CacheControl {
 	var result domain.CacheControl
 
@@ -226,6 +207,13 @@ func resolveHeaders(headers map[string]interface{}, input domain.QueryInput) map
 			}
 
 			result[key] = paramValue
+		case domain.Chain:
+			rc, ok := resolveChain(value, input)
+			if !ok {
+				continue
+			}
+
+			result[key] = rc
 		case string:
 			result[key] = value
 		}
@@ -253,6 +241,25 @@ func resolveTimeout(timeout interface{}, input domain.QueryInput) interface{} {
 	default:
 		return nil
 	}
+}
+
+func resolveChain(chain domain.Chain, input domain.QueryInput) (domain.Chain, bool) {
+	result := make(domain.Chain, len(chain))
+	for i, pathItem := range chain {
+		switch pathItem := pathItem.(type) {
+		case domain.Variable:
+			paramValue, ok := getUniqueParamValue(pathItem.Target, input)
+			if !ok {
+				return nil, false
+			}
+
+			result[i] = paramValue
+		default:
+			result[i] = pathItem
+		}
+	}
+
+	return result, true
 }
 
 func castToInt(value interface{}) (int, bool) {

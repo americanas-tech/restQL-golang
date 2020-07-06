@@ -186,15 +186,15 @@ func TestResolveVariables(t *testing.T) {
 					Method:   "from",
 					Resource: "hero",
 					Headers: map[string]interface{}{
-						"Authorization": domain.Variable{"auth"},
+						"Authorization": domain.Chain{"done-resource", domain.Variable{"authField"}},
 						"X-Some-Header": domain.Variable{"some-param"},
 						"X-Id":          "1234567890",
 					},
 				},
 			},
-			domain.QueryInput{Params: map[string]interface{}{"auth": "abcdef0987", "some-param": "abc"}},
+			domain.QueryInput{Params: map[string]interface{}{"authField": "token", "some-param": "abc"}},
 			domain.Resources{
-				"hero": domain.Statement{Method: "from", Resource: "hero", Headers: map[string]interface{}{"Authorization": "abcdef0987", "X-Id": "1234567890", "X-Some-Header": "abc"}},
+				"hero": domain.Statement{Method: "from", Resource: "hero", Headers: map[string]interface{}{"Authorization": domain.Chain{"done-resource", "token"}, "X-Id": "1234567890", "X-Some-Header": "abc"}},
 			},
 		},
 		{

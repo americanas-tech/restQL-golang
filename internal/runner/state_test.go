@@ -43,12 +43,14 @@ func TestAvailableResources(t *testing.T) {
 		sidekickStatement := domain.Statement{Method: "from", Resource: "sidekick", With: domain.Params{Values: map[string]interface{}{"id": domain.Chain{"hero", "sidekick", "id"}}}}
 		villainStatement := domain.Statement{Method: "from", Resource: "villain", With: domain.Params{Values: map[string]interface{}{"id": []interface{}{domain.Chain{"hero", "villain", "id"}}}}}
 		crossoverStatement := domain.Statement{Method: "from", Resource: "crossover", With: domain.Params{Values: map[string]interface{}{"id": map[string]interface{}{"heroes": domain.Chain{"hero", "id"}}}}}
+		combosStatement := domain.Statement{Method: "from", Resource: "combos", Headers: map[string]interface{}{"id": domain.Chain{"hero", "combo", "id"}}}
 
 		input := domain.Resources{
 			"hero":      heroStatement,
 			"sidekick":  sidekickStatement,
 			"villain":   villainStatement,
 			"crossover": crossoverStatement,
+			"combo":     combosStatement,
 		}
 
 		expected := domain.Resources{

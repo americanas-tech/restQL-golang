@@ -530,10 +530,11 @@ func TestAstGenerator(t *testing.T) {
 		},
 		{
 			"Get query with headers",
-			`from hero headers Authorization = "abcdef12345", X-Trace-Id = $trace-id`,
+			`from hero headers Authorization = "abcdef12345", X-Trace-Id = $trace-id, Basic-Auth = done-resource.auth`,
 			ast.Query{Blocks: []ast.Block{{Method: ast.FromMethod, Resource: "hero", Qualifiers: []ast.Qualifier{{Headers: []ast.HeaderItem{
 				{Key: "Authorization", Value: ast.HeaderValue{String: String("abcdef12345")}},
 				{Key: "X-Trace-Id", Value: ast.HeaderValue{Variable: String("trace-id")}},
+				{Key: "Basic-Auth", Value: ast.HeaderValue{Chain: []ast.Chained{{PathItem: "done-resource"}, {PathItem: "auth"}}}},
 			}}}}}},
 		},
 		{

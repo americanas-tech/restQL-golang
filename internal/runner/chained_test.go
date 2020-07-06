@@ -224,6 +224,18 @@ func TestResolveChainedValues(t *testing.T) {
 			}},
 			domain.Resources{"done-resource": domain.DoneResource{Status: 200, ResponseBody: test.Unmarshal(`{"id": "abcdef"}`)}},
 		},
+		{
+			"Returns a statement with chained value in header resolved",
+			domain.Resources{"resource-name": domain.Statement{Resource: "resource-name", Headers: map[string]interface{}{"x-id": "abcdef"}}},
+			domain.Resources{"resource-name": domain.Statement{Resource: "resource-name", Headers: map[string]interface{}{"x-id": domain.Chain{"done-resource", "id"}}}},
+			domain.Resources{"done-resource": domain.DoneResource{Status: 200, ResponseBody: test.Unmarshal(`{"id": "abcdef"}`)}},
+		},
+		{
+			"Returns a statement with chained value in header resolved to a complex value",
+			domain.Resources{"resource-name": domain.Statement{Resource: "resource-name", Headers: map[string]interface{}{"x-id": `["abcdef","ghijkl"]`}}},
+			domain.Resources{"resource-name": domain.Statement{Resource: "resource-name", Headers: map[string]interface{}{"x-id": domain.Chain{"done-resource", "tokens"}}}},
+			domain.Resources{"done-resource": domain.DoneResource{Status: 200, ResponseBody: test.Unmarshal(`{"tokens": ["abcdef","ghijkl"]}`)}},
+		},
 	}
 
 	for _, tt := range tests {

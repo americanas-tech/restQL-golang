@@ -490,6 +490,8 @@ func newHeaderValue(value interface{}) (HeaderValue, error) {
 		return HeaderValue{Variable: &v}, nil
 	case string:
 		return HeaderValue{String: &value}, nil
+	case []Chained:
+		return HeaderValue{Chain: value}, nil
 	default:
 		return HeaderValue{}, fmt.Errorf("got an unknown type : %T", value)
 	}

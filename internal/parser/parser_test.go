@@ -101,6 +101,11 @@ func TestQueryParser(t *testing.T) {
 			`from hero headers X-Trace-Id = $traceId`,
 		},
 		{
+			"Unique from statement and chained header",
+			domain.Query{Statements: []domain.Statement{{Method: "from", Resource: "hero", Headers: map[string]interface{}{"X-Trace-Id": domain.Chain{"done-resource", "traceId"}}}}},
+			`from hero headers X-Trace-Id = done-resource.traceId`,
+		},
+		{
 			"Unique from statement and max age",
 			domain.Query{Statements: []domain.Statement{{Method: "from", Resource: "hero", CacheControl: domain.CacheControl{MaxAge: 2000, SMaxAge: 4000}}}},
 			"from hero max-age 2000 s-max-age 4000",

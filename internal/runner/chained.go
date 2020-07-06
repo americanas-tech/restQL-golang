@@ -1,6 +1,7 @@
 package runner
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/b2wdigital/restQL-golang/internal/domain"
 	"github.com/pkg/errors"
@@ -26,8 +27,20 @@ func resolveStatement(stmt interface{}, doneResources domain.Resources) interfac
 	case domain.Statement:
 		params := stmt.With.Values
 		for paramName, value := range params {
-			params[paramName] = resolveParam(value, doneResources)
+			params[paramName] = resolveValue(value, doneResources)
 		}
+
+		headers := stmt.Headers
+		for name, value := range headers {
+			resolved := resolveValue(value, doneResources)
+			headerValue, err := stringify(resolved)
+			if err != nil {
+				headers[name] = EmptyChained
+				continue
+			}
+			headers[name] = headerValue
+		}
+
 	case []interface{}:
 		result := make([]interface{}, len(stmt))
 		for i, s := range stmt {
@@ -39,13 +52,28 @@ func resolveStatement(stmt interface{}, doneResources domain.Resources) interfac
 	return stmt
 }
 
-func resolveParam(value interface{}, doneResources domain.Resources) interface{} {
+func stringify(value interface{}) (string, error) {
+	switch value := value.(type) {
+	case string:
+		return value, nil
+	case map[string]interface{}:
+		b, err := json.Marshal(value)
+		return string(b), err
+	case []interface{}:
+		b, err := json.Marshal(value)
+		return string(b), err
+	default:
+		return fmt.Sprintf("%v", value), nil
+	}
+}
+
+func resolveValue(value interface{}, doneResources domain.Resources) interface{} {
 	switch param := value.(type) {
 	case domain.Chain:
 		return resolveChainParam(param, doneResources)
 	case domain.Function:
 		return param.Map(func(target interface{}) interface{} {
-			return resolveParam(target, doneResources)
+			return resolveValue(target, doneResources)
 		})
 	case []interface{}:
 		return resolveListParam(param, doneResources)
@@ -60,7 +88,7 @@ func resolveObjectParam(objectParam map[string]interface{}, doneResources domain
 	result := make(map[string]interface{})
 
 	for key, value := range objectParam {
-		result[key] = resolveParam(value, doneResources)
+		result[key] = resolveValue(value, doneResources)
 	}
 
 	return result
@@ -71,7 +99,7 @@ func resolveListParam(listParam []interface{}, doneResources domain.Resources) [
 	copy(result, listParam)
 
 	for i, value := range result {
-		result[i] = resolveParam(value, doneResources)
+		result[i] = resolveValue(value, doneResources)
 	}
 
 	return result

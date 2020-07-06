@@ -108,6 +108,7 @@ type HeaderItem struct {
 type HeaderValue struct {
 	Variable *string
 	String   *string
+	Chain    []Chained
 }
 
 type variableOrInt struct {

@@ -114,13 +114,6 @@ PRIMITIVE <- p:(Null / Boolean / String / Float / Integer / CHAIN) {
 	return newPrimitive(p)
 }
 
-CHAIN <- i:(CHAINED_ITEM) ii:('.' CHAINED_ITEM)* {
-	return newChain(i, ii)
-}
-
-CHAINED_ITEM <- ci:(PATH_VARIABLE / IDENT) {
-	return newChained(ci)
-}
 
 PATH_VARIABLE <- '$' i:(IDENT) {
 	return newChainPathVariable(i)
@@ -146,7 +139,7 @@ HEADERS <- WS_MAND "headers" WS_MAND h:(HEADER) hs:(WS LS WS HEADER)* {
 	return newHeaders(h, hs)
 }
 
-HEADER <- n:(IDENT) WS '=' WS v:(VARIABLE / String) {
+HEADER <- n:(IDENT) WS '=' WS v:(VARIABLE / CHAIN / String) {
 	return newHeader(n, v)
 }
 
@@ -172,6 +165,14 @@ FLAGS_RULE <- WS_MAND i:IGNORE_FLAG is:(WS LS WS IGNORE_FLAG)* {
 
 IGNORE_FLAG <- "ignore-errors" {
 	return newIgnoreErrors()
+}
+
+CHAIN <- i:(CHAINED_ITEM) ii:('.' CHAINED_ITEM)* {
+	return newChain(i, ii)
+}
+
+CHAINED_ITEM <- ci:(PATH_VARIABLE / IDENT) {
+	return newChained(ci)
 }
 
 VARIABLE <- '$' v:(IDENT_WITH_DOT) {
