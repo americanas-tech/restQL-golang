@@ -249,13 +249,13 @@ func makeUrl(request domain.HttpRequest) *url.URL {
 func parseQueryValue(value interface{}) string {
 	switch value := value.(type) {
 	case string:
-		return url.QueryEscape(value)
+		return value
 	case bool:
-		return url.QueryEscape(strconv.FormatBool(value))
+		return strconv.FormatBool(value)
 	case int:
-		return url.QueryEscape(strconv.Itoa(value))
+		return strconv.Itoa(value)
 	case float64:
-		return url.QueryEscape(strconv.FormatFloat(value, 'f', -1, 64))
+		return strconv.FormatFloat(value, 'f', -1, 64)
 	case map[string]interface{}:
 		return parseMapParam(value)
 	default:
@@ -269,7 +269,7 @@ func parseMapParam(value map[string]interface{}) string {
 		return ""
 	}
 
-	return url.QueryEscape(string(data))
+	return string(data)
 }
 
 func makeErrorResponse(requestUrl string, responseTime time.Duration, statusCode int) domain.HttpResponse {
