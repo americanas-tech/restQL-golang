@@ -9,7 +9,7 @@ import (
 )
 
 var disallowedHeaders = map[string]struct{}{
-	"Host":            {},
+	"host":            {},
 	"Content-Type":    {},
 	"Content-Length":  {},
 	"Connection":      {},
@@ -30,21 +30,17 @@ func MakeRequest(defaultResourceTimeout time.Duration, forwardPrefix string, sta
 	method := queryMethodToHttpMethod[statement.Method]
 	headers := makeHeaders(statement, queryCtx)
 	path := mapping.PathWithParams(statement.With.Values)
+	queryParams := makeQueryParams(forwardPrefix, statement, mapping, queryCtx)
 	timeout := parseTimeout(defaultResourceTimeout, statement)
 
 	req := domain.HttpRequest{
 		Method:  method,
-		Schema:  mapping.Schema,
-		Host:    mapping.Host,
+		Schema:  mapping.Scheme(),
+		Host:    mapping.Host(),
 		Path:    path,
+		Query:   queryParams,
 		Headers: headers,
 		Timeout: timeout,
-	}
-
-	if statement.Method == domain.FromMethod || statement.Method == domain.DeleteMethod {
-		req.Query = makeQueryParams(forwardPrefix, statement, mapping, queryCtx)
-	} else {
-		req.Query = getForwardParams(forwardPrefix, queryCtx)
 	}
 
 	if statement.Method == domain.ToMethod || statement.Method == domain.UpdateMethod || statement.Method == domain.IntoMethod {
@@ -62,7 +58,7 @@ func makeBody(statement domain.Statement, mapping domain.Mapping) domain.Body {
 
 	result := make(map[string]interface{})
 	for key, value := range statement.With.Values {
-		if mapping.HasParam(key) {
+		if mapping.IsPathParam(key) || mapping.IsQueryParam(key) {
 			continue
 		}
 
@@ -101,12 +97,20 @@ func getForwardHeaders(queryCtx domain.QueryContext) map[string]string {
 
 func makeQueryParams(forwardPrefix string, statement domain.Statement, mapping domain.Mapping, queryCtx domain.QueryContext) map[string]interface{} {
 	queryArgs := getForwardParams(forwardPrefix, queryCtx)
-	for key, value := range statement.With.Values {
-		if mapping.HasParam(key) {
-			continue
-		}
+
+	for key, value := range mapping.QueryWithParams(statement.With.Values) {
 		queryArgs[key] = value
 	}
+
+	if statement.Method == domain.FromMethod || statement.Method == domain.DeleteMethod {
+		for key, value := range statement.With.Values {
+			if mapping.IsPathParam(key) {
+				continue
+			}
+			queryArgs[key] = value
+		}
+	}
+
 	return queryArgs
 }
 

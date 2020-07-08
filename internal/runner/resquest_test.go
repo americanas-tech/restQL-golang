@@ -18,62 +18,56 @@ func TestMakeRequest(t *testing.T) {
 		{
 			"should make get request with url",
 			domain.Statement{Method: domain.FromMethod, Resource: "hero"},
-			domain.QueryContext{Mappings: map[string]domain.Mapping{"hero": {Schema: "http", Host: "hero.io", Path: "/api"}}},
+			domain.QueryContext{Mappings: map[string]domain.Mapping{"hero": mapping(t, "http://hero.io/api")}},
 			domain.HttpRequest{Method: http.MethodGet, Schema: "http", Host: "hero.io", Path: "/api", Query: map[string]interface{}{}, Headers: map[string]string{"Content-Type": "application/json"}},
 		},
 		{
 			"should make post request with url",
 			domain.Statement{Method: domain.ToMethod, Resource: "hero", With: domain.Params{Values: map[string]interface{}{"id": 1}}},
-			domain.QueryContext{Mappings: map[string]domain.Mapping{"hero": {Schema: "http", Host: "hero.io", Path: "/api"}}},
+			domain.QueryContext{Mappings: map[string]domain.Mapping{"hero": mapping(t, "http://hero.io/api")}},
 			domain.HttpRequest{Method: http.MethodPost, Schema: "http", Host: "hero.io", Path: "/api", Query: map[string]interface{}{}, Body: map[string]interface{}{"id": 1}, Headers: map[string]string{"Content-Type": "application/json"}},
 		},
 		{
 			"should make patch request with url",
 			domain.Statement{Method: domain.UpdateMethod, Resource: "hero", With: domain.Params{Values: map[string]interface{}{"id": 1}}},
-			domain.QueryContext{Mappings: map[string]domain.Mapping{"hero": {Schema: "http", Host: "hero.io", Path: "/api"}}},
+			domain.QueryContext{Mappings: map[string]domain.Mapping{"hero": mapping(t, "http://hero.io/api")}},
 			domain.HttpRequest{Method: http.MethodPatch, Schema: "http", Host: "hero.io", Path: "/api", Query: map[string]interface{}{}, Body: map[string]interface{}{"id": 1}, Headers: map[string]string{"Content-Type": "application/json"}},
 		},
 		{
 			"should make put request with url",
 			domain.Statement{Method: domain.IntoMethod, Resource: "hero", With: domain.Params{Values: map[string]interface{}{"id": 1}}},
-			domain.QueryContext{Mappings: map[string]domain.Mapping{"hero": {Schema: "http", Host: "hero.io", Path: "/api"}}},
+			domain.QueryContext{Mappings: map[string]domain.Mapping{"hero": mapping(t, "http://hero.io/api")}},
 			domain.HttpRequest{Method: http.MethodPut, Schema: "http", Host: "hero.io", Path: "/api", Query: map[string]interface{}{}, Body: map[string]interface{}{"id": 1}, Headers: map[string]string{"Content-Type": "application/json"}},
 		},
 		{
 			"should make delete request with url",
 			domain.Statement{Method: domain.DeleteMethod, Resource: "hero"},
-			domain.QueryContext{Mappings: map[string]domain.Mapping{"hero": {Schema: "http", Host: "hero.io", Path: "/api"}}},
+			domain.QueryContext{Mappings: map[string]domain.Mapping{"hero": mapping(t, "http://hero.io/api")}},
 			domain.HttpRequest{Method: http.MethodDelete, Schema: "http", Host: "hero.io", Path: "/api", Query: map[string]interface{}{}, Headers: map[string]string{"Content-Type": "application/json"}},
 		},
 		{
 			"should make request with url and query params from statement",
 			domain.Statement{Method: domain.FromMethod, Resource: "hero", With: domain.Params{Values: map[string]interface{}{"id": "123456"}}},
-			domain.QueryContext{Mappings: map[string]domain.Mapping{"hero": {Schema: "http", Host: "hero.io", Path: "/api"}}},
+			domain.QueryContext{Mappings: map[string]domain.Mapping{"hero": mapping(t, "http://hero.io/api")}},
 			domain.HttpRequest{Method: http.MethodGet, Schema: "http", Host: "hero.io", Path: "/api", Query: map[string]interface{}{"id": "123456"}, Headers: map[string]string{"Content-Type": "application/json"}},
 		},
 		{
 			"should make request with url and header from statement",
 			domain.Statement{Method: domain.FromMethod, Resource: "hero", Headers: map[string]interface{}{"X-TID": "1234567890"}},
-			domain.QueryContext{Mappings: map[string]domain.Mapping{"hero": {Schema: "http", Host: "hero.io", Path: "/api"}}},
+			domain.QueryContext{Mappings: map[string]domain.Mapping{"hero": mapping(t, "http://hero.io/api")}},
 			domain.HttpRequest{Method: http.MethodGet, Schema: "http", Host: "hero.io", Path: "/api", Query: map[string]interface{}{}, Headers: map[string]string{"X-TID": "1234567890", "Content-Type": "application/json"}},
 		},
 		{
 			"should make request with url path params resolved",
 			domain.Statement{Method: domain.FromMethod, Resource: "hero", With: domain.Params{Values: map[string]interface{}{"id": "123456"}}},
-			domain.QueryContext{Mappings: map[string]domain.Mapping{"hero": {
-				Schema:        "http",
-				Host:          "hero.io",
-				Path:          "/api/:id",
-				PathParams:    []string{"id"},
-				PathParamsSet: map[string]struct{}{"id": {}},
-			}}},
+			domain.QueryContext{Mappings: map[string]domain.Mapping{"hero": mapping(t, " http://hero.io/api/:id")}},
 			domain.HttpRequest{Method: http.MethodGet, Schema: "http", Host: "hero.io", Path: "/api/123456", Query: map[string]interface{}{}, Headers: map[string]string{"Content-Type": "application/json"}},
 		},
 		{
 			"should make request with url, query params from statement and forward query params",
 			domain.Statement{Method: domain.FromMethod, Resource: "hero", With: domain.Params{Values: map[string]interface{}{"id": "123456"}}},
 			domain.QueryContext{
-				Mappings: map[string]domain.Mapping{"hero": {Schema: "http", Host: "hero.io", Path: "/api"}},
+				Mappings: map[string]domain.Mapping{"hero": mapping(t, "http://hero.io/api")},
 				Input:    domain.QueryInput{Params: map[string]interface{}{"c_universe": "dc", "test": "test"}},
 			},
 			domain.HttpRequest{Method: http.MethodGet, Schema: "http", Host: "hero.io", Path: "/api", Query: map[string]interface{}{"id": "123456", "c_universe": "dc"}, Headers: map[string]string{"Content-Type": "application/json"}},
@@ -82,10 +76,10 @@ func TestMakeRequest(t *testing.T) {
 			"should make request with url, header from statement and only allowed forward headers",
 			domain.Statement{Method: domain.FromMethod, Resource: "hero", Headers: map[string]interface{}{"X-TID": "1234567890"}},
 			domain.QueryContext{
-				Mappings: map[string]domain.Mapping{"hero": {Schema: "http", Host: "hero.io", Path: "/api"}},
+				Mappings: map[string]domain.Mapping{"hero": mapping(t, "http://hero.io/api")},
 				Input: domain.QueryInput{Headers: map[string]string{
 					"Authorization":   "Bearer abcdefgh",
-					"Host":            "http://hero.io/api",
+					"host":            "http://hero.io/api",
 					"Content-Type":    "application/json",
 					"Content-Length":  "0",
 					"Connection":      "keepalive",
@@ -113,4 +107,13 @@ func TestMakeRequest(t *testing.T) {
 			test.Equal(t, got, tt.expected)
 		})
 	}
+}
+
+func mapping(t *testing.T, url string) domain.Mapping {
+	m, err := domain.NewMapping("test-resource", url)
+	if err != nil {
+		t.Fatal("failed to create stub mapping", err)
+	}
+
+	return m
 }

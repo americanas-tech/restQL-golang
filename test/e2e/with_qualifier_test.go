@@ -1186,6 +1186,74 @@ to planets
 	test.Equal(t, body, test.Unmarshal(expectedResponse))
 }
 
+func TestWithQualifierSendingQueryParametersOnToStatement(t *testing.T) {
+	query := `
+to starships
+	with 
+		id = $shipIds
+		name = $shipName
+`
+
+	starshipResponse := `
+{
+	"id": 1,
+	"name": "X-wing",
+	"model": "T-65 X-wing",
+	"manufacturer": "Incom Corporation",
+	"cost_in_credits": "149999",
+	"length": "12.5",
+	"max_atmosphering_speed": "1050",
+	"crew": "1",
+	"passengers": "0",
+	"cargo_capacity": "110",
+	"consumables": "1 week",
+	"hyperdrive_rating": "1.0",
+	"MGLT": "100",
+	"starship_class": "Starfighter"
+}
+`
+
+	expectedResponse := fmt.Sprintf(`
+	{
+		"starships": {
+			"details": {
+				"success": true,
+				"status": 201,
+				"metadata": {}
+			},
+			"result": %s 
+		}
+	}`, starshipResponse)
+
+	mockServer := test.NewMockServer(mockPort)
+	defer mockServer.Teardown()
+
+	mockServer.Mux().HandleFunc("/api/starships", func(w http.ResponseWriter, r *http.Request) {
+		test.Equal(t, r.Method, http.MethodPost)
+
+		params := r.URL.Query()
+		test.Equal(t, params["id"][0], "1")
+		test.Equal(t, params["name"][0], "X-wing")
+
+		w.WriteHeader(201)
+		io.WriteString(w, starshipResponse)
+	})
+	mockServer.Start()
+
+	target := adHocQueryUrl + `&shipIds=1&shipName=X-wing`
+	response, err := httpClient.Post(target, "text/plain", strings.NewReader(query))
+	test.VerifyError(t, err)
+	defer response.Body.Close()
+
+	test.Equal(t, response.StatusCode, 200)
+
+	var body map[string]interface{}
+	err = json.NewDecoder(response.Body).Decode(&body)
+	test.VerifyError(t, err)
+
+	test.Equal(t, body, test.Unmarshal(expectedResponse))
+}
+
 func removeWhitespaces(s string) string {
 	return strings.Join(strings.Fields(s), "")
 }

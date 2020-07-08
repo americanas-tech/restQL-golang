@@ -24,23 +24,15 @@ func TestMappingsReader_Env(t *testing.T) {
 
 	reader := NewMappingReader(noOpLogger, envSource, map[string]string{}, db)
 
+	heroMapping, err := domain.NewMapping("hero", "http://hero.api/")
+	test.VerifyError(t, err)
+
+	sidekickMapping, err := domain.NewMapping("sidekick", "http://sidekick.api/")
+	test.VerifyError(t, err)
+
 	expected := map[string]domain.Mapping{
-		"hero": {
-			ResourceName:  "hero",
-			Schema:        "http",
-			Host:          "hero.api",
-			Path:          "/",
-			PathParams:    []string{},
-			PathParamsSet: map[string]struct{}{},
-		},
-		"sidekick": {
-			ResourceName:  "sidekick",
-			Schema:        "http",
-			Host:          "sidekick.api",
-			Path:          "/",
-			PathParams:    []string{},
-			PathParamsSet: map[string]struct{}{},
-		},
+		"hero":     heroMapping,
+		"sidekick": sidekickMapping,
 	}
 
 	mappings, err := reader.FromTenant(context.Background(), defaultTenant)
@@ -59,23 +51,15 @@ func TestMappingsReader_Local(t *testing.T) {
 
 	reader := NewMappingReader(noOpLogger, envSource, local, db)
 
+	heroMapping, err := domain.NewMapping("hero", "http://hero.api/")
+	test.VerifyError(t, err)
+
+	sidekickMapping, err := domain.NewMapping("sidekick", "http://sidekick.api/")
+	test.VerifyError(t, err)
+
 	expected := map[string]domain.Mapping{
-		"hero": {
-			ResourceName:  "hero",
-			Schema:        "http",
-			Host:          "hero.api",
-			Path:          "/",
-			PathParams:    []string{},
-			PathParamsSet: map[string]struct{}{},
-		},
-		"sidekick": {
-			ResourceName:  "sidekick",
-			Schema:        "http",
-			Host:          "sidekick.api",
-			Path:          "/",
-			PathParams:    []string{},
-			PathParamsSet: map[string]struct{}{},
-		},
+		"hero":     heroMapping,
+		"sidekick": sidekickMapping,
 	}
 
 	mappings, err := reader.FromTenant(context.Background(), defaultTenant)
@@ -87,44 +71,20 @@ func TestMappingsReader_Local(t *testing.T) {
 func TestMappingsReader_Database(t *testing.T) {
 	envSource := stubEnvSource{getAll: map[string]string{}}
 	local := map[string]string{}
-	db := stubDatabase{findMappingsForTenant: []domain.Mapping{
-		{
-			ResourceName:  "hero",
-			Schema:        "http",
-			Host:          "hero.api",
-			Path:          "/",
-			PathParams:    []string{},
-			PathParamsSet: map[string]struct{}{},
-		},
-		{
-			ResourceName:  "sidekick",
-			Schema:        "http",
-			Host:          "sidekick.api",
-			Path:          "/",
-			PathParams:    []string{},
-			PathParamsSet: map[string]struct{}{},
-		},
-	}}
+
+	heroMapping, err := domain.NewMapping("hero", "http://hero.api/")
+	test.VerifyError(t, err)
+
+	sidekickMapping, err := domain.NewMapping("sidekick", "http://sidekick.api/")
+	test.VerifyError(t, err)
+
+	db := stubDatabase{findMappingsForTenant: []domain.Mapping{heroMapping, sidekickMapping}}
 
 	reader := NewMappingReader(noOpLogger, envSource, local, db)
 
 	expected := map[string]domain.Mapping{
-		"hero": {
-			ResourceName:  "hero",
-			Schema:        "http",
-			Host:          "hero.api",
-			Path:          "/",
-			PathParams:    []string{},
-			PathParamsSet: map[string]struct{}{},
-		},
-		"sidekick": {
-			ResourceName:  "sidekick",
-			Schema:        "http",
-			Host:          "sidekick.api",
-			Path:          "/",
-			PathParams:    []string{},
-			PathParamsSet: map[string]struct{}{},
-		},
+		"hero":     heroMapping,
+		"sidekick": sidekickMapping,
 	}
 
 	mappings, err := reader.FromTenant(context.Background(), defaultTenant)
@@ -134,22 +94,22 @@ func TestMappingsReader_Database(t *testing.T) {
 }
 
 func TestMappingsReader_ShouldOverwriteMappings(t *testing.T) {
+	heroMapping, err := domain.NewMapping("hero", "https://hero.com/api/")
+	test.VerifyError(t, err)
+
+	sidekickMapping, err := domain.NewMapping("sidekick", "https://sidekick.com/api")
+	test.VerifyError(t, err)
+
+	villainMapping, err := domain.NewMapping("villain", "http://villain.api/")
+	test.VerifyError(t, err)
+
 	local := map[string]string{
 		"hero":     "http://hero.api/",
 		"sidekick": "http://sidekick.api/",
 		"villain":  "http://villain.api/",
 	}
 	db := stubDatabase{
-		findMappingsForTenant: []domain.Mapping{
-			{
-				ResourceName:  "sidekick",
-				Schema:        "https",
-				Host:          "sidekick.com",
-				Path:          "/api",
-				PathParams:    []string{},
-				PathParamsSet: map[string]struct{}{},
-			},
-		},
+		findMappingsForTenant: []domain.Mapping{sidekickMapping},
 	}
 	envSource := stubEnvSource{
 		getAll: map[string]string{
@@ -160,30 +120,9 @@ func TestMappingsReader_ShouldOverwriteMappings(t *testing.T) {
 	reader := NewMappingReader(noOpLogger, envSource, local, db)
 
 	expected := map[string]domain.Mapping{
-		"hero": {
-			ResourceName:  "hero",
-			Schema:        "https",
-			Host:          "hero.com",
-			Path:          "/api/",
-			PathParams:    []string{},
-			PathParamsSet: map[string]struct{}{},
-		},
-		"sidekick": {
-			ResourceName:  "sidekick",
-			Schema:        "https",
-			Host:          "sidekick.com",
-			Path:          "/api",
-			PathParams:    []string{},
-			PathParamsSet: map[string]struct{}{},
-		},
-		"villain": {
-			ResourceName:  "villain",
-			Schema:        "http",
-			Host:          "villain.api",
-			Path:          "/",
-			PathParams:    []string{},
-			PathParamsSet: map[string]struct{}{},
-		},
+		"hero":     heroMapping,
+		"sidekick": sidekickMapping,
+		"villain":  villainMapping,
 	}
 
 	mappings, err := reader.FromTenant(context.Background(), defaultTenant)

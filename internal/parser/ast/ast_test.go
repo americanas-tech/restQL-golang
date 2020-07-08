@@ -59,7 +59,7 @@ func TestAstGenerator(t *testing.T) {
 			},
 		},
 		{
-			"Query with two from statements",
+			"query with two from statements",
 			`
 							from cart
 							from hero

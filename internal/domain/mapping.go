@@ -8,32 +8,20 @@ import (
 )
 
 var pathParamRegex = regexp.MustCompile(":([^/]+)/?")
-var urlRegex = regexp.MustCompile("(https?)://([-a-zA-Z0-9@:%._+~#=]+)([-a-zA-Z0-9@:%_+.~#?&/=]*)")
+var urlRegex = regexp.MustCompile("(https?)://([^/]+)([^?]*)\\??(.*)")
 
 type Mapping struct {
-	ResourceName  string
-	Schema        string
-	Host          string
-	Path          string
-	PathParams    []string
-	PathParamsSet map[string]struct{}
+	resourceName  string
+	schema        string
+	host          string
+	path          string
+	query         map[string]interface{}
+	pathParams    []string
+	pathParamsSet map[string]struct{}
 }
 
 func NewMapping(resource, url string) (Mapping, error) {
-	mapping := Mapping{ResourceName: resource}
-
-	paramsMatches := pathParamRegex.FindAllStringSubmatch(url, -1)
-
-	pathParamsSet := make(map[string]struct{})
-	pathParams := make([]string, len(paramsMatches))
-	for i, m := range paramsMatches {
-		paramName := m[1]
-		pathParams[i] = paramName
-		pathParamsSet[paramName] = struct{}{}
-	}
-
-	mapping.PathParams = pathParams
-	mapping.PathParamsSet = pathParamsSet
+	mapping := Mapping{resourceName: resource}
 
 	urlMatches := urlRegex.FindAllStringSubmatch(url, -1)
 	if len(urlMatches) == 0 {
@@ -44,24 +32,76 @@ func NewMapping(resource, url string) (Mapping, error) {
 	if len(m) < 3 {
 		return Mapping{}, errors.Errorf("failed to create mapping from %s", url)
 	}
-	mapping.Schema = m[1]
-	mapping.Host = m[2]
+	mapping.schema = m[1]
+	mapping.host = m[2]
 
 	if len(m) >= 4 {
-		mapping.Path = m[3]
+		mapping.path = m[3]
 	}
+
+	if len(m) >= 5 {
+		mapping.query = parseQueryParametersInUrl(m[4])
+	}
+
+	paramsMatches := pathParamRegex.FindAllStringSubmatch(mapping.path, -1)
+
+	pathParamsSet := make(map[string]struct{})
+	pathParams := make([]string, len(paramsMatches))
+	for i, m := range paramsMatches {
+		paramName := m[1]
+		pathParams[i] = paramName
+		pathParamsSet[paramName] = struct{}{}
+	}
+
+	mapping.pathParams = pathParams
+	mapping.pathParamsSet = pathParamsSet
 
 	return mapping, nil
 }
 
-func (m Mapping) HasParam(name string) bool {
-	_, found := m.PathParamsSet[name]
+func parseQueryParametersInUrl(queryParams string) map[string]interface{} {
+	if queryParams == "" {
+		return nil
+	}
+
+	m := make(map[string]interface{})
+
+	paramNames := strings.Split(queryParams, "&")
+	for _, n := range paramNames {
+		name := strings.Trim(n, ":")
+		if name != "" {
+			m[name] = struct{}{}
+		}
+	}
+
+	return m
+}
+
+func (m Mapping) ResourceName() string {
+	return m.resourceName
+}
+
+func (m Mapping) IsPathParam(name string) bool {
+	_, found := m.pathParamsSet[name]
+	return found
+}
+
+func (m Mapping) Scheme() string {
+	return m.schema
+}
+
+func (m Mapping) Host() string {
+	return m.host
+}
+
+func (m Mapping) IsQueryParam(name string) bool {
+	_, found := m.query[name]
 	return found
 }
 
 func (m Mapping) PathWithParams(params map[string]interface{}) string {
-	path := m.Path
-	for _, pathParam := range m.PathParams {
+	path := m.path
+	for _, pathParam := range m.pathParams {
 		pathParamValue, found := params[pathParam]
 		if !found {
 			pathParamValue = ""
@@ -71,4 +111,22 @@ func (m Mapping) PathWithParams(params map[string]interface{}) string {
 	}
 
 	return path
+}
+
+func (m Mapping) QueryWithParams(params map[string]interface{}) map[string]interface{} {
+	if m.query == nil {
+		return nil
+	}
+
+	queryParams := make(map[string]interface{})
+	for key := range m.query {
+		paramValue, found := params[key]
+		if !found {
+			continue
+		}
+
+		queryParams[key] = paramValue
+	}
+
+	return queryParams
 }

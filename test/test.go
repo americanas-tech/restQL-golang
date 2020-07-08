@@ -3,6 +3,7 @@ package test
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/b2wdigital/restQL-golang/internal/domain"
 	"github.com/google/go-cmp/cmp"
 	"log"
 	"net"
@@ -26,8 +27,14 @@ var regexComparer = cmp.Comparer(func(x, y *regexp.Regexp) bool {
 	return x.String() == y.String()
 })
 
+var mappingComparer = cmp.Comparer(func(x, y domain.Mapping) bool {
+	return x.ResourceName() == y.ResourceName() &&
+		x.Scheme() == y.Scheme() &&
+		x.Host() == y.Host()
+})
+
 func Equal(t *testing.T, got, expected interface{}) {
-	if !cmp.Equal(got, expected, regexComparer) {
+	if !cmp.Equal(got, expected, regexComparer, mappingComparer) {
 		t.Fatalf("got = %+#v, want = %+#v\nMismatch (-want +got):\n%s", got, expected, cmp.Diff(expected, got, regexComparer))
 	}
 }

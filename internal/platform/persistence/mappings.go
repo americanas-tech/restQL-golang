@@ -41,7 +41,7 @@ func (mr MappingsReader) FromTenant(ctx context.Context, tenant string) (map[str
 	}
 
 	for _, mapping := range dbMappings {
-		result[mapping.ResourceName] = mapping
+		result[mapping.ResourceName()] = mapping
 	}
 
 	for k, v := range mr.env {
