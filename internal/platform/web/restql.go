@@ -63,6 +63,7 @@ func (r RestQl) RunAdHocQuery(ctx *fasthttp.RequestCtx) error {
 
 	input, err := r.makeQueryInput(ctx)
 	if err != nil {
+		r.log.Error("failed to build query input", err)
 		return RespondError(ctx, NewRequestError(err, http.StatusBadRequest))
 	}
 	context := middleware.GetNativeContext(ctx)
@@ -95,29 +96,31 @@ func (r RestQl) RunAdHocQuery(ctx *fasthttp.RequestCtx) error {
 func (r RestQl) RunSavedQuery(ctx *fasthttp.RequestCtx) error {
 	options, err := r.makeQueryOptions(ctx)
 	if err != nil {
-		r.log.Error("failed to build query options", err)
+		r.log.Error("failed to build query options", err, "query", ctx.RequestURI())
 		return RespondError(ctx, NewRequestError(err, http.StatusBadRequest))
 	}
+	queryIdentifier := fmt.Sprintf("%s/%s/%d", options.Namespace, options.Id, options.Revision)
 
 	input, err := r.makeQueryInput(ctx)
 	if err != nil {
+		r.log.Error("failed to build query input", err, "query", queryIdentifier)
 		return RespondError(ctx, NewRequestError(err, http.StatusBadRequest))
 	}
 	context := middleware.GetNativeContext(ctx)
 
 	result, err := r.evaluator.SavedQuery(context, options, input)
 	if err != nil {
-		r.log.Error("failed to evaluated saved query", err, "query", fmt.Sprintf("%s/%s/%d", options.Namespace, options.Id, options.Revision))
+		r.log.Error("failed to evaluated saved query", err, "query", queryIdentifier)
 
 		switch err := err.(type) {
 		case eval.ValidationError:
 			return RespondError(ctx, NewRequestError(err, http.StatusUnprocessableEntity))
 		case eval.NotFoundError:
 			return RespondError(ctx, NewRequestError(err, http.StatusNotFound))
-		case eval.ParserError:
-			return RespondError(ctx, NewRequestError(err, http.StatusInternalServerError))
 		case eval.TimeoutError:
 			return RespondError(ctx, NewRequestError(err, http.StatusRequestTimeout))
+		case eval.ParserError:
+			return RespondError(ctx, NewRequestError(err, http.StatusInternalServerError))
 		case eval.MappingError:
 			return RespondError(ctx, NewRequestError(err, http.StatusInternalServerError))
 		case domain.ErrQueryRevisionDeprecated:
