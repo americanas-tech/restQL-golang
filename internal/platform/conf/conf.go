@@ -62,9 +62,9 @@ type Config struct {
 	} `yaml:"http"`
 
 	Logging struct {
-		Enable    bool   `yaml:"enable"`
+		Enable    bool   `yaml:"enable" env:"RESTQL_LOGGING_ENABLE"`
 		Timestamp bool   `yaml:"timestamp"`
-		Level     string `yaml:"level"`
+		Level     string `yaml:"level" env:"RESTQL_LOGGING_LEVEL"`
 		Format    string `yaml:"format"`
 	} `yaml:"logging"`
 

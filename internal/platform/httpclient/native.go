@@ -24,6 +24,7 @@ import (
 )
 
 const poolSize = 20
+const defaultStatusCode = 0
 
 type nativeHttpClient struct {
 	clients       []*http.Client
@@ -90,6 +91,8 @@ func newNativeHttpClient(log *logger.Logger, pm plugins.Manager, cfg *conf.Confi
 }
 
 func (nc *nativeHttpClient) Do(ctx context.Context, request domain.HttpRequest) (domain.HttpResponse, error) {
+	nc.pluginManager.RunBeforeRequest(ctx, request)
+
 	req, err := nc.makeRequest(request)
 	if err != nil {
 		return domain.HttpResponse{}, err
@@ -113,9 +116,12 @@ func (nc *nativeHttpClient) Do(ctx context.Context, request domain.HttpRequest) 
 
 		if err, ok := err.(net.Error); ok && err.Timeout() {
 			nc.log.Info("request timed out", "url", requestUrl, "method", request.Method, "duration-ms", duration.Milliseconds())
+			nc.pluginManager.RunAfterRequest(ctx, request, errorResponse, err)
+
 			return errorResponse, domain.ErrRequestTimeout
 		}
 
+		nc.pluginManager.RunAfterRequest(ctx, request, errorResponse, err)
 		return errorResponse, err
 	}
 
@@ -128,7 +134,10 @@ func (nc *nativeHttpClient) Do(ctx context.Context, request domain.HttpRequest) 
 
 	body, err := nc.unmarshalBody(response)
 	if err != nil {
-		return makeErrorResponse(requestUrl, duration, 0), fmt.Errorf("%w: %v", domain.ErrInvalidResponseBody, body)
+		errorResponse := makeErrorResponse(requestUrl, duration, defaultStatusCode)
+		nc.pluginManager.RunAfterRequest(ctx, request, errorResponse, err)
+
+		return errorResponse, fmt.Errorf("%w: %v", domain.ErrInvalidResponseBody, body)
 	}
 
 	hr := make(map[string]string)
@@ -143,6 +152,8 @@ func (nc *nativeHttpClient) Do(ctx context.Context, request domain.HttpRequest) 
 		Headers:    hr,
 		Duration:   duration,
 	}
+
+	nc.pluginManager.RunAfterRequest(ctx, request, httpResponse, err)
 
 	return httpResponse, nil
 }
