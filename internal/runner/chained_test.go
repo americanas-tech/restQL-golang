@@ -201,12 +201,6 @@ func TestResolveChainedValues(t *testing.T) {
 			domain.Resources{"done-resource": domain.DoneResource{Status: 200, ResponseBody: test.Unmarshal(`{"id": [1,2]}`)}},
 		},
 		{
-			"Returns a statement with flattened chained param inside object",
-			domain.Resources{"resource-name": domain.Statement{Resource: "resource-name", With: domain.Params{Values: map[string]interface{}{"country": map[string]interface{}{"code": domain.NoMultiplex{Value: "USA"}}}}}},
-			domain.Resources{"resource-name": domain.Statement{Resource: "resource-name", With: domain.Params{Values: map[string]interface{}{"country": map[string]interface{}{"code": domain.NoMultiplex{Value: domain.Chain{"done-resource", "hero", "origin"}}}}}}},
-			domain.Resources{"done-resource": domain.DoneResource{Status: 200, ResponseBody: test.Unmarshal(`{"hero": {"origin": "USA"}}`)}},
-		},
-		{
 			"Returns a statement with single done resource value resolved from header",
 			domain.Resources{"resource-name": domain.Statement{Resource: "resource-name", With: domain.Params{Values: map[string]interface{}{"id": "abcdef", "xtid": "12345678"}}}},
 			domain.Resources{"resource-name": domain.Statement{Resource: "resource-name", With: domain.Params{Values: map[string]interface{}{"id": domain.Chain{"done-resource", "location"}, "xtid": domain.Chain{"done-resource", "x-tid"}}}}},
@@ -235,6 +229,12 @@ func TestResolveChainedValues(t *testing.T) {
 			domain.Resources{"resource-name": domain.Statement{Resource: "resource-name", Headers: map[string]interface{}{"x-id": `["abcdef","ghijkl"]`}}},
 			domain.Resources{"resource-name": domain.Statement{Resource: "resource-name", Headers: map[string]interface{}{"x-id": domain.Chain{"done-resource", "tokens"}}}},
 			domain.Resources{"done-resource": domain.DoneResource{Status: 200, ResponseBody: test.Unmarshal(`{"tokens": ["abcdef","ghijkl"]}`)}},
+		},
+		{
+			"Returns a statement with object param with resolved list values exploded",
+			domain.Resources{"resource-name": domain.Statement{Resource: "resource-name", With: domain.Params{Values: map[string]interface{}{"info": domain.NoMultiplex{Value: []interface{}{map[string]interface{}{"weapon": "batarang"}, map[string]interface{}{"weapon": "batbelt"}}}}}}},
+			domain.Resources{"resource-name": domain.Statement{Resource: "resource-name", With: domain.Params{Values: map[string]interface{}{"info": domain.NoMultiplex{Value: map[string]interface{}{"weapon": domain.Chain{"done-resource", "hero", "weapons"}}}}}}},
+			domain.Resources{"done-resource": domain.DoneResource{Status: 200, ResponseBody: test.Unmarshal(`{"hero": {"weapons": ["batarang", "batbelt"]}}`)}},
 		},
 	}
 

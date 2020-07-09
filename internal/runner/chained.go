@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/b2wdigital/restQL-golang/internal/domain"
 	"github.com/pkg/errors"
+	"math"
 	"strings"
 )
 
@@ -27,12 +28,20 @@ func resolveStatement(stmt interface{}, doneResources domain.Resources) interfac
 	case domain.Statement:
 		params := stmt.With.Values
 		for paramName, value := range params {
-			params[paramName] = resolveValue(value, doneResources)
+			v := resolveValue(value, doneResources)
+			if v == nil {
+				continue
+			}
+			params[paramName] = v
 		}
 
 		headers := stmt.Headers
 		for name, value := range headers {
 			resolved := resolveValue(value, doneResources)
+			if resolved == nil {
+				continue
+			}
+
 			headerValue, err := stringify(resolved)
 			if err != nil {
 				headers[name] = EmptyChained
@@ -84,14 +93,72 @@ func resolveValue(value interface{}, doneResources domain.Resources) interface{}
 	}
 }
 
-func resolveObjectParam(objectParam map[string]interface{}, doneResources domain.Resources) map[string]interface{} {
+func resolveObjectParam(objectParam map[string]interface{}, doneResources domain.Resources) interface{} {
 	result := make(map[string]interface{})
 
 	for key, value := range objectParam {
-		result[key] = resolveValue(value, doneResources)
+		v := resolveValue(value, doneResources)
+		if v == nil {
+			continue
+		}
+
+		result[key] = v
+	}
+
+	return explodeListValuesInNewMaps(result)
+}
+
+func explodeListValuesInNewMaps(m map[string]interface{}) interface{} {
+	n := minimumListValueLength(m)
+
+	if n == 0 {
+		return m
+	}
+
+	result := make([]interface{}, n)
+	for i := 0; i < n; i++ {
+		newMap := make(map[string]interface{})
+
+		for k, v := range m {
+			var newValue interface{}
+			switch v := v.(type) {
+			case []interface{}:
+				newValue = v[i]
+			default:
+				newValue = v
+			}
+
+			if newValue == nil {
+				continue
+			}
+
+			newMap[k] = newValue
+		}
+
+		result[i] = newMap
 	}
 
 	return result
+}
+
+func minimumListValueLength(m map[string]interface{}) int {
+	var result uint64 = math.MaxInt64
+
+	for _, v := range m {
+		if v, ok := v.([]interface{}); ok {
+			length := uint64(len(v))
+			if length < result {
+				result = length
+			}
+
+		}
+	}
+
+	if result == math.MaxInt64 {
+		return 0
+	}
+
+	return int(result)
 }
 
 func resolveListParam(listParam []interface{}, doneResources domain.Resources) []interface{} {
