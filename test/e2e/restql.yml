@@ -25,3 +25,9 @@ queries:
           with
             name = $name
             residents = $residents -> no-multiplex
+    variable-resolution-on-to-statement:
+      - |
+        to planets
+          with
+            planets = $body -> no-multiplex
+            climate = $climate

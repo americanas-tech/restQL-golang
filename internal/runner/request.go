@@ -1,7 +1,7 @@
 package runner
 
 import (
-	"fmt"
+	"encoding/json"
 	"github.com/b2wdigital/restQL-golang/internal/domain"
 	"net/http"
 	"strings"
@@ -52,7 +52,6 @@ func MakeRequest(defaultResourceTimeout time.Duration, forwardPrefix string, sta
 
 func makeBody(statement domain.Statement, mapping domain.Mapping) domain.Body {
 	if statement.With.Body != nil {
-		fmt.Printf("body : %+#v\n", statement.With.Body)
 		return statement.With.Body
 	}
 
@@ -62,9 +61,30 @@ func makeBody(statement domain.Statement, mapping domain.Mapping) domain.Body {
 			continue
 		}
 
-		result[key] = value
+		bodyValue, err := parseBodyValue(value)
+		if err != nil {
+			continue
+		}
+
+		result[key] = bodyValue
 	}
 	return result
+}
+
+func parseBodyValue(value interface{}) (interface{}, error) {
+	switch value := value.(type) {
+	case string:
+		valid := json.Valid([]byte(value))
+		if !valid {
+			return value, nil
+		}
+
+		var m interface{}
+		err := json.Unmarshal([]byte(value), &m)
+		return m, err
+	default:
+		return value, nil
+	}
 }
 
 func makeHeaders(statement domain.Statement, queryCtx domain.QueryContext) map[string]string {
