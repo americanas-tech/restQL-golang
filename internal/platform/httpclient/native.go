@@ -91,7 +91,7 @@ func newNativeHttpClient(log *logger.Logger, pm plugins.Manager, cfg *conf.Confi
 }
 
 func (nc *nativeHttpClient) Do(ctx context.Context, request domain.HttpRequest) (domain.HttpResponse, error) {
-	nc.pluginManager.RunBeforeRequest(ctx, request)
+	ctx = nc.pluginManager.RunBeforeRequest(ctx, request)
 
 	req, err := nc.makeRequest(request)
 	if err != nil {
