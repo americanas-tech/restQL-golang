@@ -120,6 +120,13 @@ func TestAstGenerator(t *testing.T) {
 			}}}}}},
 		},
 		{
+			"Get query with variable chained using brackets query parameters",
+			`from hero with id = done-resource[$path].id`,
+			ast.Query{Blocks: []ast.Block{{Method: ast.FromMethod, Resource: "hero", Qualifiers: []ast.Qualifier{{With: &ast.Parameters{
+				KeyValues: []ast.KeyValue{{Key: "id", Value: ast.Value{Primitive: &ast.Primitive{Chain: []ast.Chained{{PathItem: "done-resource"}, {PathVariable: "path"}, {PathItem: "id"}}}}}},
+			}}}}}},
+		},
+		{
 			"Get query with variable query parameters",
 			`from hero with id = $id`,
 			ast.Query{Blocks: []ast.Block{{Method: ast.FromMethod, Resource: "hero", Qualifiers: []ast.Qualifier{{With: &ast.Parameters{
