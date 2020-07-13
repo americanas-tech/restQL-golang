@@ -603,10 +603,15 @@ from people
 	})
 	mockServer.Mux().HandleFunc("/api/people/", func(w http.ResponseWriter, r *http.Request) {
 		params := r.URL.Query()
-		profileData, err := url.QueryUnescape(params["profile"][0])
+		johnProfile, err := url.QueryUnescape(params["profile"][0])
 
 		test.VerifyError(t, err)
-		test.Equal(t, profileData, `{"name":["john","janne"]}`)
+		test.Equal(t, johnProfile, `{"name":"john"}`)
+
+		janneProfile, err := url.QueryUnescape(params["profile"][1])
+
+		test.VerifyError(t, err)
+		test.Equal(t, janneProfile, `{"name":"janne"}`)
 
 		w.WriteHeader(200)
 		io.WriteString(w, peopleResponse)

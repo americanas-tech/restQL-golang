@@ -3,6 +3,7 @@ package runner_test
 import (
 	"github.com/b2wdigital/restQL-golang/internal/domain"
 	"github.com/b2wdigital/restQL-golang/internal/runner"
+	"github.com/b2wdigital/restQL-golang/pkg/restql"
 	"github.com/b2wdigital/restQL-golang/test"
 	"testing"
 )
@@ -232,3 +233,4 @@ func (n noOpLogger) Error(msg string, err error, fields ...interface{}) {}
 func (n noOpLogger) Warn(msg string, fields ...interface{})             {}
 func (n noOpLogger) Info(msg string, fields ...interface{})             {}
 func (n noOpLogger) Debug(msg string, fields ...interface{})            {}
+func (n noOpLogger) With(key string, value interface{}) restql.Logger   { return n }
