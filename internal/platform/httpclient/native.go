@@ -130,7 +130,7 @@ func (nc *nativeHttpClient) Do(ctx context.Context, request domain.HttpRequest) 
 	defer func() {
 		closeErr := response.Body.Close()
 		if err != nil {
-			log.Error("failed to close response body", closeErr)
+			log.Error("failed to close response body", closeErr, "close-err", closeErr.Error())
 		}
 	}()
 
@@ -215,13 +215,13 @@ func (nc *nativeHttpClient) unmarshalBody(log restql.Logger, response *http.Resp
 
 	err := decoder.Decode(&responseBody)
 	if err != nil {
-		log.Error("failed to unmarshal response body", err)
-
 		body, readErr := ioutil.ReadAll(response.Body)
 		if readErr != nil {
-			log.Error("failed to read response body", readErr)
+			log.Error("failed to read response body", readErr, "body", body)
 			return nil, readErr
 		}
+
+		log.Error("failed to unmarshal response body", err, "body", body)
 
 		return string(body), err
 	}
