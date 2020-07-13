@@ -110,21 +110,13 @@ func unmarshalValue(value interface{}) (interface{}, error) {
 }
 
 func resolveListWithParam(list []interface{}, input domain.QueryInput) interface{} {
-	l := make([]interface{}, len(list))
-	for i, val := range list {
-		switch val := val.(type) {
-		case domain.Variable:
-			value, ok := getUniqueParamValue(val.Target, input)
-			if !ok {
-				continue
-			}
-
-			l[i] = value
-		case []interface{}:
-			l[i] = resolveListWithParam(val, input)
-		default:
-			l[i] = val
+	l := make([]interface{}, 0, len(list))
+	for _, val := range list {
+		value, ok := resolveWithParamValue(val, input)
+		if !ok {
+			continue
 		}
+		l = append(l, value)
 	}
 
 	return l
