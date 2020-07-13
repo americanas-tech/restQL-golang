@@ -6,6 +6,7 @@ import (
 	"github.com/b2wdigital/restQL-golang/internal/eval"
 	"github.com/b2wdigital/restQL-golang/internal/platform/logger"
 	"github.com/b2wdigital/restQL-golang/internal/platform/persistence/database"
+	"github.com/b2wdigital/restQL-golang/pkg/restql"
 	"github.com/pkg/errors"
 )
 
@@ -26,11 +27,11 @@ func NewQueryReader(log *logger.Logger, local map[string]map[string][]string, db
 }
 
 func (qr QueryReader) Get(ctx context.Context, namespace, id string, revision int) (domain.SavedQuery, error) {
-	qr.log.Debug("fetching query")
+	log := restql.GetLogger(ctx)
 
 	savedQuery, err := qr.db.FindQuery(ctx, namespace, id, revision)
 	if err != nil && err != database.ErrNoDatabase {
-		qr.log.Info("query not found in database", "error", err, "namespace", namespace, "name", id, "revision", revision)
+		log.Info("query not found in database", "error", err, "namespace", namespace, "name", id, "revision", revision)
 	}
 
 	if savedQuery.Text != "" {
@@ -39,7 +40,7 @@ func (qr QueryReader) Get(ctx context.Context, namespace, id string, revision in
 
 	localQuery, err := qr.getQueryFromLocal(namespace, id, revision)
 	if err != nil {
-		qr.log.Info("query not found in local", "namespace", namespace, "name", id, "revision", revision)
+		log.Info("query not found in local", "namespace", namespace, "name", id, "revision", revision)
 		return domain.SavedQuery{}, eval.NotFoundError{Err: errors.Errorf("query not found: %s/%s/%d", namespace, id, revision)}
 	}
 

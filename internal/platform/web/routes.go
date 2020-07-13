@@ -16,6 +16,7 @@ import (
 )
 
 func API(log *logger.Logger, cfg *conf.Config) (fasthttp.RequestHandler, error) {
+	log.Debug("starting api")
 	defaultParser, err := parser.New()
 	if err != nil {
 		log.Error("failed to compile parser", err)

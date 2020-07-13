@@ -56,7 +56,8 @@ func (e Evaluator) SavedQuery(ctx context.Context, queryOpts domain.QueryOptions
 		return nil, err
 	}
 
-	e.log.Debug("Saved query retrieved", "query", savedQuery)
+	log := restql.GetLogger(ctx)
+	log.Debug("Saved query retrieved", "query", savedQuery)
 
 	if savedQuery.Deprecated {
 		return nil, domain.ErrQueryRevisionDeprecated{Revision: queryOpts.Revision}
@@ -66,21 +67,23 @@ func (e Evaluator) SavedQuery(ctx context.Context, queryOpts domain.QueryOptions
 }
 
 func (e Evaluator) evaluateQuery(ctx context.Context, queryTxt string, queryOpts domain.QueryOptions, queryInput domain.QueryInput) (domain.Resources, error) {
+	log := restql.GetLogger(ctx)
+
 	query, err := e.parser.Parse(queryTxt)
 	if err != nil {
-		e.log.Debug("failed to parse query", "error", err)
+		log.Debug("failed to parse query", "error", err)
 		return nil, ParserError{errors.Wrap(err, "invalid query syntax")}
 	}
 
 	mappings, err := e.mappingsReader.FromTenant(ctx, queryOpts.Tenant)
 	if err != nil {
-		e.log.Error("failed to fetch mappings", err)
+		log.Error("failed to fetch mappings", err)
 		return nil, err
 	}
 
 	err = validateQueryResources(query, mappings)
 	if err != nil {
-		e.log.Error("query reference invalid resource", err)
+		log.Error("query reference invalid resource", err)
 		return nil, err
 	}
 
@@ -104,7 +107,7 @@ func (e Evaluator) evaluateQuery(ctx context.Context, queryTxt string, queryOpts
 
 	resources, err = ApplyFilters(query, resources)
 	if err != nil {
-		e.log.Error("failed to apply filters", err)
+		log.Error("failed to apply filters", err)
 		return nil, err
 	}
 

@@ -9,6 +9,7 @@ import (
 	"github.com/b2wdigital/restQL-golang/internal/platform/conf"
 	"github.com/b2wdigital/restQL-golang/internal/platform/logger"
 	"github.com/b2wdigital/restQL-golang/internal/platform/web/middleware"
+	"github.com/b2wdigital/restQL-golang/pkg/restql"
 	"github.com/pkg/errors"
 	"github.com/valyala/fasthttp"
 	"net/http"
@@ -54,14 +55,14 @@ func (r RestQl) ValidateQuery(ctx *fasthttp.RequestCtx) error {
 }
 
 func (r RestQl) RunAdHocQuery(ctx *fasthttp.RequestCtx) error {
-	tenant, err := r.makeTenant(ctx)
+	tenant, err := makeTenant(ctx, r.config.Tenant)
 	if err != nil {
 		r.log.Error("failed to build query options", err)
 		return RespondError(ctx, NewRequestError(err, http.StatusBadRequest))
 	}
 	options := domain.QueryOptions{Tenant: tenant}
 
-	input, err := r.makeQueryInput(ctx)
+	input, err := makeQueryInput(ctx, r.log)
 	if err != nil {
 		r.log.Error("failed to build query input", err)
 		return RespondError(ctx, NewRequestError(err, http.StatusBadRequest))
@@ -94,23 +95,26 @@ func (r RestQl) RunAdHocQuery(ctx *fasthttp.RequestCtx) error {
 }
 
 func (r RestQl) RunSavedQuery(ctx *fasthttp.RequestCtx) error {
-	options, err := r.makeQueryOptions(ctx)
+	log := r.log.With("restql-endpoint", string(ctx.Request.URI().Path()))
+	context := middleware.GetNativeContext(ctx)
+	context = restql.WithLogger(context, log)
+
+	options, err := makeQueryOptions(ctx, log, r.config.Tenant)
 	if err != nil {
-		r.log.Error("failed to build query options", err, "query", ctx.RequestURI())
+		log.Error("failed to build query options", err, "query", ctx.RequestURI())
 		return RespondError(ctx, NewRequestError(err, http.StatusBadRequest))
 	}
 	queryIdentifier := fmt.Sprintf("%s/%s/%d", options.Namespace, options.Id, options.Revision)
 
-	input, err := r.makeQueryInput(ctx)
+	input, err := makeQueryInput(ctx, log)
 	if err != nil {
-		r.log.Error("failed to build query input", err, "query", queryIdentifier)
+		log.Error("failed to build query input", err, "query", queryIdentifier)
 		return RespondError(ctx, NewRequestError(err, http.StatusBadRequest))
 	}
-	context := middleware.GetNativeContext(ctx)
 
 	result, err := r.evaluator.SavedQuery(context, options, input)
 	if err != nil {
-		r.log.Error("failed to evaluated saved query", err, "query", queryIdentifier)
+		log.Error("failed to evaluated saved query", err, "query", queryIdentifier)
 
 		switch err := err.(type) {
 		case eval.ValidationError:
@@ -135,32 +139,32 @@ func (r RestQl) RunSavedQuery(ctx *fasthttp.RequestCtx) error {
 	return Respond(ctx, response.Body, response.StatusCode, response.Headers)
 }
 
-func (r RestQl) makeQueryOptions(ctx *fasthttp.RequestCtx) (domain.QueryOptions, error) {
+func makeQueryOptions(ctx *fasthttp.RequestCtx, log restql.Logger, envTenant string) (domain.QueryOptions, error) {
 	namespace, err := pathParamString(ctx, "namespace")
 	if err != nil {
-		r.log.Error("failed to load namespace path param", err)
+		log.Error("failed to load namespace path param", err)
 		return domain.QueryOptions{}, err
 	}
 
 	queryId, err := pathParamString(ctx, "queryId")
 	if err != nil {
-		r.log.Error("failed to load query id path param", err)
+		log.Error("failed to load query id path param", err)
 		return domain.QueryOptions{}, err
 	}
 
 	revisionStr, err := pathParamString(ctx, "revision")
 	if err != nil {
-		r.log.Error("failed to load revision path param", err)
+		log.Error("failed to load revision path param", err)
 		return domain.QueryOptions{}, err
 	}
 
 	revision, err := strconv.Atoi(revisionStr)
 	if err != nil {
-		r.log.Debug("failed to convert revision to integer")
+		log.Debug("failed to convert revision to integer")
 		return domain.QueryOptions{}, ErrInvalidRevisionType
 	}
 
-	tenant, err := r.makeTenant(ctx)
+	tenant, err := makeTenant(ctx, envTenant)
 	if err != nil {
 		return domain.QueryOptions{}, err
 	}
@@ -175,10 +179,9 @@ func (r RestQl) makeQueryOptions(ctx *fasthttp.RequestCtx) (domain.QueryOptions,
 	return qo, nil
 }
 
-func (r RestQl) makeTenant(ctx *fasthttp.RequestCtx) (string, error) {
+func makeTenant(ctx *fasthttp.RequestCtx, envTenant string) (string, error) {
 	var tenant string
 
-	envTenant := r.config.Tenant
 	if envTenant != "" {
 		tenant = envTenant
 	} else {
@@ -191,7 +194,7 @@ func (r RestQl) makeTenant(ctx *fasthttp.RequestCtx) (string, error) {
 	return tenant, nil
 }
 
-func (r RestQl) makeQueryInput(ctx *fasthttp.RequestCtx) (domain.QueryInput, error) {
+func makeQueryInput(ctx *fasthttp.RequestCtx, log restql.Logger) (domain.QueryInput, error) {
 	params := make(map[string]interface{})
 	ctx.Request.URI().QueryArgs().VisitAll(func(keyByte, valueByte []byte) {
 		key := string(keyByte)
@@ -231,7 +234,7 @@ func (r RestQl) makeQueryInput(ctx *fasthttp.RequestCtx) (domain.QueryInput, err
 			var b interface{}
 			err := json.Unmarshal(requestBody, &b)
 			if err != nil {
-				r.log.Error("failed to unmarshal request body", err)
+				log.Error("failed to unmarshal request body", err)
 				return domain.QueryInput{}, err
 			}
 

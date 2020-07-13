@@ -40,7 +40,8 @@ func NewManager(log *logger.Logger, pluginsLocation string) (Manager, error) {
 
 func (m manager) RunBeforeTransaction(ctx context.Context, requestCtx *fasthttp.RequestCtx) context.Context {
 	return m.executeAllPluginsWithContext("BeforeTransaction", ctx, func(currentCtx context.Context, p restql.Plugin) context.Context {
-		tr := m.newTransactionRequest(requestCtx)
+		log := restql.GetLogger(ctx)
+		tr := m.newTransactionRequest(log, requestCtx)
 		return p.BeforeTransaction(currentCtx, tr)
 	})
 }
@@ -77,11 +78,13 @@ func (m manager) RunAfterRequest(ctx context.Context, request domain.HttpRequest
 	})
 }
 func (m manager) executeAllPluginsWithContext(hook string, ctx context.Context, fn pluginExecutor) context.Context {
+	log := restql.GetLogger(ctx)
+
 	var pluginCtx context.Context
 
 	pluginCtx = ctx
 	for _, p := range m.availablePlugins {
-		m.safeExecute(p.Name(), hook, func() {
+		m.safeExecute(log, p.Name(), hook, func() {
 			pluginCtx = fn(pluginCtx, p)
 		})
 	}
@@ -89,21 +92,21 @@ func (m manager) executeAllPluginsWithContext(hook string, ctx context.Context, 
 	return pluginCtx
 }
 
-func (m manager) safeExecute(pluginName string, hook string, fn func()) {
+func (m manager) safeExecute(log restql.Logger, pluginName string, hook string, fn func()) {
 	defer func() {
 		if reason := recover(); reason != nil {
 			err := errors.Errorf("reason : %v\n\t stack : %v", reason, string(debug.Stack()))
-			m.log.Error("plugin produced a panic", err, "name", pluginName, "hook", hook)
+			log.Error("plugin produced a panic", err, "name", pluginName, "hook", hook)
 		}
 	}()
 
 	fn()
 }
 
-func (m manager) newTransactionRequest(ctx *fasthttp.RequestCtx) restql.TransactionRequest {
+func (m manager) newTransactionRequest(log restql.Logger, ctx *fasthttp.RequestCtx) restql.TransactionRequest {
 	uri, err := url.ParseRequestURI(string(ctx.RequestURI()))
 	if err != nil {
-		m.log.Error("failed to parse request uri for plugin", err)
+		log.Error("failed to parse request uri for plugin", err)
 	}
 
 	header := make(http.Header)

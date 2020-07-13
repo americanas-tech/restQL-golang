@@ -50,6 +50,8 @@ func NewRunner(log restql.Logger, executor Executor, globalQueryTimeout time.Dur
 }
 
 func (r Runner) ExecuteQuery(ctx context.Context, query domain.Query, queryCtx domain.QueryContext) (domain.Resources, error) {
+	log := restql.GetLogger(ctx)
+
 	var cancel context.CancelFunc
 	queryTimeout, ok := r.parseQueryTimeout(query)
 	if ok {
@@ -79,7 +81,7 @@ func (r Runner) ExecuteQuery(ctx context.Context, query domain.Query, queryCtx d
 	}()
 
 	stateWorker := &stateWorker{
-		log:       r.log,
+		log:       log,
 		requestCh: requestCh,
 		resultCh:  resultCh,
 		outputCh:  outputCh,
@@ -103,10 +105,10 @@ func (r Runner) ExecuteQuery(ctx context.Context, query domain.Query, queryCtx d
 	case output := <-outputCh:
 		return output, nil
 	case err := <-errorCh:
-		r.log.Debug("an error occurred when running the query", "error", err)
+		log.Debug("an error occurred when running the query", "error", err)
 		return nil, err
 	case <-ctx.Done():
-		r.log.Debug("query timed out")
+		log.Debug("query timed out")
 		return nil, ErrQueryTimedOut
 	}
 }

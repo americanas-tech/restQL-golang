@@ -40,7 +40,6 @@ func start() error {
 		runtime.SetMutexProfileFraction(1)
 		runtime.SetBlockProfileRate(1)
 	}
-
 	log := logger.New(os.Stdout, logger.LogOptions{
 		Enable:    cfg.Logging.Enable,
 		Timestamp: cfg.Logging.Timestamp,

@@ -5,6 +5,7 @@ import (
 	"github.com/b2wdigital/restQL-golang/internal/domain"
 	"github.com/b2wdigital/restQL-golang/internal/platform/logger"
 	"github.com/b2wdigital/restQL-golang/internal/platform/persistence/database"
+	"github.com/b2wdigital/restQL-golang/pkg/restql"
 	"regexp"
 	"strings"
 )
@@ -26,7 +27,8 @@ func NewMappingReader(log *logger.Logger, env domain.EnvSource, local map[string
 }
 
 func (mr MappingsReader) FromTenant(ctx context.Context, tenant string) (map[string]domain.Mapping, error) {
-	mr.log.Debug("fetching mappings")
+	log := restql.GetLogger(ctx)
+	log.Debug("fetching mappings")
 
 	result := make(map[string]domain.Mapping)
 
@@ -36,7 +38,7 @@ func (mr MappingsReader) FromTenant(ctx context.Context, tenant string) (map[str
 
 	dbMappings, err := mr.db.FindMappingsForTenant(ctx, tenant)
 	if err != nil && err != database.ErrNoDatabase {
-		mr.log.Debug("failed to load mappings from database", "error", err)
+		log.Debug("failed to load mappings from database", "error", err)
 		return nil, err
 	}
 
@@ -48,7 +50,7 @@ func (mr MappingsReader) FromTenant(ctx context.Context, tenant string) (map[str
 		result[k] = v
 	}
 
-	mr.log.Debug("tenant mappings", "value", result)
+	log.Debug("tenant mappings", "value", result)
 
 	return result, nil
 }

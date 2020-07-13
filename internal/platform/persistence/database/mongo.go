@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/b2wdigital/restQL-golang/internal/domain"
 	"github.com/b2wdigital/restQL-golang/internal/platform/logger"
+	"github.com/b2wdigital/restQL-golang/pkg/restql"
 	"github.com/pkg/errors"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -32,6 +33,7 @@ type mongoDatabase struct {
 }
 
 func (md mongoDatabase) FindMappingsForTenant(ctx context.Context, tenantId string) ([]domain.Mapping, error) {
+	log := restql.GetLogger(ctx)
 	mappingsTimeout := md.options.MappingsTimeout
 
 	var cancel context.CancelFunc
@@ -39,7 +41,7 @@ func (md mongoDatabase) FindMappingsForTenant(ctx context.Context, tenantId stri
 		ctx, cancel = context.WithTimeout(ctx, mappingsTimeout)
 		defer cancel()
 	}
-	md.logger.Debug("mappings timeout defined", "timeout", mappingsTimeout)
+	log.Debug("mappings timeout defined", "timeout", mappingsTimeout)
 
 	var t tenant
 
@@ -65,12 +67,13 @@ func (md mongoDatabase) FindMappingsForTenant(ctx context.Context, tenantId stri
 }
 
 func (md mongoDatabase) FindQuery(ctx context.Context, namespace string, name string, revision int) (domain.SavedQuery, error) {
-	//todo: log if timeout is zero
+	log := restql.GetLogger(ctx)
+
 	queryTimeout := md.options.QueryTimeout
 	if queryTimeout > 0 {
 		ctx, _ = context.WithTimeout(ctx, queryTimeout)
 	}
-	md.logger.Debug("query timeout defined", "timeout", queryTimeout)
+	log.Debug("query timeout defined", "timeout", queryTimeout)
 
 	var q query
 

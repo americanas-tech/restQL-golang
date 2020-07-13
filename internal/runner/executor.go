@@ -21,6 +21,8 @@ func NewExecutor(log restql.Logger, client domain.HttpClient, resourceTimeout ti
 }
 
 func (e Executor) DoStatement(ctx context.Context, statement domain.Statement, queryCtx domain.QueryContext) (domain.DoneResource, error) {
+	log := restql.GetLogger(ctx)
+
 	drOptions := DoneResourceOptions{
 		IgnoreErrors: statement.IgnoreErrors,
 		MaxAge:       statement.CacheControl.MaxAge,
@@ -30,13 +32,13 @@ func (e Executor) DoStatement(ctx context.Context, statement domain.Statement, q
 	emptyChainedParams := GetEmptyChainedParams(statement)
 	if len(emptyChainedParams) > 0 {
 		emptyChainedResponse := NewEmptyChainedResponse(emptyChainedParams, drOptions)
-		e.log.Debug("request execution skipped due to empty chained parameters", "resource", statement.Resource, "method", statement.Method)
+		log.Debug("request execution skipped due to empty chained parameters", "resource", statement.Resource, "method", statement.Method)
 		return emptyChainedResponse, nil
 	}
 
 	request := MakeRequest(e.resourceTimeout, e.forwardPrefix, statement, queryCtx)
 
-	e.log.Debug("executing request for statement", "resource", statement.Resource, "method", statement.Method, "request", request)
+	log.Debug("executing request for statement", "resource", statement.Resource, "method", statement.Method, "request", request)
 
 	response, err := e.client.Do(ctx, request)
 
@@ -44,16 +46,16 @@ func (e Executor) DoStatement(ctx context.Context, statement domain.Statement, q
 	case err == domain.ErrRequestTimeout:
 		return NewErrorResponse(err, request, response, drOptions), nil
 	case errors.Is(err, domain.ErrInvalidResponseBody):
-		e.log.Debug("err is ErrInvalidResponseBody")
+		log.Debug("err is ErrInvalidResponseBody")
 		return NewErrorResponse(err, request, response, drOptions), nil
 	case err != nil:
-		e.log.Debug("request execution failed", "error", err)
+		log.Debug("request execution failed", "error", err)
 		return NewErrorResponse(err, request, response, drOptions), err
 	}
 
 	dr := NewDoneResource(request, response, drOptions)
 
-	e.log.Debug("request execution done", "resource", statement.Resource, "method", statement.Method, "response", dr)
+	log.Debug("request execution done", "resource", statement.Resource, "method", statement.Method, "response", dr)
 
 	return dr, nil
 }

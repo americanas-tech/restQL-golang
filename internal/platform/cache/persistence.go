@@ -5,6 +5,7 @@ import (
 	"github.com/b2wdigital/restQL-golang/internal/domain"
 	"github.com/b2wdigital/restQL-golang/internal/platform/logger"
 	"github.com/b2wdigital/restQL-golang/internal/platform/persistence"
+	"github.com/b2wdigital/restQL-golang/pkg/restql"
 	"github.com/pkg/errors"
 )
 
@@ -26,7 +27,8 @@ func (c *MappingsReaderCache) FromTenant(ctx context.Context, tenant string) (ma
 
 	mappings, ok := result.(map[string]domain.Mapping)
 	if !ok {
-		c.log.Info("failed to convert cache content", "content", result)
+		log := restql.GetLogger(ctx)
+		log.Info("failed to convert cache content", "content", result)
 	}
 
 	return mappings, nil
@@ -73,7 +75,8 @@ func (c *QueryReaderCache) Get(ctx context.Context, namespace, id string, revisi
 
 	query, ok := result.(domain.SavedQuery)
 	if !ok {
-		c.log.Info("failed to convert cache content", "content", result)
+		log := restql.GetLogger(ctx)
+		log.Info("failed to convert cache content", "content", result)
 	}
 
 	return query, nil

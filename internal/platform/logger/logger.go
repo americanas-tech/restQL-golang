@@ -2,9 +2,13 @@ package logger
 
 import (
 	"fmt"
+	"github.com/b2wdigital/restQL-golang/pkg/restql"
 	"github.com/rs/zerolog"
 	"io"
+	"io/ioutil"
 )
+
+var noOpLogger = New(ioutil.Discard, LogOptions{})
 
 type LogOptions struct {
 	Enable    bool
@@ -32,7 +36,7 @@ func New(w io.Writer, options LogOptions) *Logger {
 	}
 
 	if !options.Enable {
-		zerolog.SetGlobalLevel(zerolog.Disabled)
+		logger.Level(zerolog.Disabled)
 	}
 
 	return &Logger{zLogger: logger}
@@ -77,6 +81,11 @@ func (l *Logger) Debug(msg string, fields ...interface{}) {
 	fieldMap := makeFieldMap(fields)
 
 	l.zLogger.Debug().Fields(fieldMap).Msg(msg)
+}
+
+func (l *Logger) With(key string, value interface{}) restql.Logger {
+	cl := l.zLogger.With().Str(key, fmt.Sprintf("%v", value)).Logger()
+	return &Logger{zLogger: cl}
 }
 
 func makeFieldMap(fields []interface{}) map[string]interface{} {
