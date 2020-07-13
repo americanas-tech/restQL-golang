@@ -215,15 +215,16 @@ func (nc *nativeHttpClient) unmarshalBody(log restql.Logger, response *http.Resp
 
 	err := decoder.Decode(&responseBody)
 	if err != nil {
-		body, readErr := ioutil.ReadAll(response.Body)
+		bb, readErr := ioutil.ReadAll(response.Body)
 		if readErr != nil {
-			log.Error("failed to read response body", readErr, "body", body)
+			log.Error("failed to read response bb", readErr)
 			return nil, readErr
 		}
+		body := string(bb)
 
-		log.Error("failed to unmarshal response body", err, "body", body)
+		log.Error("failed to unmarshal response bb", err, "body", body)
 
-		return string(body), err
+		return body, err
 	}
 
 	return responseBody, nil
