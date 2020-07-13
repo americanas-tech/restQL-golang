@@ -129,8 +129,8 @@ func (nc *nativeHttpClient) Do(ctx context.Context, request domain.HttpRequest) 
 
 	defer func() {
 		closeErr := response.Body.Close()
-		if err != nil {
-			log.Error("failed to close response body", closeErr, "close-err", closeErr.Error())
+		if closeErr != nil {
+			log.Error("failed to close response body", closeErr)
 		}
 	}()
 
