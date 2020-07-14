@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/b2wdigital/restQL-golang/internal/domain"
+	"github.com/b2wdigital/restQL-golang/pkg/restql"
 	"github.com/google/go-cmp/cmp"
 	"log"
 	"net"
@@ -89,3 +90,13 @@ func (ms *MockServer) Server() *httptest.Server {
 func (ms *MockServer) Teardown() {
 	ms.server.Close()
 }
+
+type NoOpLogger struct{}
+
+func (n NoOpLogger) Panic(msg string, fields ...interface{})            {}
+func (n NoOpLogger) Fatal(msg string, fields ...interface{})            {}
+func (n NoOpLogger) Error(msg string, err error, fields ...interface{}) {}
+func (n NoOpLogger) Warn(msg string, fields ...interface{})             {}
+func (n NoOpLogger) Info(msg string, fields ...interface{})             {}
+func (n NoOpLogger) Debug(msg string, fields ...interface{})            {}
+func (n NoOpLogger) With(key string, value interface{}) restql.Logger   { return n }
