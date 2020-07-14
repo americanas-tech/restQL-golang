@@ -125,19 +125,11 @@ func resolveListWithParam(list []interface{}, input domain.QueryInput) interface
 func resolveComplexWithParam(object map[string]interface{}, input domain.QueryInput) interface{} {
 	m := make(map[string]interface{})
 	for key, val := range object {
-		switch val := val.(type) {
-		case domain.Variable:
-			value, ok := getUniqueParamValue(val.Target, input)
-			if !ok {
-				continue
-			}
-
-			m[key] = value
-		case map[string]interface{}:
-			m[key] = resolveComplexWithParam(val, input)
-		default:
-			m[key] = val
+		value, ok := resolveWithParamValue(val, input)
+		if !ok {
+			continue
 		}
+		m[key] = value
 	}
 
 	return m
