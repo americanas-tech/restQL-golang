@@ -3,10 +3,11 @@ package eval
 import (
 	"fmt"
 	"github.com/b2wdigital/restQL-golang/internal/domain"
+	"github.com/b2wdigital/restQL-golang/pkg/restql"
 	"github.com/pkg/errors"
 )
 
-func ApplyFilters(query domain.Query, resources domain.Resources) (domain.Resources, error) {
+func ApplyFilters(log restql.Logger, query domain.Query, resources domain.Resources) (domain.Resources, error) {
 	result := make(domain.Resources)
 
 	for _, stmt := range query.Statements {
@@ -15,6 +16,7 @@ func ApplyFilters(query domain.Query, resources domain.Resources) (domain.Resour
 
 		filtered, err := applyOnlyFilters(stmt.Only, dr)
 		if err != nil {
+			log.Error("failed to apply filter on statement", err, "statement", fmt.Sprintf("%+#v", stmt), "done-resource", fmt.Sprintf("%v+#", dr))
 			return nil, err
 		}
 
@@ -42,7 +44,7 @@ func applyOnlyFilters(filters []interface{}, resourceResult interface{}) (interf
 		}
 		return list, nil
 	default:
-		return nil, errors.Errorf("resource result has unknown type: %T", resourceResult)
+		return resourceResult, errors.Errorf("resource result has unknown type %T with value: %v", resourceResult, resourceResult)
 	}
 }
 
