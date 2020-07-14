@@ -16,7 +16,7 @@ func ApplyFilters(log restql.Logger, query domain.Query, resources domain.Resour
 
 		filtered, err := applyOnlyFilters(stmt.Only, dr)
 		if err != nil {
-			log.Error("failed to apply filter on statement", err, "statement", fmt.Sprintf("%+#v", stmt), "done-resource", fmt.Sprintf("%v+#", dr))
+			log.Error("failed to apply filter on statement", err, "statement", fmt.Sprintf("%+#v", stmt), "done-resource", fmt.Sprintf("%+#v", dr))
 			return nil, err
 		}
 

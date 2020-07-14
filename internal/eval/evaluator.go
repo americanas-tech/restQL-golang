@@ -2,6 +2,7 @@ package eval
 
 import (
 	"context"
+	"fmt"
 	"github.com/b2wdigital/restQL-golang/internal/domain"
 	"github.com/b2wdigital/restQL-golang/internal/parser"
 	"github.com/b2wdigital/restQL-golang/internal/platform/plugins"
@@ -107,7 +108,7 @@ func (e Evaluator) evaluateQuery(ctx context.Context, queryTxt string, queryOpts
 
 	resources, err = ApplyFilters(log, query, resources)
 	if err != nil {
-		log.Error("failed to apply filters", err)
+		log.Error("failed to apply filters", err, "input", fmt.Sprintf("%+#v", queryContext.Input))
 		return nil, err
 	}
 
