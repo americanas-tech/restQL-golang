@@ -4,7 +4,6 @@ import (
 	"context"
 	"github.com/b2wdigital/restQL-golang/internal/domain"
 	"github.com/b2wdigital/restQL-golang/pkg/restql"
-	"github.com/pkg/errors"
 	"sync"
 	"time"
 )
@@ -41,15 +40,10 @@ func (e Executor) DoStatement(ctx context.Context, statement domain.Statement, q
 	log.Debug("executing request for statement", "resource", statement.Resource, "method", statement.Method, "request", request)
 
 	response, err := e.client.Do(ctx, request)
-
-	switch {
-	case err == domain.ErrRequestTimeout:
-		return NewErrorResponse(err, request, response, drOptions)
-	case errors.Is(err, domain.ErrInvalidResponseBody):
-		return NewErrorResponse(err, request, response, drOptions)
-	case err != nil:
-		log.Debug("request execution failed", "error", err)
-		return NewErrorResponse(err, request, response, drOptions)
+	if err != nil {
+		errorResponse := NewErrorResponse(err, request, response, drOptions)
+		log.Debug("request execution failed", "error", err, "resource", statement.Resource, "method", statement.Method, "response", errorResponse)
+		return errorResponse
 	}
 
 	dr := NewDoneResource(request, response, drOptions)

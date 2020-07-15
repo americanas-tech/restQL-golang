@@ -605,27 +605,78 @@ from people
 </planet>
 `
 
-	peopleResponse := `The request was skipped due to missing { :name } param value`
+	peopleResponse := `
+[
+	{
+		"name": "Luke Skywalker",
+		"height": "172",
+		"mass": "77",
+		"hair_color": "blond",
+		"skin_color": "fair",
+		"eye_color": "blue",
+		"birth_year": "19BBY",
+		"gender": "male",
+		"homeworld": "http://swapi.dev/api/planets/1/",
+		"species": [],
+		"vehicles": [
+			"http://swapi.dev/api/vehicles/14/",
+			"http://swapi.dev/api/vehicles/30/"
+		],
+		"starships": [
+			"http://swapi.dev/api/starships/12/",
+			"http://swapi.dev/api/starships/22/"
+		]
+	},
+	{
+		"name": "C-3PO",
+		"height": "167",
+		"mass": "75",
+		"hair_color": "n/a",
+		"skin_color": "gold",
+		"eye_color": "yellow",
+		"birth_year": "112BBY",
+		"gender": "n/a",
+		"homeworld": "http://swapi.dev/api/planets/1/",
+		"species": ["http://swapi.dev/api/species/2/"],
+		"vehicles": [],
+		"starships": []
+	},
+	{
+		"name": "R2-D2",
+		"height": "96",
+		"mass": "32",
+		"hair_color": "n/a",
+		"skin_color": "white, blue",
+		"eye_color": "red",
+		"birth_year": "33BBY",
+		"gender": "n/a",
+		"homeworld": "http://swapi.dev/api/planets/8/",
+		"species": ["http://swapi.dev/api/species/2/"],
+		"vehicles": [],
+		"starships": []
+	}
+]
+`
 
 	expectedResponse := fmt.Sprintf(`
 	{
 		"planets": {
 			"details": {
-				"success": false,
-				"status": 0,
+				"success": true,
+				"status": 200,
 				"metadata": {}
 			},
-			"result": "failed to unmarshal response body: outh>rainforests</south>\n   </terrain>\n</planet>\n" 
+			"result": "\n<planet>\n   <climate>temperate, tropical</climate>\n   <diameter>10200</diameter>\n   <films>\n      <element>1</element>\n   </films>\n   <gravity>1 standard</gravity>\n   <leader>Yavin King</leader>\n   <name>Yavin</name>\n   <orbital_period>4818</orbital_period>\n   <population>1000</population>\n   <residents>\n      <element>john</element>\n      <element>janne</element>\n   </residents>\n   <rotation_period>24.5</rotation_period>\n   <surface_water>8</surface_water>\n   <terrain>\n      <north>jungle</north>\n      <south>rainforests</south>\n   </terrain>\n</planet>\n" 
 		},
 		"people": {
 			"details": {
-				"success": false,
-				"status": 400,
+				"success": true,
+				"status": 200,
 				"metadata": {}
 			},
-			"result": "The request was skipped due to missing { :name } param value"
+			"result": %s
 		}
-	}`)
+	}`, peopleResponse)
 
 	mockServer := test.NewMockServer(mockPort)
 	defer mockServer.Teardown()
@@ -636,10 +687,8 @@ from people
 	})
 	mockServer.Mux().HandleFunc("/api/people/", func(w http.ResponseWriter, r *http.Request) {
 		params := r.URL.Query()
-
-		name, err := url.QueryUnescape(params["name"][0])
-		test.VerifyError(t, err)
-		test.Equal(t, name, "Yavin King")
+		var expectedNameParam []string
+		test.Equal(t, params["name"], expectedNameParam)
 
 		w.WriteHeader(200)
 		io.WriteString(w, peopleResponse)
@@ -650,7 +699,139 @@ from people
 	test.VerifyError(t, err)
 	defer response.Body.Close()
 
-	test.Equal(t, response.StatusCode, 500)
+	test.Equal(t, response.StatusCode, 200)
+
+	var body map[string]interface{}
+	err = json.NewDecoder(response.Body).Decode(&body)
+	test.VerifyError(t, err)
+
+	test.Equal(t, body, test.Unmarshal(expectedResponse))
+}
+
+func TestChainedParamReturningStringOnFromStatement(t *testing.T) {
+	query := `
+from planets as yavinAuth
+	with 
+		id = "Yavin"
+
+from planets as tatooineAuth
+	with 
+		id = "Tatooine"
+
+from people
+	with
+		name = tatooineAuth.leader
+`
+
+	yavinResponse := "a1HO1SDrIJ"
+	tatooineResponse := ""
+	peopleResponse := `
+[
+	{
+		"name": "Luke Skywalker",
+		"height": "172",
+		"mass": "77",
+		"hair_color": "blond",
+		"skin_color": "fair",
+		"eye_color": "blue",
+		"birth_year": "19BBY",
+		"gender": "male",
+		"homeworld": "http://swapi.dev/api/planets/1/",
+		"species": [],
+		"vehicles": [
+			"http://swapi.dev/api/vehicles/14/",
+			"http://swapi.dev/api/vehicles/30/"
+		],
+		"starships": [
+			"http://swapi.dev/api/starships/12/",
+			"http://swapi.dev/api/starships/22/"
+		]
+	},
+	{
+		"name": "C-3PO",
+		"height": "167",
+		"mass": "75",
+		"hair_color": "n/a",
+		"skin_color": "gold",
+		"eye_color": "yellow",
+		"birth_year": "112BBY",
+		"gender": "n/a",
+		"homeworld": "http://swapi.dev/api/planets/1/",
+		"species": ["http://swapi.dev/api/species/2/"],
+		"vehicles": [],
+		"starships": []
+	},
+	{
+		"name": "R2-D2",
+		"height": "96",
+		"mass": "32",
+		"hair_color": "n/a",
+		"skin_color": "white, blue",
+		"eye_color": "red",
+		"birth_year": "33BBY",
+		"gender": "n/a",
+		"homeworld": "http://swapi.dev/api/planets/8/",
+		"species": ["http://swapi.dev/api/species/2/"],
+		"vehicles": [],
+		"starships": []
+	}
+]
+`
+
+	expectedResponse := fmt.Sprintf(`
+	{
+		"yavinAuth": {
+			"details": {
+				"success": true,
+				"status": 200,
+				"metadata": {}
+			},
+			"result": "%s" 
+		},
+		"tatooineAuth": {
+			"details": {
+				"success": true,
+				"status": 200,
+				"metadata": {}
+			},
+			"result": "%s" 
+		},
+		"people": {
+			"details": {
+				"success": true,
+				"status": 200,
+				"metadata": {}
+			},
+			"result": %s
+		}
+	}`, yavinResponse, tatooineResponse, peopleResponse)
+
+	mockServer := test.NewMockServer(mockPort)
+	defer mockServer.Teardown()
+
+	mockServer.Mux().HandleFunc("/api/planets/Yavin", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(200)
+		io.WriteString(w, yavinResponse)
+	})
+	mockServer.Mux().HandleFunc("/api/planets/Tatooine", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(200)
+		io.WriteString(w, tatooineResponse)
+	})
+	mockServer.Mux().HandleFunc("/api/people/", func(w http.ResponseWriter, r *http.Request) {
+		params := r.URL.Query()
+		var expectedNameParam []string
+		test.Equal(t, params["name"], expectedNameParam)
+
+		w.WriteHeader(200)
+		io.WriteString(w, peopleResponse)
+	})
+	mockServer.Start()
+
+	response, err := httpClient.Post(adHocQueryUrl, "text/plain", strings.NewReader(query))
+	test.VerifyError(t, err)
+	defer response.Body.Close()
+
+	test.Equal(t, response.StatusCode, 200)
 
 	var body map[string]interface{}
 	err = json.NewDecoder(response.Body).Decode(&body)

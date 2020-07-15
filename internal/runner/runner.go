@@ -103,7 +103,6 @@ func (r Runner) ExecuteQuery(ctx context.Context, query domain.Query, queryCtx d
 
 	select {
 	case output := <-outputCh:
-		log.Debug("runner finished", "output", output)
 		return output, nil
 	case err := <-errorCh:
 		log.Debug("an error occurred when running the query", "error", err)

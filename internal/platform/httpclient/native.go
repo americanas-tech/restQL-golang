@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"fmt"
 	"github.com/b2wdigital/restQL-golang/pkg/restql"
 	"io"
 	"io/ioutil"
@@ -114,15 +113,16 @@ func (nc *nativeHttpClient) Do(ctx context.Context, request domain.HttpRequest) 
 	response, err := client.Do(req)
 	duration := time.Since(start)
 	if err != nil {
-		errorResponse := makeErrorResponse(requestUrl, duration, http.StatusRequestTimeout)
-
 		if err, ok := err.(net.Error); ok && err.Timeout() {
+			errorResponse := makeErrorResponse(requestUrl, duration, http.StatusRequestTimeout)
 			log.Info("request timed out", "url", requestUrl, "method", request.Method, "duration-ms", duration.Milliseconds())
+
 			nc.pluginManager.RunAfterRequest(ctx, request, errorResponse, domain.ErrRequestTimeout)
 
 			return errorResponse, domain.ErrRequestTimeout
 		}
 
+		errorResponse := makeErrorResponse(requestUrl, duration, defaultStatusCode)
 		log.Error("request finished with error", err, "url", requestUrl, "method", request.Method, "duration-ms", duration.Milliseconds())
 
 		nc.pluginManager.RunAfterRequest(ctx, request, errorResponse, err)
@@ -141,7 +141,7 @@ func (nc *nativeHttpClient) Do(ctx context.Context, request domain.HttpRequest) 
 		errorResponse := makeErrorResponse(requestUrl, duration, defaultStatusCode)
 		nc.pluginManager.RunAfterRequest(ctx, request, errorResponse, err)
 
-		return errorResponse, fmt.Errorf("%w: %v", domain.ErrInvalidResponseBody, body)
+		return errorResponse, err
 	}
 
 	hr := make(map[string]string)
@@ -209,24 +209,30 @@ func (nc *nativeHttpClient) makeBody(request domain.HttpRequest) (io.ReadCloser,
 }
 
 func (nc *nativeHttpClient) unmarshalBody(log restql.Logger, response *http.Response) (interface{}, error) {
-	var responseBody interface{}
-	decoder := json.NewDecoder(response.Body)
-	if !decoder.More() {
-		return nil, nil
+	target := response.Request.URL.Host
+
+	bodyByte, readErr := ioutil.ReadAll(response.Body)
+	if readErr != nil {
+		log.Error("failed to read response body", readErr, "target", target)
+		return nil, readErr
 	}
 
-	err := decoder.Decode(&responseBody)
+	if !json.Valid(bodyByte) {
+		body := string(bodyByte)
+		err := errors.New("invalid json")
+
+		log.Error("invalid json as body", err, "body", body, "target", target)
+
+		return body, nil
+	}
+
+	var responseBody interface{}
+	err := json.Unmarshal(bodyByte, &responseBody)
 	if err != nil {
-		bb, readErr := ioutil.ReadAll(response.Body)
-		if readErr != nil {
-			log.Error("failed to read response body", readErr, "target", response.Request.Host)
-			return nil, readErr
-		}
-		body := string(bb)
+		body := string(bodyByte)
+		log.Error("failed to unmarshal response body", err, "body", body, "target", target)
 
-		log.Error("failed to unmarshal response body", err, "body", body, "target", response.Request.Host)
-
-		return body, err
+		return body, nil
 	}
 
 	return responseBody, nil

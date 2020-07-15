@@ -55,6 +55,9 @@ func (r RestQl) ValidateQuery(ctx *fasthttp.RequestCtx) error {
 }
 
 func (r RestQl) RunAdHocQuery(ctx *fasthttp.RequestCtx) error {
+	context := middleware.GetNativeContext(ctx)
+	context = restql.WithLogger(ctx, r.log)
+
 	tenant, err := makeTenant(ctx, r.config.Tenant)
 	if err != nil {
 		r.log.Error("failed to build query options", err)
@@ -67,7 +70,6 @@ func (r RestQl) RunAdHocQuery(ctx *fasthttp.RequestCtx) error {
 		r.log.Error("failed to build query input", err)
 		return RespondError(ctx, NewRequestError(err, http.StatusBadRequest))
 	}
-	context := middleware.GetNativeContext(ctx)
 
 	queryTxt := string(ctx.PostBody())
 

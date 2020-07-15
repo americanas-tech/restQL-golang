@@ -16,7 +16,6 @@ type HttpClient interface {
 }
 
 var ErrRequestTimeout = errors.New("request timed out")
-var ErrInvalidResponseBody = errors.New("failed to unmarshal response body")
 
 type Headers map[string]string
 type Body interface{}

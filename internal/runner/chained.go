@@ -251,7 +251,7 @@ func getValueFromBody(pathToValue []string, b domain.Body) (interface{}, bool) {
 		}
 		return result, true
 	default:
-		return body, true
+		return nil, false
 	}
 }
 
