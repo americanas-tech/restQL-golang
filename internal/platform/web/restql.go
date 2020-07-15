@@ -96,6 +96,8 @@ func (r RestQl) RunAdHocQuery(ctx *fasthttp.RequestCtx) error {
 
 func (r RestQl) RunSavedQuery(ctx *fasthttp.RequestCtx) error {
 	log := r.log.With("restql-endpoint", string(ctx.Request.URI().Path()))
+	log = log.With("request-id", string(ctx.Request.Header.Peek("X-TID")))
+
 	context := middleware.GetNativeContext(ctx)
 	context = restql.WithLogger(context, log)
 
