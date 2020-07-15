@@ -5,7 +5,7 @@ import (
 	"github.com/b2wdigital/restQL-golang/internal/domain"
 	"github.com/b2wdigital/restQL-golang/pkg/restql"
 	"github.com/pkg/errors"
-	"golang.org/x/sync/errgroup"
+	"sync"
 	"time"
 )
 
@@ -20,7 +20,7 @@ func NewExecutor(log restql.Logger, client domain.HttpClient, resourceTimeout ti
 	return Executor{client: client, log: log, resourceTimeout: resourceTimeout, forwardPrefix: forwardPrefix}
 }
 
-func (e Executor) DoStatement(ctx context.Context, statement domain.Statement, queryCtx domain.QueryContext) (domain.DoneResource, error) {
+func (e Executor) DoStatement(ctx context.Context, statement domain.Statement, queryCtx domain.QueryContext) domain.DoneResource {
 	log := restql.GetLogger(ctx)
 
 	drOptions := DoneResourceOptions{
@@ -33,7 +33,7 @@ func (e Executor) DoStatement(ctx context.Context, statement domain.Statement, q
 	if len(emptyChainedParams) > 0 {
 		emptyChainedResponse := NewEmptyChainedResponse(emptyChainedParams, drOptions)
 		log.Debug("request execution skipped due to empty chained parameters", "resource", statement.Resource, "method", statement.Method)
-		return emptyChainedResponse, nil
+		return emptyChainedResponse
 	}
 
 	request := MakeRequest(e.resourceTimeout, e.forwardPrefix, statement, queryCtx)
@@ -44,63 +44,58 @@ func (e Executor) DoStatement(ctx context.Context, statement domain.Statement, q
 
 	switch {
 	case err == domain.ErrRequestTimeout:
-		return NewErrorResponse(err, request, response, drOptions), nil
+		return NewErrorResponse(err, request, response, drOptions)
 	case errors.Is(err, domain.ErrInvalidResponseBody):
-		log.Debug("err is ErrInvalidResponseBody")
-		return NewErrorResponse(err, request, response, drOptions), nil
+		return NewErrorResponse(err, request, response, drOptions)
 	case err != nil:
 		log.Debug("request execution failed", "error", err)
-		return NewErrorResponse(err, request, response, drOptions), err
+		return NewErrorResponse(err, request, response, drOptions)
 	}
 
 	dr := NewDoneResource(request, response, drOptions)
 
 	log.Debug("request execution done", "resource", statement.Resource, "method", statement.Method, "response", dr)
 
-	return dr, nil
+	return dr
 }
 
-func (e Executor) DoMultiplexedStatement(ctx context.Context, statements []interface{}, queryCtx domain.QueryContext) (domain.DoneResources, error) {
+func (e Executor) DoMultiplexedStatement(ctx context.Context, statements []interface{}, queryCtx domain.QueryContext) domain.DoneResources {
 	responseChans := make([]chan interface{}, len(statements))
 	for i := range responseChans {
 		responseChans[i] = make(chan interface{}, 1)
 	}
 
-	var g errgroup.Group
+	var wg sync.WaitGroup
 
+	wg.Add(len(statements))
 	for i, stmt := range statements {
 		i, stmt := i, stmt
 		ch := responseChans[i]
 
-		g.Go(func() error {
-			response, err := e.doCurrentStatement(stmt, ctx, queryCtx)
-			if err != nil {
-				return err
-			}
+		go func() {
+			response := e.doCurrentStatement(stmt, ctx, queryCtx)
 			ch <- response
-			return nil
-		})
+			wg.Done()
+		}()
 	}
 
-	if err := g.Wait(); err != nil {
-		return nil, err
-	}
+	wg.Wait()
 
 	responses := make(domain.DoneResources, len(statements))
 	for i, ch := range responseChans {
 		responses[i] = <-ch
 	}
 
-	return responses, nil
+	return responses
 }
 
-func (e Executor) doCurrentStatement(stmt interface{}, ctx context.Context, queryCtx domain.QueryContext) (interface{}, error) {
+func (e Executor) doCurrentStatement(stmt interface{}, ctx context.Context, queryCtx domain.QueryContext) interface{} {
 	switch stmt := stmt.(type) {
 	case domain.Statement:
 		return e.DoStatement(ctx, stmt, queryCtx)
 	case []interface{}:
 		return e.DoMultiplexedStatement(ctx, stmt, queryCtx)
 	default:
-		return nil, errors.Errorf("unknown statement type: %T", stmt)
+		return nil
 	}
 }

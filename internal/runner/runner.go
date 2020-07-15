@@ -218,26 +218,12 @@ func (rw *requestWorker) Run() {
 			switch statement := statement.(type) {
 			case domain.Statement:
 				go func() {
-					response, err := rw.executor.DoStatement(rw.ctx, statement, rw.queryCtx)
-					if err != nil {
-						select {
-						case rw.errorCh <- err:
-						case <-rw.ctx.Done():
-							break
-						}
-					}
+					response := rw.executor.DoStatement(rw.ctx, statement, rw.queryCtx)
 					writeResult(rw.ctx, rw.resultCh, result{ResourceIdentifier: resourceId, Response: response})
 				}()
 			case []interface{}:
 				go func() {
-					responses, err := rw.executor.DoMultiplexedStatement(rw.ctx, statement, rw.queryCtx)
-					if err != nil {
-						select {
-						case rw.errorCh <- err:
-						case <-rw.ctx.Done():
-							break
-						}
-					}
+					responses := rw.executor.DoMultiplexedStatement(rw.ctx, statement, rw.queryCtx)
 					writeResult(rw.ctx, rw.resultCh, result{ResourceIdentifier: resourceId, Response: responses})
 				}()
 			}
