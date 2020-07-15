@@ -123,6 +123,8 @@ func (nc *nativeHttpClient) Do(ctx context.Context, request domain.HttpRequest) 
 			return errorResponse, domain.ErrRequestTimeout
 		}
 
+		log.Error("request finished with error", err, "url", requestUrl, "method", request.Method, "duration-ms", duration.Milliseconds())
+
 		nc.pluginManager.RunAfterRequest(ctx, request, errorResponse, err)
 		return errorResponse, err
 	}
