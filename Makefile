@@ -8,7 +8,10 @@ peg:
 	pigeon ./internal/parser/ast/grammar.peg > ./internal/parser/ast/grammar.go
 
 dev:
-	RESTQL_PORT=9000 RESTQL_HEALTH_PORT=9001 RESTQL_DEBUG_PORT=9002 RESTQL_ENV=development go run -ldflags="-X main.build=$(vcs_ref)" -mod=vendor cmd/restQL/main.go
+	RESTQL_PORT=9000 RESTQL_HEALTH_PORT=9001 RESTQL_DEBUG_PORT=9002 RESTQL_ENV=development go run -race -ldflags="-X main.build=$(vcs_ref)" -mod=vendor cmd/restQL/main.go
+
+unit:
+	cd internal && go test -race -mod=vendor -count=1 ./...
 
 e2e: e2e-up e2e-run
 
