@@ -2,23 +2,19 @@ package runner
 
 import (
 	"github.com/b2wdigital/restQL-golang/internal/domain"
-	"sync"
 )
 
 type State struct {
-	mu *sync.Mutex
-
 	todo      domain.Resources
 	requested domain.Resources
 	done      domain.Resources
 }
 
 func NewState(todo domain.Resources) *State {
-	return &State{todo: todo, requested: make(domain.Resources), done: make(domain.Resources), mu: &sync.Mutex{}}
+	return &State{todo: todo, requested: make(domain.Resources), done: make(domain.Resources)}
 }
 
 func (s *State) Available() domain.Resources {
-	s.mu.Lock()
 	available := make(domain.Resources)
 	for key, stmt := range s.todo {
 		switch stmt := stmt.(type) {
@@ -32,7 +28,6 @@ func (s *State) Available() domain.Resources {
 			}
 		}
 	}
-	s.mu.Unlock()
 
 	return available
 }
@@ -99,38 +94,26 @@ func (s *State) isValueResolved(value interface{}) bool {
 }
 
 func (s *State) UpdateDone(resourceId domain.ResourceId, response interface{}) {
-	s.mu.Lock()
 	s.done[resourceId] = response
 	delete(s.requested, resourceId)
-	s.mu.Unlock()
 }
 
 func (s *State) Done() domain.Resources {
-	s.mu.Lock()
 	d := s.done
-	s.mu.Unlock()
 
 	return d
 }
 
 func (s *State) SetAsRequest(resourceId domain.ResourceId) {
-	s.mu.Lock()
 	statement := s.todo[resourceId]
 	s.requested[resourceId] = statement
 	delete(s.todo, resourceId)
-	s.mu.Unlock()
 }
 
 func (s *State) Requested() domain.Resources {
-	s.mu.Lock()
-	r := s.requested
-	s.mu.Unlock()
-	return r
+	return s.requested
 }
 
 func (s *State) HasFinished() bool {
-	s.mu.Lock()
-	hf := len(s.todo) == 0 && len(s.requested) == 0
-	s.mu.Unlock()
-	return hf
+	return len(s.todo) == 0 && len(s.requested) == 0
 }
