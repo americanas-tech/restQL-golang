@@ -5,33 +5,8 @@ import (
 	"github.com/b2wdigital/restQL-golang/internal/domain"
 	"github.com/b2wdigital/restQL-golang/pkg/restql"
 	"github.com/pkg/errors"
-	"sync"
 	"time"
 )
-
-var requestChannelPool = sync.Pool{
-	New: func() interface{} {
-		return make(chan request, 10)
-	},
-}
-
-var resultChannelPool = sync.Pool{
-	New: func() interface{} {
-		return make(chan result, 10)
-	},
-}
-
-var outputChannelPool = sync.Pool{
-	New: func() interface{} {
-		return make(chan domain.Resources)
-	},
-}
-
-var errorChannelPool = sync.Pool{
-	New: func() interface{} {
-		return make(chan error)
-	},
-}
 
 var ErrQueryTimedOut = errors.New("query timed out")
 
@@ -68,17 +43,10 @@ func (r Runner) ExecuteQuery(ctx context.Context, query domain.Query, queryCtx d
 
 	state := NewState(resources)
 
-	requestCh := requestChannelPool.Get().(chan request)
-	outputCh := outputChannelPool.Get().(chan domain.Resources)
-	errorCh := errorChannelPool.Get().(chan error)
-	resultCh := resultChannelPool.Get().(chan result)
-
-	defer func() {
-		requestChannelPool.Put(requestCh)
-		outputChannelPool.Put(outputCh)
-		errorChannelPool.Put(errorCh)
-		resultChannelPool.Put(resultCh)
-	}()
+	requestCh := make(chan request, 10)
+	resultCh := make(chan result, 10)
+	outputCh := make(chan domain.Resources)
+	errorCh := make(chan error)
 
 	stateWorker := &stateWorker{
 		log:       log,
