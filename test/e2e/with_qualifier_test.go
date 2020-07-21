@@ -1254,6 +1254,76 @@ to starships
 	test.Equal(t, body, test.Unmarshal(expectedResponse))
 }
 
+func TestWithQualifierUsingParameterAsBodyOnToStatement(t *testing.T) {
+	query := `
+to planets
+	with 
+		body = [{ "north": "jungle", "south": "rainforests" }] -> as-body
+		id = 1
+`
+
+	planetResponse := `
+{
+	"name": "Yavin IV",
+	"rotation_period": 24.5,
+	"orbital_period": "4818",
+	"diameter": "10200",
+	"climate": "temperate, tropical",
+	"gravity": "1 standard",
+	"terrain": { "north": "jungle", "south": "rainforests" },
+	"surface_water": "8",
+	"population": 1000,
+	"residents": ["john", "janne"],
+	"films": [1]
+}
+`
+
+	expectedResponse := fmt.Sprintf(`
+	{
+		"planets": {
+			"details": {
+				"success": true,
+				"status": 201,
+				"metadata": {}
+			},
+			"result": %s 
+		}
+	}`, planetResponse)
+
+	mockServer := test.NewMockServer(mockPort)
+	defer mockServer.Teardown()
+
+	mockServer.Mux().HandleFunc("/api/planets/1", func(w http.ResponseWriter, r *http.Request) {
+		test.Equal(t, r.Method, http.MethodPost)
+
+		b, err := ioutil.ReadAll(r.Body)
+		test.VerifyError(t, err)
+
+		body := string(b)
+		test.NotEqual(t, body, "")
+
+		expectedBody := `[{ "north": "jungle", "south": "rainforests" }]`
+
+		test.Equal(t, test.Unmarshal(expectedBody), test.Unmarshal(body))
+
+		w.WriteHeader(201)
+		io.WriteString(w, planetResponse)
+	})
+	mockServer.Start()
+
+	response, err := httpClient.Post(adHocQueryUrl, "text/plain", strings.NewReader(query))
+	test.VerifyError(t, err)
+	defer response.Body.Close()
+
+	test.Equal(t, response.StatusCode, 200)
+
+	var body map[string]interface{}
+	err = json.NewDecoder(response.Body).Decode(&body)
+	test.VerifyError(t, err)
+
+	test.Equal(t, body, test.Unmarshal(expectedResponse))
+}
+
 func removeWhitespaces(s string) string {
 	return strings.Join(strings.Fields(s), "")
 }

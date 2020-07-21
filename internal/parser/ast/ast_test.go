@@ -367,6 +367,25 @@ func TestAstGenerator(t *testing.T) {
 			}}},
 		},
 		{
+			"Get query with as-body function applied to parameter",
+			`from hero with id = [{"registryNumber": "abcdefg12345"}] -> as-body`,
+			ast.Query{Blocks: []ast.Block{{
+				Method:   ast.FromMethod,
+				Resource: "hero",
+				Qualifiers: []ast.Qualifier{{
+					With: &ast.Parameters{
+						KeyValues: []ast.KeyValue{
+							{
+								Key:       "id",
+								Value:     ast.Value{List: []ast.Value{{Object: []ast.ObjectEntry{{Key: "registryNumber", Value: ast.Value{Primitive: &ast.Primitive{String: String("abcdefg12345")}}}}}}},
+								Functions: []string{"as-body"},
+							},
+						},
+					},
+				}},
+			}}},
+		},
+		{
 			"Get query with object query parameters encoded as json",
 			`from hero with id = { "id": "1" } -> json`,
 			ast.Query{Blocks: []ast.Block{{

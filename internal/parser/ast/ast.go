@@ -17,6 +17,7 @@ const (
 	NoMultiplex         = "no-multiplex"
 	Base64              = "base64"
 	Json                = "json"
+	AsBody              = "as-body"
 )
 
 type Query struct {

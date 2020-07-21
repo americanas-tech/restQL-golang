@@ -136,6 +136,11 @@ func TestQueryParser(t *testing.T) {
 			`from hero with id = "abdcef12345" -> base64`,
 		},
 		{
+			"Unique from statement and parameter defined as body",
+			domain.Query{Statements: []domain.Statement{{Method: "from", Resource: "hero", With: domain.Params{Values: map[string]interface{}{"id": domain.AsBody{Value: []interface{}{map[string]interface{}{"registryNumber": "abdcef12345"}}}}}}}},
+			`from hero with id = [{"registryNumber": "abdcef12345"}] -> as-body`,
+		},
+		{
 			"Unique to statement with default body value and custom parameter",
 			domain.Query{Statements: []domain.Statement{{Method: "to", Resource: "hero", With: domain.Params{Body: domain.Variable{"hero"}, Values: map[string]interface{}{"name": "batman"}}}}},
 			`to hero with $hero, name = "batman"`,
