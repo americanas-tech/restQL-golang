@@ -96,6 +96,12 @@ func TestMakeRequest(t *testing.T) {
 				Headers: map[string]string{"X-TID": "1234567890", "Authorization": "Bearer abcdefgh", "Content-Type": "application/json"},
 			},
 		},
+		{
+			"should make post request with parameter as body",
+			domain.Statement{Method: domain.ToMethod, Resource: "hero", With: domain.Params{Values: map[string]interface{}{"id": domain.AsBody{Value: []interface{}{"1", "2", "3"}}}}},
+			domain.QueryContext{Mappings: map[string]domain.Mapping{"hero": mapping(t, "http://hero.io/api")}},
+			domain.HttpRequest{Method: http.MethodPost, Schema: "http", Host: "hero.io", Path: "/api", Query: map[string]interface{}{}, Body: []interface{}{"1", "2", "3"}, Headers: map[string]string{"Content-Type": "application/json"}},
+		},
 	}
 
 	forwardPrefix := "c_"

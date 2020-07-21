@@ -132,6 +132,8 @@ func applyFunctions(v interface{}, functions []string) interface{} {
 		switch fn {
 		case ast.NoMultiplex:
 			v = domain.NoMultiplex{Value: v}
+		case ast.AsBody:
+			v = domain.AsBody{Value: v}
 		case ast.Base64:
 			v = domain.Base64{Value: v}
 		case ast.Json:

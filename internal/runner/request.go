@@ -61,29 +61,28 @@ func makeBody(statement domain.Statement, mapping domain.Mapping) domain.Body {
 			continue
 		}
 
-		bodyValue, err := parseBodyValue(value)
-		if err != nil {
-			continue
+		if value, ok := value.(domain.AsBody); ok {
+			return parseBodyValue(value.Target())
 		}
 
-		result[key] = bodyValue
+		result[key] = parseBodyValue(value)
 	}
 	return result
 }
 
-func parseBodyValue(value interface{}) (interface{}, error) {
+func parseBodyValue(value interface{}) interface{} {
 	switch value := value.(type) {
 	case string:
 		valid := json.Valid([]byte(value))
 		if !valid {
-			return value, nil
+			return value
 		}
 
 		var m interface{}
-		err := json.Unmarshal([]byte(value), &m)
-		return m, err
+		_ = json.Unmarshal([]byte(value), &m)
+		return m
 	default:
-		return value, nil
+		return value
 	}
 }
 
