@@ -7,7 +7,6 @@ import (
 	"github.com/b2wdigital/restQL-golang/pkg/restql"
 	"io"
 	"io/ioutil"
-	"math/rand"
 	"net"
 	"net/http"
 	"net/url"
@@ -23,11 +22,10 @@ import (
 	"github.com/rs/dnscache"
 )
 
-const poolSize = 20
 const defaultStatusCode = 0
 
 type nativeHttpClient struct {
-	clients       []*http.Client
+	client        *http.Client
 	log           *logger.Logger
 	pluginManager plugins.Manager
 }
@@ -44,47 +42,41 @@ func newNativeHttpClient(log *logger.Logger, pm plugins.Manager, cfg *conf.Confi
 		}
 	}()
 
-	clients := make([]*http.Client, poolSize)
+	dialer := net.Dialer{
+		Timeout: clientCfg.ConnTimeout,
+	}
 
-	for i := 0; i < poolSize; i++ {
-		dialer := net.Dialer{
-			Timeout: clientCfg.ConnTimeout,
-		}
-
-		t := &http.Transport{
-			MaxIdleConns:        clientCfg.MaxIdleConns,
-			MaxIdleConnsPerHost: clientCfg.MaxIdleConnsPerHost,
-			MaxConnsPerHost:     clientCfg.MaxConnsPerHost,
-			IdleConnTimeout:     clientCfg.MaxIdleConnDuration,
-			DialContext: func(ctx context.Context, network, addr string) (conn net.Conn, err error) {
-				host, port, err := net.SplitHostPort(addr)
-				if err != nil {
-					return nil, err
+	t := &http.Transport{
+		MaxIdleConns:        clientCfg.MaxIdleConns,
+		MaxIdleConnsPerHost: clientCfg.MaxIdleConnsPerHost,
+		MaxConnsPerHost:     clientCfg.MaxConnsPerHost,
+		IdleConnTimeout:     clientCfg.MaxIdleConnDuration,
+		DialContext: func(ctx context.Context, network, addr string) (conn net.Conn, err error) {
+			host, port, err := net.SplitHostPort(addr)
+			if err != nil {
+				return nil, err
+			}
+			ips, err := r.LookupHost(ctx, host)
+			if err != nil {
+				return nil, err
+			}
+			for _, ip := range ips {
+				conn, err = dialer.DialContext(ctx, network, net.JoinHostPort(ip, port))
+				if err == nil {
+					break
 				}
-				ips, err := r.LookupHost(ctx, host)
-				if err != nil {
-					return nil, err
-				}
-				for _, ip := range ips {
-					conn, err = dialer.DialContext(ctx, network, net.JoinHostPort(ip, port))
-					if err == nil {
-						break
-					}
-				}
-				return
-			},
-		}
+			}
+			return
+		},
+	}
 
-		c := &http.Client{
-			Timeout:   clientCfg.MaxRequestTimeout,
-			Transport: t,
-		}
-
-		clients[i] = c
+	c := &http.Client{
+		Timeout:   clientCfg.MaxRequestTimeout,
+		Transport: t,
 	}
 
 	return &nativeHttpClient{
-		clients:       clients,
+		client:        c,
 		log:           log,
 		pluginManager: pm,
 	}
@@ -107,10 +99,8 @@ func (nc *nativeHttpClient) Do(ctx context.Context, request domain.HttpRequest) 
 
 	log.Debug("request created", "request-url", req.URL.String())
 
-	client := nc.peekClient()
-
 	start := time.Now()
-	response, err := client.Do(req)
+	response, err := nc.client.Do(req)
 	duration := time.Since(start)
 	if err != nil {
 		if err, ok := err.(net.Error); ok && err.Timeout() {
@@ -160,11 +150,6 @@ func (nc *nativeHttpClient) Do(ctx context.Context, request domain.HttpRequest) 
 	nc.pluginManager.RunAfterRequest(ctx, request, httpResponse, err)
 
 	return httpResponse, nil
-}
-
-func (nc *nativeHttpClient) peekClient() *http.Client {
-	n := rand.Intn(poolSize)
-	return nc.clients[n]
 }
 
 func (nc *nativeHttpClient) makeRequest(request domain.HttpRequest) (*http.Request, error) {
