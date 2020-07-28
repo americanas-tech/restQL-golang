@@ -2,20 +2,21 @@ package logger
 
 import (
 	"fmt"
-	"github.com/b2wdigital/restQL-golang/pkg/restql"
-	"github.com/rs/zerolog"
 	"io"
 	"io/ioutil"
+
+	"github.com/b2wdigital/restQL-golang/pkg/restql"
+	"github.com/rs/zerolog"
 )
 
 var noOpLogger = New(ioutil.Discard, LogOptions{})
 
 type LogOptions struct {
-	Enable             bool
-	TimestampFieldName string
-	TimeFieldFormat    string
-	Level              string
-	Format             string
+	Enable               bool
+	TimestampFieldName   string
+	TimestampFieldFormat string
+	Level                string
+	Format               string
 }
 
 func New(w io.Writer, options LogOptions) *Logger {
@@ -31,8 +32,8 @@ func New(w io.Writer, options LogOptions) *Logger {
 		zerolog.TimestampFieldName = options.TimestampFieldName
 	}
 
-	if len(options.TimeFieldFormat) > 0 {
-		zerolog.TimeFieldFormat = options.TimeFieldFormat
+	if len(options.TimestampFieldFormat) > 0 {
+		zerolog.TimeFieldFormat = options.TimestampFieldFormat
 	}
 
 	level, err := zerolog.ParseLevel(options.Level)
