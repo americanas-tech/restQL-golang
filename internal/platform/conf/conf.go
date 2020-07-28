@@ -64,7 +64,7 @@ type Config struct {
 	Logging struct {
 		Enable    bool   `yaml:"enable" env:"RESTQL_LOGGING_ENABLE"`
 		TimestampFieldName string `yaml:"timestampFieldName"`
-		TimeFieldFormat string `yaml:"timeFieldFormat"`
+		TimestampFieldFormat string `yaml:"timestampFieldFormat"`
 		Level     string `yaml:"level" env:"RESTQL_LOGGING_LEVEL"`
 		Format    string `yaml:"format"`
 	} `yaml:"logging"`
