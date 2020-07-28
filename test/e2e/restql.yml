@@ -6,7 +6,7 @@ web:
 
 logging:
   enable: true
-  timestamp: true
+  timestampFieldName: timestamp
   level: debug
   format: pretty
 
