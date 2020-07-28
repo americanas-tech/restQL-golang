@@ -12,7 +12,7 @@ var noOpLogger = New(ioutil.Discard, LogOptions{})
 
 type LogOptions struct {
 	Enable    bool
-	Timestamp bool
+	TimestampFieldName string
 	Level     string
 	Format    string
 }
@@ -25,9 +25,9 @@ func New(w io.Writer, options LogOptions) *Logger {
 
 	logger := zerolog.New(output)
 
-	if options.Timestamp {
+	if len(options.TimestampFieldName) > 0 {
 		logger = logger.With().Timestamp().Logger()
-		zerolog.TimestampFieldName = "timestamp"
+		zerolog.TimestampFieldName = options.TimestampFieldName
 	}
 
 	level, err := zerolog.ParseLevel(options.Level)

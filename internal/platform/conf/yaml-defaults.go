@@ -19,7 +19,7 @@ web:
 
 logging:
   enable: true
-  timestamp: true
+  timestampFieldName: timestamp
   level: info
   format: json
 
