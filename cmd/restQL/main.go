@@ -43,6 +43,7 @@ func start() error {
 	log := logger.New(os.Stdout, logger.LogOptions{
 		Enable:    cfg.Logging.Enable,
 		TimestampFieldName: cfg.Logging.TimestampFieldName,
+		TimeFieldFormat: cfg.Logging.TimeFieldFormat,
 		Level:     cfg.Logging.Level,
 		Format:    cfg.Logging.Format,
 	})
