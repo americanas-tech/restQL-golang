@@ -207,7 +207,7 @@ func (nc *nativeHttpClient) unmarshalBody(log restql.Logger, response *http.Resp
 		return nil, readErr
 	}
 
-	if !json.Valid(bodyByte) {
+	if len(bodyByte) == 0 || !json.Valid(bodyByte) {
 		body := string(bodyByte)
 		err := errors.New("invalid json")
 
