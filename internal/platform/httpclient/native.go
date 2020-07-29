@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"github.com/b2wdigital/restQL-golang/pkg/restql"
 	"io"
 	"io/ioutil"
 	"net"
@@ -13,6 +12,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/b2wdigital/restQL-golang/pkg/restql"
 
 	"github.com/b2wdigital/restQL-golang/internal/domain"
 	"github.com/b2wdigital/restQL-golang/internal/platform/conf"
@@ -91,6 +92,7 @@ func (nc *nativeHttpClient) Do(ctx context.Context, request domain.HttpRequest) 
 		return domain.HttpResponse{}, err
 	}
 	requestUrl := req.URL.String()
+	target := req.URL.Host
 
 	timeout, cancel := context.WithTimeout(ctx, request.Timeout)
 	defer cancel()
@@ -105,7 +107,7 @@ func (nc *nativeHttpClient) Do(ctx context.Context, request domain.HttpRequest) 
 	if err != nil {
 		if err, ok := err.(net.Error); ok && err.Timeout() {
 			errorResponse := makeErrorResponse(requestUrl, duration, http.StatusRequestTimeout)
-			log.Info("request timed out", "url", requestUrl, "method", request.Method, "duration-ms", duration.Milliseconds())
+			log.Warn("request timed out", "url", requestUrl, "target", target, "method", request.Method, "duration-ms", duration.Milliseconds())
 
 			nc.pluginManager.RunAfterRequest(ctx, request, errorResponse, domain.ErrRequestTimeout)
 
@@ -113,7 +115,7 @@ func (nc *nativeHttpClient) Do(ctx context.Context, request domain.HttpRequest) 
 		}
 
 		errorResponse := makeErrorResponse(requestUrl, duration, defaultStatusCode)
-		log.Error("request finished with error", err, "url", requestUrl, "method", request.Method, "duration-ms", duration.Milliseconds())
+		log.Error("request finished with error", err, "url", requestUrl, "target", target, "method", request.Method, "duration-ms", duration.Milliseconds())
 
 		nc.pluginManager.RunAfterRequest(ctx, request, errorResponse, err)
 		return errorResponse, err
@@ -195,10 +197,13 @@ func (nc *nativeHttpClient) makeBody(request domain.HttpRequest) (io.ReadCloser,
 
 func (nc *nativeHttpClient) unmarshalBody(log restql.Logger, response *http.Response) (interface{}, error) {
 	target := response.Request.URL.Host
+	requestURL := response.Request.URL.String()
+	statusCode := response.StatusCode
 
 	bodyByte, readErr := ioutil.ReadAll(response.Body)
 	if readErr != nil {
-		log.Error("failed to read response body", readErr, "target", target)
+		log.Error("failed to read response body", readErr, "url", requestURL, "target", target, "statusCode", statusCode)
+
 		return nil, readErr
 	}
 
@@ -206,7 +211,7 @@ func (nc *nativeHttpClient) unmarshalBody(log restql.Logger, response *http.Resp
 		body := string(bodyByte)
 		err := errors.New("invalid json")
 
-		log.Error("invalid json as body", err, "body", body, "target", target)
+		log.Error("invalid json as body", err, "body", body, "url", requestURL, "target", target, "statusCode", statusCode)
 
 		return body, nil
 	}
@@ -215,7 +220,7 @@ func (nc *nativeHttpClient) unmarshalBody(log restql.Logger, response *http.Resp
 	err := json.Unmarshal(bodyByte, &responseBody)
 	if err != nil {
 		body := string(bodyByte)
-		log.Error("failed to unmarshal response body", err, "body", body, "target", target)
+		log.Error("failed to unmarshal response body", err, "body", body, "url", requestURL, "target", target, "statusCode", statusCode)
 
 		return body, nil
 	}
