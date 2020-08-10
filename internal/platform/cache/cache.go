@@ -2,10 +2,11 @@ package cache
 
 import (
 	"context"
+	"time"
+
 	"github.com/b2wdigital/restQL-golang/internal/platform/logger"
 	"github.com/bluele/gcache"
 	"github.com/pkg/errors"
-	"time"
 )
 
 type cacheItem struct {
@@ -155,6 +156,7 @@ func (rw *refreshWorker) Run() {
 		select {
 		case <-rw.ticker.C:
 			for key := range rw.refreshWorkCh {
+				key := key
 				go func() {
 					_, err := rw.cache.loadItem(context.Background(), key)
 					if err != nil {
