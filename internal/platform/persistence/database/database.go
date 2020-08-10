@@ -3,11 +3,12 @@ package database
 import (
 	"context"
 	"errors"
+	"time"
+
 	"github.com/b2wdigital/restQL-golang/internal/domain"
 	"github.com/b2wdigital/restQL-golang/internal/platform/logger"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
-	"time"
 )
 
 type dbOptions struct {
@@ -71,7 +72,12 @@ func New(log *logger.Logger, connectionString string, optionList ...Option) (Dat
 		options.Client().SetConnectTimeout(timeout),
 	)
 	if err != nil {
-		return noOpDatabase{}, err
+		return nil, err
+	}
+
+	err = client.Ping(ctx, nil)
+	if err != nil {
+		return nil, err
 	}
 
 	log.Info("database connection established", "url", connectionString)

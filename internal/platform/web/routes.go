@@ -1,6 +1,8 @@
 package web
 
 import (
+	"net/http"
+
 	"github.com/b2wdigital/restQL-golang/internal/eval"
 	"github.com/b2wdigital/restQL-golang/internal/parser"
 	"github.com/b2wdigital/restQL-golang/internal/platform/cache"
@@ -12,7 +14,6 @@ import (
 	"github.com/b2wdigital/restQL-golang/internal/platform/plugins"
 	"github.com/b2wdigital/restQL-golang/internal/runner"
 	"github.com/valyala/fasthttp"
-	"net/http"
 )
 
 func API(log *logger.Logger, cfg *conf.Config) (fasthttp.RequestHandler, error) {
@@ -31,8 +32,9 @@ func API(log *logger.Logger, cfg *conf.Config) (fasthttp.RequestHandler, error) 
 		database.WithQueryTimeout(cfg.Database.Timeouts.Query),
 		database.WithDatabaseName(cfg.Database.Name),
 	)
-	if err != nil {
+	if err != nil && cfg.Database.ConnectionString != "" {
 		log.Error("failed to establish connection to database", err)
+		return nil, err
 	}
 
 	pluginManager, err := plugins.NewManager(log, cfg.Plugins.Location)
