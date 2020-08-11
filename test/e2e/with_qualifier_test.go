@@ -634,8 +634,8 @@ from planets
 	with 
 		name = "Yavin IV" -> base64
 		population = 1000
+		leaders = [["King", "Queen"], ["Governor"]] -> flatten -> no-multiplex
 		residents = ["john", "janne"] -> json
-		films = [1, 2, 3] -> no-multiplex -> json
 `
 
 	planetResponse := `
@@ -673,10 +673,7 @@ from planets
 		params := r.URL.Query()
 
 		test.Equal(t, params["population"][0], "1000")
-
-		films, err := url.QueryUnescape(params["films"][0])
-		test.VerifyError(t, err)
-		test.Equal(t, films, "[1,2,3]")
+		test.Equal(t, params["leaders"], []string{"King", "Queen", "Governor"})
 
 		name, err := url.QueryUnescape(params["name"][0])
 		test.VerifyError(t, err)

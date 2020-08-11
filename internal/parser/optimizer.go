@@ -127,8 +127,7 @@ func makeParams(wq ast.Qualifier) domain.Params {
 }
 
 func applyFunctions(v interface{}, functions []string) interface{} {
-	for i := len(functions) - 1; i >= 0; i-- {
-		fn := functions[i]
+	for _, fn := range functions {
 		switch fn {
 		case ast.NoMultiplex:
 			v = domain.NoMultiplex{Value: v}
@@ -138,6 +137,8 @@ func applyFunctions(v interface{}, functions []string) interface{} {
 			v = domain.Base64{Value: v}
 		case ast.Json:
 			v = domain.Json{Value: v}
+		case ast.Flatten:
+			v = domain.Flatten{Value: v}
 		}
 	}
 
