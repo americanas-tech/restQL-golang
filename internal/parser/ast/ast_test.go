@@ -420,6 +420,27 @@ func TestAstGenerator(t *testing.T) {
 			}}},
 		},
 		{
+			"Get query with parameter using flatten function",
+			`from hero with id = [[1],[2],[3]] -> flatten`,
+			ast.Query{Blocks: []ast.Block{{
+				Method:   ast.FromMethod,
+				Resource: "hero",
+				Qualifiers: []ast.Qualifier{{
+					With: &ast.Parameters{
+						KeyValues: []ast.KeyValue{{
+							Key: "id",
+							Value: ast.Value{List: []ast.Value{
+								{List: []ast.Value{{Primitive: &ast.Primitive{Int: Int(1)}}}},
+								{List: []ast.Value{{Primitive: &ast.Primitive{Int: Int(2)}}}},
+								{List: []ast.Value{{Primitive: &ast.Primitive{Int: Int(3)}}}},
+							}},
+							Functions: []string{"flatten"},
+						}},
+					},
+				}},
+			}}},
+		},
+		{
 			"Get query with dynamic body parameter and multiple statements",
 			`from hero
 							with

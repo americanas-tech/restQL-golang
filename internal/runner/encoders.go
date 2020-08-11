@@ -26,7 +26,7 @@ func applyEncoderToStatement(log restql.Logger, statement domain.Statement) doma
 		values[key] = result
 	}
 
-	body := applyEncoderToBody(statement.With.Body)
+	body := applyEncoderToBody(log, statement.With.Body)
 
 	statement.With.Body = body
 	statement.With.Values = values
@@ -34,15 +34,17 @@ func applyEncoderToStatement(log restql.Logger, statement domain.Statement) doma
 	return statement
 }
 
-func applyEncoderToBody(body interface{}) interface{} {
+func applyEncoderToBody(log restql.Logger, body interface{}) interface{} {
 	switch body := body.(type) {
 	case domain.Base64:
-		return applyBase64encoder(applyEncoderToBody(body.Target()))
+		return applyBase64encoder(applyEncoderToBody(log, body.Target()))
 	case domain.Json:
-		return applyEncoderToBody(body.Target())
+		return applyEncoderToBody(log, body.Target())
+	case domain.Flatten:
+		return applyFlattenEncoder(log, applyEncoderToBody(log, body.Target()))
 	case domain.Function:
 		return body.Map(func(target interface{}) interface{} {
-			return applyEncoderToBody(target)
+			return applyEncoderToBody(log, target)
 		})
 	default:
 		return body
@@ -65,6 +67,13 @@ func applyEncoderToValue(log restql.Logger, value interface{}) interface{} {
 		}
 
 		return applyJsonEncoder(log, applyEncoderToValue(log, value.Target()))
+	case domain.Flatten:
+		target := value.Target()
+		if _, ok := target.(domain.Chain); ok {
+			return value
+		}
+
+		return applyFlattenEncoder(log, applyEncoderToValue(log, value.Target()))
 	case domain.Function:
 		return value.Map(func(target interface{}) interface{} {
 			return applyEncoderToValue(log, target)
@@ -85,7 +94,6 @@ func applyEncoderToValue(log restql.Logger, value interface{}) interface{} {
 		return value
 	}
 }
-
 func applyJsonEncoder(log restql.Logger, value interface{}) interface{} {
 	data, err := json.Marshal(value)
 	if err != nil {
@@ -98,4 +106,30 @@ func applyJsonEncoder(log restql.Logger, value interface{}) interface{} {
 func applyBase64encoder(value interface{}) interface{} {
 	data := []byte(fmt.Sprintf("%v", value))
 	return base64.StdEncoding.EncodeToString(data)
+}
+
+func applyFlattenEncoder(log restql.Logger, value interface{}) interface{} {
+	if value, ok := value.([]interface{}); ok {
+		return flatten(value)
+	}
+
+	log.Warn("flatten encoder used on non list value", "value", value)
+	return value
+}
+
+func flatten(ii []interface{}) []interface{} {
+	var res []interface{}
+	for _, i := range ii {
+		if i == nil {
+			continue
+		}
+		switch t := i.(type) {
+		case []interface{}:
+			res = append(res, flatten(t)...)
+		default:
+			res = append(res, i)
+		}
+	}
+
+	return res
 }

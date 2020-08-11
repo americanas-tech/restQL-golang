@@ -67,3 +67,15 @@ func (ab AsBody) Target() interface{} {
 func (ab AsBody) Map(fn func(target interface{}) interface{}) Function {
 	return AsBody{Value: fn(ab.Value)}
 }
+
+type Flatten struct {
+	Value interface{}
+}
+
+func (f Flatten) Target() interface{} {
+	return f.Value
+}
+
+func (f Flatten) Map(fn func(target interface{}) interface{}) Function {
+	return Flatten{Value: fn(f.Value)}
+}

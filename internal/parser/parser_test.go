@@ -123,7 +123,7 @@ func TestQueryParser(t *testing.T) {
 		{
 			"Unique from statement with multiple functions applied to parameter",
 			domain.Query{Statements: []domain.Statement{{Method: "from", Resource: "hero", With: domain.Params{Values: map[string]interface{}{"id": domain.NoMultiplex{domain.Json{[]interface{}{1, 2}}}}}}}},
-			"from hero with id = [1, 2] -> no-multiplex -> json",
+			"from hero with id = [1, 2] -> json -> no-multiplex",
 		},
 		{
 			"Unique from statement and object parameter encoded as json",
@@ -139,6 +139,11 @@ func TestQueryParser(t *testing.T) {
 			"Unique from statement and parameter defined as body",
 			domain.Query{Statements: []domain.Statement{{Method: "from", Resource: "hero", With: domain.Params{Values: map[string]interface{}{"id": domain.AsBody{Value: []interface{}{map[string]interface{}{"registryNumber": "abdcef12345"}}}}}}}},
 			`from hero with id = [{"registryNumber": "abdcef12345"}] -> as-body`,
+		},
+		{
+			"Unique from statement and parameter flattened",
+			domain.Query{Statements: []domain.Statement{{Method: "from", Resource: "hero", With: domain.Params{Values: map[string]interface{}{"id": domain.Flatten{[]interface{}{[]interface{}{1}, []interface{}{2}, []interface{}{3}}}}}}}},
+			`from hero with id = [[1], [2], [3]] -> flatten`,
 		},
 		{
 			"Unique to statement with default body value and custom parameter",

@@ -142,6 +142,36 @@ func TestApplyEncoders(t *testing.T) {
 			}},
 		},
 		{
+			"should apply flatten encoder to with value",
+			domain.Resources{"hero": domain.Statement{
+				Method:   "from",
+				Resource: "hero",
+				With: domain.Params{Values: map[string]interface{}{
+					"weapons": domain.Flatten{Value: []interface{}{[]interface{}{1}, []interface{}{2}, []interface{}{3}}},
+				}},
+			}},
+			domain.Resources{"hero": domain.Statement{
+				Method:   "from",
+				Resource: "hero",
+				With: domain.Params{Values: map[string]interface{}{
+					"weapons": []interface{}{1, 2, 3},
+				}},
+			}},
+		},
+		{
+			"should apply flatten encoder to with body",
+			domain.Resources{"hero": domain.Statement{
+				Method:   "from",
+				Resource: "hero",
+				With:     domain.Params{Body: domain.Flatten{Value: []interface{}{[]interface{}{1}, []interface{}{2}, []interface{}{3}}}},
+			}},
+			domain.Resources{"hero": domain.Statement{
+				Method:   "from",
+				Resource: "hero",
+				With:     domain.Params{Body: []interface{}{1, 2, 3}},
+			}},
+		},
+		{
 			"should apply nested encoders to with value",
 			domain.Resources{"hero": domain.Statement{
 				Method:   "from",

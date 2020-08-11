@@ -18,6 +18,7 @@ const (
 	Base64              = "base64"
 	Json                = "json"
 	AsBody              = "as-body"
+	Flatten             = "flatten"
 )
 
 type Query struct {
