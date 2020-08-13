@@ -18,15 +18,19 @@ import (
 )
 
 func main() {
-	if err := start(); err != nil {
-		fmt.Printf("[ERROR] failed to start api : %v", err)
+	Start()
+}
+
+func Start() {
+	if err := startServer(); err != nil {
+		fmt.Printf("[ERROR] failed to startServer api : %v", err)
 		os.Exit(1)
 	}
 }
 
 var build string
 
-func start() error {
+func startServer() error {
 	//// =========================================================================
 	//// Config
 	startupStart := time.Now()
@@ -41,11 +45,11 @@ func start() error {
 		runtime.SetBlockProfileRate(1)
 	}
 	log := logger.New(os.Stdout, logger.LogOptions{
-		Enable:    cfg.Logging.Enable,
-		TimestampFieldName: cfg.Logging.TimestampFieldName,
+		Enable:               cfg.Logging.Enable,
+		TimestampFieldName:   cfg.Logging.TimestampFieldName,
 		TimestampFieldFormat: cfg.Logging.TimestampFieldFormat,
-		Level:     cfg.Logging.Level,
-		Format:    cfg.Logging.Format,
+		Level:                cfg.Logging.Level,
+		Format:               cfg.Logging.Format,
 	})
 	//// =========================================================================
 	//// Start API
@@ -126,11 +130,6 @@ func shutdown(ctx context.Context, log *logger.Logger, servers ...*fasthttp.Serv
 	var g errgroup.Group
 	done := make(chan struct{})
 
-	go func() {
-		groupErr = g.Wait()
-		done <- struct{}{}
-	}()
-
 	for _, s := range servers {
 		s := s
 		g.Go(func() error {
@@ -143,6 +142,11 @@ func shutdown(ctx context.Context, log *logger.Logger, servers ...*fasthttp.Serv
 			return err
 		})
 	}
+
+	go func() {
+		groupErr = g.Wait()
+		done <- struct{}{}
+	}()
 
 	select {
 	case <-ctx.Done():
