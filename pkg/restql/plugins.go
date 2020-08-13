@@ -3,12 +3,18 @@ package restql
 import (
 	"context"
 	"github.com/b2wdigital/restQL-golang/internal/domain"
+	"log"
 	"net/http"
 	"net/url"
+	"sync"
 )
 
 type Plugin interface {
 	Name() string
+}
+
+type LifecyclePlugin interface {
+	Plugin
 	BeforeTransaction(ctx context.Context, tr TransactionRequest) context.Context
 	AfterTransaction(ctx context.Context, tr TransactionResponse) context.Context
 	BeforeQuery(ctx context.Context, query string, queryCtx QueryContext) context.Context
@@ -36,14 +42,58 @@ type QueryContext = domain.QueryContext
 type HttpRequest = domain.HttpRequest
 type HttpResponse = domain.HttpResponse
 
-type pluginLoader = func(logger Logger) (Plugin, error)
+var (
+	plugins   pluginIndex
+	pluginsMu sync.RWMutex
+)
 
-var pluginLoaders []pluginLoader
-
-func ServePlugin(fn func(logger Logger) (Plugin, error)) {
-	pluginLoaders = append(pluginLoaders, fn)
+type pluginIndex struct {
+	lifecycle []PluginInfo
 }
 
-func GetPluginLoaders() []pluginLoader {
-	return pluginLoaders
+const (
+	Lifecycle PluginType = iota
+	Database
+)
+
+type PluginType int
+
+func (pt PluginType) String() string {
+	switch pt {
+	case Lifecycle:
+		return "Lifecycle"
+	case Database:
+		return "Database"
+	default:
+		return "Unknown"
+	}
+}
+
+type PluginInfo struct {
+	Name string
+	Type PluginType
+	New  func(Logger) (Plugin, error)
+}
+
+func RegisterPlugin(loader func() PluginInfo) {
+	pluginsMu.Lock()
+	defer pluginsMu.Unlock()
+
+	pi := loader()
+
+	switch pi.Type {
+	case Lifecycle:
+		plugins.lifecycle = append(plugins.lifecycle, pi)
+	default:
+		log.Printf("[WARN] unknown plugin type: %s", pi.Type)
+	}
+}
+
+func LifecyclePlugins() []PluginInfo {
+	pluginsMu.RLock()
+	defer pluginsMu.RUnlock()
+
+	lp := plugins.lifecycle
+
+	return lp
 }

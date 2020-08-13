@@ -24,17 +24,17 @@ type Evaluator struct {
 	mappingsReader MappingsReader
 	queryReader    QueryReader
 	runner         runner.Runner
-	pluginsManager plugins.Manager
+	lifecycle      plugins.Lifecycle
 }
 
-func NewEvaluator(log restql.Logger, mr MappingsReader, qr QueryReader, r runner.Runner, p parser.Parser, pm plugins.Manager) Evaluator {
+func NewEvaluator(log restql.Logger, mr MappingsReader, qr QueryReader, r runner.Runner, p parser.Parser, l plugins.Lifecycle) Evaluator {
 	return Evaluator{
 		log:            log,
 		mappingsReader: mr,
 		queryReader:    qr,
 		runner:         r,
 		parser:         p,
-		pluginsManager: pm,
+		lifecycle:      l,
 	}
 }
 
@@ -94,7 +94,7 @@ func (e Evaluator) evaluateQuery(ctx context.Context, queryTxt string, queryOpts
 		Input:    queryInput,
 	}
 
-	queryCtx := e.pluginsManager.RunBeforeQuery(ctx, queryTxt, queryContext)
+	queryCtx := e.lifecycle.BeforeQuery(ctx, queryTxt, queryContext)
 
 	resources, err := e.runner.ExecuteQuery(queryCtx, query, queryContext)
 	switch {
@@ -114,7 +114,7 @@ func (e Evaluator) evaluateQuery(ctx context.Context, queryTxt string, queryOpts
 
 	resources = ApplyAggregators(query, resources)
 
-	queryCtx = e.pluginsManager.RunAfterQuery(queryCtx, queryTxt, resources)
+	queryCtx = e.lifecycle.AfterQuery(queryCtx, queryTxt, resources)
 
 	resources = ApplyHidden(query, resources)
 

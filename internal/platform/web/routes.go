@@ -37,13 +37,13 @@ func API(log *logger.Logger, cfg *conf.Config) (fasthttp.RequestHandler, error) 
 		return nil, err
 	}
 
-	pluginManager, err := plugins.NewManager(log, cfg.Plugins.Location)
+	lifecycle, err := plugins.NewLifecycle(log)
 	if err != nil {
 		log.Error("failed to initialize plugins", err)
 	}
 
-	app := NewApp(log, cfg, pluginManager)
-	client := httpclient.New(log, pluginManager, cfg)
+	app := NewApp(log, cfg, lifecycle)
+	client := httpclient.New(log, lifecycle, cfg)
 	executor := runner.NewExecutor(log, client, cfg.Http.QueryResourceTimeout, cfg.Http.ForwardPrefix)
 	r := runner.NewRunner(log, executor, cfg.Http.GlobalQueryTimeout)
 
@@ -60,7 +60,7 @@ func API(log *logger.Logger, cfg *conf.Config) (fasthttp.RequestHandler, error) 
 	queryCache := cache.New(log, cfg.Cache.Query.MaxSize, cache.QueryCacheLoader(qr))
 	cacheQr := cache.NewQueryReaderCache(log, qr, queryCache)
 
-	e := eval.NewEvaluator(log, cacheMr, cacheQr, r, parserCache, pluginManager)
+	e := eval.NewEvaluator(log, cacheMr, cacheQr, r, parserCache, lifecycle)
 
 	restQl := NewRestQl(log, cfg, e, defaultParser)
 
@@ -73,7 +73,7 @@ func API(log *logger.Logger, cfg *conf.Config) (fasthttp.RequestHandler, error) 
 }
 
 func Health(log *logger.Logger, cfg *conf.Config) fasthttp.RequestHandler {
-	app := NewApp(log, cfg, plugins.NoOpManager)
+	app := NewApp(log, cfg, plugins.NoOpLifecycle)
 	check := NewCheck(cfg.Build)
 
 	app.Handle(http.MethodGet, "/health", check.Health)
@@ -83,7 +83,7 @@ func Health(log *logger.Logger, cfg *conf.Config) fasthttp.RequestHandler {
 }
 
 func Debug(log *logger.Logger, cfg *conf.Config) fasthttp.RequestHandler {
-	app := NewApp(log, cfg, plugins.NoOpManager)
+	app := NewApp(log, cfg, plugins.NoOpLifecycle)
 	pprof := NewPprof()
 
 	app.Handle(http.MethodGet, "/debug/pprof/goroutine", pprof.Index)

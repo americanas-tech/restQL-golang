@@ -26,12 +26,12 @@ import (
 const defaultStatusCode = 0
 
 type nativeHttpClient struct {
-	client        *http.Client
-	log           *logger.Logger
-	pluginManager plugins.Manager
+	client    *http.Client
+	log       *logger.Logger
+	lifecycle plugins.Lifecycle
 }
 
-func newNativeHttpClient(log *logger.Logger, pm plugins.Manager, cfg *conf.Config) *nativeHttpClient {
+func newNativeHttpClient(log *logger.Logger, l plugins.Lifecycle, cfg *conf.Config) *nativeHttpClient {
 	clientCfg := cfg.Http.Client
 
 	r := &dnscache.Resolver{}
@@ -77,14 +77,14 @@ func newNativeHttpClient(log *logger.Logger, pm plugins.Manager, cfg *conf.Confi
 	}
 
 	return &nativeHttpClient{
-		client:        c,
-		log:           log,
-		pluginManager: pm,
+		client:    c,
+		log:       log,
+		lifecycle: l,
 	}
 }
 
 func (nc *nativeHttpClient) Do(ctx context.Context, request domain.HttpRequest) (domain.HttpResponse, error) {
-	ctx = nc.pluginManager.RunBeforeRequest(ctx, request)
+	ctx = nc.lifecycle.BeforeRequest(ctx, request)
 	log := restql.GetLogger(ctx)
 
 	req, err := nc.makeRequest(request)
@@ -109,7 +109,7 @@ func (nc *nativeHttpClient) Do(ctx context.Context, request domain.HttpRequest) 
 			errorResponse := makeErrorResponse(requestUrl, duration, http.StatusRequestTimeout)
 			log.Warn("request timed out", "url", requestUrl, "target", target, "method", request.Method, "duration-ms", duration.Milliseconds())
 
-			nc.pluginManager.RunAfterRequest(ctx, request, errorResponse, domain.ErrRequestTimeout)
+			nc.lifecycle.AfterRequest(ctx, request, errorResponse, domain.ErrRequestTimeout)
 
 			return errorResponse, domain.ErrRequestTimeout
 		}
@@ -117,7 +117,7 @@ func (nc *nativeHttpClient) Do(ctx context.Context, request domain.HttpRequest) 
 		errorResponse := makeErrorResponse(requestUrl, duration, defaultStatusCode)
 		log.Error("request finished with error", err, "url", requestUrl, "target", target, "method", request.Method, "duration-ms", duration.Milliseconds())
 
-		nc.pluginManager.RunAfterRequest(ctx, request, errorResponse, err)
+		nc.lifecycle.AfterRequest(ctx, request, errorResponse, err)
 		return errorResponse, err
 	}
 
@@ -131,7 +131,7 @@ func (nc *nativeHttpClient) Do(ctx context.Context, request domain.HttpRequest) 
 	body, err := nc.unmarshalBody(log, response)
 	if err != nil {
 		errorResponse := makeErrorResponse(requestUrl, duration, defaultStatusCode)
-		nc.pluginManager.RunAfterRequest(ctx, request, errorResponse, err)
+		nc.lifecycle.AfterRequest(ctx, request, errorResponse, err)
 
 		return errorResponse, err
 	}
@@ -149,7 +149,7 @@ func (nc *nativeHttpClient) Do(ctx context.Context, request domain.HttpRequest) 
 		Duration:   duration,
 	}
 
-	nc.pluginManager.RunAfterRequest(ctx, request, httpResponse, err)
+	nc.lifecycle.AfterRequest(ctx, request, httpResponse, err)
 
 	return httpResponse, nil
 }

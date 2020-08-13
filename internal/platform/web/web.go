@@ -12,17 +12,17 @@ import (
 type Handler func(ctx *fasthttp.RequestCtx) error
 
 type App struct {
-	config         *conf.Config
-	router         *fasthttprouter.Router
-	log            *logger.Logger
-	pluginsManager plugins.Manager
+	config    *conf.Config
+	router    *fasthttprouter.Router
+	log       *logger.Logger
+	lifecycle plugins.Lifecycle
 }
 
-func NewApp(log *logger.Logger, config *conf.Config, pm plugins.Manager) App {
+func NewApp(log *logger.Logger, config *conf.Config, pm plugins.Lifecycle) App {
 	r := fasthttprouter.New()
 	r.NotFound = func(ctx *fasthttp.RequestCtx) { ctx.Response.SetBodyString("There is nothing here. =/") }
 
-	return App{router: r, config: config, log: log, pluginsManager: pm}
+	return App{router: r, config: config, log: log, lifecycle: pm}
 }
 
 func (a App) Handle(method, url string, handler Handler) {
@@ -42,7 +42,7 @@ func (a App) Handle(method, url string, handler Handler) {
 }
 
 func (a App) RequestHandler() fasthttp.RequestHandler {
-	mws := middleware.FetchEnabled(a.log, a.config, a.pluginsManager)
+	mws := middleware.FetchEnabled(a.log, a.config, a.lifecycle)
 	h := middleware.Apply(a.router.Handler, mws, a.log)
 	return h
 }

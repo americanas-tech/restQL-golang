@@ -30,7 +30,7 @@ func Apply(h fasthttp.RequestHandler, mws []Middleware, log *logger.Logger) fast
 	return handler
 }
 
-func FetchEnabled(log *logger.Logger, cfg *conf.Config, pm plugins.Manager) []Middleware {
+func FetchEnabled(log *logger.Logger, cfg *conf.Config, pm plugins.Lifecycle) []Middleware {
 	mws := []Middleware{NewRecover(log), NewNativeContext(), NewTransaction(pm)}
 
 	mwCfg := cfg.Http.Server.Middlewares
