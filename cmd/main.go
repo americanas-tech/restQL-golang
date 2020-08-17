@@ -1,4 +1,4 @@
-package main
+package cmd
 
 import (
 	"context"
@@ -17,9 +17,7 @@ import (
 	"time"
 )
 
-func main() {
-	Start()
-}
+var build string
 
 func Start() {
 	if err := startServer(); err != nil {
@@ -27,8 +25,6 @@ func Start() {
 		os.Exit(1)
 	}
 }
-
-var build string
 
 func startServer() error {
 	//// =========================================================================

@@ -8,7 +8,7 @@ peg:
 	pigeon ./internal/parser/ast/grammar.peg > ./internal/parser/ast/grammar.go
 
 dev:
-	RESTQL_PORT=9000 RESTQL_HEALTH_PORT=9001 RESTQL_DEBUG_PORT=9002 RESTQL_ENV=development go run -race -ldflags="-X main.build=$(vcs_ref)" cmd/main.go
+	RESTQL_PORT=9000 RESTQL_HEALTH_PORT=9001 RESTQL_DEBUG_PORT=9002 RESTQL_ENV=development go run -race -ldflags="-X github.com/b2wdigital/restQL-golang/cmd.build=$(vcs_ref)" main.go
 
 unit:
 	cd internal && go test -race -count=1 ./...
@@ -22,4 +22,4 @@ e2e-run:
 	cd test/e2e && go test -race -count=1 ./...
 
 build:
-	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o bin/restQL -ldflags="-s -w -X main.build=$(vcs_ref) -extldflags -static" -tags netgo cmd/restQL/main.go
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o bin/restQL -ldflags="-s -w -X github.com/b2wdigital/restQL-golang/cmd.build==$(vcs_ref) -extldflags -static" -tags netgo cmd/restQL/main.go
