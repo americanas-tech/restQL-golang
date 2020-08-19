@@ -3,16 +3,16 @@ package web
 import (
 	"net/http"
 
-	"github.com/b2wdigital/restQL-golang/internal/eval"
-	"github.com/b2wdigital/restQL-golang/internal/parser"
-	"github.com/b2wdigital/restQL-golang/internal/platform/cache"
-	"github.com/b2wdigital/restQL-golang/internal/platform/conf"
-	"github.com/b2wdigital/restQL-golang/internal/platform/httpclient"
-	"github.com/b2wdigital/restQL-golang/internal/platform/logger"
-	"github.com/b2wdigital/restQL-golang/internal/platform/persistence"
-	"github.com/b2wdigital/restQL-golang/internal/platform/persistence/database"
-	"github.com/b2wdigital/restQL-golang/internal/platform/plugins"
-	"github.com/b2wdigital/restQL-golang/internal/runner"
+	"github.com/b2wdigital/restQL-golang/v4/internal/eval"
+	"github.com/b2wdigital/restQL-golang/v4/internal/parser"
+	"github.com/b2wdigital/restQL-golang/v4/internal/platform/cache"
+	"github.com/b2wdigital/restQL-golang/v4/internal/platform/conf"
+	"github.com/b2wdigital/restQL-golang/v4/internal/platform/httpclient"
+	"github.com/b2wdigital/restQL-golang/v4/internal/platform/logger"
+	"github.com/b2wdigital/restQL-golang/v4/internal/platform/persistence"
+	"github.com/b2wdigital/restQL-golang/v4/internal/platform/persistence/database"
+	"github.com/b2wdigital/restQL-golang/v4/internal/platform/plugins"
+	"github.com/b2wdigital/restQL-golang/v4/internal/runner"
 	"github.com/valyala/fasthttp"
 )
 

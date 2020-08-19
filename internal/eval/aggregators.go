@@ -1,6 +1,6 @@
 package eval
 
-import "github.com/b2wdigital/restQL-golang/internal/domain"
+import "github.com/b2wdigital/restQL-golang/v4/internal/domain"
 
 func ApplyAggregators(query domain.Query, resources domain.Resources) domain.Resources {
 	for _, stmt := range query.Statements {

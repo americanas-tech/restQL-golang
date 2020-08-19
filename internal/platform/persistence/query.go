@@ -2,11 +2,12 @@ package persistence
 
 import (
 	"context"
-	"github.com/b2wdigital/restQL-golang/internal/domain"
-	"github.com/b2wdigital/restQL-golang/internal/eval"
-	"github.com/b2wdigital/restQL-golang/internal/platform/logger"
-	"github.com/b2wdigital/restQL-golang/internal/platform/persistence/database"
-	"github.com/b2wdigital/restQL-golang/pkg/restql"
+
+	"github.com/b2wdigital/restQL-golang/v4/internal/domain"
+	"github.com/b2wdigital/restQL-golang/v4/internal/eval"
+	"github.com/b2wdigital/restQL-golang/v4/internal/platform/logger"
+	"github.com/b2wdigital/restQL-golang/v4/internal/platform/persistence/database"
+	"github.com/b2wdigital/restQL-golang/v4/pkg/restql"
 	"github.com/pkg/errors"
 )
 

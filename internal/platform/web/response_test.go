@@ -1,11 +1,12 @@
 package web_test
 
 import (
-	"github.com/b2wdigital/restQL-golang/internal/domain"
-	"github.com/b2wdigital/restQL-golang/internal/platform/web"
-	"github.com/b2wdigital/restQL-golang/test"
 	"reflect"
 	"testing"
+
+	"github.com/b2wdigital/restQL-golang/v4/internal/domain"
+	"github.com/b2wdigital/restQL-golang/v4/internal/platform/web"
+	"github.com/b2wdigital/restQL-golang/v4/test"
 )
 
 func TestMakeQueryResponse(t *testing.T) {

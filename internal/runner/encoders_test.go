@@ -1,11 +1,12 @@
 package runner_test
 
 import (
-	"github.com/b2wdigital/restQL-golang/internal/domain"
-	"github.com/b2wdigital/restQL-golang/internal/runner"
-	"github.com/b2wdigital/restQL-golang/pkg/restql"
-	"github.com/b2wdigital/restQL-golang/test"
 	"testing"
+
+	"github.com/b2wdigital/restQL-golang/v4/internal/domain"
+	"github.com/b2wdigital/restQL-golang/v4/internal/runner"
+	"github.com/b2wdigital/restQL-golang/v4/pkg/restql"
+	"github.com/b2wdigital/restQL-golang/v4/test"
 )
 
 func TestApplyEncoders(t *testing.T) {

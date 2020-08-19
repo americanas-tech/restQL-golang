@@ -2,9 +2,10 @@ package ast_test
 
 import (
 	"fmt"
-	"github.com/b2wdigital/restQL-golang/internal/parser/ast"
-	"github.com/b2wdigital/restQL-golang/test"
 	"testing"
+
+	"github.com/b2wdigital/restQL-golang/v4/internal/parser/ast"
+	"github.com/b2wdigital/restQL-golang/v4/test"
 )
 
 func String(s string) *string {

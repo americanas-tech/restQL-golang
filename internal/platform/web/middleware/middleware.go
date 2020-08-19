@@ -2,9 +2,10 @@ package middleware
 
 import (
 	"fmt"
-	"github.com/b2wdigital/restQL-golang/internal/platform/conf"
-	"github.com/b2wdigital/restQL-golang/internal/platform/logger"
-	"github.com/b2wdigital/restQL-golang/internal/platform/plugins"
+
+	"github.com/b2wdigital/restQL-golang/v4/internal/platform/conf"
+	"github.com/b2wdigital/restQL-golang/v4/internal/platform/logger"
+	"github.com/b2wdigital/restQL-golang/v4/internal/platform/plugins"
 	"github.com/valyala/fasthttp"
 )
 

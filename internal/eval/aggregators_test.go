@@ -1,10 +1,11 @@
 package eval_test
 
 import (
-	"github.com/b2wdigital/restQL-golang/internal/domain"
-	"github.com/b2wdigital/restQL-golang/internal/eval"
-	"github.com/b2wdigital/restQL-golang/test"
 	"testing"
+
+	"github.com/b2wdigital/restQL-golang/v4/internal/domain"
+	"github.com/b2wdigital/restQL-golang/v4/internal/eval"
+	"github.com/b2wdigital/restQL-golang/v4/test"
 )
 
 func TestApplyAggregators(t *testing.T) {

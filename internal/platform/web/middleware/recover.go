@@ -1,11 +1,12 @@
 package middleware
 
 import (
-	"github.com/b2wdigital/restQL-golang/internal/platform/logger"
-	"github.com/pkg/errors"
-	"github.com/valyala/fasthttp"
 	"net/http"
 	"runtime/debug"
+
+	"github.com/b2wdigital/restQL-golang/v4/internal/platform/logger"
+	"github.com/pkg/errors"
+	"github.com/valyala/fasthttp"
 )
 
 type Recover struct {

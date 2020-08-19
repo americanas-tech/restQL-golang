@@ -2,10 +2,11 @@ package runner
 
 import (
 	"context"
-	"github.com/b2wdigital/restQL-golang/internal/domain"
-	"github.com/b2wdigital/restQL-golang/pkg/restql"
 	"sync"
 	"time"
+
+	"github.com/b2wdigital/restQL-golang/v4/internal/domain"
+	"github.com/b2wdigital/restQL-golang/v4/pkg/restql"
 )
 
 type Executor struct {

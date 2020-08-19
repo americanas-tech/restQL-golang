@@ -2,11 +2,12 @@ package restql
 
 import (
 	"context"
-	"github.com/b2wdigital/restQL-golang/internal/domain"
 	"log"
 	"net/http"
 	"net/url"
 	"sync"
+
+	"github.com/b2wdigital/restQL-golang/v4/internal/domain"
 )
 
 type Plugin interface {

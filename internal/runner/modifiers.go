@@ -1,6 +1,6 @@
 package runner
 
-import "github.com/b2wdigital/restQL-golang/internal/domain"
+import "github.com/b2wdigital/restQL-golang/v4/internal/domain"
 
 func ApplyModifiers(resources domain.Resources, modifiers domain.Modifiers) domain.Resources {
 	for resourceId, stmt := range resources {

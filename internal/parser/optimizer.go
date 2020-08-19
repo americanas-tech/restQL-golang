@@ -1,11 +1,12 @@
 package parser
 
 import (
-	"github.com/b2wdigital/restQL-golang/internal/domain"
-	"github.com/b2wdigital/restQL-golang/internal/parser/ast"
-	"github.com/pkg/errors"
 	"regexp"
 	"strings"
+
+	"github.com/b2wdigital/restQL-golang/v4/internal/domain"
+	"github.com/b2wdigital/restQL-golang/v4/internal/parser/ast"
+	"github.com/pkg/errors"
 )
 
 func Optimize(queryAst *ast.Query) (domain.Query, error) {

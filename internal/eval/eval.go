@@ -2,7 +2,8 @@ package eval
 
 import (
 	"context"
-	"github.com/b2wdigital/restQL-golang/internal/domain"
+
+	"github.com/b2wdigital/restQL-golang/v4/internal/domain"
 )
 
 type MappingsReader interface {

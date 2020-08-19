@@ -1,11 +1,12 @@
 package plugins_test
 
 import (
-	"github.com/b2wdigital/restQL-golang/internal/domain"
-	"github.com/b2wdigital/restQL-golang/internal/platform/plugins"
-	"github.com/b2wdigital/restQL-golang/test"
 	"net/http"
 	"testing"
+
+	"github.com/b2wdigital/restQL-golang/v4/internal/domain"
+	"github.com/b2wdigital/restQL-golang/v4/internal/platform/plugins"
+	"github.com/b2wdigital/restQL-golang/v4/test"
 )
 
 func TestDecodeQueryResult(t *testing.T) {

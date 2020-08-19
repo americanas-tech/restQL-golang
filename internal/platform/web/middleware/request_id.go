@@ -1,7 +1,7 @@
 package middleware
 
 import (
-	"github.com/b2wdigital/restQL-golang/internal/platform/logger"
+	"github.com/b2wdigital/restQL-golang/v4/internal/platform/logger"
 	"github.com/valyala/fasthttp"
 )
 

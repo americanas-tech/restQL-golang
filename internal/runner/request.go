@@ -2,7 +2,7 @@ package runner
 
 import (
 	"encoding/json"
-	"github.com/b2wdigital/restQL-golang/internal/domain"
+	"github.com/b2wdigital/restQL-golang/v4/internal/domain"
 	"net/http"
 	"strings"
 	"time"

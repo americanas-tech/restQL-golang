@@ -3,9 +3,9 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"github.com/b2wdigital/restQL-golang/internal/platform/conf"
-	"github.com/b2wdigital/restQL-golang/internal/platform/logger"
-	"github.com/b2wdigital/restQL-golang/internal/platform/web"
+	"github.com/b2wdigital/restQL-golang/v4/internal/platform/conf"
+	"github.com/b2wdigital/restQL-golang/v4/internal/platform/logger"
+	"github.com/b2wdigital/restQL-golang/v4/internal/platform/web"
 	"github.com/pkg/errors"
 	"github.com/valyala/fasthttp"
 	_ "go.uber.org/automaxprocs"

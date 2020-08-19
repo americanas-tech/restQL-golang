@@ -2,9 +2,10 @@ package runner
 
 import (
 	"bytes"
-	"github.com/b2wdigital/restQL-golang/internal/domain"
 	"regexp"
 	"strconv"
+
+	"github.com/b2wdigital/restQL-golang/v4/internal/domain"
 )
 
 type DoneResourceOptions struct {

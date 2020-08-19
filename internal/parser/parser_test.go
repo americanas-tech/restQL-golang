@@ -1,11 +1,12 @@
 package parser_test
 
 import (
-	"github.com/b2wdigital/restQL-golang/internal/domain"
-	"github.com/b2wdigital/restQL-golang/internal/parser"
-	"github.com/b2wdigital/restQL-golang/test"
 	"regexp"
 	"testing"
+
+	"github.com/b2wdigital/restQL-golang/v4/internal/domain"
+	"github.com/b2wdigital/restQL-golang/v4/internal/parser"
+	"github.com/b2wdigital/restQL-golang/v4/test"
 )
 
 func TestQueryParser(t *testing.T) {

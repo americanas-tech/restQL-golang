@@ -1,7 +1,7 @@
 package plugins
 
 import (
-	"github.com/b2wdigital/restQL-golang/internal/domain"
+	"github.com/b2wdigital/restQL-golang/v4/internal/domain"
 )
 
 func DecodeQueryResult(queryResult domain.Resources) map[string]interface{} {

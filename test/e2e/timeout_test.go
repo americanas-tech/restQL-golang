@@ -2,12 +2,13 @@ package e2e
 
 import (
 	"encoding/json"
-	"github.com/b2wdigital/restQL-golang/test"
 	"io"
 	"net/http"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/b2wdigital/restQL-golang/v4/test"
 )
 
 func TestTimeoutOnFromStatement(t *testing.T) {

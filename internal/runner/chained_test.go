@@ -2,10 +2,11 @@ package runner_test
 
 import (
 	"fmt"
-	"github.com/b2wdigital/restQL-golang/internal/domain"
-	"github.com/b2wdigital/restQL-golang/internal/runner"
-	"github.com/b2wdigital/restQL-golang/test"
 	"testing"
+
+	"github.com/b2wdigital/restQL-golang/v4/internal/domain"
+	"github.com/b2wdigital/restQL-golang/v4/internal/runner"
+	"github.com/b2wdigital/restQL-golang/v4/test"
 )
 
 func TestResolveChainedValues(t *testing.T) {

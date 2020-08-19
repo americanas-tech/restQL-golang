@@ -3,9 +3,6 @@ package test
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/b2wdigital/restQL-golang/internal/domain"
-	"github.com/b2wdigital/restQL-golang/pkg/restql"
-	"github.com/google/go-cmp/cmp"
 	"log"
 	"net"
 	"net/http"
@@ -13,6 +10,10 @@ import (
 	"reflect"
 	"regexp"
 	"testing"
+
+	"github.com/b2wdigital/restQL-golang/v4/internal/domain"
+	"github.com/b2wdigital/restQL-golang/v4/pkg/restql"
+	"github.com/google/go-cmp/cmp"
 )
 
 func Unmarshal(body string) interface{} {

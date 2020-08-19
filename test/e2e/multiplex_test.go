@@ -3,12 +3,13 @@ package e2e
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/b2wdigital/restQL-golang/test"
 	"io"
 	"net/http"
 	"net/url"
 	"strings"
 	"testing"
+
+	"github.com/b2wdigital/restQL-golang/v4/test"
 )
 
 func TestMultiplexingWithStaticParameterOnFromStatement(t *testing.T) {

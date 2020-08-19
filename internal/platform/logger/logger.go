@@ -5,7 +5,7 @@ import (
 	"io"
 	"io/ioutil"
 
-	"github.com/b2wdigital/restQL-golang/pkg/restql"
+	"github.com/b2wdigital/restQL-golang/v4/pkg/restql"
 	"github.com/rs/zerolog"
 )
 

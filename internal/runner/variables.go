@@ -2,8 +2,9 @@ package runner
 
 import (
 	"encoding/json"
-	"github.com/b2wdigital/restQL-golang/internal/domain"
 	"strconv"
+
+	"github.com/b2wdigital/restQL-golang/v4/internal/domain"
 )
 
 func ResolveVariables(resources domain.Resources, input domain.QueryInput) domain.Resources {

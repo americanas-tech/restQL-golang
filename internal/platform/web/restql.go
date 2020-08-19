@@ -3,17 +3,18 @@ package web
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/b2wdigital/restQL-golang/internal/domain"
-	"github.com/b2wdigital/restQL-golang/internal/eval"
-	"github.com/b2wdigital/restQL-golang/internal/parser"
-	"github.com/b2wdigital/restQL-golang/internal/platform/conf"
-	"github.com/b2wdigital/restQL-golang/internal/platform/logger"
-	"github.com/b2wdigital/restQL-golang/internal/platform/web/middleware"
-	"github.com/b2wdigital/restQL-golang/pkg/restql"
-	"github.com/pkg/errors"
-	"github.com/valyala/fasthttp"
 	"net/http"
 	"strconv"
+
+	"github.com/b2wdigital/restQL-golang/v4/internal/domain"
+	"github.com/b2wdigital/restQL-golang/v4/internal/eval"
+	"github.com/b2wdigital/restQL-golang/v4/internal/parser"
+	"github.com/b2wdigital/restQL-golang/v4/internal/platform/conf"
+	"github.com/b2wdigital/restQL-golang/v4/internal/platform/logger"
+	"github.com/b2wdigital/restQL-golang/v4/internal/platform/web/middleware"
+	"github.com/b2wdigital/restQL-golang/v4/pkg/restql"
+	"github.com/pkg/errors"
+	"github.com/valyala/fasthttp"
 )
 
 var jsonContentType = "application/json"

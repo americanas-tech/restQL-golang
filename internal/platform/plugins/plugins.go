@@ -2,14 +2,15 @@ package plugins
 
 import (
 	"context"
-	"github.com/b2wdigital/restQL-golang/internal/domain"
-	"github.com/b2wdigital/restQL-golang/internal/platform/logger"
-	"github.com/b2wdigital/restQL-golang/pkg/restql"
-	"github.com/pkg/errors"
-	"github.com/valyala/fasthttp"
 	"net/http"
 	"net/url"
 	"runtime/debug"
+
+	"github.com/b2wdigital/restQL-golang/v4/internal/domain"
+	"github.com/b2wdigital/restQL-golang/v4/internal/platform/logger"
+	"github.com/b2wdigital/restQL-golang/v4/pkg/restql"
+	"github.com/pkg/errors"
+	"github.com/valyala/fasthttp"
 )
 
 type Lifecycle interface {

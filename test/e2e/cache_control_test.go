@@ -3,11 +3,12 @@ package e2e
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/b2wdigital/restQL-golang/test"
 	"io"
 	"net/http"
 	"strings"
 	"testing"
+
+	"github.com/b2wdigital/restQL-golang/v4/test"
 )
 
 func TestGlobalCacheControlOnFromStatement(t *testing.T) {

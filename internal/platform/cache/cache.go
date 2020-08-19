@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/b2wdigital/restQL-golang/internal/platform/logger"
+	"github.com/b2wdigital/restQL-golang/v4/internal/platform/logger"
 	"github.com/bluele/gcache"
 	"github.com/pkg/errors"
 )

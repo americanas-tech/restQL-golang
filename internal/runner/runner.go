@@ -2,10 +2,11 @@ package runner
 
 import (
 	"context"
-	"github.com/b2wdigital/restQL-golang/internal/domain"
-	"github.com/b2wdigital/restQL-golang/pkg/restql"
-	"github.com/pkg/errors"
 	"time"
+
+	"github.com/b2wdigital/restQL-golang/v4/internal/domain"
+	"github.com/b2wdigital/restQL-golang/v4/pkg/restql"
+	"github.com/pkg/errors"
 )
 
 var ErrQueryTimedOut = errors.New("query timed out")
