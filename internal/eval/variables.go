@@ -1,25 +1,28 @@
-package runner
+package eval
 
 import (
 	"encoding/json"
+	"fmt"
 	"strconv"
 
 	"github.com/b2wdigital/restQL-golang/v4/internal/domain"
 )
 
-func ResolveVariables(resources domain.Resources, input domain.QueryInput) domain.Resources {
-	for key, statement := range resources {
-		if statement, ok := statement.(domain.Statement); ok {
-			statement.With = resolveWith(statement.With, input)
-			statement.Timeout = resolveTimeout(statement.Timeout, input)
-			statement.Headers = resolveHeaders(statement.Headers, input)
-			statement.CacheControl = resolveCacheControl(statement.CacheControl, input)
+func ResolveVariables(query domain.Query, input domain.QueryInput) domain.Query {
+	result := make([]domain.Statement, len(query.Statements))
 
-			resources[key] = statement
-		}
+	for i, stmt := range query.Statements {
+		copyStmt := stmt
+		copyStmt.With = resolveWith(copyStmt.With, input)
+		copyStmt.Timeout = resolveTimeout(copyStmt.Timeout, input)
+		copyStmt.Headers = resolveHeaders(copyStmt.Headers, input)
+		copyStmt.CacheControl = resolveCacheControl(copyStmt.CacheControl, input)
+		copyStmt.Only = resolveOnly(copyStmt.Only, input)
+
+		result[i] = copyStmt
 	}
 
-	return resources
+	return domain.Query{Use: query.Use, Statements: result}
 }
 
 func resolveWith(with domain.Params, input domain.QueryInput) domain.Params {
@@ -245,6 +248,40 @@ func resolveChain(chain domain.Chain, input domain.QueryInput) (domain.Chain, bo
 	}
 
 	return result, true
+}
+
+func resolveOnly(only []interface{}, input domain.QueryInput) []interface{} {
+	if only == nil {
+		return nil
+	}
+
+	result := make([]interface{}, len(only))
+	for i, filter := range only {
+		switch filter := filter.(type) {
+		case domain.Match:
+			fmt.Printf("RESOLVING MATCH ON ONLY\n")
+			match, ok := resolveMatch(filter, input)
+			if !ok {
+				continue
+			}
+			fmt.Printf("MATCH RESOLVED ON ONLY : %+#v\n", match)
+			result[i] = match
+		default:
+			result[i] = filter
+		}
+	}
+
+	return result
+}
+
+func resolveMatch(match domain.Match, input domain.QueryInput) (interface{}, bool) {
+	switch matchArg := match.Arg.(type) {
+	case domain.Variable:
+		arg, ok := getUniqueParamValue(matchArg.Target, input)
+		return domain.Match{Value: match.Value, Arg: arg}, ok
+	default:
+		return match, true
+	}
 }
 
 func castToInt(value interface{}) (int, bool) {

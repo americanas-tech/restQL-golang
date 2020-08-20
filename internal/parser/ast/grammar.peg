@@ -128,8 +128,8 @@ FILTER_VALUE <- fv:(IDENT_WITH_DOT / '*') {
 	return newFilterValue(fv)
 }
 
-MATCHES_FN <- WS "->" WS "matches" "(" arg:(String) ")" {
-	return newMatchesFunction(arg)
+MATCHES_FN <- WS "->" WS "matches" "(" arg:(VARIABLE / String) ")" {
+	return arg, nil
 }
 
 HEADERS <- WS_MAND "headers" WS_MAND h:(HEADER) hs:(WS LS WS HEADER)* {

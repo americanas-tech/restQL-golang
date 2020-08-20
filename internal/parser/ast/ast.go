@@ -57,7 +57,12 @@ type Qualifier struct {
 
 type Filter struct {
 	Field []string
-	Match string
+	Match *Match
+}
+
+type Match struct {
+	String   *string
+	Variable *string
 }
 
 type Parameters struct {
