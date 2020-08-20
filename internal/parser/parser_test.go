@@ -162,6 +162,11 @@ func TestQueryParser(t *testing.T) {
 			`from hero only name -> matches("^Super"), weapons`,
 		},
 		{
+			"Unique from statement and only filters with match function using variable as argument",
+			domain.Query{Statements: []domain.Statement{{Method: "from", Resource: "hero", Only: []interface{}{domain.Match{Value: []string{"name"}, Arg: domain.Variable{Target: "heroName"}}, []string{"weapons"}}}}},
+			`from hero only name -> matches($heroName), weapons`,
+		},
+		{
 			"Unique from statement with aggregation",
 			domain.Query{Statements: []domain.Statement{
 				{Method: "from", Resource: "hero"},

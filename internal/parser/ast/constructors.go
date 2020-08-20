@@ -423,8 +423,13 @@ func newFilter(identifier, matchArg interface{}) (Filter, error) {
 	filter := Filter{Field: fields}
 
 	if matchArg != nil {
-		ma := matchArg.(string)
-		filter.Match = ma
+		switch m := matchArg.(type) {
+		case string:
+			filter.Match = &Match{String: &m}
+		case variable:
+			matchVar := string(m)
+			filter.Match = &Match{Variable: &matchVar}
+		}
 	}
 
 	return filter, nil
@@ -439,11 +444,6 @@ func newFilterValue(value interface{}) (string, error) {
 	default:
 		return "", fmt.Errorf("got an unknown type : %T", value)
 	}
-}
-
-func newMatchesFunction(arg interface{}) (string, error) {
-	a := arg.(string)
-	return a, nil
 }
 
 type hidden bool

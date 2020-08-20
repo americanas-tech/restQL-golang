@@ -550,7 +550,24 @@ func TestAstGenerator(t *testing.T) {
 				Resource: "hero",
 				Qualifiers: []ast.Qualifier{
 					{Only: []ast.Filter{
-						{Field: []string{"name"}, Match: "^Super"},
+						{Field: []string{"name"}, Match: &ast.Match{String: String("^Super")}},
+						{Field: []string{"weapons"}},
+					}},
+				},
+			}}},
+		},
+		{
+			"Get query with select filters and match function using variable as argument",
+			`from hero
+								only
+										name -> matches($heroName)
+										weapons`,
+			ast.Query{Blocks: []ast.Block{{
+				Method:   ast.FromMethod,
+				Resource: "hero",
+				Qualifiers: []ast.Qualifier{
+					{Only: []ast.Filter{
+						{Field: []string{"name"}, Match: &ast.Match{Variable: String("heroName")}},
 						{Field: []string{"weapons"}},
 					}},
 				},

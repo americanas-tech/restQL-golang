@@ -2,6 +2,7 @@ package eval
 
 import (
 	"fmt"
+	"regexp"
 
 	"github.com/b2wdigital/restQL-golang/v4/internal/domain"
 	"github.com/b2wdigital/restQL-golang/v4/pkg/restql"
@@ -34,7 +35,10 @@ func applyOnlyFilters(filters []interface{}, resourceResult interface{}) (interf
 
 	switch resourceResult := resourceResult.(type) {
 	case domain.DoneResource:
-		result := extractWithFilters(buildFilterTree(filters), resourceResult.ResponseBody)
+		result, err := extractWithFilters(buildFilterTree(filters), resourceResult.ResponseBody)
+		if err != nil {
+			return nil, err
+		}
 		resourceResult.ResponseBody = result
 
 		return resourceResult, nil
@@ -49,7 +53,7 @@ func applyOnlyFilters(filters []interface{}, resourceResult interface{}) (interf
 	}
 }
 
-func extractWithFilters(filters map[string]interface{}, resourceResult interface{}) interface{} {
+func extractWithFilters(filters map[string]interface{}, resourceResult interface{}) (interface{}, error) {
 	filters, hasSelectAll := extractSelectAllFilter(filters)
 
 	switch resourceResult := resourceResult.(type) {
@@ -68,17 +72,24 @@ func extractWithFilters(filters map[string]interface{}, resourceResult interface
 			}
 
 			if matchFilter, ok := subFilter.(domain.Match); ok {
-				applyMatchFilter(matchFilter, key, value, node)
+				err := applyMatchFilter(matchFilter, key, value, node)
+				if err != nil {
+					return nil, err
+				}
 			} else if subFilter == nil {
 				node[key] = value
 			} else {
 				subFilter, _ := subFilter.(map[string]interface{})
-				node[key] = extractWithFilters(subFilter, value)
+				f, err := extractWithFilters(subFilter, value)
+				if err != nil {
+					return nil, err
+				}
+				node[key] = f
 			}
 
 		}
 
-		return node
+		return node, nil
 	case []interface{}:
 		var node []interface{}
 		if hasSelectAll {
@@ -88,12 +99,16 @@ func extractWithFilters(filters map[string]interface{}, resourceResult interface
 		}
 
 		for i, r := range resourceResult {
-			node[i] = extractWithFilters(filters, r)
+			f, err := extractWithFilters(filters, r)
+			if err != nil {
+				return nil, err
+			}
+			node[i] = f
 		}
 
-		return node
+		return node, nil
 	default:
-		return resourceResult
+		return resourceResult, nil
 	}
 }
 
@@ -112,14 +127,19 @@ func extractSelectAllFilter(filters map[string]interface{}) (map[string]interfac
 	return m, has
 }
 
-func applyMatchFilter(filter domain.Match, key string, value interface{}, node map[string]interface{}) {
+func applyMatchFilter(filter domain.Match, key string, value interface{}, node map[string]interface{}) error {
+	matchRegex, err := parseMatchArg(filter.Arg)
+	if err != nil {
+		return err
+	}
+
 	switch value := value.(type) {
 	case []interface{}:
 		var list []interface{}
 
 		for _, v := range value {
 			strVal := fmt.Sprintf("%v", v)
-			match := filter.Arg.MatchString(strVal)
+			match := matchRegex.MatchString(strVal)
 			if match {
 				list = append(list, v)
 			}
@@ -129,10 +149,10 @@ func applyMatchFilter(filter domain.Match, key string, value interface{}, node m
 			node[key] = list
 		}
 
-		return
+		return nil
 	default:
 		strVal := fmt.Sprintf("%v", value)
-		match := filter.Arg.MatchString(strVal)
+		match := matchRegex.MatchString(strVal)
 
 		if match {
 			node[key] = value
@@ -140,7 +160,18 @@ func applyMatchFilter(filter domain.Match, key string, value interface{}, node m
 			delete(node, key)
 		}
 
-		return
+		return nil
+	}
+}
+
+func parseMatchArg(arg interface{}) (*regexp.Regexp, error) {
+	switch arg := arg.(type) {
+	case *regexp.Regexp:
+		return arg, nil
+	case string:
+		return regexp.Compile(arg)
+	default:
+		return nil, errors.New("failed to parse match argument : unknown match argument type")
 	}
 }
 

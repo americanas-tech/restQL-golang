@@ -97,6 +97,8 @@ func (e Evaluator) evaluateQuery(ctx context.Context, queryTxt string, queryOpts
 
 	queryCtx := e.lifecycle.BeforeQuery(ctx, queryTxt, queryContext)
 
+	query = ResolveVariables(query, queryContext.Input)
+
 	resources, err := e.runner.ExecuteQuery(queryCtx, query, queryContext)
 	switch {
 	case err == runner.ErrQueryTimedOut:

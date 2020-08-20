@@ -99,7 +99,6 @@ func (r Runner) parseQueryTimeout(query domain.Query) (time.Duration, bool) {
 func (r Runner) initializeResources(query domain.Query, queryCtx domain.QueryContext) (domain.Resources, error) {
 	resources := domain.NewResources(query.Statements)
 
-	resources = ResolveVariables(resources, queryCtx.Input)
 	err := ValidateChainedValues(resources)
 	if err != nil {
 		return nil, err

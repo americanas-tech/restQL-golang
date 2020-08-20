@@ -245,17 +245,18 @@ func TestOnlyFilters(t *testing.T) {
 				Only: []interface{}{
 					domain.Match{Value: []string{"id"}, Arg: regexp.MustCompile("56789")},
 					domain.Match{Value: []string{"name"}, Arg: regexp.MustCompile("batman")},
+					domain.Match{Value: []string{"city"}, Arg: "Gotham"},
 					[]string{"age"},
 				},
 			}}},
 			domain.Resources{
 				"hero": domain.DoneResource{
-					ResponseBody: test.Unmarshal(`{ "id": "12345", "name": "batman", "age": 42 }`),
+					ResponseBody: test.Unmarshal(`{ "id": "12345", "name": "batman", "age": 42, "city": "Gotham" }`),
 				},
 			},
 			domain.Resources{
 				"hero": domain.DoneResource{
-					ResponseBody: test.Unmarshal(`{ "name": "batman", "age": 42 }`),
+					ResponseBody: test.Unmarshal(`{ "name": "batman", "age": 42, "city": "Gotham" }`),
 				},
 			},
 		},

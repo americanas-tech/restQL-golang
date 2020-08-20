@@ -1,7 +1,5 @@
 package domain
 
-import "regexp"
-
 type Function interface {
 	Target() interface{}
 	Map(fn func(target interface{}) interface{}) Function
@@ -45,7 +43,7 @@ func (b Base64) Map(fn func(target interface{}) interface{}) Function {
 
 type Match struct {
 	Value interface{}
-	Arg   *regexp.Regexp
+	Arg   interface{}
 }
 
 func (m Match) Target() interface{} {

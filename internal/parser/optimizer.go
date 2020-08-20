@@ -151,18 +151,35 @@ func makeOnlyFilter(onlyQualifier ast.Qualifier) ([]interface{}, error) {
 
 	result := make([]interface{}, len(filters))
 	for i, f := range filters {
-		if f.Match != "" {
-			regex, err := regexp.Compile(f.Match)
+		if f.Match != nil {
+			match, err := makeMatchFunction(f)
 			if err != nil {
-				return nil, errors.Wrap(err, "matches function regex argument is invalid")
+				return nil, err
 			}
-			result[i] = domain.Match{Value: f.Field, Arg: regex}
+			result[i] = match
 		} else {
 			result[i] = f.Field
 		}
 	}
 
 	return result, nil
+}
+
+func makeMatchFunction(f ast.Filter) (domain.Match, error) {
+	if f.Match.String != nil {
+		arg := *f.Match.String
+		regex, err := regexp.Compile(arg)
+		if err != nil {
+			return domain.Match{}, errors.Wrap(err, "matches function regex argument is invalid")
+		}
+		return domain.Match{Value: f.Field, Arg: regex}, nil
+	}
+
+	if f.Match.Variable != nil {
+		return domain.Match{Value: f.Field, Arg: domain.Variable{Target: *f.Match.Variable}}, nil
+	}
+
+	return domain.Match{}, errors.New("no argument provided to matches functions")
 }
 
 func makeHeaders(qualifier ast.Qualifier) map[string]interface{} {
