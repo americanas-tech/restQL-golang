@@ -13,11 +13,10 @@ import (
 type MappingsReaderCache struct {
 	log   *logger.Logger
 	cache *Cache
-	mr    persistence.MappingsReader
 }
 
-func NewMappingsReaderCache(log *logger.Logger, mr persistence.MappingsReader, c *Cache) *MappingsReaderCache {
-	return &MappingsReaderCache{log: log, mr: mr, cache: c}
+func NewMappingsReaderCache(log *logger.Logger, c *Cache) *MappingsReaderCache {
+	return &MappingsReaderCache{log: log, cache: c}
 }
 
 func (c *MappingsReaderCache) FromTenant(ctx context.Context, tenant string) (map[string]domain.Mapping, error) {
@@ -60,11 +59,10 @@ type cacheQueryKey struct {
 type QueryReaderCache struct {
 	log   *logger.Logger
 	cache *Cache
-	qr    persistence.QueryReader
 }
 
-func NewQueryReaderCache(log *logger.Logger, qr persistence.QueryReader, c *Cache) *QueryReaderCache {
-	return &QueryReaderCache{log: log, qr: qr, cache: c}
+func NewQueryReaderCache(log *logger.Logger, c *Cache) *QueryReaderCache {
+	return &QueryReaderCache{log: log, cache: c}
 }
 
 func (c *QueryReaderCache) Get(ctx context.Context, namespace, id string, revision int) (domain.SavedQuery, error) {

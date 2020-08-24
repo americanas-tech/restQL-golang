@@ -54,11 +54,11 @@ func API(log *logger.Logger, cfg *conf.Config) (fasthttp.RequestHandler, error) 
 		cache.WithRefreshInterval(cfg.Cache.Mappings.RefreshInterval),
 		cache.WithRefreshQueueLength(cfg.Cache.Mappings.RefreshQueueLength),
 	)
-	cacheMr := cache.NewMappingsReaderCache(log, mr, tenantCache)
+	cacheMr := cache.NewMappingsReaderCache(log, tenantCache)
 
 	qr := persistence.NewQueryReader(log, cfg.Queries, db)
 	queryCache := cache.New(log, cfg.Cache.Query.MaxSize, cache.QueryCacheLoader(qr))
-	cacheQr := cache.NewQueryReaderCache(log, qr, queryCache)
+	cacheQr := cache.NewQueryReaderCache(log, queryCache)
 
 	e := eval.NewEvaluator(log, cacheMr, cacheQr, r, parserCache, lifecycle)
 
