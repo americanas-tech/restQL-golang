@@ -11,7 +11,8 @@ dev:
 	RESTQL_PORT=9000 RESTQL_HEALTH_PORT=9001 RESTQL_DEBUG_PORT=9002 RESTQL_ENV=development go run -race -ldflags="-X github.com/b2wdigital/restQL-golang/v4/cmd.build=$(vcs_ref)" main.go
 
 unit:
-	cd internal && go test -race -count=1 ./...
+	go test -race -count=1 ./internal/...
+	go test -race -count=1 ./pkg/...
 
 e2e: e2e-up e2e-run
 
