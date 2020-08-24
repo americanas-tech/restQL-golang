@@ -32,7 +32,7 @@ func (qr QueryReader) Get(ctx context.Context, namespace, id string, revision in
 
 	savedQuery, err := qr.db.FindQuery(ctx, namespace, id, revision)
 	if err != nil && err != database.ErrNoDatabase {
-		log.Info("query not found in database", "error", err, "namespace", namespace, "name", id, "revision", revision)
+		log.Error("query not found in database", err, "namespace", namespace, "name", id, "revision", revision)
 	}
 
 	if savedQuery.Text != "" {
