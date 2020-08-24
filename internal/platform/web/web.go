@@ -1,12 +1,14 @@
 package web
 
 import (
+	"fmt"
 	"github.com/b2wdigital/restQL-golang/v4/internal/platform/conf"
 	"github.com/b2wdigital/restQL-golang/v4/internal/platform/logger"
 	"github.com/b2wdigital/restQL-golang/v4/internal/platform/plugins"
 	"github.com/b2wdigital/restQL-golang/v4/internal/platform/web/middleware"
 	"github.com/buaazp/fasthttprouter"
 	"github.com/valyala/fasthttp"
+	"strings"
 )
 
 type Handler func(ctx *fasthttp.RequestCtx) error
@@ -38,7 +40,16 @@ func (a App) Handle(method, url string, handler Handler) {
 		}
 	}
 
-	a.router.Handle(method, url, fn)
+	normalizedUrls := []string{url}
+	if strings.HasSuffix(url, "/") {
+		normalizedUrls = append(normalizedUrls, strings.TrimRight(url, "/"))
+	} else {
+		normalizedUrls = append(normalizedUrls, fmt.Sprintf("%s/", url))
+	}
+
+	for _, u := range normalizedUrls {
+		a.router.Handle(method, u, fn)
+	}
 }
 
 func (a App) RequestHandler() fasthttp.RequestHandler {
