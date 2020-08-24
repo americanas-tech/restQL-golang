@@ -89,7 +89,7 @@ func (e Evaluator) evaluateQuery(ctx context.Context, queryTxt string, queryOpts
 		return nil, err
 	}
 
-	queryContext := domain.QueryContext{
+	queryContext := restql.QueryContext{
 		Mappings: mappings,
 		Options:  queryOpts,
 		Input:    queryInput,
@@ -124,7 +124,7 @@ func (e Evaluator) evaluateQuery(ctx context.Context, queryTxt string, queryOpts
 	return resources, nil
 }
 
-func validateQueryResources(query domain.Query, mappings map[string]domain.Mapping) error {
+func validateQueryResources(query domain.Query, mappings map[string]restql.Mapping) error {
 	for _, s := range query.Statements {
 		_, found := mappings[s.Resource]
 		if !found {

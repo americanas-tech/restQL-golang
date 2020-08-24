@@ -2,16 +2,15 @@ package eval
 
 import (
 	"context"
-
-	"github.com/b2wdigital/restQL-golang/v4/internal/domain"
+	"github.com/b2wdigital/restQL-golang/v4/pkg/restql"
 )
 
 type MappingsReader interface {
-	FromTenant(ctx context.Context, tenant string) (map[string]domain.Mapping, error)
+	FromTenant(ctx context.Context, tenant string) (map[string]restql.Mapping, error)
 }
 
 type QueryReader interface {
-	Get(ctx context.Context, namespace, id string, revision int) (domain.SavedQuery, error)
+	Get(ctx context.Context, namespace, id string, revision int) (restql.SavedQuery, error)
 }
 
 type ValidationError struct {

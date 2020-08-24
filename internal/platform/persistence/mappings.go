@@ -7,7 +7,6 @@ import (
 
 	"github.com/b2wdigital/restQL-golang/v4/internal/domain"
 	"github.com/b2wdigital/restQL-golang/v4/internal/platform/logger"
-	"github.com/b2wdigital/restQL-golang/v4/internal/platform/persistence/database"
 	"github.com/b2wdigital/restQL-golang/v4/pkg/restql"
 )
 
@@ -15,30 +14,30 @@ var envMappingRegex = regexp.MustCompile("^RESTQL_MAPPING_(\\w+)")
 
 type MappingsReader struct {
 	log   *logger.Logger
-	env   map[string]domain.Mapping
-	local map[string]domain.Mapping
-	db    database.Database
+	env   map[string]restql.Mapping
+	local map[string]restql.Mapping
+	db    Database
 }
 
-func NewMappingReader(log *logger.Logger, env domain.EnvSource, local map[string]string, db database.Database) MappingsReader {
+func NewMappingReader(log *logger.Logger, env domain.EnvSource, local map[string]string, db Database) MappingsReader {
 	envMappings := getMappingsFromEnv(log, env)
 	localMappings := parseMappingsFromLocal(log, local)
 
 	return MappingsReader{log: log, env: envMappings, local: localMappings, db: db}
 }
 
-func (mr MappingsReader) FromTenant(ctx context.Context, tenant string) (map[string]domain.Mapping, error) {
+func (mr MappingsReader) FromTenant(ctx context.Context, tenant string) (map[string]restql.Mapping, error) {
 	log := restql.GetLogger(ctx)
 	log.Debug("fetching mappings")
 
-	result := make(map[string]domain.Mapping)
+	result := make(map[string]restql.Mapping)
 
 	for k, v := range mr.local {
 		result[k] = v
 	}
 
 	dbMappings, err := mr.db.FindMappingsForTenant(ctx, tenant)
-	if err != nil && err != database.ErrNoDatabase {
+	if err != nil && err != ErrNoDatabase {
 		log.Debug("failed to load mappings from database", "error", err)
 		return nil, err
 	}
@@ -56,15 +55,15 @@ func (mr MappingsReader) FromTenant(ctx context.Context, tenant string) (map[str
 	return result, nil
 }
 
-func getMappingsFromEnv(log *logger.Logger, envSource domain.EnvSource) map[string]domain.Mapping {
-	result := make(map[string]domain.Mapping)
+func getMappingsFromEnv(log *logger.Logger, envSource domain.EnvSource) map[string]restql.Mapping {
+	result := make(map[string]restql.Mapping)
 	env := envSource.GetAll()
 
 	for key, value := range env {
 		matches := envMappingRegex.FindAllStringSubmatch(key, -1)
 		if len(matches) > 0 && len(matches[0]) >= 2 {
 			resource := strings.ToLower(matches[0][1])
-			mapping, err := domain.NewMapping(resource, value)
+			mapping, err := restql.NewMapping(resource, value)
 			if err != nil {
 				log.Error("failed to create mapping", err)
 				continue
@@ -77,10 +76,10 @@ func getMappingsFromEnv(log *logger.Logger, envSource domain.EnvSource) map[stri
 	return result
 }
 
-func parseMappingsFromLocal(log *logger.Logger, local map[string]string) map[string]domain.Mapping {
-	result := make(map[string]domain.Mapping)
+func parseMappingsFromLocal(log *logger.Logger, local map[string]string) map[string]restql.Mapping {
+	result := make(map[string]restql.Mapping)
 	for k, v := range local {
-		mapping, err := domain.NewMapping(k, v)
+		mapping, err := restql.NewMapping(k, v)
 		if err != nil {
 			log.Error("failed to create mapping", err)
 			continue

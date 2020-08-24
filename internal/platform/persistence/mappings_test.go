@@ -2,10 +2,10 @@ package persistence
 
 import (
 	"context"
+	"github.com/b2wdigital/restQL-golang/v4/pkg/restql"
 	"io/ioutil"
 	"testing"
 
-	"github.com/b2wdigital/restQL-golang/v4/internal/domain"
 	"github.com/b2wdigital/restQL-golang/v4/internal/platform/logger"
 	"github.com/b2wdigital/restQL-golang/v4/test"
 )
@@ -25,13 +25,13 @@ func TestMappingsReader_Env(t *testing.T) {
 
 	reader := NewMappingReader(noOpLogger, envSource, map[string]string{}, db)
 
-	heroMapping, err := domain.NewMapping("hero", "http://hero.api/")
+	heroMapping, err := restql.NewMapping("hero", "http://hero.api/")
 	test.VerifyError(t, err)
 
-	sidekickMapping, err := domain.NewMapping("sidekick", "http://sidekick.api/")
+	sidekickMapping, err := restql.NewMapping("sidekick", "http://sidekick.api/")
 	test.VerifyError(t, err)
 
-	expected := map[string]domain.Mapping{
+	expected := map[string]restql.Mapping{
 		"hero":     heroMapping,
 		"sidekick": sidekickMapping,
 	}
@@ -52,13 +52,13 @@ func TestMappingsReader_Local(t *testing.T) {
 
 	reader := NewMappingReader(noOpLogger, envSource, local, db)
 
-	heroMapping, err := domain.NewMapping("hero", "http://hero.api/")
+	heroMapping, err := restql.NewMapping("hero", "http://hero.api/")
 	test.VerifyError(t, err)
 
-	sidekickMapping, err := domain.NewMapping("sidekick", "http://sidekick.api/")
+	sidekickMapping, err := restql.NewMapping("sidekick", "http://sidekick.api/")
 	test.VerifyError(t, err)
 
-	expected := map[string]domain.Mapping{
+	expected := map[string]restql.Mapping{
 		"hero":     heroMapping,
 		"sidekick": sidekickMapping,
 	}
@@ -73,17 +73,17 @@ func TestMappingsReader_Database(t *testing.T) {
 	envSource := stubEnvSource{getAll: map[string]string{}}
 	local := map[string]string{}
 
-	heroMapping, err := domain.NewMapping("hero", "http://hero.api/")
+	heroMapping, err := restql.NewMapping("hero", "http://hero.api/")
 	test.VerifyError(t, err)
 
-	sidekickMapping, err := domain.NewMapping("sidekick", "http://sidekick.api/")
+	sidekickMapping, err := restql.NewMapping("sidekick", "http://sidekick.api/")
 	test.VerifyError(t, err)
 
-	db := stubDatabase{findMappingsForTenant: []domain.Mapping{heroMapping, sidekickMapping}}
+	db := stubDatabase{findMappingsForTenant: []restql.Mapping{heroMapping, sidekickMapping}}
 
 	reader := NewMappingReader(noOpLogger, envSource, local, db)
 
-	expected := map[string]domain.Mapping{
+	expected := map[string]restql.Mapping{
 		"hero":     heroMapping,
 		"sidekick": sidekickMapping,
 	}
@@ -95,13 +95,13 @@ func TestMappingsReader_Database(t *testing.T) {
 }
 
 func TestMappingsReader_ShouldOverwriteMappings(t *testing.T) {
-	heroMapping, err := domain.NewMapping("hero", "https://hero.com/api/")
+	heroMapping, err := restql.NewMapping("hero", "https://hero.com/api/")
 	test.VerifyError(t, err)
 
-	sidekickMapping, err := domain.NewMapping("sidekick", "https://sidekick.com/api")
+	sidekickMapping, err := restql.NewMapping("sidekick", "https://sidekick.com/api")
 	test.VerifyError(t, err)
 
-	villainMapping, err := domain.NewMapping("villain", "http://villain.api/")
+	villainMapping, err := restql.NewMapping("villain", "http://villain.api/")
 	test.VerifyError(t, err)
 
 	local := map[string]string{
@@ -110,7 +110,7 @@ func TestMappingsReader_ShouldOverwriteMappings(t *testing.T) {
 		"villain":  "http://villain.api/",
 	}
 	db := stubDatabase{
-		findMappingsForTenant: []domain.Mapping{sidekickMapping},
+		findMappingsForTenant: []restql.Mapping{sidekickMapping},
 	}
 	envSource := stubEnvSource{
 		getAll: map[string]string{
@@ -120,7 +120,7 @@ func TestMappingsReader_ShouldOverwriteMappings(t *testing.T) {
 
 	reader := NewMappingReader(noOpLogger, envSource, local, db)
 
-	expected := map[string]domain.Mapping{
+	expected := map[string]restql.Mapping{
 		"hero":     heroMapping,
 		"sidekick": sidekickMapping,
 		"villain":  villainMapping,
@@ -135,15 +135,15 @@ func TestMappingsReader_ShouldOverwriteMappings(t *testing.T) {
 var noOpLogger = logger.New(ioutil.Discard, logger.LogOptions{})
 
 type stubDatabase struct {
-	findMappingsForTenant []domain.Mapping
-	findQuery             domain.SavedQuery
+	findMappingsForTenant []restql.Mapping
+	findQuery             restql.SavedQuery
 }
 
-func (s stubDatabase) FindMappingsForTenant(ctx context.Context, tenantId string) ([]domain.Mapping, error) {
+func (s stubDatabase) FindMappingsForTenant(ctx context.Context, tenantId string) ([]restql.Mapping, error) {
 	return s.findMappingsForTenant, nil
 }
 
-func (s stubDatabase) FindQuery(ctx context.Context, namespace string, name string, revision int) (domain.SavedQuery, error) {
+func (s stubDatabase) FindQuery(ctx context.Context, namespace string, name string, revision int) (restql.SavedQuery, error) {
 	return s.findQuery, nil
 }
 
