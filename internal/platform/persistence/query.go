@@ -3,10 +3,8 @@ package persistence
 import (
 	"context"
 
-	"github.com/b2wdigital/restQL-golang/v4/internal/domain"
 	"github.com/b2wdigital/restQL-golang/v4/internal/eval"
 	"github.com/b2wdigital/restQL-golang/v4/internal/platform/logger"
-	"github.com/b2wdigital/restQL-golang/v4/internal/platform/persistence/database"
 	"github.com/b2wdigital/restQL-golang/v4/pkg/restql"
 	"github.com/pkg/errors"
 )
@@ -16,10 +14,10 @@ type savedQueries map[string][]string
 type QueryReader struct {
 	log   *logger.Logger
 	local map[string]savedQueries
-	db    database.Database
+	db    Database
 }
 
-func NewQueryReader(log *logger.Logger, local map[string]map[string][]string, db database.Database) QueryReader {
+func NewQueryReader(log *logger.Logger, local map[string]map[string][]string, db Database) QueryReader {
 	l := make(map[string]savedQueries)
 	for k, v := range local {
 		l[k] = v
@@ -27,11 +25,11 @@ func NewQueryReader(log *logger.Logger, local map[string]map[string][]string, db
 	return QueryReader{log: log, local: l, db: db}
 }
 
-func (qr QueryReader) Get(ctx context.Context, namespace, id string, revision int) (domain.SavedQuery, error) {
+func (qr QueryReader) Get(ctx context.Context, namespace, id string, revision int) (restql.SavedQuery, error) {
 	log := restql.GetLogger(ctx)
 
 	savedQuery, err := qr.db.FindQuery(ctx, namespace, id, revision)
-	if err != nil && err != database.ErrNoDatabase {
+	if err != nil && err != ErrNoDatabase {
 		log.Error("query not found in database", err, "namespace", namespace, "name", id, "revision", revision)
 	}
 
@@ -42,10 +40,10 @@ func (qr QueryReader) Get(ctx context.Context, namespace, id string, revision in
 	localQuery, err := qr.getQueryFromLocal(namespace, id, revision)
 	if err != nil {
 		log.Info("query not found in local", "namespace", namespace, "name", id, "revision", revision)
-		return domain.SavedQuery{}, eval.NotFoundError{Err: errors.Errorf("query not found: %s/%s/%d", namespace, id, revision)}
+		return restql.SavedQuery{}, eval.NotFoundError{Err: errors.Errorf("query not found: %s/%s/%d", namespace, id, revision)}
 	}
 
-	return domain.SavedQuery{Text: localQuery}, nil
+	return restql.SavedQuery{Text: localQuery}, nil
 }
 
 func (qr QueryReader) getQueryFromLocal(namespace string, id string, revision int) (string, error) {

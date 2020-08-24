@@ -16,7 +16,7 @@ import (
 type Lifecycle interface {
 	BeforeTransaction(ctx context.Context, requestCtx *fasthttp.RequestCtx) context.Context
 	AfterTransaction(ctx context.Context, requestCtx *fasthttp.RequestCtx) context.Context
-	BeforeQuery(ctx context.Context, query string, queryCtx domain.QueryContext) context.Context
+	BeforeQuery(ctx context.Context, query string, queryCtx restql.QueryContext) context.Context
 	AfterQuery(ctx context.Context, query string, result domain.Resources) context.Context
 	BeforeRequest(ctx context.Context, request domain.HttpRequest) context.Context
 	AfterRequest(ctx context.Context, request domain.HttpRequest, response domain.HttpResponse, err error) context.Context
@@ -32,7 +32,7 @@ type manager struct {
 func NewLifecycle(log *logger.Logger) (Lifecycle, error) {
 	ps := loadLifecyclePlugins(log)
 	if len(ps) == 0 {
-		log.Info("no plugins provided")
+		log.Info("no lifecycle hook provided")
 		return NoOpLifecycle, nil
 	}
 
@@ -54,7 +54,7 @@ func (m manager) AfterTransaction(ctx context.Context, requestCtx *fasthttp.Requ
 	})
 }
 
-func (m manager) BeforeQuery(ctx context.Context, query string, queryCtx domain.QueryContext) context.Context {
+func (m manager) BeforeQuery(ctx context.Context, query string, queryCtx restql.QueryContext) context.Context {
 	return m.executeAllPluginsWithContext("BeforeQuery", ctx, func(currentCtx context.Context, p restql.LifecyclePlugin) context.Context {
 		return p.BeforeQuery(currentCtx, query, queryCtx)
 	})
@@ -147,7 +147,7 @@ func (n noOpLifecycle) BeforeTransaction(ctx context.Context, requestCtx *fastht
 func (n noOpLifecycle) AfterTransaction(ctx context.Context, requestCtx *fasthttp.RequestCtx) context.Context {
 	return ctx
 }
-func (n noOpLifecycle) BeforeQuery(ctx context.Context, query string, queryCtx domain.QueryContext) context.Context {
+func (n noOpLifecycle) BeforeQuery(ctx context.Context, query string, queryCtx restql.QueryContext) context.Context {
 	return ctx
 }
 func (n noOpLifecycle) AfterQuery(ctx context.Context, query string, result domain.Resources) context.Context {

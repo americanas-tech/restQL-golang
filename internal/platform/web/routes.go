@@ -10,7 +10,6 @@ import (
 	"github.com/b2wdigital/restQL-golang/v4/internal/platform/httpclient"
 	"github.com/b2wdigital/restQL-golang/v4/internal/platform/logger"
 	"github.com/b2wdigital/restQL-golang/v4/internal/platform/persistence"
-	"github.com/b2wdigital/restQL-golang/v4/internal/platform/persistence/database"
 	"github.com/b2wdigital/restQL-golang/v4/internal/platform/plugins"
 	"github.com/b2wdigital/restQL-golang/v4/internal/runner"
 	"github.com/valyala/fasthttp"
@@ -26,12 +25,7 @@ func API(log *logger.Logger, cfg *conf.Config) (fasthttp.RequestHandler, error) 
 	parserCacheLoader := cache.New(log, cfg.Cache.Parser.MaxSize, cache.ParserCacheLoader(defaultParser))
 	parserCache := cache.NewParserCache(log, parserCacheLoader)
 
-	db, err := database.New(log, cfg.Database.ConnectionString,
-		database.WithConnectionTimeout(cfg.Database.Timeouts.Connection),
-		database.WithMappingsTimeout(cfg.Database.Timeouts.Mappings),
-		database.WithQueryTimeout(cfg.Database.Timeouts.Query),
-		database.WithDatabaseName(cfg.Database.Name),
-	)
+	db, err := persistence.NewDatabase(log)
 	if err != nil && cfg.Database.ConnectionString != "" {
 		log.Error("failed to establish connection to database", err)
 		return nil, err

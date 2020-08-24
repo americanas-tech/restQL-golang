@@ -106,7 +106,7 @@ func (r RestQl) RunSavedQuery(ctx *fasthttp.RequestCtx) error {
 
 	options, err := makeQueryOptions(ctx, log, r.config.Tenant)
 	if err != nil {
-		log.Error("failed to build query options", err, "query", ctx.RequestURI())
+		log.Error("failed to build query options", err)
 		return RespondError(ctx, NewRequestError(err, http.StatusBadRequest))
 	}
 	queryIdentifier := fmt.Sprintf("%s/%s/%d", options.Namespace, options.Id, options.Revision)

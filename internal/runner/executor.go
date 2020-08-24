@@ -20,7 +20,7 @@ func NewExecutor(log restql.Logger, client domain.HttpClient, resourceTimeout ti
 	return Executor{client: client, log: log, resourceTimeout: resourceTimeout, forwardPrefix: forwardPrefix}
 }
 
-func (e Executor) DoStatement(ctx context.Context, statement domain.Statement, queryCtx domain.QueryContext) domain.DoneResource {
+func (e Executor) DoStatement(ctx context.Context, statement domain.Statement, queryCtx restql.QueryContext) domain.DoneResource {
 	log := restql.GetLogger(ctx)
 
 	drOptions := DoneResourceOptions{
@@ -54,7 +54,7 @@ func (e Executor) DoStatement(ctx context.Context, statement domain.Statement, q
 	return dr
 }
 
-func (e Executor) DoMultiplexedStatement(ctx context.Context, statements []interface{}, queryCtx domain.QueryContext) domain.DoneResources {
+func (e Executor) DoMultiplexedStatement(ctx context.Context, statements []interface{}, queryCtx restql.QueryContext) domain.DoneResources {
 	responseChans := make([]chan interface{}, len(statements))
 	for i := range responseChans {
 		responseChans[i] = make(chan interface{}, 1)
@@ -84,7 +84,7 @@ func (e Executor) DoMultiplexedStatement(ctx context.Context, statements []inter
 	return responses
 }
 
-func (e Executor) doCurrentStatement(stmt interface{}, ctx context.Context, queryCtx domain.QueryContext) interface{} {
+func (e Executor) doCurrentStatement(stmt interface{}, ctx context.Context, queryCtx restql.QueryContext) interface{} {
 	switch stmt := stmt.(type) {
 	case domain.Statement:
 		return e.DoStatement(ctx, stmt, queryCtx)

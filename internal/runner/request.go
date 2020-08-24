@@ -3,6 +3,7 @@ package runner
 import (
 	"encoding/json"
 	"github.com/b2wdigital/restQL-golang/v4/internal/domain"
+	"github.com/b2wdigital/restQL-golang/v4/pkg/restql"
 	"net/http"
 	"strings"
 	"time"
@@ -25,7 +26,7 @@ var queryMethodToHttpMethod = map[string]string{
 	domain.DeleteMethod: http.MethodDelete,
 }
 
-func MakeRequest(defaultResourceTimeout time.Duration, forwardPrefix string, statement domain.Statement, queryCtx domain.QueryContext) domain.HttpRequest {
+func MakeRequest(defaultResourceTimeout time.Duration, forwardPrefix string, statement domain.Statement, queryCtx restql.QueryContext) domain.HttpRequest {
 	mapping := queryCtx.Mappings[statement.Resource]
 	method := queryMethodToHttpMethod[statement.Method]
 	headers := makeHeaders(statement, queryCtx)
@@ -50,7 +51,7 @@ func MakeRequest(defaultResourceTimeout time.Duration, forwardPrefix string, sta
 	return req
 }
 
-func makeBody(statement domain.Statement, mapping domain.Mapping) domain.Body {
+func makeBody(statement domain.Statement, mapping restql.Mapping) domain.Body {
 	if statement.With.Body != nil {
 		return statement.With.Body
 	}
@@ -86,7 +87,7 @@ func parseBodyValue(value interface{}) interface{} {
 	}
 }
 
-func makeHeaders(statement domain.Statement, queryCtx domain.QueryContext) map[string]string {
+func makeHeaders(statement domain.Statement, queryCtx restql.QueryContext) map[string]string {
 	headers := getForwardHeaders(queryCtx)
 	for key, value := range statement.Headers {
 		str, ok := value.(string)
@@ -104,7 +105,7 @@ func makeHeaders(statement domain.Statement, queryCtx domain.QueryContext) map[s
 	return headers
 }
 
-func getForwardHeaders(queryCtx domain.QueryContext) map[string]string {
+func getForwardHeaders(queryCtx restql.QueryContext) map[string]string {
 	r := make(map[string]string)
 	for k, v := range queryCtx.Input.Headers {
 		if _, found := disallowedHeaders[k]; !found {
@@ -114,7 +115,7 @@ func getForwardHeaders(queryCtx domain.QueryContext) map[string]string {
 	return r
 }
 
-func makeQueryParams(forwardPrefix string, statement domain.Statement, mapping domain.Mapping, queryCtx domain.QueryContext) map[string]interface{} {
+func makeQueryParams(forwardPrefix string, statement domain.Statement, mapping restql.Mapping, queryCtx restql.QueryContext) map[string]interface{} {
 	queryArgs := getForwardParams(forwardPrefix, queryCtx)
 
 	for key, value := range mapping.QueryWithParams(statement.With.Values) {
@@ -133,7 +134,7 @@ func makeQueryParams(forwardPrefix string, statement domain.Statement, mapping d
 	return queryArgs
 }
 
-func getForwardParams(forwardPrefix string, queryCtx domain.QueryContext) map[string]interface{} {
+func getForwardParams(forwardPrefix string, queryCtx restql.QueryContext) map[string]interface{} {
 	r := make(map[string]interface{})
 	if forwardPrefix == "" {
 		return r

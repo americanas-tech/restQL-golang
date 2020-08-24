@@ -3,7 +3,6 @@ package cache
 import (
 	"context"
 
-	"github.com/b2wdigital/restQL-golang/v4/internal/domain"
 	"github.com/b2wdigital/restQL-golang/v4/internal/platform/logger"
 	"github.com/b2wdigital/restQL-golang/v4/internal/platform/persistence"
 	"github.com/b2wdigital/restQL-golang/v4/pkg/restql"
@@ -19,13 +18,13 @@ func NewMappingsReaderCache(log *logger.Logger, c *Cache) *MappingsReaderCache {
 	return &MappingsReaderCache{log: log, cache: c}
 }
 
-func (c *MappingsReaderCache) FromTenant(ctx context.Context, tenant string) (map[string]domain.Mapping, error) {
+func (c *MappingsReaderCache) FromTenant(ctx context.Context, tenant string) (map[string]restql.Mapping, error) {
 	result, err := c.cache.Get(ctx, tenant)
 	if err != nil {
 		return nil, err
 	}
 
-	mappings, ok := result.(map[string]domain.Mapping)
+	mappings, ok := result.(map[string]restql.Mapping)
 	if !ok {
 		log := restql.GetLogger(ctx)
 		log.Info("failed to convert cache content", "content", result)
@@ -65,14 +64,14 @@ func NewQueryReaderCache(log *logger.Logger, c *Cache) *QueryReaderCache {
 	return &QueryReaderCache{log: log, cache: c}
 }
 
-func (c *QueryReaderCache) Get(ctx context.Context, namespace, id string, revision int) (domain.SavedQuery, error) {
+func (c *QueryReaderCache) Get(ctx context.Context, namespace, id string, revision int) (restql.SavedQuery, error) {
 	cacheKey := cacheQueryKey{namespace: namespace, id: id, revision: revision}
 	result, err := c.cache.Get(ctx, cacheKey)
 	if err != nil {
-		return domain.SavedQuery{}, err
+		return restql.SavedQuery{}, err
 	}
 
-	query, ok := result.(domain.SavedQuery)
+	query, ok := result.(restql.SavedQuery)
 	if !ok {
 		log := restql.GetLogger(ctx)
 		log.Info("failed to convert cache content", "content", result)

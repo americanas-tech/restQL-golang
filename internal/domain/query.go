@@ -62,17 +62,6 @@ type QueryInput struct {
 	Headers map[string]string
 }
 
-type QueryContext struct {
-	Mappings map[string]Mapping
-	Options  QueryOptions
-	Input    QueryInput
-}
-
-type SavedQuery struct {
-	Text       string
-	Deprecated bool
-}
-
 type ErrQueryRevisionDeprecated struct {
 	Revision int
 }

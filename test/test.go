@@ -11,7 +11,6 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/b2wdigital/restQL-golang/v4/internal/domain"
 	"github.com/b2wdigital/restQL-golang/v4/pkg/restql"
 	"github.com/google/go-cmp/cmp"
 )
@@ -29,7 +28,7 @@ var regexComparer = cmp.Comparer(func(x, y *regexp.Regexp) bool {
 	return x.String() == y.String()
 })
 
-var mappingComparer = cmp.Comparer(func(x, y domain.Mapping) bool {
+var mappingComparer = cmp.Comparer(func(x, y restql.Mapping) bool {
 	return x.ResourceName() == y.ResourceName() &&
 		x.Scheme() == y.Scheme() &&
 		x.Host() == y.Host()

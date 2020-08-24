@@ -25,7 +25,7 @@ func NewRunner(log restql.Logger, executor Executor, globalQueryTimeout time.Dur
 	}
 }
 
-func (r Runner) ExecuteQuery(ctx context.Context, query domain.Query, queryCtx domain.QueryContext) (domain.Resources, error) {
+func (r Runner) ExecuteQuery(ctx context.Context, query domain.Query, queryCtx restql.QueryContext) (domain.Resources, error) {
 	log := restql.GetLogger(ctx)
 
 	var cancel context.CancelFunc
@@ -96,7 +96,7 @@ func (r Runner) parseQueryTimeout(query domain.Query) (time.Duration, bool) {
 	return time.Millisecond * time.Duration(duration), true
 }
 
-func (r Runner) initializeResources(query domain.Query, queryCtx domain.QueryContext) (domain.Resources, error) {
+func (r Runner) initializeResources(query domain.Query, queryCtx restql.QueryContext) (domain.Resources, error) {
 	resources := domain.NewResources(query.Statements)
 
 	err := ValidateChainedValues(resources)
@@ -171,7 +171,7 @@ type requestWorker struct {
 	resultCh  chan result
 	errorCh   chan error
 	executor  Executor
-	queryCtx  domain.QueryContext
+	queryCtx  restql.QueryContext
 	ctx       context.Context
 }
 

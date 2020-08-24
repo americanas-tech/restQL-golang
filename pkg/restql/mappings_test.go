@@ -1,9 +1,9 @@
-package domain_test
+package restql_test
 
 import (
+	"github.com/b2wdigital/restQL-golang/v4/pkg/restql"
 	"testing"
 
-	"github.com/b2wdigital/restQL-golang/v4/internal/domain"
 	"github.com/b2wdigital/restQL-golang/v4/test"
 )
 
@@ -42,7 +42,7 @@ func TestMappingsPathWithParams(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mapping, err := domain.NewMapping("test-resource", tt.url)
+			mapping, err := restql.NewMapping("test-resource", tt.url)
 			test.VerifyError(t, err)
 
 			got := mapping.PathWithParams(tt.params)
@@ -86,7 +86,7 @@ func TestMappingsQueryWithParams(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mapping, err := domain.NewMapping("test-resource", tt.url)
+			mapping, err := restql.NewMapping("test-resource", tt.url)
 			test.VerifyError(t, err)
 
 			got := mapping.QueryWithParams(tt.params)
