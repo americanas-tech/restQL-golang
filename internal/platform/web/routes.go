@@ -26,7 +26,7 @@ func API(log *logger.Logger, cfg *conf.Config) (fasthttp.RequestHandler, error) 
 	parserCache := cache.NewParserCache(log, parserCacheLoader)
 
 	db, err := persistence.NewDatabase(log)
-	if err != nil && cfg.Database.ConnectionString != "" {
+	if err != nil {
 		log.Error("failed to establish connection to database", err)
 		return nil, err
 	}

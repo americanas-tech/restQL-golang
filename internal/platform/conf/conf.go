@@ -62,22 +62,12 @@ type Config struct {
 	} `yaml:"http"`
 
 	Logging struct {
-		Enable    bool   `yaml:"enable" env:"RESTQL_LOGGING_ENABLE"`
-		TimestampFieldName string `yaml:"timestampFieldName"`
+		Enable               bool   `yaml:"enable" env:"RESTQL_LOGGING_ENABLE"`
+		TimestampFieldName   string `yaml:"timestampFieldName"`
 		TimestampFieldFormat string `yaml:"timestampFieldFormat"`
-		Level     string `yaml:"level" env:"RESTQL_LOGGING_LEVEL"`
-		Format    string `yaml:"format"`
+		Level                string `yaml:"level" env:"RESTQL_LOGGING_LEVEL"`
+		Format               string `yaml:"format"`
 	} `yaml:"logging"`
-
-	Database struct {
-		ConnectionString string `yaml:"connectionString" env:"RESTQL_DATABASE_CONNECTION_STRING"`
-		Name             string `yaml:"name" env:"RESTQL_DATABASE_NAME"`
-		Timeouts         struct {
-			Connection time.Duration `yaml:"connection" env:"RESTQL_DATABASE_CONNECTION_TIMEOUT"`
-			Mappings   time.Duration `yaml:"mappings" env:"RESTQL_DATABASE_MAPPINGS_READ_TIMEOUT"`
-			Query      time.Duration `yaml:"query" env:"RESTQL_DATABASE_QUERY_READ_TIMEOUT"`
-		} `yaml:"timeouts"`
-	} `yaml:"database"`
 
 	Cache struct {
 		Mappings struct {
