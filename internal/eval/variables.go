@@ -2,7 +2,6 @@ package eval
 
 import (
 	"encoding/json"
-	"fmt"
 	"strconv"
 
 	"github.com/b2wdigital/restQL-golang/v4/internal/domain"
@@ -259,12 +258,10 @@ func resolveOnly(only []interface{}, input domain.QueryInput) []interface{} {
 	for i, filter := range only {
 		switch filter := filter.(type) {
 		case domain.Match:
-			fmt.Printf("RESOLVING MATCH ON ONLY\n")
 			match, ok := resolveMatch(filter, input)
 			if !ok {
 				continue
 			}
-			fmt.Printf("MATCH RESOLVED ON ONLY : %+#v\n", match)
 			result[i] = match
 		default:
 			result[i] = filter
