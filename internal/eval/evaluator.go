@@ -39,7 +39,7 @@ func NewEvaluator(log restql.Logger, mr MappingsReader, qr QueryReader, r runner
 	}
 }
 
-func (e Evaluator) AdHocQuery(ctx context.Context, queryTxt string, queryOpts domain.QueryOptions, queryInput domain.QueryInput) (domain.Resources, error) {
+func (e Evaluator) AdHocQuery(ctx context.Context, queryTxt string, queryOpts restql.QueryOptions, queryInput restql.QueryInput) (domain.Resources, error) {
 	if queryOpts.Tenant == "" {
 		return nil, ValidationError{ErrInvalidTenant}
 	}
@@ -47,7 +47,7 @@ func (e Evaluator) AdHocQuery(ctx context.Context, queryTxt string, queryOpts do
 	return e.evaluateQuery(ctx, queryTxt, queryOpts, queryInput)
 }
 
-func (e Evaluator) SavedQuery(ctx context.Context, queryOpts domain.QueryOptions, queryInput domain.QueryInput) (domain.Resources, error) {
+func (e Evaluator) SavedQuery(ctx context.Context, queryOpts restql.QueryOptions, queryInput restql.QueryInput) (domain.Resources, error) {
 	err := validateQueryOptions(queryOpts)
 	if err != nil {
 		return nil, err
@@ -68,7 +68,7 @@ func (e Evaluator) SavedQuery(ctx context.Context, queryOpts domain.QueryOptions
 	return e.evaluateQuery(ctx, savedQuery.Text, queryOpts, queryInput)
 }
 
-func (e Evaluator) evaluateQuery(ctx context.Context, queryTxt string, queryOpts domain.QueryOptions, queryInput domain.QueryInput) (domain.Resources, error) {
+func (e Evaluator) evaluateQuery(ctx context.Context, queryTxt string, queryOpts restql.QueryOptions, queryInput restql.QueryInput) (domain.Resources, error) {
 	log := restql.GetLogger(ctx)
 
 	query, err := e.parser.Parse(queryTxt)
@@ -136,7 +136,7 @@ func validateQueryResources(query domain.Query, mappings map[string]restql.Mappi
 	return nil
 }
 
-func validateQueryOptions(queryOpts domain.QueryOptions) error {
+func validateQueryOptions(queryOpts restql.QueryOptions) error {
 	if queryOpts.Revision <= 0 {
 		return ValidationError{ErrInvalidRevision}
 	}

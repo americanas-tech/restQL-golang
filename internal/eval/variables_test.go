@@ -2,6 +2,7 @@ package eval_test
 
 import (
 	"github.com/b2wdigital/restQL-golang/v4/internal/eval"
+	"github.com/b2wdigital/restQL-golang/v4/pkg/restql"
 	"testing"
 
 	"github.com/b2wdigital/restQL-golang/v4/internal/domain"
@@ -12,25 +13,25 @@ func TestResolveVariables(t *testing.T) {
 	tests := []struct {
 		name      string
 		resources domain.Query
-		input     domain.QueryInput
+		input     restql.QueryInput
 		expected  domain.Query
 	}{
 		{
 			"resolve variable in timeout from params",
 			domain.Query{Statements: []domain.Statement{{Method: "from", Resource: "hero", Timeout: domain.Variable{"duration"}}}},
-			domain.QueryInput{Params: map[string]interface{}{"duration": "1000"}},
+			restql.QueryInput{Params: map[string]interface{}{"duration": "1000"}},
 			domain.Query{Statements: []domain.Statement{{Method: "from", Resource: "hero", Timeout: 1000}}},
 		},
 		{
 			"resolve variable in timeout from header",
 			domain.Query{Statements: []domain.Statement{{Method: "from", Resource: "hero", Timeout: domain.Variable{"duration"}}}},
-			domain.QueryInput{Headers: map[string]string{"duration": "1000"}},
+			restql.QueryInput{Headers: map[string]string{"duration": "1000"}},
 			domain.Query{Statements: []domain.Statement{{Method: "from", Resource: "hero", Timeout: 1000}}},
 		},
 		{
 			"resolve variable in timeout from body",
 			domain.Query{Statements: []domain.Statement{{Method: "from", Resource: "hero", Timeout: domain.Variable{"duration"}}}},
-			domain.QueryInput{Body: map[string]interface{}{"duration": 1000}},
+			restql.QueryInput{Body: map[string]interface{}{"duration": 1000}},
 			domain.Query{Statements: []domain.Statement{{Method: "from", Resource: "hero", Timeout: 1000}}},
 		},
 		{
@@ -51,7 +52,7 @@ func TestResolveVariables(t *testing.T) {
 						},
 					},
 				}}},
-			domain.QueryInput{Params: map[string]interface{}{
+			restql.QueryInput{Params: map[string]interface{}{
 				"name":             "batman",
 				"affiliations":     []string{"justice league", "batman family"},
 				"field":            "weapon",
@@ -92,7 +93,7 @@ func TestResolveVariables(t *testing.T) {
 						"places":   map[string]interface{}{"city": map[string]interface{}{"name": domain.Variable{"city"}}},
 					}},
 				}}},
-			domain.QueryInput{Headers: map[string]string{"name": "batman", "field": "weapon", "sidekick": "robbin", "city": "Gotham"}},
+			restql.QueryInput{Headers: map[string]string{"name": "batman", "field": "weapon", "sidekick": "robbin", "city": "Gotham"}},
 			domain.Query{
 				Statements: []domain.Statement{{
 					Method:   "from",
@@ -125,7 +126,7 @@ func TestResolveVariables(t *testing.T) {
 						},
 					}},
 				}},
-			domain.QueryInput{Body: map[string]interface{}{
+			restql.QueryInput{Body: map[string]interface{}{
 				"name":         "batman",
 				"affiliations": []string{"justice league", "batman family"},
 				"field":        "weapon",
@@ -156,7 +157,7 @@ func TestResolveVariables(t *testing.T) {
 			domain.Query{
 				Statements: []domain.Statement{{Method: "from", Resource: "hero", CacheControl: domain.CacheControl{MaxAge: domain.Variable{"cache-control"}, SMaxAge: domain.Variable{"s-cache-control"}}}},
 			},
-			domain.QueryInput{Params: map[string]interface{}{"cache-control": "200", "s-cache-control": "400"}},
+			restql.QueryInput{Params: map[string]interface{}{"cache-control": "200", "s-cache-control": "400"}},
 			domain.Query{
 				Statements: []domain.Statement{{Method: "from", Resource: "hero", CacheControl: domain.CacheControl{MaxAge: 200, SMaxAge: 400}}},
 			},
@@ -166,7 +167,7 @@ func TestResolveVariables(t *testing.T) {
 			domain.Query{
 				Statements: []domain.Statement{{Method: "from", Resource: "hero", CacheControl: domain.CacheControl{MaxAge: domain.Variable{"cache-control"}, SMaxAge: domain.Variable{"s-cache-control"}}}},
 			},
-			domain.QueryInput{Headers: map[string]string{"cache-control": "200", "s-cache-control": "400"}},
+			restql.QueryInput{Headers: map[string]string{"cache-control": "200", "s-cache-control": "400"}},
 			domain.Query{
 				Statements: []domain.Statement{{Method: "from", Resource: "hero", CacheControl: domain.CacheControl{MaxAge: 200, SMaxAge: 400}}},
 			},
@@ -176,7 +177,7 @@ func TestResolveVariables(t *testing.T) {
 			domain.Query{
 				Statements: []domain.Statement{{Method: "from", Resource: "hero", CacheControl: domain.CacheControl{MaxAge: domain.Variable{"cache-control"}, SMaxAge: domain.Variable{"s-cache-control"}}}},
 			},
-			domain.QueryInput{Body: map[string]interface{}{"cache-control": "200", "s-cache-control": 400}},
+			restql.QueryInput{Body: map[string]interface{}{"cache-control": "200", "s-cache-control": 400}},
 			domain.Query{
 				Statements: []domain.Statement{{Method: "from", Resource: "hero", CacheControl: domain.CacheControl{MaxAge: 200, SMaxAge: 400}}},
 			},
@@ -194,7 +195,7 @@ func TestResolveVariables(t *testing.T) {
 					},
 				}},
 			},
-			domain.QueryInput{Params: map[string]interface{}{"authField": "token", "some-param": "abc"}},
+			restql.QueryInput{Params: map[string]interface{}{"authField": "token", "some-param": "abc"}},
 			domain.Query{
 				Statements: []domain.Statement{{Method: "from", Resource: "hero", Headers: map[string]interface{}{"Authorization": domain.Chain{"done-resource", "token"}, "X-Id": "1234567890", "X-Some-Header": "abc"}}},
 			},
@@ -212,7 +213,7 @@ func TestResolveVariables(t *testing.T) {
 					},
 				}},
 			},
-			domain.QueryInput{Headers: map[string]string{"auth": "abcdef0987", "some-param": "abc"}},
+			restql.QueryInput{Headers: map[string]string{"auth": "abcdef0987", "some-param": "abc"}},
 			domain.Query{
 				Statements: []domain.Statement{{Method: "from", Resource: "hero", Headers: map[string]interface{}{"Authorization": "abcdef0987", "X-Id": "1234567890", "X-Some-Header": "abc"}}},
 			},
@@ -230,7 +231,7 @@ func TestResolveVariables(t *testing.T) {
 					},
 				}},
 			},
-			domain.QueryInput{Body: map[string]interface{}{"auth": "abcdef0987", "some-param": "abc"}},
+			restql.QueryInput{Body: map[string]interface{}{"auth": "abcdef0987", "some-param": "abc"}},
 			domain.Query{
 				Statements: []domain.Statement{{Method: "from", Resource: "hero", Headers: map[string]interface{}{"Authorization": "abcdef0987", "X-Id": "1234567890", "X-Some-Header": "abc"}}},
 			},
@@ -238,19 +239,19 @@ func TestResolveVariables(t *testing.T) {
 		{
 			"resolve variable in only from params",
 			domain.Query{Statements: []domain.Statement{{Method: "from", Resource: "hero", Only: []interface{}{domain.Match{Value: "name", Arg: domain.Variable{Target: "heroName"}}}}}},
-			domain.QueryInput{Params: map[string]interface{}{"heroName": "^Super"}},
+			restql.QueryInput{Params: map[string]interface{}{"heroName": "^Super"}},
 			domain.Query{Statements: []domain.Statement{{Method: "from", Resource: "hero", Only: []interface{}{domain.Match{Value: "name", Arg: "^Super"}}}}},
 		},
 		{
 			"resolve variable in only from header",
 			domain.Query{Statements: []domain.Statement{{Method: "from", Resource: "hero", Only: []interface{}{domain.Match{Value: "name", Arg: domain.Variable{Target: "heroName"}}}}}},
-			domain.QueryInput{Headers: map[string]string{"heroName": "^Super"}},
+			restql.QueryInput{Headers: map[string]string{"heroName": "^Super"}},
 			domain.Query{Statements: []domain.Statement{{Method: "from", Resource: "hero", Only: []interface{}{domain.Match{Value: "name", Arg: "^Super"}}}}},
 		},
 		{
 			"resolve variable in only from body",
 			domain.Query{Statements: []domain.Statement{{Method: "from", Resource: "hero", Only: []interface{}{domain.Match{Value: "name", Arg: domain.Variable{Target: "heroName"}}}}}},
-			domain.QueryInput{Body: map[string]interface{}{"heroName": "^Super"}},
+			restql.QueryInput{Body: map[string]interface{}{"heroName": "^Super"}},
 			domain.Query{Statements: []domain.Statement{{Method: "from", Resource: "hero", Only: []interface{}{domain.Match{Value: "name", Arg: "^Super"}}}}},
 		},
 	}

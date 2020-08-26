@@ -10,6 +10,14 @@ import (
 var pathParamRegex = regexp.MustCompile(":([^/]+)/?")
 var urlRegex = regexp.MustCompile("(https?)://([^/]+)([^?]*)\\??(.*)")
 
+// Mapping represents the association of a name to a REST resource url.
+// It support special syntax in the URL to provide dynamic value substitution, like:
+//• Path parameters: can be defined by placing a colon (:) before an identifier in the URL path,
+// for example "http://some.api/:id", will replace ":id" by the value of the "id" parameter
+// in the query definition.
+//• Query parameters: can be defined by placing a colon (:) before an identifier in the URL query,
+// for example "http://some.api?:page", will replace ":page" by the value of the "page" parameter
+// in the query definition creating the URL "http://some.api?page=<value>".
 type Mapping struct {
 	resourceName  string
 	schema        string
@@ -20,6 +28,9 @@ type Mapping struct {
 	pathParamsSet map[string]struct{}
 }
 
+// NewMapping constructs a Mapping value from a resource name
+// and a canonical URL with optional identifiers for
+// path and query parameters.
 func NewMapping(resource, url string) (Mapping, error) {
 	mapping := Mapping{resourceName: resource}
 
@@ -81,6 +92,7 @@ func (m Mapping) ResourceName() string {
 	return m.resourceName
 }
 
+// IsPathParam returns true if the given name is a path parameter identifier
 func (m Mapping) IsPathParam(name string) bool {
 	_, found := m.pathParamsSet[name]
 	return found
@@ -94,11 +106,20 @@ func (m Mapping) Host() string {
 	return m.host
 }
 
+// IsQueryParam returns true if the given name is a query parameter identifier
 func (m Mapping) IsQueryParam(name string) bool {
 	_, found := m.query[name]
 	return found
 }
 
+// PathWithParams takes a map of key/value pairs and use it as value source
+// to replace path parameters defined by identifiers.
+
+// PathWithParams takes a map of key/value pairs and use it to
+// build a path string with the all identifiable parameters resolved.
+// For example, if the mapping URL is defined as "http://some.api/:id/",
+// then this method will lookup for a "id" key in the given map and use its
+// value to build the result "http://some.api/<value>/".
 func (m Mapping) PathWithParams(params map[string]interface{}) string {
 	path := m.path
 	for _, pathParam := range m.pathParams {
@@ -113,6 +134,11 @@ func (m Mapping) PathWithParams(params map[string]interface{}) string {
 	return path
 }
 
+// QueryWithParams takes a map of key/value pairs and use it to
+// build a query parameters map with the all identifiable parameters resolved.
+// For example, if the mapping URL is defined as "http://some.api?:page",
+// then this method will lookup for a "page" key in the given map and use its
+// value to build the result map[string]interface{}{"page": <value>}.
 func (m Mapping) QueryWithParams(params map[string]interface{}) map[string]interface{} {
 	if m.query == nil {
 		return nil

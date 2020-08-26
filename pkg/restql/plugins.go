@@ -9,6 +9,8 @@ import (
 	"sync"
 )
 
+// Root plugin interface that allows general handling of
+// the plugin instance when need.
 type Plugin interface {
 	Name() string
 }
@@ -28,6 +30,8 @@ const (
 	DatabasePluginType
 )
 
+// Enum of possible plugin types supported by restQL,
+// currently supports LifecyclePluginType and DatabasePluginType.
 type PluginType int
 
 func (pt PluginType) String() string {
@@ -41,12 +45,20 @@ func (pt PluginType) String() string {
 	}
 }
 
+// PluginInfo represents a plugin instance associating a
+// name and type to a constructor function.
 type PluginInfo struct {
 	Name string
 	Type PluginType
 	New  func(Logger) (Plugin, error)
 }
 
+// RegisterPlugin indexes the provided plugin information
+// for latter usage by restQL in runtime.
+// It supports registration of multiple Lifecycle plugins
+// but only one Database plugin.
+// In case of failure to register the plugin a warn
+// message will be printed to the os.Stdout.
 func RegisterPlugin(pluginInfo PluginInfo) {
 	pluginsMu.Lock()
 	defer pluginsMu.Unlock()
@@ -87,6 +99,8 @@ func GetDatabasePlugin() (PluginInfo, bool) {
 	return *dbPlugin, true
 }
 
+// LifecyclePlugin is the interface that defines
+// all possible hooks during the query execution.
 type LifecyclePlugin interface {
 	Plugin
 	BeforeTransaction(ctx context.Context, tr TransactionRequest) context.Context
@@ -97,21 +111,34 @@ type LifecyclePlugin interface {
 	AfterRequest(ctx context.Context, request HttpRequest, response HttpResponse, err error) context.Context
 }
 
+// TransactionRequest represents a query execution
+// transaction received through the /run-query/* endpoints.
 type TransactionRequest struct {
 	Url    *url.URL
 	Method string
 	Header http.Header
 }
 
+// TransactionResponse represents a query execution result
+// from a transaction received through the /run-query/* endpoints.
 type TransactionResponse struct {
 	Status int
 	Header http.Header
 	Body   []byte
 }
 
+// HttpRequest represents a HTTP call to be
+// made to an upstream dependency defined
+// by the mappings.
 type HttpRequest = domain.HttpRequest
+
+// HttpResponse represents a HTTP call result
+// from an upstream dependency defined
+// by the mappings.
 type HttpResponse = domain.HttpResponse
 
+// DatabasePlugin is the interface that defines
+// the obligatory operations needed from a database.
 type DatabasePlugin interface {
 	Plugin
 	FindMappingsForTenant(ctx context.Context, tenantId string) ([]Mapping, error)

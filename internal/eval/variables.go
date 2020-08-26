@@ -2,12 +2,13 @@ package eval
 
 import (
 	"encoding/json"
+	"github.com/b2wdigital/restQL-golang/v4/pkg/restql"
 	"strconv"
 
 	"github.com/b2wdigital/restQL-golang/v4/internal/domain"
 )
 
-func ResolveVariables(query domain.Query, input domain.QueryInput) domain.Query {
+func ResolveVariables(query domain.Query, input restql.QueryInput) domain.Query {
 	result := make([]domain.Statement, len(query.Statements))
 
 	for i, stmt := range query.Statements {
@@ -24,7 +25,7 @@ func ResolveVariables(query domain.Query, input domain.QueryInput) domain.Query 
 	return domain.Query{Use: query.Use, Statements: result}
 }
 
-func resolveWith(with domain.Params, input domain.QueryInput) domain.Params {
+func resolveWith(with domain.Params, input restql.QueryInput) domain.Params {
 	if with.Values == nil && with.Body == nil {
 		return with
 	}
@@ -45,7 +46,7 @@ func resolveWith(with domain.Params, input domain.QueryInput) domain.Params {
 	return domain.Params{Body: body, Values: result}
 }
 
-func resolveWithParamValue(value interface{}, input domain.QueryInput) (interface{}, bool) {
+func resolveWithParamValue(value interface{}, input restql.QueryInput) (interface{}, bool) {
 	switch value := value.(type) {
 	case domain.Variable:
 		return getUniqueParamValue(value.Target, input)
@@ -64,7 +65,7 @@ func resolveWithParamValue(value interface{}, input domain.QueryInput) (interfac
 	}
 }
 
-func resolveWithBody(body interface{}, input domain.QueryInput) interface{} {
+func resolveWithBody(body interface{}, input restql.QueryInput) interface{} {
 	switch body := body.(type) {
 	case domain.Variable:
 		p, found := getUniqueParamValue(body.Target, input)
@@ -112,7 +113,7 @@ func unmarshalValue(value interface{}) (interface{}, error) {
 	}
 }
 
-func resolveListWithParam(list []interface{}, input domain.QueryInput) interface{} {
+func resolveListWithParam(list []interface{}, input restql.QueryInput) interface{} {
 	l := make([]interface{}, 0, len(list))
 	for _, val := range list {
 		value, ok := resolveWithParamValue(val, input)
@@ -125,7 +126,7 @@ func resolveListWithParam(list []interface{}, input domain.QueryInput) interface
 	return l
 }
 
-func resolveComplexWithParam(object map[string]interface{}, input domain.QueryInput) interface{} {
+func resolveComplexWithParam(object map[string]interface{}, input restql.QueryInput) interface{} {
 	m := make(map[string]interface{})
 	for key, val := range object {
 		value, ok := resolveWithParamValue(val, input)
@@ -138,7 +139,7 @@ func resolveComplexWithParam(object map[string]interface{}, input domain.QueryIn
 	return m
 }
 
-func resolveCacheControl(cacheControl domain.CacheControl, input domain.QueryInput) domain.CacheControl {
+func resolveCacheControl(cacheControl domain.CacheControl, input restql.QueryInput) domain.CacheControl {
 	var result domain.CacheControl
 
 	switch value := cacheControl.MaxAge.(type) {
@@ -178,7 +179,7 @@ func resolveCacheControl(cacheControl domain.CacheControl, input domain.QueryInp
 	return result
 }
 
-func resolveHeaders(headers map[string]interface{}, input domain.QueryInput) map[string]interface{} {
+func resolveHeaders(headers map[string]interface{}, input restql.QueryInput) map[string]interface{} {
 	if headers == nil {
 		return nil
 	}
@@ -209,7 +210,7 @@ func resolveHeaders(headers map[string]interface{}, input domain.QueryInput) map
 	return result
 }
 
-func resolveTimeout(timeout interface{}, input domain.QueryInput) interface{} {
+func resolveTimeout(timeout interface{}, input restql.QueryInput) interface{} {
 	switch timeout := timeout.(type) {
 	case domain.Variable:
 		paramValue, found := getUniqueParamValue(timeout.Target, input)
@@ -230,7 +231,7 @@ func resolveTimeout(timeout interface{}, input domain.QueryInput) interface{} {
 	}
 }
 
-func resolveChain(chain domain.Chain, input domain.QueryInput) (domain.Chain, bool) {
+func resolveChain(chain domain.Chain, input restql.QueryInput) (domain.Chain, bool) {
 	result := make(domain.Chain, len(chain))
 	for i, pathItem := range chain {
 		switch pathItem := pathItem.(type) {
@@ -249,7 +250,7 @@ func resolveChain(chain domain.Chain, input domain.QueryInput) (domain.Chain, bo
 	return result, true
 }
 
-func resolveOnly(only []interface{}, input domain.QueryInput) []interface{} {
+func resolveOnly(only []interface{}, input restql.QueryInput) []interface{} {
 	if only == nil {
 		return nil
 	}
@@ -271,7 +272,7 @@ func resolveOnly(only []interface{}, input domain.QueryInput) []interface{} {
 	return result
 }
 
-func resolveMatch(match domain.Match, input domain.QueryInput) (interface{}, bool) {
+func resolveMatch(match domain.Match, input restql.QueryInput) (interface{}, bool) {
 	switch matchArg := match.Arg.(type) {
 	case domain.Variable:
 		arg, ok := getUniqueParamValue(matchArg.Target, input)
@@ -296,7 +297,7 @@ func castToInt(value interface{}) (int, bool) {
 	}
 }
 
-func getUniqueParamValue(name string, input domain.QueryInput) (interface{}, bool) {
+func getUniqueParamValue(name string, input restql.QueryInput) (interface{}, bool) {
 	bodyValue, ok := getUniqueParamValueFromBody(name, input.Body)
 	if ok {
 		return bodyValue, true
