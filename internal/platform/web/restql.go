@@ -64,7 +64,7 @@ func (r RestQl) RunAdHocQuery(ctx *fasthttp.RequestCtx) error {
 		r.log.Error("failed to build query options", err)
 		return RespondError(ctx, NewRequestError(err, http.StatusBadRequest))
 	}
-	options := domain.QueryOptions{Tenant: tenant}
+	options := restql.QueryOptions{Tenant: tenant}
 
 	input, err := makeQueryInput(ctx, r.log)
 	if err != nil {
@@ -144,37 +144,37 @@ func (r RestQl) RunSavedQuery(ctx *fasthttp.RequestCtx) error {
 	return Respond(ctx, response.Body, response.StatusCode, response.Headers)
 }
 
-func makeQueryOptions(ctx *fasthttp.RequestCtx, log restql.Logger, envTenant string) (domain.QueryOptions, error) {
+func makeQueryOptions(ctx *fasthttp.RequestCtx, log restql.Logger, envTenant string) (restql.QueryOptions, error) {
 	namespace, err := pathParamString(ctx, "namespace")
 	if err != nil {
 		log.Error("failed to load namespace path param", err)
-		return domain.QueryOptions{}, err
+		return restql.QueryOptions{}, err
 	}
 
 	queryId, err := pathParamString(ctx, "queryId")
 	if err != nil {
 		log.Error("failed to load query id path param", err)
-		return domain.QueryOptions{}, err
+		return restql.QueryOptions{}, err
 	}
 
 	revisionStr, err := pathParamString(ctx, "revision")
 	if err != nil {
 		log.Error("failed to load revision path param", err)
-		return domain.QueryOptions{}, err
+		return restql.QueryOptions{}, err
 	}
 
 	revision, err := strconv.Atoi(revisionStr)
 	if err != nil {
 		log.Debug("failed to convert revision to integer")
-		return domain.QueryOptions{}, ErrInvalidRevisionType
+		return restql.QueryOptions{}, ErrInvalidRevisionType
 	}
 
 	tenant, err := makeTenant(ctx, envTenant)
 	if err != nil {
-		return domain.QueryOptions{}, err
+		return restql.QueryOptions{}, err
 	}
 
-	qo := domain.QueryOptions{
+	qo := restql.QueryOptions{
 		Namespace: namespace,
 		Id:        queryId,
 		Revision:  revision,
@@ -199,7 +199,7 @@ func makeTenant(ctx *fasthttp.RequestCtx, envTenant string) (string, error) {
 	return tenant, nil
 }
 
-func makeQueryInput(ctx *fasthttp.RequestCtx, log restql.Logger) (domain.QueryInput, error) {
+func makeQueryInput(ctx *fasthttp.RequestCtx, log restql.Logger) (restql.QueryInput, error) {
 	params := make(map[string]interface{})
 	ctx.Request.URI().QueryArgs().VisitAll(func(keyByte, valueByte []byte) {
 		key := string(keyByte)
@@ -227,7 +227,7 @@ func makeQueryInput(ctx *fasthttp.RequestCtx, log restql.Logger) (domain.QueryIn
 		headers[string(key)] = string(value)
 	})
 
-	input := domain.QueryInput{
+	input := restql.QueryInput{
 		Params:  params,
 		Headers: headers,
 	}
@@ -240,7 +240,7 @@ func makeQueryInput(ctx *fasthttp.RequestCtx, log restql.Logger) (domain.QueryIn
 			err := json.Unmarshal(requestBody, &b)
 			if err != nil {
 				log.Error("failed to unmarshal request body", err)
-				return domain.QueryInput{}, err
+				return restql.QueryInput{}, err
 			}
 
 			input.Body = b
@@ -275,7 +275,7 @@ func pathParamString(ctx *fasthttp.RequestCtx, name string) (string, error) {
 
 const debugParamName = "_debug"
 
-func isDebugEnabled(queryInput domain.QueryInput) bool {
+func isDebugEnabled(queryInput restql.QueryInput) bool {
 	param, found := queryInput.Params[debugParamName]
 	if !found {
 		return false

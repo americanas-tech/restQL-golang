@@ -70,7 +70,7 @@ func TestMakeRequest(t *testing.T) {
 			domain.Statement{Method: domain.FromMethod, Resource: "hero", With: domain.Params{Values: map[string]interface{}{"id": "123456"}}},
 			restql.QueryContext{
 				Mappings: map[string]restql.Mapping{"hero": mapping(t, "http://hero.io/api")},
-				Input:    domain.QueryInput{Params: map[string]interface{}{"c_universe": "dc", "test": "test"}},
+				Input:    restql.QueryInput{Params: map[string]interface{}{"c_universe": "dc", "test": "test"}},
 			},
 			domain.HttpRequest{Method: http.MethodGet, Schema: "http", Host: "hero.io", Path: "/api", Query: map[string]interface{}{"id": "123456", "c_universe": "dc"}, Headers: map[string]string{"Content-Type": "application/json"}},
 		},
@@ -79,7 +79,7 @@ func TestMakeRequest(t *testing.T) {
 			domain.Statement{Method: domain.FromMethod, Resource: "hero", Headers: map[string]interface{}{"X-TID": "1234567890"}},
 			restql.QueryContext{
 				Mappings: map[string]restql.Mapping{"hero": mapping(t, "http://hero.io/api")},
-				Input: domain.QueryInput{Headers: map[string]string{
+				Input: restql.QueryInput{Headers: map[string]string{
 					"Authorization":   "Bearer abcdefgh",
 					"host":            "http://hero.io/api",
 					"Content-Type":    "application/json",

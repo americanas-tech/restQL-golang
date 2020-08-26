@@ -49,19 +49,6 @@ type Variable struct {
 
 type Chain []interface{}
 
-type QueryOptions struct {
-	Namespace string
-	Id        string
-	Revision  int
-	Tenant    string
-}
-
-type QueryInput struct {
-	Params  map[string]interface{}
-	Body    interface{}
-	Headers map[string]string
-}
-
 type ErrQueryRevisionDeprecated struct {
 	Revision int
 }
