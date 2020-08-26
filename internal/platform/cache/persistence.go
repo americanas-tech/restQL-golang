@@ -27,7 +27,10 @@ func (c *MappingsReaderCache) FromTenant(ctx context.Context, tenant string) (ma
 	mappings, ok := result.(map[string]restql.Mapping)
 	if !ok {
 		log := restql.GetLogger(ctx)
-		log.Info("failed to convert cache content", "content", result)
+		err := errors.Errorf("invalid mapping cache content type: %T", result)
+
+		log.Error("failed to convert cache content", err)
+		return nil, err
 	}
 
 	return mappings, nil
@@ -74,7 +77,10 @@ func (c *QueryReaderCache) Get(ctx context.Context, namespace, id string, revisi
 	query, ok := result.(restql.SavedQuery)
 	if !ok {
 		log := restql.GetLogger(ctx)
-		log.Info("failed to convert cache content", "content", result)
+		err := errors.Errorf("invalid query cache content type: %T", result)
+
+		log.Error("failed to convert cache content", err)
+		return restql.SavedQuery{}, err
 	}
 
 	return query, nil
