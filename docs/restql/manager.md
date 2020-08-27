@@ -35,7 +35,7 @@ $ docker run -p 8080:8080 -e RESTQL_MANAGER_PORT=8080 ... b2wdigital/restQL-mana
 
 restQL-manager uses the following environment variables for its configuration:
 
-- `RESTQL_SERVER_URL`. This will set the [restQL-http](https://github.com/B2W-BIT/restQL-http) instance that will run the queries and **MUST** point to a running [restQL-http](https://github.com/B2W-BIT/restQL-http) instance
+- `RESTQL_SERVER_URL`. This will set the [restQL](https://github.com/b2wdigital/restQL-golang) instance that will run the queries.
 - `RESTQL_MANAGER_PORT`. Default is `3000`. Set this variable to change the TCP port to be bound.
 - `MONGO_URL`. This should point to the same mongoDB instances used by the referenced [restQL](https://github.com/b2wdigital/restQL-golang).
 
