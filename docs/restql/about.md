@@ -41,8 +41,9 @@ If you need help you can reach the community on Telegram:
 - [@restQL](https://t.me/restQL): restQL Telegram Group
 - [restql.b2w.io](http://restql.b2w.io): Project home page,
 - [game.b2w.io](http://game.restql.b2w.io/): A game developed to teach the basics of restQL language,
-- [restQL-clojure](https://github.com/B2W-BIT/restQL-clojure): If you want to embed restQL directly into your Clojure application,
-- [restQL-java](https://github.com/B2W-BIT/restQL-java): If you want to embed restQL directly into your Java application,
+- [restQL-golang](https://github.com/b2wdigital/restQL-golang): Main platform implementation, including the language specification and server runtime.
+- [restQL-clojure](https://github.com/B2W-BIT/restQL-clojure): _Deprecated implementation, allowed to embed the restQL runtime in your Clojure application_
+- [restQL-java](https://github.com/B2W-BIT/restQL-java): _Deprecated implementation, allowed to embed the restQL runtime in your Java application_
 - [restQL-manager](https://github.com/B2W-BIT/restQL-manager): To manage saved queries and resources endpoints (requires a MongoDB instance).
 - [Wiki](https://github.com/B2W-BIT/restQL-http/wiki/RestQL-Query-Language): Git Hub documentation.
 
