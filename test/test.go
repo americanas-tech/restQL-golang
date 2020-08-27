@@ -30,7 +30,7 @@ var regexComparer = cmp.Comparer(func(x, y *regexp.Regexp) bool {
 
 var mappingComparer = cmp.Comparer(func(x, y restql.Mapping) bool {
 	return x.ResourceName() == y.ResourceName() &&
-		x.Scheme() == y.Scheme() &&
+		x.Schema() == y.Schema() &&
 		x.Host() == y.Host()
 })
 

@@ -5,15 +5,15 @@ import (
 	"github.com/valyala/fasthttp"
 )
 
-type Transaction struct {
+type transaction struct {
 	lifecycle plugins.Lifecycle
 }
 
-func NewTransaction(l plugins.Lifecycle) Middleware {
-	return Transaction{lifecycle: l}
+func newTransaction(l plugins.Lifecycle) Middleware {
+	return transaction{lifecycle: l}
 }
 
-func (t Transaction) Apply(h fasthttp.RequestHandler) fasthttp.RequestHandler {
+func (t transaction) Apply(h fasthttp.RequestHandler) fasthttp.RequestHandler {
 	return func(ctx *fasthttp.RequestCtx) {
 		nativeContext := GetNativeContext(ctx)
 

@@ -17,7 +17,6 @@ import (
 
 	"github.com/b2wdigital/restQL-golang/v4/internal/domain"
 	"github.com/b2wdigital/restQL-golang/v4/internal/platform/conf"
-	"github.com/b2wdigital/restQL-golang/v4/internal/platform/logger"
 	"github.com/b2wdigital/restQL-golang/v4/internal/platform/plugins"
 	"github.com/pkg/errors"
 	"github.com/rs/dnscache"
@@ -25,14 +24,14 @@ import (
 
 const defaultStatusCode = 0
 
-type nativeHttpClient struct {
+type nativeHTTPClient struct {
 	client    *http.Client
-	log       *logger.Logger
+	log       restql.Logger
 	lifecycle plugins.Lifecycle
 }
 
-func newNativeHttpClient(log *logger.Logger, l plugins.Lifecycle, cfg *conf.Config) *nativeHttpClient {
-	clientCfg := cfg.Http.Client
+func newNativeHTTPClient(log restql.Logger, l plugins.Lifecycle, cfg *conf.Config) *nativeHTTPClient {
+	clientCfg := cfg.HTTP.Client
 
 	r := &dnscache.Resolver{}
 	go func() {
@@ -76,22 +75,22 @@ func newNativeHttpClient(log *logger.Logger, l plugins.Lifecycle, cfg *conf.Conf
 		Transport: t,
 	}
 
-	return &nativeHttpClient{
+	return &nativeHTTPClient{
 		client:    c,
 		log:       log,
 		lifecycle: l,
 	}
 }
 
-func (nc *nativeHttpClient) Do(ctx context.Context, request domain.HttpRequest) (domain.HttpResponse, error) {
+func (nc *nativeHTTPClient) Do(ctx context.Context, request domain.HTTPRequest) (domain.HTTPResponse, error) {
 	ctx = nc.lifecycle.BeforeRequest(ctx, request)
 	log := restql.GetLogger(ctx)
 
 	req, err := nc.makeRequest(request)
 	if err != nil {
-		return domain.HttpResponse{}, err
+		return domain.HTTPResponse{}, err
 	}
-	requestUrl := req.URL.String()
+	requestURL := req.URL.String()
 	target := req.URL.Host
 
 	timeout, cancel := context.WithTimeout(ctx, request.Timeout)
@@ -106,16 +105,16 @@ func (nc *nativeHttpClient) Do(ctx context.Context, request domain.HttpRequest) 
 	duration := time.Since(start)
 	if err != nil {
 		if err, ok := err.(net.Error); ok && err.Timeout() {
-			errorResponse := makeErrorResponse(requestUrl, duration, http.StatusRequestTimeout)
-			log.Warn("request timed out", "url", requestUrl, "target", target, "method", request.Method, "duration-ms", duration.Milliseconds())
+			errorResponse := makeErrorResponse(requestURL, duration, http.StatusRequestTimeout)
+			log.Warn("request timed out", "url", requestURL, "target", target, "method", request.Method, "duration-ms", duration.Milliseconds())
 
 			nc.lifecycle.AfterRequest(ctx, request, errorResponse, domain.ErrRequestTimeout)
 
 			return errorResponse, domain.ErrRequestTimeout
 		}
 
-		errorResponse := makeErrorResponse(requestUrl, duration, defaultStatusCode)
-		log.Error("request finished with error", err, "url", requestUrl, "target", target, "method", request.Method, "duration-ms", duration.Milliseconds())
+		errorResponse := makeErrorResponse(requestURL, duration, defaultStatusCode)
+		log.Error("request finished with error", err, "url", requestURL, "target", target, "method", request.Method, "duration-ms", duration.Milliseconds())
 
 		nc.lifecycle.AfterRequest(ctx, request, errorResponse, err)
 		return errorResponse, err
@@ -130,7 +129,7 @@ func (nc *nativeHttpClient) Do(ctx context.Context, request domain.HttpRequest) 
 
 	body, err := nc.unmarshalBody(log, response)
 	if err != nil {
-		errorResponse := makeErrorResponse(requestUrl, duration, defaultStatusCode)
+		errorResponse := makeErrorResponse(requestURL, duration, defaultStatusCode)
 		nc.lifecycle.AfterRequest(ctx, request, errorResponse, err)
 
 		return errorResponse, err
@@ -141,8 +140,8 @@ func (nc *nativeHttpClient) Do(ctx context.Context, request domain.HttpRequest) 
 		hr[k] = s[0]
 	}
 
-	httpResponse := domain.HttpResponse{
-		Url:        requestUrl,
+	httpResponse := domain.HTTPResponse{
+		URL:        requestURL,
 		StatusCode: response.StatusCode,
 		Body:       body,
 		Headers:    hr,
@@ -154,10 +153,10 @@ func (nc *nativeHttpClient) Do(ctx context.Context, request domain.HttpRequest) 
 	return httpResponse, nil
 }
 
-func (nc *nativeHttpClient) makeRequest(request domain.HttpRequest) (*http.Request, error) {
+func (nc *nativeHTTPClient) makeRequest(request domain.HTTPRequest) (*http.Request, error) {
 	req := http.Request{
 		Method: request.Method,
-		URL:    makeUrl(request),
+		URL:    makeURL(request),
 	}
 
 	if request.Method == http.MethodPost || request.Method == http.MethodPut || request.Method == http.MethodPatch {
@@ -179,7 +178,7 @@ func (nc *nativeHttpClient) makeRequest(request domain.HttpRequest) (*http.Reque
 	return &req, nil
 }
 
-func (nc *nativeHttpClient) makeBody(request domain.HttpRequest) (io.ReadCloser, error) {
+func (nc *nativeHTTPClient) makeBody(request domain.HTTPRequest) (io.ReadCloser, error) {
 	body := request.Body
 
 	if body, ok := body.(string); ok {
@@ -195,7 +194,7 @@ func (nc *nativeHttpClient) makeBody(request domain.HttpRequest) (io.ReadCloser,
 	return r, nil
 }
 
-func (nc *nativeHttpClient) unmarshalBody(log restql.Logger, response *http.Response) (interface{}, error) {
+func (nc *nativeHTTPClient) unmarshalBody(log restql.Logger, response *http.Response) (interface{}, error) {
 	target := response.Request.URL.Host
 	requestURL := response.Request.URL.String()
 	statusCode := response.StatusCode
@@ -228,7 +227,7 @@ func (nc *nativeHttpClient) unmarshalBody(log restql.Logger, response *http.Resp
 	return responseBody, nil
 }
 
-func makeUrl(request domain.HttpRequest) *url.URL {
+func makeURL(request domain.HTTPRequest) *url.URL {
 	u := &url.URL{
 		Host:   request.Host,
 		Scheme: request.Schema,
@@ -284,9 +283,9 @@ func parseMapParam(value map[string]interface{}) string {
 	return string(data)
 }
 
-func makeErrorResponse(requestUrl string, responseTime time.Duration, statusCode int) domain.HttpResponse {
-	return domain.HttpResponse{
-		Url:        requestUrl,
+func makeErrorResponse(requestURL string, responseTime time.Duration, statusCode int) domain.HTTPResponse {
+	return domain.HTTPResponse{
+		URL:        requestURL,
 		StatusCode: statusCode,
 		Duration:   responseTime,
 	}

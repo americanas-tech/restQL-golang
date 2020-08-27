@@ -4,6 +4,8 @@ import (
 	"github.com/b2wdigital/restQL-golang/v4/internal/domain"
 )
 
+// DecodeQueryResult transforms a resolved Resources collection
+// into a generic map.
 func DecodeQueryResult(queryResult domain.Resources) map[string]interface{} {
 	m := make(map[string]interface{})
 	for key, resource := range queryResult {
@@ -61,7 +63,7 @@ func parseResource(resource interface{}) map[string]interface{} {
 func parseDetails(resource domain.DoneResource) map[string]interface{} {
 	debug := map[string]interface{}{
 		"method":          resource.Method,
-		"url":             resource.Url,
+		"url":             resource.URL,
 		"requestHeaders":  resource.RequestHeaders,
 		"params":          resource.RequestParams,
 		"responseHeaders": resource.ResponseHeaders,

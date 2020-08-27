@@ -51,7 +51,7 @@ func NewMapping(resource, url string) (Mapping, error) {
 	}
 
 	if len(m) >= 5 {
-		mapping.query = parseQueryParametersInUrl(m[4])
+		mapping.query = parseQueryParametersInURL(m[4])
 	}
 
 	paramsMatches := pathParamRegex.FindAllStringSubmatch(mapping.path, -1)
@@ -70,7 +70,7 @@ func NewMapping(resource, url string) (Mapping, error) {
 	return mapping, nil
 }
 
-func parseQueryParametersInUrl(queryParams string) map[string]interface{} {
+func parseQueryParametersInURL(queryParams string) map[string]interface{} {
 	if queryParams == "" {
 		return nil
 	}
@@ -88,6 +88,7 @@ func parseQueryParametersInUrl(queryParams string) map[string]interface{} {
 	return m
 }
 
+// ResourceName return the name associated with the resource URL
 func (m Mapping) ResourceName() string {
 	return m.resourceName
 }
@@ -98,10 +99,12 @@ func (m Mapping) IsPathParam(name string) bool {
 	return found
 }
 
-func (m Mapping) Scheme() string {
+// Schema returns the resource URL schema
+func (m Mapping) Schema() string {
 	return m.schema
 }
 
+// Host returns the resource URL host
 func (m Mapping) Host() string {
 	return m.host
 }

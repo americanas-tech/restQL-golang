@@ -3,10 +3,11 @@ package httpclient
 import (
 	"github.com/b2wdigital/restQL-golang/v4/internal/domain"
 	"github.com/b2wdigital/restQL-golang/v4/internal/platform/conf"
-	"github.com/b2wdigital/restQL-golang/v4/internal/platform/logger"
 	"github.com/b2wdigital/restQL-golang/v4/internal/platform/plugins"
+	"github.com/b2wdigital/restQL-golang/v4/pkg/restql"
 )
 
-func New(log *logger.Logger, pm plugins.Lifecycle, cfg *conf.Config) domain.HttpClient {
-	return newNativeHttpClient(log, pm, cfg)
+// New constructs an HTTPClient instances.
+func New(log restql.Logger, pm plugins.Lifecycle, cfg *conf.Config) domain.HTTPClient {
+	return newNativeHTTPClient(log, pm, cfg)
 }

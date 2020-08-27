@@ -12,13 +12,16 @@ import (
 	"github.com/pkg/errors"
 )
 
+// Validation errors returned be Evaluator
 var (
 	ErrInvalidRevision  = errors.New("revision must be greater than 0")
-	ErrInvalidQueryId   = errors.New("query id must be not empty")
+	ErrInvalidQueryID   = errors.New("query id must be not empty")
 	ErrInvalidNamespace = errors.New("namespace must be not empty")
 	ErrInvalidTenant    = errors.New("tenant must be not empty")
 )
 
+// Evaluator is the interpreter of the restQL language.
+// It can execute saved or ad-hoc queries.
 type Evaluator struct {
 	log            restql.Logger
 	parser         parser.Parser
@@ -28,6 +31,7 @@ type Evaluator struct {
 	lifecycle      plugins.Lifecycle
 }
 
+// NewEvaluator constructs an instance of the restQL interpreter.
 func NewEvaluator(log restql.Logger, mr MappingsReader, qr QueryReader, r runner.Runner, p parser.Parser, l plugins.Lifecycle) Evaluator {
 	return Evaluator{
 		log:            log,
@@ -39,6 +43,8 @@ func NewEvaluator(log restql.Logger, mr MappingsReader, qr QueryReader, r runner
 	}
 }
 
+// AdHocQuery executes an ad-hoc send by the client with
+// the options and HTTP information.
 func (e Evaluator) AdHocQuery(ctx context.Context, queryTxt string, queryOpts restql.QueryOptions, queryInput restql.QueryInput) (domain.Resources, error) {
 	if queryOpts.Tenant == "" {
 		return nil, ValidationError{ErrInvalidTenant}
@@ -47,6 +53,9 @@ func (e Evaluator) AdHocQuery(ctx context.Context, queryTxt string, queryOpts re
 	return e.evaluateQuery(ctx, queryTxt, queryOpts, queryInput)
 }
 
+// SavedQuery executes a saved query identified by namespace,
+// id and revision with the options and HTTP information
+// send by the client.
 func (e Evaluator) SavedQuery(ctx context.Context, queryOpts restql.QueryOptions, queryInput restql.QueryInput) (domain.Resources, error) {
 	err := validateQueryOptions(queryOpts)
 	if err != nil {
@@ -117,7 +126,7 @@ func (e Evaluator) evaluateQuery(ctx context.Context, queryTxt string, queryOpts
 
 	resources = ApplyAggregators(query, resources)
 
-	queryCtx = e.lifecycle.AfterQuery(queryCtx, queryTxt, resources)
+	e.lifecycle.AfterQuery(queryCtx, queryTxt, resources)
 
 	resources = ApplyHidden(query, resources)
 
@@ -142,7 +151,7 @@ func validateQueryOptions(queryOpts restql.QueryOptions) error {
 	}
 
 	if queryOpts.Id == "" {
-		return ValidationError{ErrInvalidQueryId}
+		return ValidationError{ErrInvalidQueryID}
 	}
 
 	if queryOpts.Namespace == "" {

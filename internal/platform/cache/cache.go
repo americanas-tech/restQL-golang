@@ -2,9 +2,9 @@ package cache
 
 import (
 	"context"
+	"github.com/b2wdigital/restQL-golang/v4/pkg/restql"
 	"time"
 
-	"github.com/b2wdigital/restQL-golang/v4/internal/platform/logger"
 	"github.com/bluele/gcache"
 	"github.com/pkg/errors"
 )
@@ -19,30 +19,43 @@ func (i cacheItem) Expired() bool {
 	return !i.expiration.IsZero() && time.Now().After(i.expiration)
 }
 
+// Loader is a strategy to fetch values not found or
+// expired in cache.
 type Loader func(ctx context.Context, key interface{}) (interface{}, error)
 
+// Option is a cache parameter configurator
 type Option func(c *Cache)
 
+// WithRefreshInterval sets the interval between
+// each execution of the background refresh routine.
 func WithRefreshInterval(interval time.Duration) Option {
 	return func(c *Cache) {
 		c.refreshInterval = interval
 	}
 }
 
+// WithRefreshQueueLength sets the maximum queue
+// size of cache entries to be refreshed.
 func WithRefreshQueueLength(length int) Option {
 	return func(c *Cache) {
 		c.refreshQueueLength = length
 	}
 }
 
+// WithExpiration sets the time to live of cache entries.
 func WithExpiration(expiration time.Duration) Option {
 	return func(c *Cache) {
 		c.expiration = expiration
 	}
 }
 
+// Cache is an in-memory container that uses a LRU
+// eviction strategy. It also supports stale cache,
+// i.e. cache entries have an expiration and when
+// its due the entry is refresh with a background
+// routine, never deleting the old value, only replacing it.
 type Cache struct {
-	log                *logger.Logger
+	log                restql.Logger
 	gcache             gcache.Cache
 	loader             Loader
 	refreshWorkCh      chan interface{}
@@ -51,7 +64,8 @@ type Cache struct {
 	refreshQueueLength int
 }
 
-func New(log *logger.Logger, size int, loader Loader, options ...Option) *Cache {
+// New constructs an Cache instance.
+func New(log restql.Logger, size int, loader Loader, options ...Option) *Cache {
 	c := gcache.New(size).LRU().Build()
 
 	cache := Cache{
@@ -72,6 +86,7 @@ func New(log *logger.Logger, size int, loader Loader, options ...Option) *Cache 
 	return &cache
 }
 
+// Get retrieves and entry for the given key.
 func (c *Cache) Get(ctx context.Context, key interface{}) (interface{}, error) {
 	obj, err := c.gcache.Get(key)
 
@@ -144,7 +159,7 @@ func (c *Cache) setupRefreshWorker() *refreshWorker {
 }
 
 type refreshWorker struct {
-	log           *logger.Logger
+	log           restql.Logger
 	cache         *Cache
 	refreshFn     Loader
 	refreshWorkCh chan interface{}

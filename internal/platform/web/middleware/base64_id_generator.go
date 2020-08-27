@@ -8,12 +8,12 @@ import (
 	"sync/atomic"
 )
 
-type Base64IdGenerator struct {
+type base64IdGenerator struct {
 	prefix  string
 	counter *uint64
 }
 
-func NewBase64IdGenerator() *Base64IdGenerator {
+func newBase64IdGenerator() *base64IdGenerator {
 	hostname, err := os.Hostname()
 	if hostname == "" || err != nil {
 		hostname = "localhost"
@@ -28,10 +28,10 @@ func NewBase64IdGenerator() *Base64IdGenerator {
 	prefix := fmt.Sprintf("%s/%s", hostname, b64[0:10])
 	var initialCounter uint64
 
-	return &Base64IdGenerator{prefix: prefix, counter: &initialCounter}
+	return &base64IdGenerator{prefix: prefix, counter: &initialCounter}
 }
 
-func (i *Base64IdGenerator) Run() string {
+func (i *base64IdGenerator) Run() string {
 	c := atomic.AddUint64(i.counter, 1)
 	return fmt.Sprintf("%s-%06d", i.prefix, c)
 }

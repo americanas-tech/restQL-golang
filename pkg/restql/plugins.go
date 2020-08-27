@@ -9,8 +9,8 @@ import (
 	"sync"
 )
 
-// Root plugin interface that allows general handling of
-// the plugin instance when need.
+// Plugin is the root interface that allows general
+// handling of the plugins instance when need.
 type Plugin interface {
 	Name() string
 }
@@ -25,12 +25,13 @@ type pluginIndex struct {
 	dbPlugin  *PluginInfo
 }
 
+// Plugin types
 const (
 	LifecyclePluginType PluginType = iota
 	DatabasePluginType
 )
 
-// Enum of possible plugin types supported by restQL,
+// PluginType is an enum of possible plugin types supported by restQL,
 // currently supports LifecyclePluginType and DatabasePluginType.
 type PluginType int
 
@@ -130,17 +131,17 @@ type TransactionResponse struct {
 // HttpRequest represents a HTTP call to be
 // made to an upstream dependency defined
 // by the mappings.
-type HttpRequest = domain.HttpRequest
+type HttpRequest = domain.HTTPRequest
 
 // HttpResponse represents a HTTP call result
 // from an upstream dependency defined
 // by the mappings.
-type HttpResponse = domain.HttpResponse
+type HttpResponse = domain.HTTPResponse
 
 // DatabasePlugin is the interface that defines
 // the obligatory operations needed from a database.
 type DatabasePlugin interface {
 	Plugin
-	FindMappingsForTenant(ctx context.Context, tenantId string) ([]Mapping, error)
+	FindMappingsForTenant(ctx context.Context, tenantID string) ([]Mapping, error)
 	FindQuery(ctx context.Context, namespace string, name string, revision int) (SavedQuery, error)
 }

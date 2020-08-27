@@ -9,12 +9,14 @@ import (
 	"github.com/pkg/errors"
 )
 
+// ApplyFilters returns a version of the already resolved Resources
+// only with the fields defined by the `only` clause.
 func ApplyFilters(log restql.Logger, query domain.Query, resources domain.Resources) (domain.Resources, error) {
 	result := make(domain.Resources)
 
 	for _, stmt := range query.Statements {
-		resourceId := domain.NewResourceId(stmt)
-		dr := resources[resourceId]
+		resourceID := domain.NewResourceID(stmt)
+		dr := resources[resourceID]
 
 		filtered, err := applyOnlyFilters(stmt.Only, dr)
 		if err != nil {
@@ -22,7 +24,7 @@ func ApplyFilters(log restql.Logger, query domain.Query, resources domain.Resour
 			return nil, err
 		}
 
-		result[resourceId] = filtered
+		result[resourceID] = filtered
 	}
 
 	return result, nil
@@ -259,6 +261,8 @@ func parsePath(s interface{}) []interface{} {
 	}
 }
 
+// ApplyHidden returns a version of the already resolved Resources
+// removing the statement results with the `hidden` clause.
 func ApplyHidden(query domain.Query, resources domain.Resources) domain.Resources {
 	result := make(domain.Resources)
 
@@ -266,10 +270,10 @@ func ApplyHidden(query domain.Query, resources domain.Resources) domain.Resource
 		if stmt.Hidden {
 			continue
 		}
-		resourceId := domain.NewResourceId(stmt)
-		dr := resources[resourceId]
+		resourceID := domain.NewResourceID(stmt)
+		dr := resources[resourceID]
 
-		result[resourceId] = dr
+		result[resourceID] = dr
 	}
 
 	return result

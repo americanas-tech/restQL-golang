@@ -9,15 +9,19 @@ import (
 	"strings"
 )
 
-const (
-	EmptyChained = "__EMPTY_CHAINED__"
-)
+// EmptyChained in a token used to represent a chained parameter value
+// that could not be resolved due to a failed response from the upstream dependency.
+const EmptyChained = "__EMPTY_CHAINED__"
 
+// ErrInvalidChainedParameter represents an error when a chain parameter value
+// references an unknown statement.
 var ErrInvalidChainedParameter = errors.New("chained parameter targeting unknown statement")
 
+// ResolveChainedValues takes an unresolved Resource collection and replace
+// chain parameter values by data present in the done Resource collection.
 func ResolveChainedValues(resources domain.Resources, doneResources domain.Resources) domain.Resources {
-	for resourceId, stmt := range resources {
-		resources[resourceId] = resolveStatement(stmt, doneResources)
+	for resourceID, stmt := range resources {
+		resources[resourceID] = resolveStatement(stmt, doneResources)
 	}
 
 	return resources
@@ -174,9 +178,9 @@ func resolveListParam(listParam []interface{}, doneResources domain.Resources) [
 
 func resolveChainParam(chain domain.Chain, doneResources domain.Resources) interface{} {
 	path := toPath(chain)
-	resourceId := domain.ResourceId(path[0])
+	resourceID := domain.ResourceID(path[0])
 
-	switch done := doneResources[resourceId].(type) {
+	switch done := doneResources[resourceID].(type) {
 	case domain.DoneResources:
 		return resolveWithMultiplexedRequests(path[1:], done)
 	case domain.DoneResource:
@@ -266,6 +270,8 @@ func getValueFromHeader(name string, headers map[string]string) (string, bool) {
 	return "", false
 }
 
+// ValidateChainedValues returns an error if a chain
+// parameter value references an unknown statement.
 func ValidateChainedValues(resources domain.Resources) error {
 	for _, stmt := range resources {
 		err := validateStatement(stmt, resources)
@@ -340,9 +346,9 @@ func validateListParam(listParam []interface{}, resources domain.Resources) erro
 
 func validateChainParam(chain domain.Chain, resources domain.Resources) error {
 	path := toPath(chain)
-	resourceId := domain.ResourceId(path[0])
+	resourceID := domain.ResourceID(path[0])
 
-	_, found := resources[resourceId]
+	_, found := resources[resourceID]
 	if !found {
 		return fmt.Errorf("%w : %s", ErrInvalidChainedParameter, strings.Join(path, "."))
 	}

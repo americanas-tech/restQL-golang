@@ -7,25 +7,25 @@ import (
 	"net/http/pprof"
 )
 
-type Pprof struct {
+type debug struct {
 	index   fasthttp.RequestHandler
 	profile fasthttp.RequestHandler
 }
 
-func NewPprof() Pprof {
-	return Pprof{
+func newDebug() debug {
+	return debug{
 		index:   fasthttpadaptor.NewFastHTTPHandlerFunc(pprof.Index),
 		profile: fasthttpadaptor.NewFastHTTPHandlerFunc(pprof.Profile),
 	}
 }
 
-func (d Pprof) Index(ctx *fasthttp.RequestCtx) error {
+func (d debug) Index(ctx *fasthttp.RequestCtx) error {
 	log.Printf("[DEBUG] profile requested")
 	d.index(ctx)
 	return nil
 }
 
-func (d Pprof) Profile(ctx *fasthttp.RequestCtx) error {
+func (d debug) Profile(ctx *fasthttp.RequestCtx) error {
 	log.Printf("[DEBUG] profile requested")
 	d.profile(ctx)
 	return nil

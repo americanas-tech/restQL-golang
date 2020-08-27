@@ -4,16 +4,21 @@ import (
 	"github.com/b2wdigital/restQL-golang/v4/internal/domain"
 )
 
+// State tracks the status of the statements to be resolved
+// being resolved and done.
 type State struct {
 	todo      domain.Resources
 	requested domain.Resources
 	done      domain.Resources
 }
 
+// NewState constructs a State value.
 func NewState(todo domain.Resources) *State {
 	return &State{todo: todo, requested: make(domain.Resources), done: make(domain.Resources)}
 }
 
+// Available return all statements to be resolved
+// that have no dependency or which dependency was resolved.
 func (s *State) Available() domain.Resources {
 	available := make(domain.Resources)
 	for key, stmt := range s.todo {
@@ -70,7 +75,7 @@ func (s *State) isValueResolved(value interface{}) bool {
 			return false
 		}
 
-		_, found := s.done[domain.ResourceId(resourceTarget)]
+		_, found := s.done[domain.ResourceID(resourceTarget)]
 		return found
 	case domain.Function:
 		return s.isValueResolved(value.Target())
@@ -93,27 +98,33 @@ func (s *State) isValueResolved(value interface{}) bool {
 	}
 }
 
-func (s *State) UpdateDone(resourceId domain.ResourceId, response interface{}) {
-	s.done[resourceId] = response
-	delete(s.requested, resourceId)
+// UpdateDone set a being resolved Resource as done.
+func (s *State) UpdateDone(resourceID domain.ResourceID, response interface{}) {
+	s.done[resourceID] = response
+	delete(s.requested, resourceID)
 }
 
+// Done returns all Resources already resolved
 func (s *State) Done() domain.Resources {
 	d := s.done
 
 	return d
 }
 
-func (s *State) SetAsRequest(resourceId domain.ResourceId) {
-	statement := s.todo[resourceId]
-	s.requested[resourceId] = statement
-	delete(s.todo, resourceId)
+// SetAsRequest define an to be resolved Resource
+// into a being resolved Resource.
+func (s *State) SetAsRequest(resourceID domain.ResourceID) {
+	statement := s.todo[resourceID]
+	s.requested[resourceID] = statement
+	delete(s.todo, resourceID)
 }
 
+// Requested returns all Resources being resolved
 func (s *State) Requested() domain.Resources {
 	return s.requested
 }
 
+// HasFinished returns true if all Resources are set as done.
 func (s *State) HasFinished() bool {
 	return len(s.todo) == 0 && len(s.requested) == 0
 }

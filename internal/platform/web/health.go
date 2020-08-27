@@ -5,20 +5,20 @@ import (
 	"github.com/valyala/fasthttp"
 )
 
-type Check struct {
+type check struct {
 	build string
 }
 
-func NewCheck(build string) Check {
-	return Check{build: build}
+func newCheck(build string) check {
+	return check{build: build}
 }
 
-func (c Check) Health(ctx *fasthttp.RequestCtx) error {
+func (c check) Health(ctx *fasthttp.RequestCtx) error {
 	ctx.Response.SetBodyString("I'm healthy! :)")
 	return nil
 }
 
-func (c Check) ResourceStatus(ctx *fasthttp.RequestCtx) error {
+func (c check) ResourceStatus(ctx *fasthttp.RequestCtx) error {
 	ctx.Response.SetBodyString(fmt.Sprintf("RestQL is running with build %s", c.build))
 	return nil
 }

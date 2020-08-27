@@ -2,22 +2,26 @@ package cache
 
 import (
 	"context"
+	"github.com/b2wdigital/restQL-golang/v4/pkg/restql"
 
 	"github.com/b2wdigital/restQL-golang/v4/internal/domain"
 	"github.com/b2wdigital/restQL-golang/v4/internal/parser"
-	"github.com/b2wdigital/restQL-golang/v4/internal/platform/logger"
 	"github.com/pkg/errors"
 )
 
+// ParserCache is a caching wrapper that implements the Parser interface.
 type ParserCache struct {
-	log   *logger.Logger
+	log   restql.Logger
 	cache *Cache
 }
 
-func NewParserCache(log *logger.Logger, c *Cache) ParserCache {
+// NewParserCache constructs a ParserCache instance.
+func NewParserCache(log restql.Logger, c *Cache) ParserCache {
 	return ParserCache{log: log, cache: c}
 }
 
+// Parse returns a cached Query internal representation if
+// present, transforming the query text into one otherwise.
 func (p ParserCache) Parse(queryStr string) (domain.Query, error) {
 	result, err := p.cache.Get(context.Background(), queryStr)
 	if err != nil {
@@ -32,6 +36,8 @@ func (p ParserCache) Parse(queryStr string) (domain.Query, error) {
 	return query, nil
 }
 
+// ParserCacheLoader is the strategy to load
+// values for the cached parser.
 func ParserCacheLoader(p parser.Parser) Loader {
 	return func(ctx context.Context, key interface{}) (interface{}, error) {
 		queryStr, ok := key.(string)

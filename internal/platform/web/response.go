@@ -10,6 +10,7 @@ import (
 	"github.com/valyala/fasthttp"
 )
 
+// Respond write the information back to the client.
 func Respond(ctx *fasthttp.RequestCtx, data interface{}, statusCode int, headers map[string]string) error {
 	ctx.Response.Header.SetContentType("application/json; charset=utf-8")
 	ctx.Response.SetStatusCode(statusCode)
@@ -27,6 +28,7 @@ func Respond(ctx *fasthttp.RequestCtx, data interface{}, statusCode int, headers
 	return nil
 }
 
+// RespondError translate the error and write it back to the client.
 func RespondError(ctx *fasthttp.RequestCtx, err error) error {
 
 	// If the error was of the type *Error, the handler has
@@ -50,9 +52,10 @@ func RespondError(ctx *fasthttp.RequestCtx, err error) error {
 	return nil
 }
 
+// StatementDebugging represents the client format of debugging information
 type StatementDebugging struct {
 	Method          string                 `json:"method,omitempty"`
-	Url             string                 `json:"url,omitempty"`
+	URL             string                 `json:"url,omitempty"`
 	RequestHeaders  map[string]string      `json:"request-headers,omitempty"`
 	ResponseHeaders map[string]string      `json:"response-headers,omitempty"`
 	Params          map[string]interface{} `json:"params,omitempty"`
@@ -60,10 +63,12 @@ type StatementDebugging struct {
 	ResponseTime    int64                  `json:"response-time,omitempty"`
 }
 
+// StatementMetadata represents the client format of metadata
 type StatementMetadata struct {
 	IgnoreErrors string `json:"ignore-errors,omitempty"`
 }
 
+// StatementDetails represents the client format of the statement details
 type StatementDetails struct {
 	Status   int                 `json:"status"`
 	Success  bool                `json:"success"`
@@ -71,17 +76,20 @@ type StatementDetails struct {
 	Debug    *StatementDebugging `json:"debug,omitempty"`
 }
 
+// StatementResult represents the client format of the statement result
 type StatementResult struct {
 	Details interface{} `json:"details"`
 	Result  interface{} `json:"result,omitempty"`
 }
 
+// QueryResponse represents the client format of the query result
 type QueryResponse struct {
 	StatusCode int
 	Body       map[string]StatementResult
 	Headers    map[string]string
 }
 
+// MakeQueryResponse create a query execution response for the client.
 func MakeQueryResponse(queryResult domain.Resources, debug bool) QueryResponse {
 	m := make(map[string]StatementResult)
 	for key, resource := range queryResult {
@@ -150,7 +158,7 @@ func parseDetails(resource domain.DoneResource, debug bool) StatementDetails {
 func parseDebug(resource domain.DoneResource) *StatementDebugging {
 	return &StatementDebugging{
 		Method:          resource.Method,
-		Url:             resource.Url,
+		URL:             resource.URL,
 		RequestHeaders:  resource.RequestHeaders,
 		ResponseHeaders: resource.ResponseHeaders,
 		Params:          resource.RequestParams,
@@ -159,6 +167,13 @@ func parseDebug(resource domain.DoneResource) *StatementDebugging {
 	}
 }
 
+// CalculateStatusCode returns the greater status in all
+// statement results to be used as the response status code.
+// It applies the following normalization to statement result status codes:
+//
+// 0 => 500
+// 204 => 200
+// 201 => 200
 func CalculateStatusCode(queryResult domain.Resources) int {
 	results := make([]interface{}, len(queryResult))
 	index := 0

@@ -9,6 +9,7 @@ import (
 	"github.com/pkg/errors"
 )
 
+// Optimize transforms a restQL AST into the internal representation.
 func Optimize(queryAst *ast.Query) (domain.Query, error) {
 	statements, err := mapToStatements(queryAst.Blocks)
 	if err != nil {
@@ -136,8 +137,8 @@ func applyFunctions(v interface{}, functions []string) interface{} {
 			v = domain.AsBody{Value: v}
 		case ast.Base64:
 			v = domain.Base64{Value: v}
-		case ast.Json:
-			v = domain.Json{Value: v}
+		case ast.JSON:
+			v = domain.JSON{Value: v}
 		case ast.Flatten:
 			v = domain.Flatten{Value: v}
 		}

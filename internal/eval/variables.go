@@ -8,6 +8,9 @@ import (
 	"github.com/b2wdigital/restQL-golang/v4/internal/domain"
 )
 
+// ResolveVariables returns a restQL query with all variables
+// resolved to values present in the client body,
+// query parameters or headers, in this specific order.
 func ResolveVariables(query domain.Query, input restql.QueryInput) domain.Query {
 	result := make([]domain.Statement, len(query.Statements))
 

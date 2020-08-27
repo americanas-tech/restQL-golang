@@ -1,57 +1,57 @@
 package middleware
 
 import (
-	"github.com/b2wdigital/restQL-golang/v4/internal/platform/logger"
+	"github.com/b2wdigital/restQL-golang/v4/pkg/restql"
 	"github.com/valyala/fasthttp"
 )
 
-type IdGenerator interface {
+type idGenerator interface {
 	Run() string
 }
 
-type RequestId struct {
+type requestID struct {
 	header    string
-	generator IdGenerator
+	generator idGenerator
 }
 
-var strategyToGenerator = map[string]IdGenerator{
-	"base64": NewBase64IdGenerator(),
-	"uuid":   NewUuidIdGenerator(),
+var strategyToGenerator = map[string]idGenerator{
+	"base64": newBase64IdGenerator(),
+	"uuid":   newUUIDGenerator(),
 }
 
-func NewRequestId(header string, strategy string, log *logger.Logger) Middleware {
+func newRequestID(header string, strategy string, log restql.Logger) Middleware {
 	if header == "" {
 		log.Warn("failed to initialize request id middleware : empty header name")
-		return NoopMiddleware{}
+		return noopMiddleware{}
 	}
 
 	generator, ok := strategyToGenerator[strategy]
 	if !ok {
 		log.Warn("failed to initialize request id middleware : unknow strategy", "strategy", strategy)
-		return NoopMiddleware{}
+		return noopMiddleware{}
 	}
 
-	return RequestId{
+	return requestID{
 		header:    header,
 		generator: generator,
 	}
 }
 
-func (r RequestId) Apply(h fasthttp.RequestHandler) fasthttp.RequestHandler {
+func (r requestID) Apply(h fasthttp.RequestHandler) fasthttp.RequestHandler {
 	return func(ctx *fasthttp.RequestCtx) {
-		var requestId string
+		var requestID string
 
-		currentRequestId := ctx.Request.Header.Peek(r.header)
+		currentRequestID := ctx.Request.Header.Peek(r.header)
 
-		if len(currentRequestId) == 0 {
-			requestId = r.generator.Run()
-			ctx.Request.Header.Set(r.header, requestId)
+		if len(currentRequestID) == 0 {
+			requestID = r.generator.Run()
+			ctx.Request.Header.Set(r.header, requestID)
 		} else {
-			requestId = string(currentRequestId)
+			requestID = string(currentRequestID)
 		}
 
 		h(ctx)
 
-		ctx.Response.Header.Set(r.header, requestId)
+		ctx.Response.Header.Set(r.header, requestID)
 	}
 }

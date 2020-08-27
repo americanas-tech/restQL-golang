@@ -3,21 +3,24 @@ package cache
 import (
 	"context"
 
-	"github.com/b2wdigital/restQL-golang/v4/internal/platform/logger"
 	"github.com/b2wdigital/restQL-golang/v4/internal/platform/persistence"
 	"github.com/b2wdigital/restQL-golang/v4/pkg/restql"
 	"github.com/pkg/errors"
 )
 
+// MappingsReaderCache is a caching wrapper that
+// implements the MappingsReader interface.
 type MappingsReaderCache struct {
-	log   *logger.Logger
+	log   restql.Logger
 	cache *Cache
 }
 
-func NewMappingsReaderCache(log *logger.Logger, c *Cache) *MappingsReaderCache {
+// NewMappingsReaderCache constructs a MappingsReaderCache instance.
+func NewMappingsReaderCache(log restql.Logger, c *Cache) *MappingsReaderCache {
 	return &MappingsReaderCache{log: log, cache: c}
 }
 
+// FromTenant returns a cached mapping index if present, fetching it otherwise.
 func (c *MappingsReaderCache) FromTenant(ctx context.Context, tenant string) (map[string]restql.Mapping, error) {
 	result, err := c.cache.Get(ctx, tenant)
 	if err != nil {
@@ -36,6 +39,8 @@ func (c *MappingsReaderCache) FromTenant(ctx context.Context, tenant string) (ma
 	return mappings, nil
 }
 
+// TenantCacheLoader is the strategy to load
+// values for the cached mappings reader.
 func TenantCacheLoader(mr persistence.MappingsReader) Loader {
 	return func(ctx context.Context, key interface{}) (interface{}, error) {
 		tenant, ok := key.(string)
@@ -58,15 +63,19 @@ type cacheQueryKey struct {
 	revision  int
 }
 
+// QueryReaderCache is a caching wrapper that
+// implements the QueryReader interface.
 type QueryReaderCache struct {
-	log   *logger.Logger
+	log   restql.Logger
 	cache *Cache
 }
 
-func NewQueryReaderCache(log *logger.Logger, c *Cache) *QueryReaderCache {
+// NewQueryReaderCache constructs a QueryReaderCache instance.
+func NewQueryReaderCache(log restql.Logger, c *Cache) *QueryReaderCache {
 	return &QueryReaderCache{log: log, cache: c}
 }
 
+// Get returns a cached saved query if present, fetching it otherwise.
 func (c *QueryReaderCache) Get(ctx context.Context, namespace, id string, revision int) (restql.SavedQuery, error) {
 	cacheKey := cacheQueryKey{namespace: namespace, id: id, revision: revision}
 	result, err := c.cache.Get(ctx, cacheKey)
@@ -86,6 +95,8 @@ func (c *QueryReaderCache) Get(ctx context.Context, namespace, id string, revisi
 	return query, nil
 }
 
+// QueryCacheLoader is the strategy to load
+// values for the cached query reader.
 func QueryCacheLoader(qr persistence.QueryReader) Loader {
 	return func(ctx context.Context, key interface{}) (interface{}, error) {
 		cacheKey, ok := key.(cacheQueryKey)

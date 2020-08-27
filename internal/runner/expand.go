@@ -23,13 +23,18 @@ type listParameters struct {
 	value     []interface{}
 }
 
+// MultiplexStatements creates a statement for each value in a
+// list parameter value.
+// In case of multiple list parameter values it makes the cartesian
+// product of all the lists and makes a statement for each value in a
+// result product.
 func MultiplexStatements(resources domain.Resources) domain.Resources {
-	for resourceId, stmt := range resources {
+	for resourceID, stmt := range resources {
 		switch stmt := stmt.(type) {
 		case domain.Statement:
-			resources[resourceId] = multiplex(stmt)
+			resources[resourceID] = multiplex(stmt)
 		default:
-			resources[resourceId] = stmt
+			resources[resourceID] = stmt
 		}
 	}
 

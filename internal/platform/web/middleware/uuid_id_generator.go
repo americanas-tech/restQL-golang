@@ -2,13 +2,13 @@ package middleware
 
 import "github.com/google/uuid"
 
-type UuidIdGenerator struct{}
+type uuidGenerator struct{}
 
-func NewUuidIdGenerator() UuidIdGenerator {
-	return UuidIdGenerator{}
+func newUUIDGenerator() uuidGenerator {
+	return uuidGenerator{}
 }
 
-func (u UuidIdGenerator) Run() string {
+func (u uuidGenerator) Run() string {
 	id, _ := uuid.NewRandom()
 	return id.String()
 }

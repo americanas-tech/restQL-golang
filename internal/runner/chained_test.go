@@ -337,7 +337,7 @@ func TestValidateChainedValues(t *testing.T) {
 					Method:   "from",
 					Resource: "resource-name",
 					With: domain.Params{Values: map[string]interface{}{
-						"id": domain.Json{Value: domain.Chain{"done-resource", "id"}},
+						"id": domain.JSON{Value: domain.Chain{"done-resource", "id"}},
 					}},
 				},
 			},

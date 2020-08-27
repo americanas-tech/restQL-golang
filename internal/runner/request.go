@@ -18,7 +18,7 @@ var disallowedHeaders = map[string]struct{}{
 	"Accept-Encoding": {},
 }
 
-var queryMethodToHttpMethod = map[string]string{
+var queryMethodToHTTPMethod = map[string]string{
 	domain.FromMethod:   http.MethodGet,
 	domain.ToMethod:     http.MethodPost,
 	domain.IntoMethod:   http.MethodPut,
@@ -26,17 +26,18 @@ var queryMethodToHttpMethod = map[string]string{
 	domain.DeleteMethod: http.MethodDelete,
 }
 
-func MakeRequest(defaultResourceTimeout time.Duration, forwardPrefix string, statement domain.Statement, queryCtx restql.QueryContext) domain.HttpRequest {
+// MakeRequest builds a HTTPRequest from a statement.
+func MakeRequest(defaultResourceTimeout time.Duration, forwardPrefix string, statement domain.Statement, queryCtx restql.QueryContext) domain.HTTPRequest {
 	mapping := queryCtx.Mappings[statement.Resource]
-	method := queryMethodToHttpMethod[statement.Method]
+	method := queryMethodToHTTPMethod[statement.Method]
 	headers := makeHeaders(statement, queryCtx)
 	path := mapping.PathWithParams(statement.With.Values)
 	queryParams := makeQueryParams(forwardPrefix, statement, mapping, queryCtx)
 	timeout := parseTimeout(defaultResourceTimeout, statement)
 
-	req := domain.HttpRequest{
+	req := domain.HTTPRequest{
 		Method:  method,
-		Schema:  mapping.Scheme(),
+		Schema:  mapping.Schema(),
 		Host:    mapping.Host(),
 		Path:    path,
 		Query:   queryParams,

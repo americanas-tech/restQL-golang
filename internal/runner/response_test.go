@@ -12,36 +12,36 @@ import (
 func TestNewDoneResource(t *testing.T) {
 	tests := []struct {
 		name     string
-		request  domain.HttpRequest
-		response domain.HttpResponse
+		request  domain.HTTPRequest
+		response domain.HTTPResponse
 		options  runner.DoneResourceOptions
 		expected domain.DoneResource
 	}{
 		{
 			"should create done resource for successful execution",
-			domain.HttpRequest{},
-			domain.HttpResponse{StatusCode: 200, Body: nil},
+			domain.HTTPRequest{},
+			domain.HTTPResponse{StatusCode: 200, Body: nil},
 			runner.DoneResourceOptions{},
 			domain.DoneResource{Status: 200, Success: true, IgnoreErrors: false, ResponseBody: nil},
 		},
 		{
 			"should create done resource for failed execution",
-			domain.HttpRequest{},
-			domain.HttpResponse{StatusCode: 400, Body: nil},
+			domain.HTTPRequest{},
+			domain.HTTPResponse{StatusCode: 400, Body: nil},
 			runner.DoneResourceOptions{},
 			domain.DoneResource{Status: 400, Success: false, IgnoreErrors: false, ResponseBody: nil},
 		},
 		{
 			"should create done resource with debug",
-			domain.HttpRequest{
+			domain.HTTPRequest{
 				Schema:  "http",
 				Host:    "hero.io",
 				Path:    "/api",
 				Query:   map[string]interface{}{"id": "123456"},
 				Headers: map[string]string{"X-TID": "12345abdef"},
 			},
-			domain.HttpResponse{
-				Url:        "http://hero.io/api",
+			domain.HTTPResponse{
+				URL:        "http://hero.io/api",
 				StatusCode: 200,
 				Body:       nil,
 				Headers:    map[string]string{"Content-Type": "application/json"},
@@ -52,7 +52,7 @@ func TestNewDoneResource(t *testing.T) {
 				Status:          200,
 				Success:         true,
 				IgnoreErrors:    false,
-				Url:             "http://hero.io/api",
+				URL:             "http://hero.io/api",
 				RequestHeaders:  map[string]string{"X-TID": "12345abdef"},
 				ResponseHeaders: map[string]string{"Content-Type": "application/json"},
 				RequestParams:   map[string]interface{}{"id": "123456"},
@@ -62,8 +62,8 @@ func TestNewDoneResource(t *testing.T) {
 		},
 		{
 			"should create done resource with ignore errors",
-			domain.HttpRequest{},
-			domain.HttpResponse{StatusCode: 200, Body: nil},
+			domain.HTTPRequest{},
+			domain.HTTPResponse{StatusCode: 200, Body: nil},
 			runner.DoneResourceOptions{IgnoreErrors: true},
 			domain.DoneResource{
 				Status:       200,
@@ -74,8 +74,8 @@ func TestNewDoneResource(t *testing.T) {
 		},
 		{
 			"should create done resource with cache control information returned by resource",
-			domain.HttpRequest{},
-			domain.HttpResponse{StatusCode: 200, Body: nil, Headers: map[string]string{"Cache-Control": "max-age=400, s-maxage=600"}},
+			domain.HTTPRequest{},
+			domain.HTTPResponse{StatusCode: 200, Body: nil, Headers: map[string]string{"Cache-Control": "max-age=400, s-maxage=600"}},
 			runner.DoneResourceOptions{},
 			domain.DoneResource{
 				Status:  200,
@@ -91,8 +91,8 @@ func TestNewDoneResource(t *testing.T) {
 		},
 		{
 			"should create done resource with cache control information returned by resource",
-			domain.HttpRequest{},
-			domain.HttpResponse{StatusCode: 200, Body: nil, Headers: map[string]string{"Cache-Control": "no-cache"}},
+			domain.HTTPRequest{},
+			domain.HTTPResponse{StatusCode: 200, Body: nil, Headers: map[string]string{"Cache-Control": "no-cache"}},
 			runner.DoneResourceOptions{},
 			domain.DoneResource{
 				Status:  200,
@@ -107,8 +107,8 @@ func TestNewDoneResource(t *testing.T) {
 		},
 		{
 			"should create done resource with cache control information defined in statement if not returned by resource",
-			domain.HttpRequest{},
-			domain.HttpResponse{StatusCode: 200, Body: nil},
+			domain.HTTPRequest{},
+			domain.HTTPResponse{StatusCode: 200, Body: nil},
 			runner.DoneResourceOptions{MaxAge: 100, SMaxAge: 300},
 			domain.DoneResource{
 				Status:  200,
@@ -123,8 +123,8 @@ func TestNewDoneResource(t *testing.T) {
 		},
 		{
 			"should create done resource with cache control information defined in statement if not returned by resource",
-			domain.HttpRequest{},
-			domain.HttpResponse{StatusCode: 200, Body: nil},
+			domain.HTTPRequest{},
+			domain.HTTPResponse{StatusCode: 200, Body: nil},
 			runner.DoneResourceOptions{MaxAge: 100},
 			domain.DoneResource{
 				Status:  200,
@@ -138,8 +138,8 @@ func TestNewDoneResource(t *testing.T) {
 		},
 		{
 			"should create done resource with minimum cache control information between the returned by resource and the defined in statement",
-			domain.HttpRequest{},
-			domain.HttpResponse{StatusCode: 200, Body: nil, Headers: map[string]string{"Cache-Control": "max-age=100, s-maxage=600"}},
+			domain.HTTPRequest{},
+			domain.HTTPResponse{StatusCode: 200, Body: nil, Headers: map[string]string{"Cache-Control": "max-age=100, s-maxage=600"}},
 			runner.DoneResourceOptions{MaxAge: 400, SMaxAge: 300},
 			domain.DoneResource{
 				Status:  200,
@@ -155,8 +155,8 @@ func TestNewDoneResource(t *testing.T) {
 		},
 		{
 			"should create done resource with minimum cache control information between the returned by resource and the defined in statement",
-			domain.HttpRequest{},
-			domain.HttpResponse{StatusCode: 200, Body: nil, Headers: map[string]string{"Cache-Control": "no-cache"}},
+			domain.HTTPRequest{},
+			domain.HTTPResponse{StatusCode: 200, Body: nil, Headers: map[string]string{"Cache-Control": "no-cache"}},
 			runner.DoneResourceOptions{MaxAge: 400, SMaxAge: 300},
 			domain.DoneResource{
 				Status:  200,
@@ -186,23 +186,23 @@ func TestNewTimeoutResponse(t *testing.T) {
 
 	tests := []struct {
 		name     string
-		request  domain.HttpRequest
-		response domain.HttpResponse
+		request  domain.HTTPRequest
+		response domain.HTTPResponse
 		options  runner.DoneResourceOptions
 		expected domain.DoneResource
 	}{
 		{
 			"should create response for time outed execution",
-			domain.HttpRequest{
+			domain.HTTPRequest{
 				Schema:  "http",
 				Host:    "hero.io",
 				Path:    "/api",
 				Query:   map[string]interface{}{"id": "123456"},
 				Headers: map[string]string{"X-TID": "12345abdef"},
 			},
-			domain.HttpResponse{
+			domain.HTTPResponse{
 				StatusCode: 408,
-				Url:        "http://hero.io/api",
+				URL:        "http://hero.io/api",
 				Duration:   100 * time.Millisecond,
 			},
 			runner.DoneResourceOptions{},
@@ -210,7 +210,7 @@ func TestNewTimeoutResponse(t *testing.T) {
 				Status:         408,
 				Success:        false,
 				IgnoreErrors:   false,
-				Url:            "http://hero.io/api",
+				URL:            "http://hero.io/api",
 				RequestHeaders: map[string]string{"X-TID": "12345abdef"},
 				RequestParams:  map[string]interface{}{"id": "123456"},
 				ResponseTime:   100,
@@ -219,16 +219,16 @@ func TestNewTimeoutResponse(t *testing.T) {
 		},
 		{
 			"should create response for time outed execution with ignore errors",
-			domain.HttpRequest{
+			domain.HTTPRequest{
 				Schema:  "http",
 				Host:    "hero.io",
 				Path:    "/api",
 				Query:   map[string]interface{}{"id": "123456"},
 				Headers: map[string]string{"X-TID": "12345abdef"},
 			},
-			domain.HttpResponse{
+			domain.HTTPResponse{
 				StatusCode: 408,
-				Url:        "http://hero.io/api",
+				URL:        "http://hero.io/api",
 				Duration:   100 * time.Millisecond,
 			},
 			runner.DoneResourceOptions{IgnoreErrors: true},
@@ -236,7 +236,7 @@ func TestNewTimeoutResponse(t *testing.T) {
 				Status:         408,
 				Success:        false,
 				IgnoreErrors:   true,
-				Url:            "http://hero.io/api",
+				URL:            "http://hero.io/api",
 				RequestHeaders: map[string]string{"X-TID": "12345abdef"},
 				RequestParams:  map[string]interface{}{"id": "123456"},
 				ResponseTime:   100,

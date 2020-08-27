@@ -2,11 +2,14 @@ package runner
 
 import "github.com/b2wdigital/restQL-golang/v4/internal/domain"
 
+// ApplyModifiers transforms an unresolved Resources collection and
+// set the query level cache directives into each statement without
+// cache directives.
 func ApplyModifiers(resources domain.Resources, modifiers domain.Modifiers) domain.Resources {
-	for resourceId, stmt := range resources {
+	for resourceID, stmt := range resources {
 		if stmt, ok := stmt.(domain.Statement); ok {
 			stmt.CacheControl = applyCacheModifiers(modifiers, stmt)
-			resources[resourceId] = stmt
+			resources[resourceID] = stmt
 		}
 	}
 

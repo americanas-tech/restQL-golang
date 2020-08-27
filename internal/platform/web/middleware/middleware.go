@@ -2,24 +2,28 @@ package middleware
 
 import (
 	"fmt"
+	"github.com/b2wdigital/restQL-golang/v4/pkg/restql"
 
 	"github.com/b2wdigital/restQL-golang/v4/internal/platform/conf"
-	"github.com/b2wdigital/restQL-golang/v4/internal/platform/logger"
 	"github.com/b2wdigital/restQL-golang/v4/internal/platform/plugins"
 	"github.com/valyala/fasthttp"
 )
 
+// Middleware defines a generic handler wrapper
+// capable of controlling request flow.
 type Middleware interface {
 	Apply(h fasthttp.RequestHandler) fasthttp.RequestHandler
 }
 
-type NoopMiddleware struct{}
+type noopMiddleware struct{}
 
-func (nm NoopMiddleware) Apply(h fasthttp.RequestHandler) fasthttp.RequestHandler {
+func (nm noopMiddleware) Apply(h fasthttp.RequestHandler) fasthttp.RequestHandler {
 	return h
 }
 
-func Apply(h fasthttp.RequestHandler, mws []Middleware, log *logger.Logger) fasthttp.RequestHandler {
+// Apply takes a base handler and a slice of middlewares,
+// applying each one in the order they are given.
+func Apply(log restql.Logger, h fasthttp.RequestHandler, mws []Middleware) fasthttp.RequestHandler {
 	handler := h
 
 	for i := len(mws) - 1; i >= 0; i-- {
@@ -31,24 +35,25 @@ func Apply(h fasthttp.RequestHandler, mws []Middleware, log *logger.Logger) fast
 	return handler
 }
 
-func FetchEnabled(log *logger.Logger, cfg *conf.Config, pm plugins.Lifecycle) []Middleware {
-	mws := []Middleware{NewRecover(log), NewNativeContext(), NewTransaction(pm)}
+// FetchEnabled returns all middlewares enabled in configuration
+func FetchEnabled(log restql.Logger, cfg *conf.Config, pm plugins.Lifecycle) []Middleware {
+	mws := []Middleware{newRecoverer(log), newNativeContext(), newTransaction(pm)}
 
-	mwCfg := cfg.Http.Server.Middlewares
+	mwCfg := cfg.HTTP.Server.Middlewares
 	if mwCfg.Timeout != nil {
-		mws = append(mws, NewTimeout(mwCfg.Timeout.Duration, log))
+		mws = append(mws, newTimeout(mwCfg.Timeout.Duration, log))
 	}
 
-	if mwCfg.RequestId != nil {
-		mws = append(mws, NewRequestId(mwCfg.RequestId.Header, mwCfg.RequestId.Strategy, log))
+	if mwCfg.RequestID != nil {
+		mws = append(mws, newRequestID(mwCfg.RequestID.Header, mwCfg.RequestID.Strategy, log))
 	}
 
 	if mwCfg.Cors != nil {
-		cors := NewCors(log,
-			WithAllowOrigins(mwCfg.Cors.AllowOrigin),
-			WithAllowHeaders(mwCfg.Cors.AllowHeaders),
-			WithAllowMethods(mwCfg.Cors.AllowMethods),
-			WithExposedHeaders(mwCfg.Cors.ExposeHeaders),
+		cors := newCors(log,
+			withAllowOrigins(mwCfg.Cors.AllowOrigin),
+			withAllowHeaders(mwCfg.Cors.AllowHeaders),
+			withAllowMethods(mwCfg.Cors.AllowMethods),
+			withExposedHeaders(mwCfg.Cors.ExposeHeaders),
 		)
 		mws = append(mws, cors)
 	}

@@ -9,10 +9,12 @@ import (
 	"github.com/b2wdigital/restQL-golang/v4/pkg/restql"
 )
 
+// ApplyEncoders transform parameter values with encoder functions applied
+// into a Resource collection with the values processed.
 func ApplyEncoders(resources domain.Resources, log restql.Logger) domain.Resources {
-	for resourceId, statement := range resources {
+	for resourceID, statement := range resources {
 		if statement, ok := statement.(domain.Statement); ok {
-			resources[resourceId] = applyEncoderToStatement(log, statement)
+			resources[resourceID] = applyEncoderToStatement(log, statement)
 		}
 	}
 
@@ -39,7 +41,7 @@ func applyEncoderToBody(log restql.Logger, body interface{}) interface{} {
 	switch body := body.(type) {
 	case domain.Base64:
 		return applyBase64encoder(applyEncoderToBody(log, body.Target()))
-	case domain.Json:
+	case domain.JSON:
 		return applyEncoderToBody(log, body.Target())
 	case domain.Flatten:
 		return applyFlattenEncoder(log, applyEncoderToBody(log, body.Target()))
@@ -61,13 +63,13 @@ func applyEncoderToValue(log restql.Logger, value interface{}) interface{} {
 		}
 
 		return applyBase64encoder(applyEncoderToValue(log, value.Target()))
-	case domain.Json:
+	case domain.JSON:
 		target := value.Target()
 		if _, ok := target.(domain.Chain); ok {
 			return value
 		}
 
-		return applyJsonEncoder(log, applyEncoderToValue(log, value.Target()))
+		return applyJSONEncoder(log, applyEncoderToValue(log, value.Target()))
 	case domain.Flatten:
 		target := value.Target()
 		if _, ok := target.(domain.Chain); ok {
@@ -95,7 +97,8 @@ func applyEncoderToValue(log restql.Logger, value interface{}) interface{} {
 		return value
 	}
 }
-func applyJsonEncoder(log restql.Logger, value interface{}) interface{} {
+
+func applyJSONEncoder(log restql.Logger, value interface{}) interface{} {
 	data, err := json.Marshal(value)
 	if err != nil {
 		log.Debug("failed to apply json encoder", "target", value)

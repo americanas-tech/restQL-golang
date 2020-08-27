@@ -8,6 +8,9 @@ import (
 	"github.com/b2wdigital/restQL-golang/v4/internal/domain"
 )
 
+// DoneResourceOptions represents information
+// from the statement that should be passed
+// to the result.
 type DoneResourceOptions struct {
 	Debugging    bool
 	IgnoreErrors bool
@@ -15,14 +18,15 @@ type DoneResourceOptions struct {
 	SMaxAge      interface{}
 }
 
-func NewDoneResource(request domain.HttpRequest, response domain.HttpResponse, options DoneResourceOptions) domain.DoneResource {
+// NewDoneResource constructs a DoneResourceOptions value.
+func NewDoneResource(request domain.HTTPRequest, response domain.HTTPResponse, options DoneResourceOptions) domain.DoneResource {
 	dr := domain.DoneResource{
 		Status:          response.StatusCode,
 		Success:         response.StatusCode >= 200 && response.StatusCode < 400,
 		IgnoreErrors:    options.IgnoreErrors,
 		CacheControl:    makeCacheControl(response, options),
 		Method:          request.Method,
-		Url:             response.Url,
+		URL:             response.URL,
 		RequestParams:   request.Query,
 		RequestBody:     request.Body,
 		RequestHeaders:  request.Headers,
@@ -34,14 +38,15 @@ func NewDoneResource(request domain.HttpRequest, response domain.HttpResponse, o
 	return dr
 }
 
-func NewErrorResponse(err error, request domain.HttpRequest, response domain.HttpResponse, options DoneResourceOptions) domain.DoneResource {
+// NewErrorResponse builds a DoneResource value for a failed HTTP call.
+func NewErrorResponse(err error, request domain.HTTPRequest, response domain.HTTPResponse, options DoneResourceOptions) domain.DoneResource {
 	return domain.DoneResource{
 		Status:          response.StatusCode,
 		Success:         false,
 		IgnoreErrors:    options.IgnoreErrors,
 		ResponseBody:    err.Error(),
 		Method:          request.Method,
-		Url:             response.Url,
+		URL:             response.URL,
 		RequestParams:   request.Query,
 		RequestBody:     request.Body,
 		RequestHeaders:  request.Headers,
@@ -50,6 +55,8 @@ func NewErrorResponse(err error, request domain.HttpRequest, response domain.Htt
 	}
 }
 
+// NewEmptyChainedResponse builds a DoneResource for a statement
+// with unresolved chain parameters.
 func NewEmptyChainedResponse(params []string, options DoneResourceOptions) domain.DoneResource {
 	var buf bytes.Buffer
 
@@ -69,6 +76,8 @@ func NewEmptyChainedResponse(params []string, options DoneResourceOptions) domai
 	}
 }
 
+// GetEmptyChainedParams returns the chain parameters that
+// could not be resolved.
 func GetEmptyChainedParams(statement domain.Statement) []string {
 	var r []string
 	for key, value := range statement.With.Values {
@@ -103,7 +112,7 @@ func isEmptyChained(value interface{}) bool {
 	}
 }
 
-func makeCacheControl(response domain.HttpResponse, options DoneResourceOptions) domain.ResourceCacheControl {
+func makeCacheControl(response domain.HTTPResponse, options DoneResourceOptions) domain.ResourceCacheControl {
 	headerCacheControl, headerFound := getCacheControlOptionsFromHeader(response)
 	defaultCacheControl, defaultFound := getDefaultCacheControlOptions(options)
 
@@ -154,9 +163,9 @@ func bestCacheControlValue(first domain.ResourceCacheControlValue, second domain
 func min(a int, b int) int {
 	if a < b {
 		return a
-	} else {
-		return b
 	}
+
+	return b
 }
 
 func getDefaultCacheControlOptions(options DoneResourceOptions) (cc domain.ResourceCacheControl, found bool) {
@@ -179,7 +188,7 @@ var maxAgeHeaderRegex = regexp.MustCompile("max-age=(\\d+)")
 var smaxAgeHeaderRegex = regexp.MustCompile("s-maxage=(\\d+)")
 var noCacheHeaderRegex = regexp.MustCompile("no-cache")
 
-func getCacheControlOptionsFromHeader(response domain.HttpResponse) (cc domain.ResourceCacheControl, found bool) {
+func getCacheControlOptionsFromHeader(response domain.HTTPResponse) (cc domain.ResourceCacheControl, found bool) {
 	cacheControl, ok := response.Headers["Cache-Control"]
 	if !ok {
 		return domain.ResourceCacheControl{}, false

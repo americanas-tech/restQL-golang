@@ -11,6 +11,7 @@ import (
 
 var noOpLogger = New(ioutil.Discard, LogOptions{})
 
+// LogOptions represents available logging configurations
 type LogOptions struct {
 	Enable               bool
 	TimestampFieldName   string
@@ -19,7 +20,12 @@ type LogOptions struct {
 	Format               string
 }
 
-func New(w io.Writer, options LogOptions) *Logger {
+type zeroLogger struct {
+	zLogger zerolog.Logger
+}
+
+// New constructs a zeroLogger instance.
+func New(w io.Writer, options LogOptions) restql.Logger {
 	output := w
 	if options.Format == "pretty" {
 		output = zerolog.ConsoleWriter{Out: w}
@@ -45,53 +51,49 @@ func New(w io.Writer, options LogOptions) *Logger {
 		logger.Level(zerolog.Disabled)
 	}
 
-	return &Logger{zLogger: logger}
+	return &zeroLogger{zLogger: logger}
 }
 
-type Logger struct {
-	zLogger zerolog.Logger
-}
-
-func (l *Logger) Panic(msg string, fields ...interface{}) {
-	entry := l.zLogger.Panic()
+func (zl *zeroLogger) Panic(msg string, fields ...interface{}) {
+	entry := zl.zLogger.Panic()
 	fieldMap := makeFieldMap(fields)
 
 	entry.Fields(fieldMap).Msg(msg)
 }
 
-func (l *Logger) Fatal(msg string, fields ...interface{}) {
+func (zl *zeroLogger) Fatal(msg string, fields ...interface{}) {
 	fieldMap := makeFieldMap(fields)
 
-	l.zLogger.Fatal().Fields(fieldMap).Msg(msg)
+	zl.zLogger.Fatal().Fields(fieldMap).Msg(msg)
 }
 
-func (l *Logger) Error(msg string, err error, fields ...interface{}) {
+func (zl *zeroLogger) Error(msg string, err error, fields ...interface{}) {
 	fieldMap := makeFieldMap(fields)
 
-	l.zLogger.Error().Err(err).Fields(fieldMap).Msg(msg)
+	zl.zLogger.Error().Err(err).Fields(fieldMap).Msg(msg)
 }
 
-func (l *Logger) Warn(msg string, fields ...interface{}) {
+func (zl *zeroLogger) Warn(msg string, fields ...interface{}) {
 	fieldMap := makeFieldMap(fields)
 
-	l.zLogger.Warn().Fields(fieldMap).Msg(msg)
+	zl.zLogger.Warn().Fields(fieldMap).Msg(msg)
 }
 
-func (l *Logger) Info(msg string, fields ...interface{}) {
+func (zl *zeroLogger) Info(msg string, fields ...interface{}) {
 	fieldMap := makeFieldMap(fields)
 
-	l.zLogger.Info().Fields(fieldMap).Msg(msg)
+	zl.zLogger.Info().Fields(fieldMap).Msg(msg)
 }
 
-func (l *Logger) Debug(msg string, fields ...interface{}) {
+func (zl *zeroLogger) Debug(msg string, fields ...interface{}) {
 	fieldMap := makeFieldMap(fields)
 
-	l.zLogger.Debug().Fields(fieldMap).Msg(msg)
+	zl.zLogger.Debug().Fields(fieldMap).Msg(msg)
 }
 
-func (l *Logger) With(key string, value interface{}) restql.Logger {
-	cl := l.zLogger.With().Str(key, fmt.Sprintf("%v", value)).Logger()
-	return &Logger{zLogger: cl}
+func (zl *zeroLogger) With(key string, value interface{}) restql.Logger {
+	cl := zl.zLogger.With().Str(key, fmt.Sprintf("%v", value)).Logger()
+	return &zeroLogger{zLogger: cl}
 }
 
 func makeFieldMap(fields []interface{}) map[string]interface{} {

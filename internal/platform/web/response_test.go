@@ -65,7 +65,7 @@ func TestMakeQueryResponse(t *testing.T) {
 				"hero": domain.DoneResource{
 					Status:          200,
 					Success:         true,
-					Url:             "http://hero.io/api",
+					URL:             "http://hero.io/api",
 					RequestHeaders:  map[string]string{"X-Token": "abcabcacbabc"},
 					ResponseHeaders: map[string]string{"X-New-Token": "efgefgefg"},
 					RequestParams:   map[string]interface{}{"filter": "no"},
@@ -79,7 +79,7 @@ func TestMakeQueryResponse(t *testing.T) {
 				Body: map[string]web.StatementResult{
 					"hero": {
 						Details: web.StatementDetails{Status: 200, Success: true, Debug: &web.StatementDebugging{
-							Url:             "http://hero.io/api",
+							URL:             "http://hero.io/api",
 							RequestHeaders:  map[string]string{"X-Token": "abcabcacbabc"},
 							ResponseHeaders: map[string]string{"X-New-Token": "efgefgefg"},
 							Params:          map[string]interface{}{"filter": "no"},

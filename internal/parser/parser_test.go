@@ -123,12 +123,12 @@ func TestQueryParser(t *testing.T) {
 		},
 		{
 			"Unique from statement with multiple functions applied to parameter",
-			domain.Query{Statements: []domain.Statement{{Method: "from", Resource: "hero", With: domain.Params{Values: map[string]interface{}{"id": domain.NoMultiplex{domain.Json{[]interface{}{1, 2}}}}}}}},
+			domain.Query{Statements: []domain.Statement{{Method: "from", Resource: "hero", With: domain.Params{Values: map[string]interface{}{"id": domain.NoMultiplex{domain.JSON{[]interface{}{1, 2}}}}}}}},
 			"from hero with id = [1, 2] -> json -> no-multiplex",
 		},
 		{
 			"Unique from statement and object parameter encoded as json",
-			domain.Query{Statements: []domain.Statement{{Method: "from", Resource: "hero", With: domain.Params{Values: map[string]interface{}{"id": domain.Json{map[string]interface{}{"internal": 1}}}}}}},
+			domain.Query{Statements: []domain.Statement{{Method: "from", Resource: "hero", With: domain.Params{Values: map[string]interface{}{"id": domain.JSON{map[string]interface{}{"internal": 1}}}}}}},
 			`from hero with id = { "internal": 1 } -> json`,
 		},
 		{
@@ -289,7 +289,7 @@ from hero as h
 		_, err := queryParser.Parse(query)
 
 		if err != nil {
-			b.Fatalf("An error ocurred when running the benchmark: %v", err)
+			b.Fatalf("An error occurred when running the benchmark: %v", err)
 		}
 	}
 }

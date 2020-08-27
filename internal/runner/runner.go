@@ -9,14 +9,21 @@ import (
 	"github.com/pkg/errors"
 )
 
+// ErrQueryTimedOut represents the event of a query that
+// exceed the maximum execution time for it.
 var ErrQueryTimedOut = errors.New("query timed out")
 
+// Runner process a query into a Resource collection
+// with the results in the most efficient way.
+// All statements that can be executed in parallel,
+// hence not having co-dependency, are done so.
 type Runner struct {
 	log                restql.Logger
 	executor           Executor
 	globalQueryTimeout time.Duration
 }
 
+// NewRunner returns a Runner instance.
 func NewRunner(log restql.Logger, executor Executor, globalQueryTimeout time.Duration) Runner {
 	return Runner{
 		log:                log,
@@ -25,6 +32,7 @@ func NewRunner(log restql.Logger, executor Executor, globalQueryTimeout time.Dur
 	}
 }
 
+// ExecuteQuery process a query into a Resource collection.
 func (r Runner) ExecuteQuery(ctx context.Context, query domain.Query, queryCtx restql.QueryContext) (domain.Resources, error) {
 	log := restql.GetLogger(ctx)
 
@@ -112,12 +120,12 @@ func (r Runner) initializeResources(query domain.Query, queryCtx restql.QueryCon
 }
 
 type request struct {
-	ResourceIdentifier domain.ResourceId
+	ResourceIdentifier domain.ResourceID
 	Statement          interface{}
 }
 
 type result struct {
-	ResourceIdentifier domain.ResourceId
+	ResourceIdentifier domain.ResourceID
 	Response           interface{}
 }
 
@@ -133,8 +141,8 @@ type stateWorker struct {
 func (sw *stateWorker) Run() {
 	for !sw.state.HasFinished() {
 		availableResources := sw.state.Available()
-		for resourceId := range availableResources {
-			sw.state.SetAsRequest(resourceId)
+		for resourceID := range availableResources {
+			sw.state.SetAsRequest(resourceID)
 		}
 
 		availableResources = ResolveChainedValues(availableResources, sw.state.Done())
@@ -142,11 +150,11 @@ func (sw *stateWorker) Run() {
 		availableResources = MultiplexStatements(availableResources)
 		availableResources = UnwrapNoMultiplex(availableResources)
 
-		for resourceId, stmt := range availableResources {
-			resourceId, stmt := resourceId, stmt
+		for resourceID, stmt := range availableResources {
+			resourceID, stmt := resourceID, stmt
 			go func() {
 				select {
-				case sw.requestCh <- request{ResourceIdentifier: resourceId, Statement: stmt}:
+				case sw.requestCh <- request{ResourceIdentifier: resourceID, Statement: stmt}:
 				case <-sw.ctx.Done():
 				}
 			}()
@@ -179,19 +187,19 @@ func (rw *requestWorker) Run() {
 	for {
 		select {
 		case req := <-rw.requestCh:
-			resourceId := req.ResourceIdentifier
+			resourceID := req.ResourceIdentifier
 			statement := req.Statement
 
 			switch statement := statement.(type) {
 			case domain.Statement:
 				go func() {
 					response := rw.executor.DoStatement(rw.ctx, statement, rw.queryCtx)
-					writeResult(rw.ctx, rw.resultCh, result{ResourceIdentifier: resourceId, Response: response})
+					writeResult(rw.ctx, rw.resultCh, result{ResourceIdentifier: resourceID, Response: response})
 				}()
 			case []interface{}:
 				go func() {
 					responses := rw.executor.DoMultiplexedStatement(rw.ctx, statement, rw.queryCtx)
-					writeResult(rw.ctx, rw.resultCh, result{ResourceIdentifier: resourceId, Response: responses})
+					writeResult(rw.ctx, rw.resultCh, result{ResourceIdentifier: resourceID, Response: responses})
 				}()
 			}
 		case <-rw.ctx.Done():

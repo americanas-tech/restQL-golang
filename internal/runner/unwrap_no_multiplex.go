@@ -4,9 +4,12 @@ import (
 	"github.com/b2wdigital/restQL-golang/v4/internal/domain"
 )
 
+// UnwrapNoMultiplex transform a collection of unresolved Resources
+// with `no-multiplex` functions into a collection of Resources
+// without it.
 func UnwrapNoMultiplex(resources domain.Resources) domain.Resources {
-	for resourceId, resource := range resources {
-		resources[resourceId] = unwrapResource(resource)
+	for resourceID, resource := range resources {
+		resources[resourceID] = unwrapResource(resource)
 	}
 
 	return resources

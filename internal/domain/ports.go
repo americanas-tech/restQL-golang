@@ -6,21 +6,33 @@ import (
 	"time"
 )
 
+// EnvSource expose access to environment variables.
 type EnvSource interface {
 	GetString(key string) string
 	GetAll() map[string]string
 }
 
-type HttpClient interface {
-	Do(ctx context.Context, request HttpRequest) (HttpResponse, error)
+// HTTPClient is the interface that wrap the method Do
+//
+// Do takes an HTTPRequest and execute it respecting
+// the cancellation signal from the given Context.
+type HTTPClient interface {
+	Do(ctx context.Context, request HTTPRequest) (HTTPResponse, error)
 }
 
+// ErrRequestTimeout is the error returned by HTTPClient
+// when a HTTP call fails due to the request exceeding
+// the timeout defined in HTTPRequest.
 var ErrRequestTimeout = errors.New("request timed out")
 
+// Headers represents all HTTP header in a request or response.
 type Headers map[string]string
+
+// Body represents a HTTP body in a request or response.
 type Body interface{}
 
-type HttpRequest struct {
+// HTTPRequest describe a HTTP call to be made by HTTPClient.
+type HTTPRequest struct {
 	Method  string
 	Schema  string
 	Host    string
@@ -31,8 +43,9 @@ type HttpRequest struct {
 	Timeout time.Duration
 }
 
-type HttpResponse struct {
-	Url        string
+// HTTPResponse describe a HTTP response returned by HTTPClient.
+type HTTPResponse struct {
+	URL        string
 	StatusCode int
 	Body       Body
 	Headers    Headers

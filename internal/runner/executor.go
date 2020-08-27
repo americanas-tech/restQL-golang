@@ -9,17 +9,22 @@ import (
 	"github.com/b2wdigital/restQL-golang/v4/pkg/restql"
 )
 
+// Executor process statements into a result
+// by executing the relevant HTTP calls to
+// the upstream dependency.
 type Executor struct {
-	client          domain.HttpClient
+	client          domain.HTTPClient
 	log             restql.Logger
 	resourceTimeout time.Duration
 	forwardPrefix   string
 }
 
-func NewExecutor(log restql.Logger, client domain.HttpClient, resourceTimeout time.Duration, forwardPrefix string) Executor {
+// NewExecutor constructs an instance of Executor.
+func NewExecutor(log restql.Logger, client domain.HTTPClient, resourceTimeout time.Duration, forwardPrefix string) Executor {
 	return Executor{client: client, log: log, resourceTimeout: resourceTimeout, forwardPrefix: forwardPrefix}
 }
 
+// DoStatement process a single statement into a result by executing the relevant HTTP calls to the upstream dependency.
 func (e Executor) DoStatement(ctx context.Context, statement domain.Statement, queryCtx restql.QueryContext) domain.DoneResource {
 	log := restql.GetLogger(ctx)
 
@@ -54,6 +59,7 @@ func (e Executor) DoStatement(ctx context.Context, statement domain.Statement, q
 	return dr
 }
 
+// DoMultiplexedStatement process multiplexed statements into a result by executing the relevant HTTP calls to the upstream dependency.
 func (e Executor) DoMultiplexedStatement(ctx context.Context, statements []interface{}, queryCtx restql.QueryContext) domain.DoneResources {
 	responseChans := make([]chan interface{}, len(statements))
 	for i := range responseChans {
@@ -68,7 +74,7 @@ func (e Executor) DoMultiplexedStatement(ctx context.Context, statements []inter
 		ch := responseChans[i]
 
 		go func() {
-			response := e.doCurrentStatement(stmt, ctx, queryCtx)
+			response := e.doCurrentStatement(ctx, stmt, queryCtx)
 			ch <- response
 			wg.Done()
 		}()
@@ -84,7 +90,7 @@ func (e Executor) DoMultiplexedStatement(ctx context.Context, statements []inter
 	return responses
 }
 
-func (e Executor) doCurrentStatement(stmt interface{}, ctx context.Context, queryCtx restql.QueryContext) interface{} {
+func (e Executor) doCurrentStatement(ctx context.Context, stmt interface{}, queryCtx restql.QueryContext) interface{} {
 	switch stmt := stmt.(type) {
 	case domain.Statement:
 		return e.DoStatement(ctx, stmt, queryCtx)

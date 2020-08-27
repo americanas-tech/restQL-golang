@@ -27,7 +27,7 @@ func TestApplyEncoders(t *testing.T) {
 				Resource: "hero",
 				With: domain.Params{Values: map[string]interface{}{
 					"base64": domain.Base64{Value: domain.Chain{"done-resource", "id"}},
-					"json":   domain.Json{Value: domain.Chain{"done-resource", "id"}},
+					"json":   domain.JSON{Value: domain.Chain{"done-resource", "id"}},
 				}},
 			}},
 			domain.Resources{"hero": domain.Statement{
@@ -35,7 +35,7 @@ func TestApplyEncoders(t *testing.T) {
 				Resource: "hero",
 				With: domain.Params{Values: map[string]interface{}{
 					"base64": domain.Base64{Value: domain.Chain{"done-resource", "id"}},
-					"json":   domain.Json{Value: domain.Chain{"done-resource", "id"}},
+					"json":   domain.JSON{Value: domain.Chain{"done-resource", "id"}},
 				}},
 			}},
 		},
@@ -85,7 +85,7 @@ func TestApplyEncoders(t *testing.T) {
 				Method:   "from",
 				Resource: "hero",
 				With: domain.Params{
-					Body: domain.NoMultiplex{Value: domain.Json{Value: map[string]interface{}{"id": "test"}}},
+					Body: domain.NoMultiplex{Value: domain.JSON{Value: map[string]interface{}{"id": "test"}}},
 					Values: map[string]interface{}{
 						"id": domain.Base64{Value: "12345abcdef"},
 					},
@@ -108,7 +108,7 @@ func TestApplyEncoders(t *testing.T) {
 				Method:   "from",
 				Resource: "hero",
 				With: domain.Params{
-					Body: domain.Json{Value: map[string]interface{}{"id": "test"}},
+					Body: domain.JSON{Value: map[string]interface{}{"id": "test"}},
 					Values: map[string]interface{}{
 						"id": domain.Base64{Value: "12345abcdef"},
 					},
@@ -131,7 +131,7 @@ func TestApplyEncoders(t *testing.T) {
 				Method:   "from",
 				Resource: "hero",
 				With: domain.Params{Values: map[string]interface{}{
-					"weapons": domain.Json{Value: map[string]interface{}{"id": 1, "name": "sword"}},
+					"weapons": domain.JSON{Value: map[string]interface{}{"id": 1, "name": "sword"}},
 				}},
 			}},
 			domain.Resources{"hero": domain.Statement{
@@ -178,7 +178,7 @@ func TestApplyEncoders(t *testing.T) {
 				Method:   "from",
 				Resource: "hero",
 				With: domain.Params{Values: map[string]interface{}{
-					"weapons": domain.Base64{Value: domain.Json{Value: map[string]interface{}{"id": 1, "name": "sword"}}},
+					"weapons": domain.Base64{Value: domain.JSON{Value: map[string]interface{}{"id": 1, "name": "sword"}}},
 				}},
 			}},
 			domain.Resources{"hero": domain.Statement{
@@ -195,7 +195,7 @@ func TestApplyEncoders(t *testing.T) {
 				Method:   "from",
 				Resource: "hero",
 				With: domain.Params{Values: map[string]interface{}{
-					"weapons": domain.NoMultiplex{Value: domain.Json{Value: []interface{}{"id", "name"}}},
+					"weapons": domain.NoMultiplex{Value: domain.JSON{Value: []interface{}{"id", "name"}}},
 				}},
 			}},
 			domain.Resources{"hero": domain.Statement{
@@ -214,13 +214,13 @@ func TestApplyEncoders(t *testing.T) {
 				With: domain.Params{Values: map[string]interface{}{
 					"map": map[string]interface{}{
 						"nested": map[string]interface{}{
-							"json":   domain.Json{Value: map[string]interface{}{"id": 1, "name": "sword"}},
+							"json":   domain.JSON{Value: map[string]interface{}{"id": 1, "name": "sword"}},
 							"base64": domain.Base64{Value: "12345abcdef"},
 						},
 					},
 					"list": []interface{}{
 						[]interface{}{
-							domain.Json{Value: map[string]interface{}{"id": 1, "name": "sword"}},
+							domain.JSON{Value: map[string]interface{}{"id": 1, "name": "sword"}},
 							domain.Base64{Value: "12345abcdef"},
 						},
 					},

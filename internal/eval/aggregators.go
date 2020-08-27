@@ -2,6 +2,9 @@ package eval
 
 import "github.com/b2wdigital/restQL-golang/v4/internal/domain"
 
+// ApplyAggregators resolves the `in` keyword in the query,
+// taking values from one statement result than setting it
+// on target statement result.
 func ApplyAggregators(query domain.Query, resources domain.Resources) domain.Resources {
 	for _, stmt := range query.Statements {
 		if len(stmt.In) == 0 {
@@ -11,14 +14,14 @@ func ApplyAggregators(query domain.Query, resources domain.Resources) domain.Res
 		target := stmt.In[0]
 		path := stmt.In[1:]
 
-		originResourceId := domain.NewResourceId(stmt)
-		originResource := resources[originResourceId]
+		originResourceID := domain.NewResourceID(stmt)
+		originResource := resources[originResourceID]
 
-		targetResourceId := domain.ResourceId(target)
-		targetResource := resources[targetResourceId]
+		targetResourceID := domain.ResourceID(target)
+		targetResource := resources[targetResourceID]
 
 		aggregateOriginOnTarget(path, originResource, targetResource)
-		resources[originResourceId] = cleanOriginResult(originResource)
+		resources[originResourceID] = cleanOriginResult(originResource)
 	}
 
 	return resources

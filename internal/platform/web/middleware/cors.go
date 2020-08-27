@@ -1,9 +1,9 @@
 package middleware
 
 import (
+	"github.com/b2wdigital/restQL-golang/v4/pkg/restql"
 	"strings"
 
-	"github.com/b2wdigital/restQL-golang/v4/internal/platform/logger"
 	"github.com/valyala/fasthttp"
 )
 
@@ -18,10 +18,10 @@ var (
 	originHeaderName                      = []byte("Origin")
 )
 
-type Option func(c *Cors)
+type option func(c *cors)
 
-func WithAllowOrigins(allowedOrigins string) Option {
-	return func(c *Cors) {
+func withAllowOrigins(allowedOrigins string) option {
+	return func(c *cors) {
 		origins := strings.Split(allowedOrigins, ",")
 		allowedOriginSet := make(map[string]struct{})
 
@@ -37,8 +37,8 @@ func WithAllowOrigins(allowedOrigins string) Option {
 	}
 }
 
-func WithAllowHeaders(allowedHeaders string) Option {
-	return func(c *Cors) {
+func withAllowHeaders(allowedHeaders string) option {
+	return func(c *cors) {
 		headers := strings.Split(allowedHeaders, ",")
 		allowedHeadersSet := make(map[string]struct{})
 
@@ -54,8 +54,8 @@ func WithAllowHeaders(allowedHeaders string) Option {
 	}
 }
 
-func WithAllowMethods(allowedMethods string) Option {
-	return func(c *Cors) {
+func withAllowMethods(allowedMethods string) option {
+	return func(c *cors) {
 		methods := strings.Split(allowedMethods, ",")
 		allowedMethodsSet := make(map[string]struct{})
 
@@ -67,24 +67,24 @@ func WithAllowMethods(allowedMethods string) Option {
 	}
 }
 
-func WithExposedHeaders(exposedHeaders string) Option {
-	return func(c *Cors) {
+func withExposedHeaders(exposedHeaders string) option {
+	return func(c *cors) {
 		c.exposedHeaders = exposedHeaders
 	}
 }
 
-type Cors struct {
+type cors struct {
 	allowedOriginSet  map[string]struct{}
 	allowedOriginsAll bool
 	allowedHeadersSet map[string]struct{}
 	allowedHeadersAll bool
 	allowedMethodsSet map[string]struct{}
 	exposedHeaders    string
-	logger            *logger.Logger
+	logger            restql.Logger
 }
 
-func NewCors(log *logger.Logger, options ...Option) Middleware {
-	c := Cors{logger: log}
+func newCors(log restql.Logger, options ...option) Middleware {
+	c := cors{logger: log}
 
 	for _, option := range options {
 		option(&c)
@@ -93,7 +93,7 @@ func NewCors(log *logger.Logger, options ...Option) Middleware {
 	return &c
 }
 
-func (c *Cors) Apply(h fasthttp.RequestHandler) fasthttp.RequestHandler {
+func (c *cors) Apply(h fasthttp.RequestHandler) fasthttp.RequestHandler {
 	return func(ctx *fasthttp.RequestCtx) {
 		if string(ctx.Method()) == fasthttp.MethodOptions {
 			c.handlePreflight(ctx)
@@ -105,7 +105,7 @@ func (c *Cors) Apply(h fasthttp.RequestHandler) fasthttp.RequestHandler {
 	}
 }
 
-func (c *Cors) handlePreflight(ctx *fasthttp.RequestCtx) {
+func (c *cors) handlePreflight(ctx *fasthttp.RequestCtx) {
 	originHeader := ctx.Request.Header.PeekBytes(originHeaderName)
 	if len(originHeader) == 0 || !c.isAllowedOrigin(originHeader) {
 		c.logger.Debug("origin is not allowed", "origin", originHeader)
@@ -131,7 +131,7 @@ func (c *Cors) handlePreflight(ctx *fasthttp.RequestCtx) {
 	ctx.Response.Header.SetBytesKV(accessControlAllowMethodsHeaderName, method)
 }
 
-func (c *Cors) handleActual(ctx *fasthttp.RequestCtx) {
+func (c *cors) handleActual(ctx *fasthttp.RequestCtx) {
 	originHeader := ctx.Request.Header.PeekBytes(originHeaderName)
 	if len(originHeader) == 0 || !c.isAllowedOrigin(originHeader) {
 		c.logger.Debug("origin is not allowed", "origin", originHeader)
@@ -144,7 +144,7 @@ func (c *Cors) handleActual(ctx *fasthttp.RequestCtx) {
 	}
 }
 
-func (c *Cors) isAllowedOrigin(originHeader []byte) bool {
+func (c *cors) isAllowedOrigin(originHeader []byte) bool {
 	if c.allowedOriginsAll {
 		return true
 	}
@@ -155,7 +155,7 @@ func (c *Cors) isAllowedOrigin(originHeader []byte) bool {
 	return found
 }
 
-func (c *Cors) isAllowedMethod(methodHeader []byte) bool {
+func (c *cors) isAllowedMethod(methodHeader []byte) bool {
 	if len(c.allowedMethodsSet) == 0 {
 		return false
 	}
@@ -170,7 +170,7 @@ func (c *Cors) isAllowedMethod(methodHeader []byte) bool {
 	return found
 }
 
-func (c *Cors) areHeadersAllowed(headers []string) bool {
+func (c *cors) areHeadersAllowed(headers []string) bool {
 	if c.allowedHeadersAll || len(headers) == 0 {
 		return true
 	}
@@ -186,7 +186,7 @@ func (c *Cors) areHeadersAllowed(headers []string) bool {
 	return true
 }
 
-func (c *Cors) extractAndVerifyAccessControlRequestHeaders(ctx *fasthttp.RequestCtx) (string, bool) {
+func (c *cors) extractAndVerifyAccessControlRequestHeaders(ctx *fasthttp.RequestCtx) (string, bool) {
 	if len(ctx.Request.Header.PeekBytes(accessControlRequestHeadersHeaderName)) == 0 {
 		return "", true
 	}

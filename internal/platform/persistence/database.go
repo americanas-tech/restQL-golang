@@ -2,17 +2,21 @@ package persistence
 
 import (
 	"context"
-	"github.com/b2wdigital/restQL-golang/v4/internal/platform/logger"
 	"github.com/b2wdigital/restQL-golang/v4/pkg/restql"
 	"github.com/pkg/errors"
 )
 
+// Database defines the operations needed to fetch mappings
+// and query from an external store.
 type Database interface {
-	FindMappingsForTenant(ctx context.Context, tenantId string) ([]restql.Mapping, error)
+	FindMappingsForTenant(ctx context.Context, tenantID string) ([]restql.Mapping, error)
 	FindQuery(ctx context.Context, namespace string, name string, revision int) (restql.SavedQuery, error)
 }
 
-func NewDatabase(log *logger.Logger) (Database, error) {
+// NewDatabase constructs a Database compliant value
+// from the database plugin registered.
+// In case of no plugin, a noop implementation is returned.
+func NewDatabase(log restql.Logger) (Database, error) {
 	pluginInfo, found := restql.GetDatabasePlugin()
 	if !found {
 		log.Info("no database plugin provided")
@@ -37,14 +41,14 @@ func NewDatabase(log *logger.Logger) (Database, error) {
 	return database, nil
 }
 
-var ErrNoDatabase = errors.New("no op database")
+var errNoDatabase = errors.New("no op database")
 
 type noOpDatabase struct{}
 
-func (n noOpDatabase) FindMappingsForTenant(ctx context.Context, tenantId string) ([]restql.Mapping, error) {
-	return []restql.Mapping{}, ErrNoDatabase
+func (n noOpDatabase) FindMappingsForTenant(ctx context.Context, tenantID string) ([]restql.Mapping, error) {
+	return []restql.Mapping{}, errNoDatabase
 }
 
 func (n noOpDatabase) FindQuery(ctx context.Context, namespace string, name string, revision int) (restql.SavedQuery, error) {
-	return restql.SavedQuery{}, ErrNoDatabase
+	return restql.SavedQuery{}, errNoDatabase
 }

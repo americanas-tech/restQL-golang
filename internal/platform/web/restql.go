@@ -10,7 +10,6 @@ import (
 	"github.com/b2wdigital/restQL-golang/v4/internal/eval"
 	"github.com/b2wdigital/restQL-golang/v4/internal/parser"
 	"github.com/b2wdigital/restQL-golang/v4/internal/platform/conf"
-	"github.com/b2wdigital/restQL-golang/v4/internal/platform/logger"
 	"github.com/b2wdigital/restQL-golang/v4/internal/platform/web/middleware"
 	"github.com/b2wdigital/restQL-golang/v4/pkg/restql"
 	"github.com/pkg/errors"
@@ -20,25 +19,25 @@ import (
 var jsonContentType = "application/json"
 
 var (
-	ErrInvalidNamespace    = errors.New("invalid namespace")
-	ErrInvalidQueryId      = errors.New("invalid query id")
-	ErrInvalidRevision     = errors.New("invalid revision")
-	ErrInvalidRevisionType = errors.New("invalid revision : must be an integer")
-	ErrInvalidTenant       = errors.New("invalid tenant : no value provided")
+	errInvalidNamespace    = errors.New("invalid namespace")
+	errInvalidQueryID      = errors.New("invalid query id")
+	errInvalidRevision     = errors.New("invalid revision")
+	errInvalidRevisionType = errors.New("invalid revision : must be an integer")
+	errInvalidTenant       = errors.New("invalid tenant : no value provided")
 )
 
-type RestQl struct {
+type restQl struct {
 	config    *conf.Config
-	log       *logger.Logger
+	log       restql.Logger
 	evaluator eval.Evaluator
 	parser    parser.Parser
 }
 
-func NewRestQl(l *logger.Logger, cfg *conf.Config, e eval.Evaluator, p parser.Parser) RestQl {
-	return RestQl{config: cfg, log: l, evaluator: e, parser: p}
+func newRestQl(l restql.Logger, cfg *conf.Config, e eval.Evaluator, p parser.Parser) restQl {
+	return restQl{config: cfg, log: l, evaluator: e, parser: p}
 }
 
-func (r RestQl) ValidateQuery(ctx *fasthttp.RequestCtx) error {
+func (r restQl) ValidateQuery(ctx *fasthttp.RequestCtx) error {
 	queryTxt := string(ctx.PostBody())
 	_, err := r.parser.Parse(queryTxt)
 	if err != nil {
@@ -55,93 +54,93 @@ func (r RestQl) ValidateQuery(ctx *fasthttp.RequestCtx) error {
 	return Respond(ctx, nil, http.StatusOK, nil)
 }
 
-func (r RestQl) RunAdHocQuery(ctx *fasthttp.RequestCtx) error {
-	context := middleware.GetNativeContext(ctx)
-	context = restql.WithLogger(ctx, r.log)
+func (r restQl) RunAdHocQuery(reqCtx *fasthttp.RequestCtx) error {
+	ctx := middleware.GetNativeContext(reqCtx)
+	ctx = restql.WithLogger(reqCtx, r.log)
 
-	tenant, err := makeTenant(ctx, r.config.Tenant)
+	tenant, err := makeTenant(reqCtx, r.config.Tenant)
 	if err != nil {
 		r.log.Error("failed to build query options", err)
-		return RespondError(ctx, NewRequestError(err, http.StatusBadRequest))
+		return RespondError(reqCtx, NewRequestError(err, http.StatusBadRequest))
 	}
 	options := restql.QueryOptions{Tenant: tenant}
 
-	input, err := makeQueryInput(ctx, r.log)
+	input, err := makeQueryInput(reqCtx, r.log)
 	if err != nil {
 		r.log.Error("failed to build query input", err)
-		return RespondError(ctx, NewRequestError(err, http.StatusBadRequest))
+		return RespondError(reqCtx, NewRequestError(err, http.StatusBadRequest))
 	}
 
-	queryTxt := string(ctx.PostBody())
+	queryTxt := string(reqCtx.PostBody())
 
-	result, err := r.evaluator.AdHocQuery(context, queryTxt, options, input)
+	result, err := r.evaluator.AdHocQuery(ctx, queryTxt, options, input)
 	if err != nil {
 		r.log.Error("failed to evaluated adhoc query", err)
 
 		switch err := err.(type) {
 		case eval.ValidationError:
-			return RespondError(ctx, NewRequestError(err, http.StatusUnprocessableEntity))
+			return RespondError(reqCtx, NewRequestError(err, http.StatusUnprocessableEntity))
 		case eval.NotFoundError:
-			return RespondError(ctx, NewRequestError(err, http.StatusNotFound))
+			return RespondError(reqCtx, NewRequestError(err, http.StatusNotFound))
 		case eval.ParserError:
-			return RespondError(ctx, NewRequestError(err, http.StatusBadRequest))
+			return RespondError(reqCtx, NewRequestError(err, http.StatusBadRequest))
 		case eval.TimeoutError:
-			return RespondError(ctx, NewRequestError(err, http.StatusRequestTimeout))
+			return RespondError(reqCtx, NewRequestError(err, http.StatusRequestTimeout))
 		default:
-			return RespondError(ctx, err)
+			return RespondError(reqCtx, err)
 		}
 	}
 
 	debugEnabled := isDebugEnabled(input)
 	response := MakeQueryResponse(result, debugEnabled)
-	return Respond(ctx, response.Body, response.StatusCode, response.Headers)
+	return Respond(reqCtx, response.Body, response.StatusCode, response.Headers)
 }
 
-func (r RestQl) RunSavedQuery(ctx *fasthttp.RequestCtx) error {
-	log := r.log.With("restql-endpoint", string(ctx.Request.URI().Path()))
-	log = log.With("request-id", string(ctx.Request.Header.Peek("X-TID")))
+func (r restQl) RunSavedQuery(reqCtx *fasthttp.RequestCtx) error {
+	log := r.log.With("restql-endpoint", string(reqCtx.Request.URI().Path()))
+	log = log.With("request-id", string(reqCtx.Request.Header.Peek("X-TID")))
 
-	context := middleware.GetNativeContext(ctx)
-	context = restql.WithLogger(context, log)
+	ctx := middleware.GetNativeContext(reqCtx)
+	ctx = restql.WithLogger(ctx, log)
 
-	options, err := makeQueryOptions(ctx, log, r.config.Tenant)
+	options, err := makeQueryOptions(reqCtx, log, r.config.Tenant)
 	if err != nil {
 		log.Error("failed to build query options", err)
-		return RespondError(ctx, NewRequestError(err, http.StatusBadRequest))
+		return RespondError(reqCtx, NewRequestError(err, http.StatusBadRequest))
 	}
 	queryIdentifier := fmt.Sprintf("%s/%s/%d", options.Namespace, options.Id, options.Revision)
 
-	input, err := makeQueryInput(ctx, log)
+	input, err := makeQueryInput(reqCtx, log)
 	if err != nil {
 		log.Error("failed to build query input", err, "query", queryIdentifier)
-		return RespondError(ctx, NewRequestError(err, http.StatusBadRequest))
+		return RespondError(reqCtx, NewRequestError(err, http.StatusBadRequest))
 	}
 
-	result, err := r.evaluator.SavedQuery(context, options, input)
+	result, err := r.evaluator.SavedQuery(ctx, options, input)
 	if err != nil {
 		log.Error("failed to evaluated saved query", err, "query", queryIdentifier)
 
 		switch err := err.(type) {
 		case eval.ValidationError:
-			return RespondError(ctx, NewRequestError(err, http.StatusUnprocessableEntity))
+			return RespondError(reqCtx, NewRequestError(err, http.StatusUnprocessableEntity))
 		case eval.NotFoundError:
-			return RespondError(ctx, NewRequestError(err, http.StatusNotFound))
+			return RespondError(reqCtx, NewRequestError(err, http.StatusNotFound))
 		case eval.TimeoutError:
-			return RespondError(ctx, NewRequestError(err, http.StatusRequestTimeout))
+			return RespondError(reqCtx, NewRequestError(err, http.StatusRequestTimeout))
 		case eval.ParserError:
-			return RespondError(ctx, NewRequestError(err, http.StatusInternalServerError))
+			return RespondError(reqCtx, NewRequestError(err, http.StatusInternalServerError))
 		case eval.MappingError:
-			return RespondError(ctx, NewRequestError(err, http.StatusInternalServerError))
+			return RespondError(reqCtx, NewRequestError(err, http.StatusInternalServerError))
 		case domain.ErrQueryRevisionDeprecated:
-			return RespondError(ctx, NewRequestError(err, http.StatusBadRequest))
+			return RespondError(reqCtx, NewRequestError(err, http.StatusBadRequest))
 		default:
-			return RespondError(ctx, err)
+			return RespondError(reqCtx, err)
 		}
 	}
 
 	debugEnabled := isDebugEnabled(input)
 	response := MakeQueryResponse(result, debugEnabled)
-	return Respond(ctx, response.Body, response.StatusCode, response.Headers)
+	return Respond(reqCtx, response.Body, response.StatusCode, response.Headers)
 }
 
 func makeQueryOptions(ctx *fasthttp.RequestCtx, log restql.Logger, envTenant string) (restql.QueryOptions, error) {
@@ -151,7 +150,7 @@ func makeQueryOptions(ctx *fasthttp.RequestCtx, log restql.Logger, envTenant str
 		return restql.QueryOptions{}, err
 	}
 
-	queryId, err := pathParamString(ctx, "queryId")
+	queryID, err := pathParamString(ctx, "queryId")
 	if err != nil {
 		log.Error("failed to load query id path param", err)
 		return restql.QueryOptions{}, err
@@ -166,7 +165,7 @@ func makeQueryOptions(ctx *fasthttp.RequestCtx, log restql.Logger, envTenant str
 	revision, err := strconv.Atoi(revisionStr)
 	if err != nil {
 		log.Debug("failed to convert revision to integer")
-		return restql.QueryOptions{}, ErrInvalidRevisionType
+		return restql.QueryOptions{}, errInvalidRevisionType
 	}
 
 	tenant, err := makeTenant(ctx, envTenant)
@@ -176,7 +175,7 @@ func makeQueryOptions(ctx *fasthttp.RequestCtx, log restql.Logger, envTenant str
 
 	qo := restql.QueryOptions{
 		Namespace: namespace,
-		Id:        queryId,
+		Id:        queryID,
 		Revision:  revision,
 		Tenant:    tenant,
 	}
@@ -194,7 +193,7 @@ func makeTenant(ctx *fasthttp.RequestCtx, envTenant string) (string, error) {
 	}
 
 	if tenant == "" {
-		return "", ErrInvalidTenant
+		return "", errInvalidTenant
 	}
 	return tenant, nil
 }
@@ -251,9 +250,9 @@ func makeQueryInput(ctx *fasthttp.RequestCtx, log restql.Logger) (restql.QueryIn
 }
 
 var paramNameToError = map[string]error{
-	"namespace": ErrInvalidNamespace,
-	"query":     ErrInvalidQueryId,
-	"revision":  ErrInvalidRevision,
+	"namespace": errInvalidNamespace,
+	"query":     errInvalidQueryID,
+	"revision":  errInvalidRevision,
 }
 
 func pathParamString(ctx *fasthttp.RequestCtx, name string) (string, error) {

@@ -139,7 +139,7 @@ type stubDatabase struct {
 	findQuery             restql.SavedQuery
 }
 
-func (s stubDatabase) FindMappingsForTenant(ctx context.Context, tenantId string) ([]restql.Mapping, error) {
+func (s stubDatabase) FindMappingsForTenant(ctx context.Context, tenantID string) ([]restql.Mapping, error) {
 	return s.findMappingsForTenant, nil
 }
 

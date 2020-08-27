@@ -6,6 +6,7 @@ import (
 	"github.com/b2wdigital/restQL-golang/v4/internal/platform/conf"
 	"github.com/b2wdigital/restQL-golang/v4/internal/platform/logger"
 	"github.com/b2wdigital/restQL-golang/v4/internal/platform/web"
+	"github.com/b2wdigital/restQL-golang/v4/pkg/restql"
 	"github.com/pkg/errors"
 	"github.com/valyala/fasthttp"
 	_ "go.uber.org/automaxprocs"
@@ -36,7 +37,7 @@ func startServer() error {
 		return err
 	}
 
-	if cfg.Http.Server.EnableFullPprof {
+	if cfg.HTTP.Server.EnableFullPprof {
 		runtime.SetMutexProfileFraction(1)
 		runtime.SetBlockProfileRate(1)
 	}
@@ -54,7 +55,7 @@ func startServer() error {
 	shutdownSignal := make(chan os.Signal, 1)
 	signal.Notify(shutdownSignal, os.Interrupt, syscall.SIGTERM)
 
-	serverCfg := cfg.Http.Server
+	serverCfg := cfg.HTTP.Server
 	apiHandler, err := web.API(log, cfg)
 	if err != nil {
 		return err
@@ -77,14 +78,14 @@ func startServer() error {
 
 	serverErrors := make(chan error, 1)
 	go func() {
-		log.Info("api listing", "port", serverCfg.ApiAddr)
-		serverErrors <- api.ListenAndServe(":" + serverCfg.ApiAddr)
+		log.Info("api listing", "port", serverCfg.APIAddr)
+		serverErrors <- api.ListenAndServe(":" + serverCfg.APIAddr)
 	}()
 
 	go func() {
 		defer log.Info("stopping health")
-		log.Info("api health listing", "port", serverCfg.ApiHealthAddr)
-		serverErrors <- health.ListenAndServe(":" + serverCfg.ApiHealthAddr)
+		log.Info("api health listing", "port", serverCfg.APIHealthAddr)
+		serverErrors <- health.ListenAndServe(":" + serverCfg.APIHealthAddr)
 	}()
 
 	if serverCfg.EnablePprof {
@@ -121,7 +122,7 @@ func startServer() error {
 	return nil
 }
 
-func shutdown(ctx context.Context, log *logger.Logger, servers ...*fasthttp.Server) error {
+func shutdown(ctx context.Context, log restql.Logger, servers ...*fasthttp.Server) error {
 	var groupErr error
 	var g errgroup.Group
 	done := make(chan struct{})

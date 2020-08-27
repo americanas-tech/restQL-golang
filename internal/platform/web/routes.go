@@ -1,6 +1,7 @@
 package web
 
 import (
+	"github.com/b2wdigital/restQL-golang/v4/pkg/restql"
 	"net/http"
 
 	"github.com/b2wdigital/restQL-golang/v4/internal/eval"
@@ -8,14 +9,14 @@ import (
 	"github.com/b2wdigital/restQL-golang/v4/internal/platform/cache"
 	"github.com/b2wdigital/restQL-golang/v4/internal/platform/conf"
 	"github.com/b2wdigital/restQL-golang/v4/internal/platform/httpclient"
-	"github.com/b2wdigital/restQL-golang/v4/internal/platform/logger"
 	"github.com/b2wdigital/restQL-golang/v4/internal/platform/persistence"
 	"github.com/b2wdigital/restQL-golang/v4/internal/platform/plugins"
 	"github.com/b2wdigital/restQL-golang/v4/internal/runner"
 	"github.com/valyala/fasthttp"
 )
 
-func API(log *logger.Logger, cfg *conf.Config) (fasthttp.RequestHandler, error) {
+// API constructs a handler for the restQL query related endpoints
+func API(log restql.Logger, cfg *conf.Config) (fasthttp.RequestHandler, error) {
 	log.Debug("starting api")
 	defaultParser, err := parser.New()
 	if err != nil {
@@ -36,10 +37,10 @@ func API(log *logger.Logger, cfg *conf.Config) (fasthttp.RequestHandler, error) 
 		log.Error("failed to initialize plugins", err)
 	}
 
-	app := NewApp(log, cfg, lifecycle)
+	app := newApp(log, cfg, lifecycle)
 	client := httpclient.New(log, lifecycle, cfg)
-	executor := runner.NewExecutor(log, client, cfg.Http.QueryResourceTimeout, cfg.Http.ForwardPrefix)
-	r := runner.NewRunner(log, executor, cfg.Http.GlobalQueryTimeout)
+	executor := runner.NewExecutor(log, client, cfg.HTTP.QueryResourceTimeout, cfg.HTTP.ForwardPrefix)
+	r := runner.NewRunner(log, executor, cfg.HTTP.GlobalQueryTimeout)
 
 	mr := persistence.NewMappingReader(log, cfg.Env, cfg.Mappings, db)
 	tenantCache := cache.New(log, cfg.Cache.Mappings.MaxSize,
@@ -56,7 +57,7 @@ func API(log *logger.Logger, cfg *conf.Config) (fasthttp.RequestHandler, error) 
 
 	e := eval.NewEvaluator(log, cacheMr, cacheQr, r, parserCache, lifecycle)
 
-	restQl := NewRestQl(log, cfg, e, defaultParser)
+	restQl := newRestQl(log, cfg, e, defaultParser)
 
 	app.Handle(http.MethodPost, "/validate-query", restQl.ValidateQuery)
 	app.Handle(http.MethodPost, "/run-query", restQl.RunAdHocQuery)
@@ -66,9 +67,10 @@ func API(log *logger.Logger, cfg *conf.Config) (fasthttp.RequestHandler, error) 
 	return app.RequestHandler(), nil
 }
 
-func Health(log *logger.Logger, cfg *conf.Config) fasthttp.RequestHandler {
-	app := NewApp(log, cfg, plugins.NoOpLifecycle)
-	check := NewCheck(cfg.Build)
+// Health constructs a handler for system checks endpoints
+func Health(log restql.Logger, cfg *conf.Config) fasthttp.RequestHandler {
+	app := newApp(log, cfg, plugins.NoOpLifecycle)
+	check := newCheck(cfg.Build)
 
 	app.Handle(http.MethodGet, "/health", check.Health)
 	app.Handle(http.MethodGet, "/resource-status", check.ResourceStatus)
@@ -76,17 +78,18 @@ func Health(log *logger.Logger, cfg *conf.Config) fasthttp.RequestHandler {
 	return app.RequestHandlerWithoutMiddlewares()
 }
 
-func Debug(log *logger.Logger, cfg *conf.Config) fasthttp.RequestHandler {
-	app := NewApp(log, cfg, plugins.NoOpLifecycle)
-	pprof := NewPprof()
+// Debug constructs a handler for profiling endpoints
+func Debug(log restql.Logger, cfg *conf.Config) fasthttp.RequestHandler {
+	app := newApp(log, cfg, plugins.NoOpLifecycle)
+	d := newDebug()
 
-	app.Handle(http.MethodGet, "/debug/pprof/goroutine", pprof.Index)
-	app.Handle(http.MethodGet, "/debug/pprof/heap", pprof.Index)
-	app.Handle(http.MethodGet, "/debug/pprof/threadcreate", pprof.Index)
-	app.Handle(http.MethodGet, "/debug/pprof/block", pprof.Index)
-	app.Handle(http.MethodGet, "/debug/pprof/mutex", pprof.Index)
+	app.Handle(http.MethodGet, "/debug/pprof/goroutine", d.Index)
+	app.Handle(http.MethodGet, "/debug/pprof/heap", d.Index)
+	app.Handle(http.MethodGet, "/debug/pprof/threadcreate", d.Index)
+	app.Handle(http.MethodGet, "/debug/pprof/block", d.Index)
+	app.Handle(http.MethodGet, "/debug/pprof/mutex", d.Index)
 
-	app.Handle(http.MethodGet, "/debug/pprof/profile", pprof.Profile)
+	app.Handle(http.MethodGet, "/debug/pprof/profile", d.Profile)
 
 	return app.RequestHandlerWithoutMiddlewares()
 }

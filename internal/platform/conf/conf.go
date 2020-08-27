@@ -13,7 +13,7 @@ import (
 
 const configFileName = "restql.yml"
 
-type requestIdConf struct {
+type requestIDConf struct {
 	Header   string `yaml:"header"`
 	Strategy string `yaml:"strategy"`
 }
@@ -29,15 +29,16 @@ type corsConf struct {
 	ExposeHeaders string `yaml:"exposeHeaders" env:"RESTQL_CORS_EXPOSE_HEADERS"`
 }
 
+// Config represents all parameters allowed in restQL runtime.
 type Config struct {
-	Http struct {
+	HTTP struct {
 		ForwardPrefix        string        `yaml:"forwardPrefix" env:"RESTQL_FORWARD_PREFIX"`
 		GlobalQueryTimeout   time.Duration `env:"RESTQL_QUERY_GLOBAL_TIMEOUT" envDefault:"30s"`
 		QueryResourceTimeout time.Duration `env:"RESTQL_QUERY_RESOURCE_TIMEOUT" envDefault:"5s"`
 
 		Server struct {
-			ApiAddr                 string        `env:"RESTQL_PORT,required"`
-			ApiHealthAddr           string        `env:"RESTQL_HEALTH_PORT,required"`
+			APIAddr                 string        `env:"RESTQL_PORT,required"`
+			APIHealthAddr           string        `env:"RESTQL_HEALTH_PORT,required"`
 			PropfAddr               string        `env:"RESTQL_PPROF_PORT"`
 			EnablePprof             bool          `env:"RESTQL_ENABLE_PPROF"`
 			EnableFullPprof         bool          `env:"RESTQL_ENABLE_FULL_PPROF"`
@@ -45,7 +46,7 @@ type Config struct {
 			ReadTimeout             time.Duration `yaml:"readTimeout"`
 
 			Middlewares struct {
-				RequestId *requestIdConf `yaml:"requestId"`
+				RequestID *requestIDConf `yaml:"requestId"`
 				Timeout   *timeoutConf   `yaml:"timeout"`
 				Cors      *corsConf      `yaml:"cors"`
 			} `yaml:"middlewares"`
@@ -99,6 +100,9 @@ type Config struct {
 	Build string
 }
 
+// Load returns a Config build from the
+// defaults, YAML configuration file and
+// environment variables.
 func Load(build string) (*Config, error) {
 	cfg := Config{}
 	readDefaults(&cfg)
@@ -174,12 +178,16 @@ func doesFileExist(filepath string) bool {
 	return !info.IsDir()
 }
 
+// EnvSource allows access to environment variables.
 type EnvSource struct{}
 
+// GetString returns the environment variable value
+// for the given key.
 func (e EnvSource) GetString(key string) string {
 	return os.Getenv("RESTQL_" + key)
 }
 
+// GetAll return all the environment variables.
 func (e EnvSource) GetAll() map[string]string {
 	result := make(map[string]string)
 	for _, envVar := range os.Environ() {

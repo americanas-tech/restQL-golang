@@ -6,26 +6,29 @@ import (
 	"strings"
 
 	"github.com/b2wdigital/restQL-golang/v4/internal/domain"
-	"github.com/b2wdigital/restQL-golang/v4/internal/platform/logger"
 	"github.com/b2wdigital/restQL-golang/v4/pkg/restql"
 )
 
 var envMappingRegex = regexp.MustCompile("^RESTQL_MAPPING_(\\w+)")
 
+// MappingsReader fetch indexed mappings from database,
+// configuration file and environment variable.
 type MappingsReader struct {
-	log   *logger.Logger
+	log   restql.Logger
 	env   map[string]restql.Mapping
 	local map[string]restql.Mapping
 	db    Database
 }
 
-func NewMappingReader(log *logger.Logger, env domain.EnvSource, local map[string]string, db Database) MappingsReader {
+// NewMappingReader constructs a MappingsReader instance.
+func NewMappingReader(log restql.Logger, env domain.EnvSource, local map[string]string, db Database) MappingsReader {
 	envMappings := getMappingsFromEnv(log, env)
 	localMappings := parseMappingsFromLocal(log, local)
 
 	return MappingsReader{log: log, env: envMappings, local: localMappings, db: db}
 }
 
+// FromTenant fetch the mappings for the given tenant.
 func (mr MappingsReader) FromTenant(ctx context.Context, tenant string) (map[string]restql.Mapping, error) {
 	log := restql.GetLogger(ctx)
 	log.Debug("fetching mappings")
@@ -37,7 +40,7 @@ func (mr MappingsReader) FromTenant(ctx context.Context, tenant string) (map[str
 	}
 
 	dbMappings, err := mr.db.FindMappingsForTenant(ctx, tenant)
-	if err != nil && err != ErrNoDatabase {
+	if err != nil && err != errNoDatabase {
 		log.Debug("failed to load mappings from database", "error", err)
 		return nil, err
 	}
@@ -55,7 +58,7 @@ func (mr MappingsReader) FromTenant(ctx context.Context, tenant string) (map[str
 	return result, nil
 }
 
-func getMappingsFromEnv(log *logger.Logger, envSource domain.EnvSource) map[string]restql.Mapping {
+func getMappingsFromEnv(log restql.Logger, envSource domain.EnvSource) map[string]restql.Mapping {
 	result := make(map[string]restql.Mapping)
 	env := envSource.GetAll()
 
@@ -76,7 +79,7 @@ func getMappingsFromEnv(log *logger.Logger, envSource domain.EnvSource) map[stri
 	return result
 }
 
-func parseMappingsFromLocal(log *logger.Logger, local map[string]string) map[string]restql.Mapping {
+func parseMappingsFromLocal(log restql.Logger, local map[string]string) map[string]restql.Mapping {
 	result := make(map[string]restql.Mapping)
 	for k, v := range local {
 		mapping, err := restql.NewMapping(k, v)

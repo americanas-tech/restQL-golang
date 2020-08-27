@@ -3,31 +3,31 @@ package web
 import (
 	"fmt"
 	"github.com/b2wdigital/restQL-golang/v4/internal/platform/conf"
-	"github.com/b2wdigital/restQL-golang/v4/internal/platform/logger"
 	"github.com/b2wdigital/restQL-golang/v4/internal/platform/plugins"
 	"github.com/b2wdigital/restQL-golang/v4/internal/platform/web/middleware"
+	"github.com/b2wdigital/restQL-golang/v4/pkg/restql"
 	"github.com/buaazp/fasthttprouter"
 	"github.com/valyala/fasthttp"
 	"strings"
 )
 
-type Handler func(ctx *fasthttp.RequestCtx) error
+type handler func(ctx *fasthttp.RequestCtx) error
 
-type App struct {
+type app struct {
 	config    *conf.Config
 	router    *fasthttprouter.Router
-	log       *logger.Logger
+	log       restql.Logger
 	lifecycle plugins.Lifecycle
 }
 
-func NewApp(log *logger.Logger, config *conf.Config, pm plugins.Lifecycle) App {
+func newApp(log restql.Logger, config *conf.Config, pm plugins.Lifecycle) app {
 	r := fasthttprouter.New()
 	r.NotFound = func(ctx *fasthttp.RequestCtx) { ctx.Response.SetBodyString("There is nothing here. =/") }
 
-	return App{router: r, config: config, log: log, lifecycle: pm}
+	return app{router: r, config: config, log: log, lifecycle: pm}
 }
 
-func (a App) Handle(method, url string, handler Handler) {
+func (a app) Handle(method, url string, handler handler) {
 	fn := func(ctx *fasthttp.RequestCtx) {
 		err := handler(ctx)
 
@@ -52,12 +52,12 @@ func (a App) Handle(method, url string, handler Handler) {
 	}
 }
 
-func (a App) RequestHandler() fasthttp.RequestHandler {
+func (a app) RequestHandler() fasthttp.RequestHandler {
 	mws := middleware.FetchEnabled(a.log, a.config, a.lifecycle)
-	h := middleware.Apply(a.router.Handler, mws, a.log)
+	h := middleware.Apply(a.log, a.router.Handler, mws)
 	return h
 }
 
-func (a App) RequestHandlerWithoutMiddlewares() fasthttp.RequestHandler {
+func (a app) RequestHandlerWithoutMiddlewares() fasthttp.RequestHandler {
 	return a.router.Handler
 }
