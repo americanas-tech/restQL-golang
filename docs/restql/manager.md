@@ -1,6 +1,6 @@
 # restQL-manager
 
-[restQL-manager](https://github.com/B2W-BIT/restQL-manager) allows you to easily develop and test new queries, save resources endpoints, check resources status and save queries that can be used by clients just referencing the query's name.
+[restQL-manager](https://github.com/b2wdigital/restQL-manager) allows you to easily develop and test new queries, save resources endpoints, check resources status and save queries that can be used by clients just referencing the query's name.
 
 restQL-manager requires a [restQL](https://github.com/b2wdigital/restQL-golang) running instance.
 
