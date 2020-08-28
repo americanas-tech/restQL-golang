@@ -9,6 +9,7 @@
 </p>
 
 [![GoDoc](https://godoc.org/github.com/b2wdigital/restQL-golang?status.svg)](https://pkg.go.dev/github.com/b2wdigital/restQL-golang)
+[![Go Report Card](https://goreportcard.com/badge/github.com/b2wdigital/restQL-golang)](https://goreportcard.com/report/github.com/b2wdigital/restQL-golang)
 
 # Getting Started
 
