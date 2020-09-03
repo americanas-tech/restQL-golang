@@ -2,6 +2,8 @@ package persistence
 
 import (
 	"context"
+	"fmt"
+	"github.com/pkg/errors"
 	"regexp"
 	"strings"
 
@@ -32,6 +34,7 @@ func NewMappingReader(log restql.Logger, env domain.EnvSource, local map[string]
 func (mr MappingsReader) FromTenant(ctx context.Context, tenant string) (map[string]restql.Mapping, error) {
 	log := restql.GetLogger(ctx)
 	log.Debug("fetching mappings")
+	mappingsFoundErr := fmt.Errorf("%w: tenant %s", domain.ErrMappingsNotFound, tenant)
 
 	result := make(map[string]restql.Mapping)
 
@@ -40,8 +43,33 @@ func (mr MappingsReader) FromTenant(ctx context.Context, tenant string) (map[str
 	}
 
 	dbMappings, err := mr.db.FindMappingsForTenant(ctx, tenant)
-	if err != nil && err != errNoDatabase {
-		log.Debug("failed to load mappings from database", "error", err)
+	switch {
+	case errors.Is(err, restql.ErrMappingsNotFoundInDatabase):
+		log.Error("query not found in database", err, "tenant", tenant)
+		result = mr.applyEnvMappings(result)
+
+		if len(result) == 0 {
+			return nil, mappingsFoundErr
+		}
+
+		log.Debug("tenant mappings", "value", result)
+		return result, nil
+	case errors.Is(err, restql.ErrDatabaseCommunicationFailed):
+		log.Error("database communication failed when fetching query", err, "tenant", tenant)
+
+		return nil, err
+	case err == errNoDatabase:
+		result = mr.applyEnvMappings(result)
+
+		if len(result) == 0 {
+			return nil, mappingsFoundErr
+		}
+
+		log.Debug("tenant mappings", "value", result)
+		return result, nil
+	case err != nil:
+		log.Error("unknown database error when fetching query", err, "tenant", tenant)
+
 		return nil, err
 	}
 
@@ -49,13 +77,21 @@ func (mr MappingsReader) FromTenant(ctx context.Context, tenant string) (map[str
 		result[mapping.ResourceName()] = mapping
 	}
 
-	for k, v := range mr.env {
-		result[k] = v
+	result = mr.applyEnvMappings(result)
+
+	if len(result) == 0 {
+		return nil, mappingsFoundErr
 	}
 
 	log.Debug("tenant mappings", "value", result)
-
 	return result, nil
+}
+
+func (mr MappingsReader) applyEnvMappings(result map[string]restql.Mapping) map[string]restql.Mapping {
+	for k, v := range mr.env {
+		result[k] = v
+	}
+	return result
 }
 
 func getMappingsFromEnv(log restql.Logger, envSource domain.EnvSource) map[string]restql.Mapping {

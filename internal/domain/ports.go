@@ -6,6 +6,19 @@ import (
 	"time"
 )
 
+// ErrRequestTimeout is the error returned by HTTPClient
+// when a HTTP call fails due to the request exceeding
+// the timeout defined in HTTPRequest.
+var ErrRequestTimeout = errors.New("request timed out")
+
+// ErrMappingsNotFound is the error returned when
+// the resource mappings is not found anywhere
+var ErrMappingsNotFound = errors.New("mappings not found")
+
+// ErrQueryNotFound is the error returned when
+// the query text is not found anywhere
+var ErrQueryNotFound = errors.New("query not found")
+
 // EnvSource expose access to environment variables.
 type EnvSource interface {
 	GetString(key string) string
@@ -19,11 +32,6 @@ type EnvSource interface {
 type HTTPClient interface {
 	Do(ctx context.Context, request HTTPRequest) (HTTPResponse, error)
 }
-
-// ErrRequestTimeout is the error returned by HTTPClient
-// when a HTTP call fails due to the request exceeding
-// the timeout defined in HTTPRequest.
-var ErrRequestTimeout = errors.New("request timed out")
 
 // Headers represents all HTTP header in a request or response.
 type Headers map[string]string

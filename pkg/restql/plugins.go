@@ -2,6 +2,7 @@ package restql
 
 import (
 	"context"
+	"errors"
 	"github.com/b2wdigital/restQL-golang/v4/internal/domain"
 	"log"
 	"net/http"
@@ -145,3 +146,10 @@ type DatabasePlugin interface {
 	FindMappingsForTenant(ctx context.Context, tenantID string) ([]Mapping, error)
 	FindQuery(ctx context.Context, namespace string, name string, revision int) (SavedQuery, error)
 }
+
+// Errors returned by Database plugin
+var (
+	ErrMappingsNotFoundInDatabase  = errors.New("mappings not found in database")
+	ErrQueryNotFoundInDatabase     = errors.New("query not found in database")
+	ErrDatabaseCommunicationFailed = errors.New("failed to communicate with the database")
+)

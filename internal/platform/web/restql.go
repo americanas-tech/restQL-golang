@@ -77,15 +77,24 @@ func (r restQl) RunAdHocQuery(reqCtx *fasthttp.RequestCtx) error {
 	if err != nil {
 		r.log.Error("failed to evaluated adhoc query", err)
 
+		switch {
+		case errors.Is(err, domain.ErrMappingsNotFound):
+			return RespondError(reqCtx, NewRequestError(err, http.StatusNotFound))
+		case errors.Is(err, domain.ErrQueryNotFound):
+			return RespondError(reqCtx, NewRequestError(err, http.StatusNotFound))
+		case errors.Is(err, restql.ErrDatabaseCommunicationFailed):
+			return RespondError(reqCtx, NewRequestError(err, http.StatusInsufficientStorage))
+		}
+
 		switch err := err.(type) {
 		case eval.ValidationError:
 			return RespondError(reqCtx, NewRequestError(err, http.StatusUnprocessableEntity))
-		case eval.NotFoundError:
-			return RespondError(reqCtx, NewRequestError(err, http.StatusNotFound))
 		case eval.ParserError:
 			return RespondError(reqCtx, NewRequestError(err, http.StatusBadRequest))
 		case eval.TimeoutError:
 			return RespondError(reqCtx, NewRequestError(err, http.StatusRequestTimeout))
+		case eval.MappingError:
+			return RespondError(reqCtx, NewRequestError(err, http.StatusInternalServerError))
 		default:
 			return RespondError(reqCtx, err)
 		}
@@ -108,23 +117,29 @@ func (r restQl) RunSavedQuery(reqCtx *fasthttp.RequestCtx) error {
 		log.Error("failed to build query options", err)
 		return RespondError(reqCtx, NewRequestError(err, http.StatusBadRequest))
 	}
-	queryIdentifier := fmt.Sprintf("%s/%s/%d", options.Namespace, options.Id, options.Revision)
 
 	input, err := makeQueryInput(reqCtx, log)
 	if err != nil {
-		log.Error("failed to build query input", err, "query", queryIdentifier)
+		log.Error("failed to build query input", err)
 		return RespondError(reqCtx, NewRequestError(err, http.StatusBadRequest))
 	}
 
 	result, err := r.evaluator.SavedQuery(ctx, options, input)
 	if err != nil {
-		log.Error("failed to evaluated saved query", err, "query", queryIdentifier)
+		log.Error("failed to evaluated saved query", err)
+
+		switch {
+		case errors.Is(err, domain.ErrMappingsNotFound):
+			return RespondError(reqCtx, NewRequestError(err, http.StatusNotFound))
+		case errors.Is(err, domain.ErrQueryNotFound):
+			return RespondError(reqCtx, NewRequestError(err, http.StatusNotFound))
+		case errors.Is(err, restql.ErrDatabaseCommunicationFailed):
+			return RespondError(reqCtx, NewRequestError(err, http.StatusInsufficientStorage))
+		}
 
 		switch err := err.(type) {
 		case eval.ValidationError:
 			return RespondError(reqCtx, NewRequestError(err, http.StatusUnprocessableEntity))
-		case eval.NotFoundError:
-			return RespondError(reqCtx, NewRequestError(err, http.StatusNotFound))
 		case eval.TimeoutError:
 			return RespondError(reqCtx, NewRequestError(err, http.StatusRequestTimeout))
 		case eval.ParserError:
