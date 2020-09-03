@@ -2,7 +2,8 @@ package persistence
 
 import (
 	"context"
-	"github.com/b2wdigital/restQL-golang/v4/internal/eval"
+	"fmt"
+	"github.com/b2wdigital/restQL-golang/v4/internal/domain"
 	"github.com/b2wdigital/restQL-golang/v4/pkg/restql"
 	"github.com/pkg/errors"
 )
@@ -31,38 +32,69 @@ func NewQueryReader(log restql.Logger, local map[string]map[string][]string, db 
 // it first search the database and, if not found, in the configuration file.
 func (qr QueryReader) Get(ctx context.Context, namespace, id string, revision int) (restql.SavedQuery, error) {
 	log := restql.GetLogger(ctx)
+	queryNotFoundErr := fmt.Errorf("%w: %s/%s/%d", domain.ErrQueryNotFound, namespace, id, revision)
 
-	savedQuery, err := qr.db.FindQuery(ctx, namespace, id, revision)
-	if err != nil && err != errNoDatabase {
-		log.Error("query not found in database", err, "namespace", namespace, "name", id, "revision", revision)
-	}
-
-	if savedQuery.Text != "" {
-		return savedQuery, nil
-	}
-
-	localQuery, err := qr.getQueryFromLocal(namespace, id, revision)
+	localQueryText, err := qr.getQueryFromLocal(namespace, id, revision)
 	if err != nil {
-		log.Info("query not found in local", "namespace", namespace, "name", id, "revision", revision)
-		return restql.SavedQuery{}, eval.NotFoundError{Err: errors.Errorf("query not found: %s/%s/%d", namespace, id, revision)}
+		log.Info("query not found in local", "error", err, "namespace", namespace, "name", id, "revision", revision)
+	}
+	localQuery := restql.SavedQuery{Text: localQueryText}
+
+	dbQuery, err := qr.db.FindQuery(ctx, namespace, id, revision)
+	switch {
+	case errors.Is(err, restql.ErrQueryNotFoundInDatabase):
+		log.Error("query not found in database", err, "namespace", namespace, "name", id, "revision", revision)
+		if localQuery.Text != "" {
+			return localQuery, nil
+		}
+
+		return restql.SavedQuery{}, queryNotFoundErr
+	case errors.Is(err, restql.ErrDatabaseCommunicationFailed):
+		log.Error("database communication failed when fetching query", err, "namespace", namespace, "name", id, "revision", revision)
+		if localQuery.Text != "" {
+			return localQuery, nil
+		}
+
+		return restql.SavedQuery{}, err
+	case err == errNoDatabase:
+		if localQuery.Text != "" {
+			return localQuery, nil
+		}
+
+		return restql.SavedQuery{}, queryNotFoundErr
+	case err != nil:
+		log.Error("unknown database error when fetching query", err, "namespace", namespace, "name", id, "revision", revision)
+		if localQuery.Text != "" {
+			return localQuery, nil
+		}
+
+		return restql.SavedQuery{}, err
 	}
 
-	return restql.SavedQuery{Text: localQuery}, nil
+	if dbQuery.Text != "" {
+		return dbQuery, nil
+	}
+
+	if localQuery.Text != "" {
+		return localQuery, nil
+	}
+
+	return restql.SavedQuery{}, queryNotFoundErr
 }
 
 func (qr QueryReader) getQueryFromLocal(namespace string, id string, revision int) (string, error) {
 	queriesInNamespace, ok := qr.local[namespace]
 	if !ok {
-		return "", eval.NotFoundError{Err: errors.Errorf("namespace not found: %s", namespace)}
+		return "", errors.Errorf("namespace not found in local: %s", namespace)
 	}
 
 	queriesByRevision, ok := queriesInNamespace[id]
 	if !ok {
-		return "", eval.NotFoundError{Err: errors.Errorf("query not found: %s", id)}
+		return "", errors.Errorf("query not found in local: %s", id)
 	}
 
 	if len(queriesByRevision) < revision {
-		return "", eval.NotFoundError{Err: errors.Errorf("revision not found: %d", revision)}
+		return "", errors.Errorf("revision not found in local: %d", revision)
 	}
 
 	queryTxt := queriesByRevision[revision-1]
