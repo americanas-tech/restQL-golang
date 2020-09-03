@@ -92,7 +92,7 @@ func (c *Cache) Get(ctx context.Context, key interface{}) (interface{}, error) {
 
 	switch {
 	case err == gcache.KeyNotFoundError:
-		item, err := c.loadItem(ctx, key)
+		item, err := c.populate(ctx, key)
 		if err != nil {
 			return nil, err
 		}
@@ -119,10 +119,16 @@ func (c *Cache) Get(ctx context.Context, key interface{}) (interface{}, error) {
 	return item.value, nil
 }
 
-func (c *Cache) loadItem(ctx context.Context, key interface{}) (cacheItem, error) {
+func (c *Cache) populate(ctx context.Context, key interface{}) (cacheItem, error) {
 	value, err := c.loader(ctx, key)
 	if err != nil {
 		c.log.Debug("failed to load value to populate cache", "error", err)
+		return cacheItem{}, err
+	}
+
+	if value == nil {
+		err := errors.Errorf("no value for key %#v", key)
+		c.log.Error("nil value returned by loader", err)
 		return cacheItem{}, err
 	}
 
@@ -173,7 +179,7 @@ func (rw *refreshWorker) Run() {
 			for key := range rw.refreshWorkCh {
 				key := key
 				go func() {
-					_, err := rw.cache.loadItem(context.Background(), key)
+					_, err := rw.cache.populate(context.Background(), key)
 					if err != nil {
 						rw.log.Error("failed to refresh cache item in background", err)
 					}
