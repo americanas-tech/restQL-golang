@@ -94,7 +94,7 @@ func (e Evaluator) evaluateQuery(ctx context.Context, queryTxt string, queryOpts
 
 	err = validateQueryResources(query, mappings)
 	if err != nil {
-		log.Error("query reference invalid resource", err)
+		log.Error("query reference invalid resource", err, "mappings", mappings)
 		return nil, err
 	}
 
