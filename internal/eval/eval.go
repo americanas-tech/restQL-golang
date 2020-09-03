@@ -31,16 +31,6 @@ func (ve ValidationError) Error() string {
 	return ve.Err.Error()
 }
 
-// NotFoundError is returned by Evaluator when
-// the asked query, namespace or revision is not found.
-type NotFoundError struct {
-	Err error
-}
-
-func (ne NotFoundError) Error() string {
-	return ne.Err.Error()
-}
-
 // ParserError is returned by Evaluator when
 // the asked query has invalid syntax.
 type ParserError struct {
