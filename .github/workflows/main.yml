@@ -1,0 +1,25 @@
+name: RestQL CI
+
+on:
+  push:
+    tags:
+    - '*'
+
+jobs:
+  test-and-build:
+    name: RestQL tests and build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v2
+
+      - name: Get the version
+        id: get_version
+        run: echo ::set-output name=version::${GITHUB_REF/refs\/tags\//}
+
+      - name: What version?
+        run: echo $RESTQL_VERSION
+        env:
+          RESTQL_VERSION: ${{ steps.get_version.outputs.version }}
+      
