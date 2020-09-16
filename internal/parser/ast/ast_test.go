@@ -47,7 +47,7 @@ func TestAstGenerator(t *testing.T) {
 							use max-age 600
 							use s-max-age 400
 							use timeout 8000
-							
+
 							from cart
 					`,
 			ast.Query{
@@ -126,6 +126,14 @@ func TestAstGenerator(t *testing.T) {
 			ast.Query{Blocks: []ast.Block{{Method: ast.FromMethod, Resource: "hero", Qualifiers: []ast.Qualifier{{With: &ast.Parameters{
 				KeyValues: []ast.KeyValue{{Key: "id", Value: ast.Value{Primitive: &ast.Primitive{Chain: []ast.Chained{{PathItem: "done-resource"}, {PathVariable: "path"}, {PathItem: "id"}}}}}},
 			}}}}}},
+		},
+		{
+			"Get query with chained parameters using collon inside the path",
+			`from hero with id = done-resource.path:withcollon.id`,
+			ast.Query{
+				Blocks: []ast.Block{{Method: "from", Resource: "hero", Qualifiers: []ast.Qualifier{{With: &ast.Parameters{
+					KeyValues: []ast.KeyValue{{Key: "id", Value: ast.Value{Primitive: &ast.Primitive{Chain: []ast.Chained{{PathItem: "done-resource"}, {PathItem: "path:withcollon"}, {PathItem: "id"}}}}}},
+				}}}}}},
 		},
 		{
 			"Get query with variable query parameters",
@@ -449,7 +457,7 @@ func TestAstGenerator(t *testing.T) {
 								id = 1
 								from = "5m"
 								timeout = 100
-		
+
 							from sidekick
 								with
 									id = 1
@@ -515,11 +523,16 @@ func TestAstGenerator(t *testing.T) {
 		},
 		{
 			"Get query with select filter",
-			`from hero only *, name, 
+			`from hero only *, name,
 						to,
-         		      
+
 						weapons`,
 			ast.Query{Blocks: []ast.Block{{Method: ast.FromMethod, Resource: "hero", Qualifiers: []ast.Qualifier{{Only: []ast.Filter{{Field: []string{"*"}}, {Field: []string{"name"}}, {Field: []string{"to"}}, {Field: []string{"weapons"}}}}}}}},
+		},
+		{
+			"Get query with a select filter containing a path with collon",
+			`from hero only name.path:withcollon.id`,
+			ast.Query{Blocks: []ast.Block{{Method: "from", Resource: "hero", Qualifiers: []ast.Qualifier{{Only: []ast.Filter{{Field: []string{"name", "path:withcollon", "id"}}}}}}}},
 		},
 		{
 			"Get query with select filter delimited by new line",
@@ -532,7 +545,7 @@ func TestAstGenerator(t *testing.T) {
 		only
 			name
 			weapons
-		
+
 		from sidekick`,
 			ast.Query{Blocks: []ast.Block{
 				{Method: ast.FromMethod, Resource: "hero", Qualifiers: []ast.Qualifier{{Only: []ast.Filter{{Field: []string{"name"}}, {Field: []string{"weapons"}}}}}},
@@ -630,13 +643,13 @@ func TestAstGenerator(t *testing.T) {
 							headers
 								X-Trace-Id = "abcdef12345"
 							with
-								id = 1,   
-								name = "batman",    
-								weapons = ["belt", "hands"],   		
-								family = { "father": "Thomas Wayne" },		
-								height = 10.5,		
+								id = 1,
+								name = "batman",
+								weapons = ["belt", "hands"],
+								family = { "father": "Thomas Wayne" },
+								height = 10.5,
 								var = $myvar
-							only 
+							only
 								from
 								name
 						 from sidekick as s in hero.sidekick
@@ -764,7 +777,7 @@ func TestAstGenerator(t *testing.T) {
 				only
 					total
 					opn
-		
+
 				from sku
 				with
 					sku = cart.lines.productSku
