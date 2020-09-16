@@ -106,7 +106,7 @@ POPULATED_OBJ <- '{' WS NL* WS oe:(OBJ_ENTRY) oes:(WS ',' WS NL* WS OBJ_ENTRY)* 
 	return newPopulatedObject(oe, oes)
 }
 
-OBJ_ENTRY <- k:(String / IDENT) WS ':' WS v:(VALUE) {
+OBJ_ENTRY <- k:(String / IDENT_WITHOUT_COLLON) WS ':' WS v:(VALUE) {
 	return newObjectEntry(k, v)
 }
 
@@ -180,11 +180,15 @@ VARIABLE <- '$' v:(IDENT_WITH_DOT) {
 	return newVariable(v)
 }
 
-IDENT <- [A-Za-z0-9_-]+ {
+IDENT <- [A-Za-z0-9:_-]+ {
 	return stringify(c.text)
 }
 
-IDENT_WITH_DOT <- [a-zA-Z0-9-_.]+ {
+IDENT_WITHOUT_COLLON <- [A-Za-z0-9_-]+ {
+	return stringify(c.text)
+}
+
+IDENT_WITH_DOT <- [a-zA-Z0-9-:_.]+ {
 	return stringify(c.text)
 }
 
