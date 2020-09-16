@@ -42,20 +42,6 @@ func (qr QueryReader) Get(ctx context.Context, namespace, id string, revision in
 
 	dbQuery, err := qr.db.FindQuery(ctx, namespace, id, revision)
 	switch {
-	case errors.Is(err, restql.ErrQueryNotFoundInDatabase):
-		log.Error("query not found in database", err, "namespace", namespace, "name", id, "revision", revision)
-		if localQuery.Text != "" {
-			return localQuery, nil
-		}
-
-		return restql.SavedQuery{}, queryNotFoundErr
-	case errors.Is(err, restql.ErrDatabaseCommunicationFailed):
-		log.Error("database communication failed when fetching query", err, "namespace", namespace, "name", id, "revision", revision)
-		if localQuery.Text != "" {
-			return localQuery, nil
-		}
-
-		return restql.SavedQuery{}, err
 	case err == errNoDatabase:
 		if localQuery.Text != "" {
 			return localQuery, nil
@@ -63,7 +49,7 @@ func (qr QueryReader) Get(ctx context.Context, namespace, id string, revision in
 
 		return restql.SavedQuery{}, queryNotFoundErr
 	case err != nil:
-		log.Error("unknown database error when fetching query", err, "namespace", namespace, "name", id, "revision", revision)
+		log.Error("database error when fetching query", err, "namespace", namespace, "name", id, "revision", revision)
 		if localQuery.Text != "" {
 			return localQuery, nil
 		}

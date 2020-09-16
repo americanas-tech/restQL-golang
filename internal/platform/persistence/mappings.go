@@ -3,7 +3,6 @@ package persistence
 import (
 	"context"
 	"fmt"
-	"github.com/pkg/errors"
 	"regexp"
 	"strings"
 
@@ -44,20 +43,6 @@ func (mr MappingsReader) FromTenant(ctx context.Context, tenant string) (map[str
 
 	dbMappings, err := mr.db.FindMappingsForTenant(ctx, tenant)
 	switch {
-	case errors.Is(err, restql.ErrMappingsNotFoundInDatabase):
-		log.Error("query not found in database", err, "tenant", tenant)
-		result = mr.applyEnvMappings(result)
-
-		if len(result) == 0 {
-			return nil, mappingsFoundErr
-		}
-
-		log.Debug("tenant mappings", "value", result)
-		return result, nil
-	case errors.Is(err, restql.ErrDatabaseCommunicationFailed):
-		log.Error("database communication failed when fetching query", err, "tenant", tenant)
-
-		return nil, err
 	case err == errNoDatabase:
 		result = mr.applyEnvMappings(result)
 
@@ -68,7 +53,7 @@ func (mr MappingsReader) FromTenant(ctx context.Context, tenant string) (map[str
 		log.Debug("tenant mappings", "value", result)
 		return result, nil
 	case err != nil:
-		log.Error("unknown database error when fetching query", err, "tenant", tenant)
+		log.Error("unknown database error when fetching mappings", err, "tenant", tenant)
 
 		return nil, err
 	}
