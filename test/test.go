@@ -3,6 +3,8 @@ package test
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/b2wdigital/restQL-golang/v4/pkg/restql"
+	"github.com/google/go-cmp/cmp"
 	"log"
 	"net"
 	"net/http"
@@ -10,9 +12,7 @@ import (
 	"reflect"
 	"regexp"
 	"testing"
-
-	"github.com/b2wdigital/restQL-golang/v4/pkg/restql"
-	"github.com/google/go-cmp/cmp"
+	"time"
 )
 
 func Unmarshal(body string) interface{} {
@@ -88,6 +88,7 @@ func (ms *MockServer) Server() *httptest.Server {
 }
 
 func (ms *MockServer) Teardown() {
+	time.Sleep(100 * time.Millisecond)
 	ms.server.Close()
 }
 
