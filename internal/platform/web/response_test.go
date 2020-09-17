@@ -1,7 +1,6 @@
 package web_test
 
 import (
-	"reflect"
 	"testing"
 
 	"github.com/b2wdigital/restQL-golang/v4/internal/domain"
@@ -88,7 +87,9 @@ func TestMakeQueryResponse(t *testing.T) {
 						Result: test.Unmarshal(`{"id": "12345abcde"}`),
 					},
 				},
-				Headers: map[string]string{},
+				Headers: map[string]string{
+					"hero-X-New-Token": "efgefgefg",
+				},
 			},
 		},
 		{
@@ -340,14 +341,90 @@ func TestMakeQueryResponse(t *testing.T) {
 				Headers: map[string]string{"Cache-Control": "max-age=100, s-maxage=600"},
 			},
 		},
+		{
+			"should make response with upstream headers",
+			domain.Resources{
+				"hero": domain.DoneResource{
+					Status:       200,
+					Success:      true,
+					ResponseBody: test.Unmarshal(`{"id": "12345abcde"}`),
+					ResponseHeaders: map[string]string{
+						"TransactionId": "abdcefg",
+					},
+				},
+				"sidekick": domain.DoneResource{
+					Status:       200,
+					Success:      true,
+					ResponseBody: test.Unmarshal(`{"id": "12345abcde"}`),
+					ResponseHeaders: map[string]string{
+						"TID": "123456",
+					},
+				},
+			},
+			false,
+			web.QueryResponse{
+				StatusCode: 200,
+				Body: map[string]web.StatementResult{
+					"hero": {
+						Details: web.StatementDetails{Status: 200, Success: true},
+						Result:  test.Unmarshal(`{"id": "12345abcde"}`),
+					},
+					"sidekick": {
+						Details: web.StatementDetails{Status: 200, Success: true},
+						Result:  test.Unmarshal(`{"id": "12345abcde"}`),
+					},
+				},
+				Headers: map[string]string{
+					"hero-TransactionId": "abdcefg",
+					"sidekick-TID":       "123456",
+				},
+			},
+		},
+		{
+			"should make response with upstream headers except from failed responses",
+			domain.Resources{
+				"hero": domain.DoneResource{
+					Status:       200,
+					Success:      true,
+					ResponseBody: test.Unmarshal(`{"id": "12345abcde"}`),
+					ResponseHeaders: map[string]string{
+						"TransactionId": "abdcefg",
+					},
+				},
+				"sidekick": domain.DoneResource{
+					Status:       500,
+					Success:      false,
+					IgnoreErrors: true,
+					ResponseBody: test.Unmarshal(`{"id": "12345abcde"}`),
+					ResponseHeaders: map[string]string{
+						"TID": "123456",
+					},
+				},
+			},
+			false,
+			web.QueryResponse{
+				StatusCode: 200,
+				Body: map[string]web.StatementResult{
+					"hero": {
+						Details: web.StatementDetails{Status: 200, Success: true},
+						Result:  test.Unmarshal(`{"id": "12345abcde"}`),
+					},
+					"sidekick": {
+						Details: web.StatementDetails{Status: 500, Success: false, Metadata: web.StatementMetadata{IgnoreErrors: "ignore"}},
+						Result:  test.Unmarshal(`{"id": "12345abcde"}`),
+					},
+				},
+				Headers: map[string]string{
+					"hero-TransactionId": "abdcefg",
+				},
+			},
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got := web.MakeQueryResponse(tt.queryResult, tt.debug)
-			if !reflect.DeepEqual(got, tt.expected) {
-				t.Errorf("MakeQueryResponse = %+#v, want = %+#v", got, tt.expected)
-			}
+			test.Equal(t, got, tt.expected)
 		})
 	}
 

@@ -3,6 +3,7 @@ package web
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -226,6 +227,39 @@ func findMaxStatusCode(results []interface{}) int {
 }
 
 func makeHeaders(queryResult domain.Resources) map[string]string {
+	resourceHeaders := makeResourceHeaders(queryResult)
+	ccHeaders := makeCacheControlHeaders(queryResult)
+
+	return appendMap(resourceHeaders, ccHeaders)
+}
+
+func makeResourceHeaders(queryResult domain.Resources) map[string]string {
+	headers := make(map[string]string)
+	for resourceID, response := range queryResult {
+		switch response := response.(type) {
+		case domain.DoneResource:
+			headers = appendMap(headers, getResponseHeader(string(resourceID), response))
+		}
+	}
+
+	return headers
+}
+
+func getResponseHeader(resourceID string, response domain.DoneResource) map[string]string {
+	if !response.Success {
+		return nil
+	}
+
+	headers := make(map[string]string)
+	for hn, hv := range response.ResponseHeaders {
+		headerName := fmt.Sprintf("%s-%s", resourceID, hn)
+		headers[headerName] = hv
+	}
+
+	return headers
+}
+
+func makeCacheControlHeaders(queryResult domain.Resources) map[string]string {
 	cacheControl := calculateCacheControl(queryResult)
 	cacheControlString := generateCacheControlString(cacheControl)
 
@@ -233,7 +267,6 @@ func makeHeaders(queryResult domain.Resources) map[string]string {
 	if cacheControlString != "" {
 		headers["Cache-Control"] = cacheControlString
 	}
-
 	return headers
 }
 
@@ -313,4 +346,17 @@ func generateCacheControlString(cacheControl domain.ResourceCacheControl) string
 	}
 
 	return buf.String()
+}
+
+func appendMap(m1 map[string]string, m2 map[string]string) map[string]string {
+	m := make(map[string]string, len(m1)+len(m2))
+	for k, v := range m1 {
+		m[k] = v
+	}
+
+	for k, v := range m2 {
+		m[k] = v
+	}
+
+	return m
 }
