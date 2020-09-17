@@ -1,0 +1,92 @@
+name: Publish RestQL enhanced with Mongo support Docker image
+
+on:
+  push:
+    tags:
+    - '*'
+
+jobs:
+  publish:
+    name: RestQL tests and build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v2
+
+      - name: Get the version
+        id: get_version
+        run: echo ::set-output name=version::${GITHUB_REF/refs\/tags\//}
+
+      - name: Set up Go 1.14
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.14.6
+
+      - name: Run unit tests
+        shell: bash
+        run: |
+          make unit | tee unit-test.log
+
+      - name: Upload unit test logs
+        uses: actions/upload-artifact@v2
+        with:
+          name: tests
+          path: unit-test.log
+        if: ${{ always() }}
+
+      - name: Run e2e tests
+        shell: bash
+        run: |
+          make e2e-up &
+          sleep 10
+          make e2e-run | tee e2e-test.log
+
+      - name: Upload e2e test logs
+        uses: actions/upload-artifact@v2
+        with:
+          name: tests
+          path: e2e-test.log
+        if: ${{ always() }}
+
+      - name: Set up restQL-cli
+        shell: bash
+        run: |
+          GO111MODULE=on go get github.com/b2wdigital/restQL-cli@v${RESTQL_CLI_VERSION}
+        env:
+          RESTQL_CLI_VERSION: 1.1.1
+
+      - name: Build restQL
+        id: build
+        shell: bash
+        run: |
+          restQL-cli build --with ${MONGO_PLUGIN_MODULE}@v${MONGO_PLUGIN_VERSION} -o ./bin/restQL ${RESTQL_BUILD_VERSION}
+          echo ::set-output name=mongo_plugin_version::${MONGO_PLUGIN_VERSION}
+        env:
+          RESTQL_BUILD_VERSION: ${{ steps.get_version.outputs.version }}
+          MONGO_PLUGIN_MODULE: github.com/b2wdigital/restQL-plugin-mongodb
+          MONGO_PLUGIN_VERSION: 1.0.2
+
+      - name: Upload restQL binary
+        uses: actions/upload-artifact@v2
+        with:
+          name: restQL
+          path: ./bin/restQL
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          file: ./Dockerfile
+          platforms: linux/amd64
+          push: true
+          tags: caiorcferreira/restql:${{ steps.get_version.outputs.version }}-mongo${{ steps.build.outputs.mongo_plugin_version }}
