@@ -11,14 +11,6 @@ import (
 // the timeout defined in HTTPRequest.
 var ErrRequestTimeout = errors.New("request timed out")
 
-// ErrMappingsNotFound is the error returned when
-// the resource mappings is not found anywhere
-var ErrMappingsNotFound = errors.New("mappings not found")
-
-// ErrQueryNotFound is the error returned when
-// the query text is not found anywhere
-var ErrQueryNotFound = errors.New("query not found")
-
 // EnvSource expose access to environment variables.
 type EnvSource interface {
 	GetString(key string) string

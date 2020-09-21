@@ -2,8 +2,6 @@ package persistence
 
 import (
 	"context"
-	"fmt"
-	"github.com/b2wdigital/restQL-golang/v4/internal/domain"
 	"github.com/b2wdigital/restQL-golang/v4/pkg/restql"
 	"github.com/pkg/errors"
 )
@@ -32,7 +30,6 @@ func NewQueryReader(log restql.Logger, local map[string]map[string][]string, db 
 // it first search the database and, if not found, in the configuration file.
 func (qr QueryReader) Get(ctx context.Context, namespace, id string, revision int) (restql.SavedQuery, error) {
 	log := restql.GetLogger(ctx)
-	queryNotFoundErr := fmt.Errorf("%w: %s/%s/%d", domain.ErrQueryNotFound, namespace, id, revision)
 
 	localQueryText, err := qr.getQueryFromLocal(namespace, id, revision)
 	if err != nil {
@@ -47,7 +44,7 @@ func (qr QueryReader) Get(ctx context.Context, namespace, id string, revision in
 			return localQuery, nil
 		}
 
-		return restql.SavedQuery{}, queryNotFoundErr
+		return restql.SavedQuery{}, restql.ErrQueryNotFoundInLocal
 	case err != nil:
 		log.Error("database error when fetching query", err, "namespace", namespace, "name", id, "revision", revision)
 		if localQuery.Text != "" {
@@ -65,7 +62,7 @@ func (qr QueryReader) Get(ctx context.Context, namespace, id string, revision in
 		return localQuery, nil
 	}
 
-	return restql.SavedQuery{}, queryNotFoundErr
+	return restql.SavedQuery{}, restql.ErrQueryNotFoundInDatabase
 }
 
 func (qr QueryReader) getQueryFromLocal(namespace string, id string, revision int) (string, error) {

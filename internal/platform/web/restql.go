@@ -78,9 +78,7 @@ func (r restQl) RunAdHocQuery(reqCtx *fasthttp.RequestCtx) error {
 		r.log.Error("failed to evaluated adhoc query", err)
 
 		switch {
-		case errors.Is(err, domain.ErrMappingsNotFound):
-			return RespondError(reqCtx, NewRequestError(err, http.StatusNotFound))
-		case errors.Is(err, domain.ErrQueryNotFound):
+		case errors.Is(err, restql.ErrMappingsNotFoundInLocal):
 			return RespondError(reqCtx, NewRequestError(err, http.StatusNotFound))
 		case errors.Is(err, restql.ErrDatabaseCommunicationFailed):
 			return RespondError(reqCtx, NewRequestError(err, http.StatusInsufficientStorage))
@@ -129,9 +127,13 @@ func (r restQl) RunSavedQuery(reqCtx *fasthttp.RequestCtx) error {
 		log.Error("failed to evaluated saved query", err)
 
 		switch {
-		case errors.Is(err, domain.ErrMappingsNotFound):
+		case errors.Is(err, restql.ErrMappingsNotFoundInLocal):
 			return RespondError(reqCtx, NewRequestError(err, http.StatusNotFound))
-		case errors.Is(err, domain.ErrQueryNotFound):
+		case errors.Is(err, restql.ErrQueryNotFoundInLocal):
+			return RespondError(reqCtx, NewRequestError(err, http.StatusNotFound))
+		case errors.Is(err, restql.ErrQueryNotFoundInDatabase):
+			return RespondError(reqCtx, NewRequestError(err, http.StatusNotFound))
+		case errors.Is(err, restql.ErrMappingsNotFoundInDatabase):
 			return RespondError(reqCtx, NewRequestError(err, http.StatusNotFound))
 		case errors.Is(err, restql.ErrDatabaseCommunicationFailed):
 			return RespondError(reqCtx, NewRequestError(err, http.StatusInsufficientStorage))

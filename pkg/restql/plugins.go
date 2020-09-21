@@ -153,3 +153,11 @@ var (
 	ErrQueryNotFoundInDatabase     = errors.New("query not found in database")
 	ErrDatabaseCommunicationFailed = errors.New("failed to communicate with the database")
 )
+
+// ErrMappingsNotFoundInLocal is the error returned when
+// the resource mappings is not found anywhere
+var ErrMappingsNotFoundInLocal = errors.New("mappings not found in local configuration")
+
+// ErrQueryNotFoundInLocal is the error returned when
+// the query text is not found anywhere
+var ErrQueryNotFoundInLocal = errors.New("query not found in local configuration")

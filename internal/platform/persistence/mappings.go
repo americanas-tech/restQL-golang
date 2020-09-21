@@ -33,7 +33,7 @@ func NewMappingReader(log restql.Logger, env domain.EnvSource, local map[string]
 func (mr MappingsReader) FromTenant(ctx context.Context, tenant string) (map[string]restql.Mapping, error) {
 	log := restql.GetLogger(ctx)
 	log.Debug("fetching mappings")
-	mappingsFoundErr := fmt.Errorf("%w: tenant %s", domain.ErrMappingsNotFound, tenant)
+	mappingsFoundErr := fmt.Errorf("%w: tenant %s", restql.ErrMappingsNotFoundInLocal, tenant)
 
 	result := make(map[string]restql.Mapping)
 
