@@ -24,3 +24,22 @@ e2e-run:
 
 build:
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o bin/restQL -ldflags="-s -w -X github.com/b2wdigital/restQL-golang/v4/cmd.build=$(RESTQL_BUILD) -extldflags -static" -tags netgo main.go
+
+# Modules support
+deps-reset:
+	git checkout -- go.mod
+	go mod tidy
+	go mod vendor
+
+tidy:
+	go mod tidy
+	go mod vendor
+
+deps-upgrade:
+	go get -u -t -d -v ./...
+	go mod tidy
+	go mod vendor
+
+deps-cleancache:
+	go clean -modcache
+#	
