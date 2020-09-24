@@ -9,7 +9,7 @@ This tutorial is freely inspired by [Apollo GraphQL's tutorial](https://www.apol
 ## System Requirements
 As prerequisites to build restQL-http from source we need:
 
-- Golang 1.14 or higher
+- Golang 1.15 or higher
 - Make utility
 
 ## Preparing for Battle
