@@ -1,27 +1,25 @@
 package web
 
 import (
-	"fmt"
 	"github.com/b2wdigital/restQL-golang/v4/internal/platform/conf"
 	"github.com/b2wdigital/restQL-golang/v4/internal/platform/plugins"
 	"github.com/b2wdigital/restQL-golang/v4/internal/platform/web/middleware"
 	"github.com/b2wdigital/restQL-golang/v4/pkg/restql"
-	"github.com/buaazp/fasthttprouter"
+	"github.com/fasthttp/router"
 	"github.com/valyala/fasthttp"
-	"strings"
 )
 
 type handler func(ctx *fasthttp.RequestCtx) error
 
 type app struct {
 	config    *conf.Config
-	router    *fasthttprouter.Router
+	router    *router.Router
 	log       restql.Logger
 	lifecycle plugins.Lifecycle
 }
 
 func newApp(log restql.Logger, config *conf.Config, pm plugins.Lifecycle) app {
-	r := fasthttprouter.New()
+	r := router.New()
 	r.NotFound = func(ctx *fasthttp.RequestCtx) { ctx.Response.SetBodyString("There is nothing here. =/") }
 
 	return app{router: r, config: config, log: log, lifecycle: pm}
@@ -40,16 +38,7 @@ func (a app) Handle(method, url string, handler handler) {
 		}
 	}
 
-	normalizedUrls := []string{url}
-	if strings.HasSuffix(url, "/") {
-		normalizedUrls = append(normalizedUrls, strings.TrimRight(url, "/"))
-	} else {
-		normalizedUrls = append(normalizedUrls, fmt.Sprintf("%s/", url))
-	}
-
-	for _, u := range normalizedUrls {
-		a.router.Handle(method, u, fn)
-	}
+	a.router.Handle(method, url, fn)
 }
 
 func (a app) RequestHandler() fasthttp.RequestHandler {
