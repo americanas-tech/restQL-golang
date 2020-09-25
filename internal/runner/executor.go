@@ -25,7 +25,7 @@ func NewExecutor(log restql.Logger, client domain.HTTPClient, resourceTimeout ti
 }
 
 // DoStatement process a single statement into a result by executing the relevant HTTP calls to the upstream dependency.
-func (e Executor) DoStatement(ctx context.Context, statement domain.Statement, queryCtx restql.QueryContext) domain.DoneResource {
+func (e Executor) DoStatement(ctx context.Context, statement domain.Statement, queryCtx restql.QueryContext) restql.DoneResource {
 	log := restql.GetLogger(ctx)
 
 	drOptions := DoneResourceOptions{
@@ -60,7 +60,7 @@ func (e Executor) DoStatement(ctx context.Context, statement domain.Statement, q
 }
 
 // DoMultiplexedStatement process multiplexed statements into a result by executing the relevant HTTP calls to the upstream dependency.
-func (e Executor) DoMultiplexedStatement(ctx context.Context, statements []interface{}, queryCtx restql.QueryContext) domain.DoneResources {
+func (e Executor) DoMultiplexedStatement(ctx context.Context, statements []interface{}, queryCtx restql.QueryContext) restql.DoneResources {
 	responseChans := make([]chan interface{}, len(statements))
 	for i := range responseChans {
 		responseChans[i] = make(chan interface{}, 1)
@@ -82,7 +82,7 @@ func (e Executor) DoMultiplexedStatement(ctx context.Context, statements []inter
 
 	wg.Wait()
 
-	responses := make(domain.DoneResources, len(statements))
+	responses := make(restql.DoneResources, len(statements))
 	for i, ch := range responseChans {
 		responses[i] = <-ch
 	}

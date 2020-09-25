@@ -1,6 +1,8 @@
 package runner
 
-import "github.com/b2wdigital/restQL-golang/v4/internal/domain"
+import (
+	"github.com/b2wdigital/restQL-golang/v4/internal/domain"
+)
 
 // ApplyModifiers transforms an unresolved Resources collection and
 // set the query level cache directives into each statement without

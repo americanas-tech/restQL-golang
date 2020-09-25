@@ -1,6 +1,7 @@
 package runner_test
 
 import (
+	"github.com/b2wdigital/restQL-golang/v4/pkg/restql"
 	"testing"
 
 	"github.com/b2wdigital/restQL-golang/v4/internal/domain"
@@ -133,13 +134,13 @@ func TestUpdateDone(t *testing.T) {
 		input := domain.Resources{"hero": doneStatement}
 
 		expectedDoneRequests := domain.Resources{
-			"hero": domain.DoneResource{Status: 200, ResponseBody: []byte{}},
+			"hero": restql.DoneResource{Status: 200, ResponseBody: []byte{}},
 		}
 		expectedRequestedStatements := domain.Resources{}
 
 		state := runner.NewState(input)
 
-		response := domain.DoneResource{Status: 200, ResponseBody: []byte{}}
+		response := restql.DoneResource{Status: 200, ResponseBody: []byte{}}
 
 		state.UpdateDone("hero", response)
 

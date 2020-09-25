@@ -4,10 +4,11 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/b2wdigital/restQL-golang/v4/internal/domain"
+	"github.com/b2wdigital/restQL-golang/v4/pkg/restql"
 	"net/http"
 	"strconv"
 
-	"github.com/b2wdigital/restQL-golang/v4/internal/domain"
 	"github.com/valyala/fasthttp"
 )
 
@@ -109,7 +110,7 @@ func MakeQueryResponse(queryResult domain.Resources, debug bool) (QueryResponse,
 
 func parseResource(resource interface{}, debug bool) (StatementResult, error) {
 	switch resource := resource.(type) {
-	case domain.DoneResource:
+	case restql.DoneResource:
 		//todo: handle err
 		body, err := resource.ResponseBody.Marshal()
 		if err != nil {
@@ -118,7 +119,7 @@ func parseResource(resource interface{}, debug bool) (StatementResult, error) {
 
 		jsonBody := json.RawMessage(body)
 		return StatementResult{Details: parseDetails(resource, debug), Result: jsonBody}, nil
-	case domain.DoneResources:
+	case restql.DoneResources:
 		details := make([]interface{}, len(resource))
 		results := make([]interface{}, len(resource))
 
@@ -152,7 +153,7 @@ func parseResource(resource interface{}, debug bool) (StatementResult, error) {
 	}
 }
 
-func parseDetails(resource domain.DoneResource, debug bool) StatementDetails {
+func parseDetails(resource restql.DoneResource, debug bool) StatementDetails {
 	var metadata StatementMetadata
 	if resource.IgnoreErrors {
 		metadata.IgnoreErrors = "ignore"
@@ -171,7 +172,7 @@ func parseDetails(resource domain.DoneResource, debug bool) StatementDetails {
 	return sd
 }
 
-func parseDebug(resource domain.DoneResource) *StatementDebugging {
+func parseDebug(resource restql.DoneResource) *StatementDebugging {
 	return &StatementDebugging{
 		Method:          resource.Method,
 		URL:             resource.URL,
@@ -207,7 +208,7 @@ var statusNormalization = map[int]int{0: 500, 204: 200, 201: 200}
 
 func calculateResultStatusCode(result interface{}) int {
 	switch r := result.(type) {
-	case domain.DoneResource:
+	case restql.DoneResource:
 		if r.IgnoreErrors {
 			return 200
 		}
@@ -219,7 +220,7 @@ func calculateResultStatusCode(result interface{}) int {
 		}
 
 		return status
-	case domain.DoneResources:
+	case restql.DoneResources:
 		return findMaxStatusCode(r)
 	default:
 		return 500
@@ -252,7 +253,7 @@ func makeResourceHeaders(queryResult domain.Resources) map[string]string {
 	headers := make(map[string]string)
 	for resourceID, response := range queryResult {
 		switch response := response.(type) {
-		case domain.DoneResource:
+		case restql.DoneResource:
 			headers = appendMap(headers, getResponseHeader(string(resourceID), response))
 		}
 	}
@@ -260,7 +261,7 @@ func makeResourceHeaders(queryResult domain.Resources) map[string]string {
 	return headers
 }
 
-func getResponseHeader(resourceID string, response domain.DoneResource) map[string]string {
+func getResponseHeader(resourceID string, response restql.DoneResource) map[string]string {
 	if !response.Success {
 		return nil
 	}
@@ -285,7 +286,7 @@ func makeCacheControlHeaders(queryResult domain.Resources) map[string]string {
 	return headers
 }
 
-func calculateCacheControl(queryResult domain.Resources) domain.ResourceCacheControl {
+func calculateCacheControl(queryResult domain.Resources) restql.ResourceCacheControl {
 	results := make([]interface{}, len(queryResult))
 	index := 0
 	for _, r := range queryResult {
@@ -296,15 +297,15 @@ func calculateCacheControl(queryResult domain.Resources) domain.ResourceCacheCon
 	return findMinCacheControl(results)
 }
 
-func findMinCacheControl(results []interface{}) domain.ResourceCacheControl {
-	resourceCacheControls := make([]domain.ResourceCacheControl, len(results))
+func findMinCacheControl(results []interface{}) restql.ResourceCacheControl {
+	resourceCacheControls := make([]restql.ResourceCacheControl, len(results))
 	for i, result := range results {
 		resourceCacheControls[i] = calculateResultCacheControl(result)
 	}
 
-	minCacheControl := domain.ResourceCacheControl{
-		MaxAge:  domain.ResourceCacheControlValue{Exist: false},
-		SMaxAge: domain.ResourceCacheControlValue{Exist: false},
+	minCacheControl := restql.ResourceCacheControl{
+		MaxAge:  restql.ResourceCacheControlValue{Exist: false},
+		SMaxAge: restql.ResourceCacheControlValue{Exist: false},
 	}
 
 	for _, cc := range resourceCacheControls {
@@ -329,18 +330,18 @@ func findMinCacheControl(results []interface{}) domain.ResourceCacheControl {
 	return minCacheControl
 }
 
-func calculateResultCacheControl(result interface{}) domain.ResourceCacheControl {
+func calculateResultCacheControl(result interface{}) restql.ResourceCacheControl {
 	switch result := result.(type) {
-	case domain.DoneResource:
+	case restql.DoneResource:
 		return result.CacheControl
-	case domain.DoneResources:
+	case restql.DoneResources:
 		return findMinCacheControl(result)
 	default:
-		return domain.ResourceCacheControl{}
+		return restql.ResourceCacheControl{}
 	}
 }
 
-func generateCacheControlString(cacheControl domain.ResourceCacheControl) string {
+func generateCacheControlString(cacheControl restql.ResourceCacheControl) string {
 	var buf bytes.Buffer
 
 	if cacheControl.NoCache {

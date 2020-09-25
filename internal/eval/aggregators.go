@@ -1,6 +1,9 @@
 package eval
 
-import "github.com/b2wdigital/restQL-golang/v4/internal/domain"
+import (
+	"github.com/b2wdigital/restQL-golang/v4/internal/domain"
+	"github.com/b2wdigital/restQL-golang/v4/pkg/restql"
+)
 
 // ApplyAggregators resolves the `in` keyword in the query,
 // taking values from one statement result than setting it
@@ -29,10 +32,10 @@ func ApplyAggregators(query domain.Query, resources domain.Resources) domain.Res
 
 func aggregateOriginOnTarget(path []string, origin interface{}, target interface{}) {
 	switch target := target.(type) {
-	case domain.DoneResource:
+	case restql.DoneResource:
 		body := target.ResponseBody.Unmarshal()
 		aggregateOriginOnTarget(path, origin, body)
-	case domain.DoneResources:
+	case restql.DoneResources:
 		aggregateOriginOnListTarget(path, origin, target)
 	case []interface{}:
 		aggregateOriginOnListTarget(path, origin, target)
@@ -57,10 +60,10 @@ func aggregateOriginOnTarget(path []string, origin interface{}, target interface
 
 func aggregateOriginOnListTarget(path []string, origin interface{}, target []interface{}) {
 	switch origin := origin.(type) {
-	case domain.DoneResource:
+	case restql.DoneResource:
 		body := origin.ResponseBody.Unmarshal()
 		aggregateOriginOnTarget(path, body, target)
-	case domain.DoneResources:
+	case restql.DoneResources:
 		for i, t := range target {
 			aggregateOriginOnTarget(path, origin[i], t)
 		}
@@ -77,7 +80,7 @@ func aggregateOriginOnListTarget(path []string, origin interface{}, target []int
 
 func setOriginOnTarget(field string, origin interface{}, target interface{}) {
 	switch target := target.(type) {
-	case domain.DoneResource:
+	case restql.DoneResource:
 		body := target.ResponseBody.Unmarshal()
 		setOriginOnTarget(field, origin, body)
 	case map[string]interface{}:
@@ -88,10 +91,10 @@ func setOriginOnTarget(field string, origin interface{}, target interface{}) {
 
 func parseOrigin(origin interface{}) interface{} {
 	switch origin := origin.(type) {
-	case domain.DoneResource:
+	case restql.DoneResource:
 		body := origin.ResponseBody.Unmarshal()
 		return body
-	case domain.DoneResources:
+	case restql.DoneResources:
 		result := make([]interface{}, len(origin))
 		for i, o := range origin {
 			result[i] = parseOrigin(o)
@@ -104,12 +107,12 @@ func parseOrigin(origin interface{}) interface{} {
 
 func cleanOriginResult(origin interface{}) interface{} {
 	switch origin := origin.(type) {
-	case domain.DoneResource:
+	case restql.DoneResource:
 		origin.ResponseBody.SetValue(nil)
 		origin.ResponseBody.SetBytes(nil)
 		return origin
-	case domain.DoneResources:
-		result := make(domain.DoneResources, len(origin))
+	case restql.DoneResources:
+		result := make(restql.DoneResources, len(origin))
 		for i, o := range origin {
 			result[i] = cleanOriginResult(o)
 		}

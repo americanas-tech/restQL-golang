@@ -182,23 +182,23 @@ func resolveChainParam(chain domain.Chain, doneResources domain.Resources) inter
 	resourceID := domain.ResourceID(path[0])
 
 	switch done := doneResources[resourceID].(type) {
-	case domain.DoneResources:
+	case restql.DoneResources:
 		return resolveWithMultiplexedRequests(path[1:], done)
-	case domain.DoneResource:
+	case restql.DoneResource:
 		return resolveWithSingleRequest(path[1:], done)
 	default:
 		return nil
 	}
 }
 
-func resolveWithMultiplexedRequests(path []string, doneRequests domain.DoneResources) []interface{} {
+func resolveWithMultiplexedRequests(path []string, doneRequests restql.DoneResources) []interface{} {
 	var result []interface{}
 
 	for _, request := range doneRequests {
 		switch request := request.(type) {
-		case domain.DoneResource:
+		case restql.DoneResource:
 			result = append(result, resolveWithSingleRequest(path, request))
-		case domain.DoneResources:
+		case restql.DoneResources:
 			result = append(result, resolveWithMultiplexedRequests(path, request))
 		}
 	}
@@ -206,7 +206,7 @@ func resolveWithMultiplexedRequests(path []string, doneRequests domain.DoneResou
 	return result
 }
 
-func resolveWithSingleRequest(path []string, done domain.DoneResource) interface{} {
+func resolveWithSingleRequest(path []string, done restql.DoneResource) interface{} {
 	if done.Status < 200 || done.Status >= 400 {
 		return EmptyChained
 	}

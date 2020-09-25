@@ -16,21 +16,21 @@ func TestNewDoneResource(t *testing.T) {
 		request  restql.HTTPRequest
 		response restql.HTTPResponse
 		options  runner.DoneResourceOptions
-		expected domain.DoneResource
+		expected restql.DoneResource
 	}{
 		{
 			"should create done resource for successful execution",
 			restql.HTTPRequest{},
 			restql.HTTPResponse{StatusCode: 200, Body: nil},
 			runner.DoneResourceOptions{},
-			domain.DoneResource{Status: 200, Success: true, IgnoreErrors: false, ResponseBody: nil},
+			restql.DoneResource{Status: 200, Success: true, IgnoreErrors: false, ResponseBody: nil},
 		},
 		{
 			"should create done resource for failed execution",
 			restql.HTTPRequest{},
 			restql.HTTPResponse{StatusCode: 400, Body: nil},
 			runner.DoneResourceOptions{},
-			domain.DoneResource{Status: 400, Success: false, IgnoreErrors: false, ResponseBody: nil},
+			restql.DoneResource{Status: 400, Success: false, IgnoreErrors: false, ResponseBody: nil},
 		},
 		{
 			"should create done resource with debug",
@@ -49,7 +49,7 @@ func TestNewDoneResource(t *testing.T) {
 				Duration:   100 * time.Millisecond,
 			},
 			runner.DoneResourceOptions{},
-			domain.DoneResource{
+			restql.DoneResource{
 				Status:          200,
 				Success:         true,
 				IgnoreErrors:    false,
@@ -66,7 +66,7 @@ func TestNewDoneResource(t *testing.T) {
 			restql.HTTPRequest{},
 			restql.HTTPResponse{StatusCode: 200, Body: nil},
 			runner.DoneResourceOptions{IgnoreErrors: true},
-			domain.DoneResource{
+			restql.DoneResource{
 				Status:       200,
 				Success:      true,
 				IgnoreErrors: true,
@@ -78,12 +78,12 @@ func TestNewDoneResource(t *testing.T) {
 			restql.HTTPRequest{},
 			restql.HTTPResponse{StatusCode: 200, Body: nil, Headers: map[string]string{"Cache-Control": "max-age=400, s-maxage=600"}},
 			runner.DoneResourceOptions{},
-			domain.DoneResource{
+			restql.DoneResource{
 				Status:  200,
 				Success: true,
-				CacheControl: domain.ResourceCacheControl{
-					MaxAge:  domain.ResourceCacheControlValue{Exist: true, Time: 400},
-					SMaxAge: domain.ResourceCacheControlValue{Exist: true, Time: 600},
+				CacheControl: restql.ResourceCacheControl{
+					MaxAge:  restql.ResourceCacheControlValue{Exist: true, Time: 400},
+					SMaxAge: restql.ResourceCacheControlValue{Exist: true, Time: 600},
 				},
 				ResponseHeaders: map[string]string{"Cache-Control": "max-age=400, s-maxage=600"},
 				IgnoreErrors:    false,
@@ -95,10 +95,10 @@ func TestNewDoneResource(t *testing.T) {
 			restql.HTTPRequest{},
 			restql.HTTPResponse{StatusCode: 200, Body: nil, Headers: map[string]string{"Cache-Control": "no-cache"}},
 			runner.DoneResourceOptions{},
-			domain.DoneResource{
+			restql.DoneResource{
 				Status:  200,
 				Success: true,
-				CacheControl: domain.ResourceCacheControl{
+				CacheControl: restql.ResourceCacheControl{
 					NoCache: true,
 				},
 				ResponseHeaders: map[string]string{"Cache-Control": "no-cache"},
@@ -111,12 +111,12 @@ func TestNewDoneResource(t *testing.T) {
 			restql.HTTPRequest{},
 			restql.HTTPResponse{StatusCode: 200, Body: nil},
 			runner.DoneResourceOptions{MaxAge: 100, SMaxAge: 300},
-			domain.DoneResource{
+			restql.DoneResource{
 				Status:  200,
 				Success: true,
-				CacheControl: domain.ResourceCacheControl{
-					MaxAge:  domain.ResourceCacheControlValue{Exist: true, Time: 100},
-					SMaxAge: domain.ResourceCacheControlValue{Exist: true, Time: 300},
+				CacheControl: restql.ResourceCacheControl{
+					MaxAge:  restql.ResourceCacheControlValue{Exist: true, Time: 100},
+					SMaxAge: restql.ResourceCacheControlValue{Exist: true, Time: 300},
 				},
 				IgnoreErrors: false,
 				ResponseBody: nil,
@@ -127,11 +127,11 @@ func TestNewDoneResource(t *testing.T) {
 			restql.HTTPRequest{},
 			restql.HTTPResponse{StatusCode: 200, Body: nil},
 			runner.DoneResourceOptions{MaxAge: 100},
-			domain.DoneResource{
+			restql.DoneResource{
 				Status:  200,
 				Success: true,
-				CacheControl: domain.ResourceCacheControl{
-					MaxAge: domain.ResourceCacheControlValue{Exist: true, Time: 100},
+				CacheControl: restql.ResourceCacheControl{
+					MaxAge: restql.ResourceCacheControlValue{Exist: true, Time: 100},
 				},
 				IgnoreErrors: false,
 				ResponseBody: nil,
@@ -142,12 +142,12 @@ func TestNewDoneResource(t *testing.T) {
 			restql.HTTPRequest{},
 			restql.HTTPResponse{StatusCode: 200, Body: nil, Headers: map[string]string{"Cache-Control": "max-age=100, s-maxage=600"}},
 			runner.DoneResourceOptions{MaxAge: 400, SMaxAge: 300},
-			domain.DoneResource{
+			restql.DoneResource{
 				Status:  200,
 				Success: true,
-				CacheControl: domain.ResourceCacheControl{
-					MaxAge:  domain.ResourceCacheControlValue{Exist: true, Time: 100},
-					SMaxAge: domain.ResourceCacheControlValue{Exist: true, Time: 300},
+				CacheControl: restql.ResourceCacheControl{
+					MaxAge:  restql.ResourceCacheControlValue{Exist: true, Time: 100},
+					SMaxAge: restql.ResourceCacheControlValue{Exist: true, Time: 300},
 				},
 				ResponseHeaders: map[string]string{"Cache-Control": "max-age=100, s-maxage=600"},
 				IgnoreErrors:    false,
@@ -159,10 +159,10 @@ func TestNewDoneResource(t *testing.T) {
 			restql.HTTPRequest{},
 			restql.HTTPResponse{StatusCode: 200, Body: nil, Headers: map[string]string{"Cache-Control": "no-cache"}},
 			runner.DoneResourceOptions{MaxAge: 400, SMaxAge: 300},
-			domain.DoneResource{
+			restql.DoneResource{
 				Status:  200,
 				Success: true,
-				CacheControl: domain.ResourceCacheControl{
+				CacheControl: restql.ResourceCacheControl{
 					NoCache: true,
 				},
 				ResponseHeaders: map[string]string{"Cache-Control": "no-cache"},
@@ -190,7 +190,7 @@ func TestNewTimeoutResponse(t *testing.T) {
 		request  restql.HTTPRequest
 		response restql.HTTPResponse
 		options  runner.DoneResourceOptions
-		expected domain.DoneResource
+		expected restql.DoneResource
 	}{
 		{
 			"should create response for time outed execution",
@@ -207,7 +207,7 @@ func TestNewTimeoutResponse(t *testing.T) {
 				Duration:   100 * time.Millisecond,
 			},
 			runner.DoneResourceOptions{},
-			domain.DoneResource{
+			restql.DoneResource{
 				Status:         408,
 				Success:        false,
 				IgnoreErrors:   false,
@@ -233,7 +233,7 @@ func TestNewTimeoutResponse(t *testing.T) {
 				Duration:   100 * time.Millisecond,
 			},
 			runner.DoneResourceOptions{IgnoreErrors: true},
-			domain.DoneResource{
+			restql.DoneResource{
 				Status:         408,
 				Success:        false,
 				IgnoreErrors:   true,
@@ -260,7 +260,7 @@ func TestNewEmptyChainedResponse(t *testing.T) {
 		params := []string{"id"}
 		options := runner.DoneResourceOptions{}
 
-		expected := domain.DoneResource{
+		expected := restql.DoneResource{
 			Status:       400,
 			Success:      false,
 			IgnoreErrors: false,
@@ -276,7 +276,7 @@ func TestNewEmptyChainedResponse(t *testing.T) {
 		params := []string{"id", "name", "city"}
 		options := runner.DoneResourceOptions{}
 
-		expected := domain.DoneResource{
+		expected := restql.DoneResource{
 			Status:       400,
 			Success:      false,
 			IgnoreErrors: false,
@@ -292,7 +292,7 @@ func TestNewEmptyChainedResponse(t *testing.T) {
 		params := []string{"id"}
 		options := runner.DoneResourceOptions{IgnoreErrors: true}
 
-		expected := domain.DoneResource{
+		expected := restql.DoneResource{
 			Status:       400,
 			Success:      false,
 			IgnoreErrors: true,
