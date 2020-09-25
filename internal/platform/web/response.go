@@ -111,14 +111,12 @@ func MakeQueryResponse(queryResult domain.Resources, debug bool) (QueryResponse,
 func parseResource(resource interface{}, debug bool) (StatementResult, error) {
 	switch resource := resource.(type) {
 	case restql.DoneResource:
-		//todo: handle err
 		body, err := resource.ResponseBody.Marshal()
 		if err != nil {
 			return StatementResult{}, err
 		}
 
-		jsonBody := json.RawMessage(body)
-		return StatementResult{Details: parseDetails(resource, debug), Result: jsonBody}, nil
+		return StatementResult{Details: parseDetails(resource, debug), Result: body}, nil
 	case restql.DoneResources:
 		details := make([]interface{}, len(resource))
 		results := make([]interface{}, len(resource))

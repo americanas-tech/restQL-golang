@@ -1,6 +1,7 @@
 package test
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"github.com/b2wdigital/restQL-golang/v4/pkg/restql"
@@ -34,21 +35,25 @@ var mappingComparer = cmp.Comparer(func(x, y restql.Mapping) bool {
 		x.Host() == y.Host()
 })
 
+var responseBodyComparer = cmp.Comparer(func(x, y restql.ResponseBody) bool {
+	return bytes.Equal(x.GetBytes(), y.GetBytes()) || cmp.Equal(x.GetValue(), y.GetBytes())
+})
+
 func Equal(t *testing.T, got, expected interface{}) {
-	if !cmp.Equal(got, expected, regexComparer, mappingComparer) {
-		t.Fatalf("got = %+#v, want = %+#v\nMismatch (-want +got):\n%s", got, expected, cmp.Diff(expected, got, regexComparer))
+	if !cmp.Equal(got, expected, regexComparer, mappingComparer, responseBodyComparer) {
+		t.Errorf("got = %+#v, want = %+#v\nMismatch (-want +got):\n%s", got, expected, cmp.Diff(expected, got, regexComparer))
 	}
 }
 
 func NotEqual(t *testing.T, got, expected interface{}) {
 	if reflect.DeepEqual(got, expected) {
-		t.Fatalf("got = %+#v, want = %+#v", got, expected)
+		t.Errorf("got = %+#v, want = %+#v", got, expected)
 	}
 }
 
 func VerifyError(t *testing.T, err error) {
 	if err != nil {
-		t.Fatalf("unexpected error returned: %s", err)
+		t.Errorf("unexpected error returned: %s", err)
 	}
 }
 

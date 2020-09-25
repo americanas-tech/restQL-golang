@@ -1,6 +1,7 @@
 package web_test
 
 import (
+	"encoding/json"
 	"github.com/b2wdigital/restQL-golang/v4/internal/domain"
 	"github.com/b2wdigital/restQL-golang/v4/pkg/restql"
 	"testing"
@@ -22,7 +23,7 @@ func TestMakeQueryResponse(t *testing.T) {
 				"hero": restql.DoneResource{
 					Status:       200,
 					Success:      true,
-					ResponseBody: test.Unmarshal(`{"id": "12345abcde"}`),
+					ResponseBody: restql.NewResponseBodyFromValue(test.NoOpLogger, test.Unmarshal(`{"id": "12345abcde"}`)),
 				},
 			},
 			false,
@@ -31,7 +32,7 @@ func TestMakeQueryResponse(t *testing.T) {
 				Body: map[string]web.StatementResult{
 					"hero": {
 						Details: web.StatementDetails{Status: 200, Success: true},
-						Result:  test.Unmarshal(`{"id": "12345abcde"}`),
+						Result:  rawResult(`{"id": "12345abcde"}`),
 					},
 				},
 				Headers: map[string]string{},
@@ -44,7 +45,7 @@ func TestMakeQueryResponse(t *testing.T) {
 					Status:       200,
 					Success:      true,
 					IgnoreErrors: true,
-					ResponseBody: test.Unmarshal(`{"id": "12345abcde"}`),
+					ResponseBody: restql.NewResponseBodyFromValue(test.NoOpLogger, test.Unmarshal(`{"id": "12345abcde"}`)),
 				},
 			},
 			false,
@@ -53,7 +54,7 @@ func TestMakeQueryResponse(t *testing.T) {
 				Body: map[string]web.StatementResult{
 					"hero": {
 						Details: web.StatementDetails{Status: 200, Success: true, Metadata: web.StatementMetadata{IgnoreErrors: "ignore"}},
-						Result:  test.Unmarshal(`{"id": "12345abcde"}`),
+						Result:  rawResult(`{"id": "12345abcde"}`),
 					},
 				},
 				Headers: map[string]string{},
@@ -70,7 +71,7 @@ func TestMakeQueryResponse(t *testing.T) {
 					ResponseHeaders: map[string]string{"X-New-Token": "efgefgefg"},
 					RequestParams:   map[string]interface{}{"filter": "no"},
 					ResponseTime:    100,
-					ResponseBody:    test.Unmarshal(`{"id": "12345abcde"}`),
+					ResponseBody: restql.NewResponseBodyFromValue(test.NoOpLogger, test.Unmarshal(`{"id": "12345abcde"}`)),
 				},
 			},
 			true,
@@ -85,7 +86,7 @@ func TestMakeQueryResponse(t *testing.T) {
 							Params:          map[string]interface{}{"filter": "no"},
 							ResponseTime:    100,
 						}},
-						Result: test.Unmarshal(`{"id": "12345abcde"}`),
+						Result: rawResult(`{"id": "12345abcde"}`),
 					},
 				},
 				Headers: map[string]string{
@@ -100,12 +101,12 @@ func TestMakeQueryResponse(t *testing.T) {
 					restql.DoneResource{
 						Status:       200,
 						Success:      true,
-						ResponseBody: test.Unmarshal(`{"id": "12345abcde"}`),
+						ResponseBody: restql.NewResponseBodyFromValue(test.NoOpLogger, test.Unmarshal(`{"id": "12345abcde"}`)),
 					},
 					restql.DoneResource{
 						Status:       200,
 						Success:      true,
-						ResponseBody: test.Unmarshal(`{"id": "67890fghij"}`),
+						ResponseBody: restql.NewResponseBodyFromValue(test.NoOpLogger, test.Unmarshal(`{"id": "67890fghij"}`)),
 					},
 				},
 			},
@@ -115,7 +116,7 @@ func TestMakeQueryResponse(t *testing.T) {
 				Body: map[string]web.StatementResult{
 					"hero": {
 						Details: []interface{}{web.StatementDetails{Status: 200, Success: true}, web.StatementDetails{Status: 200, Success: true}},
-						Result:  []interface{}{test.Unmarshal(`{"id": "12345abcde"}`), test.Unmarshal(`{"id": "67890fghij"}`)},
+						Result:  []interface{}{rawResult(`{"id": "12345abcde"}`), rawResult(`{"id": "67890fghij"}`)},
 					},
 				},
 				Headers: map[string]string{},
@@ -127,18 +128,18 @@ func TestMakeQueryResponse(t *testing.T) {
 				"hero": restql.DoneResource{
 					Status:       200,
 					Success:      true,
-					ResponseBody: test.Unmarshal(`{"id": "10"}`),
+					ResponseBody: restql.NewResponseBodyFromValue(test.NoOpLogger, test.Unmarshal(`{"id": "10"}`)),
 				},
 				"sidekick": restql.DoneResources{
 					restql.DoneResource{
 						Status:       200,
 						Success:      true,
-						ResponseBody: nil,
+						ResponseBody: &restql.ResponseBody{},
 					},
 					restql.DoneResource{
 						Status:       200,
 						Success:      true,
-						ResponseBody: nil,
+						ResponseBody: &restql.ResponseBody{},
 					},
 				},
 			},
@@ -148,7 +149,7 @@ func TestMakeQueryResponse(t *testing.T) {
 				Body: map[string]web.StatementResult{
 					"hero": {
 						Details: web.StatementDetails{Status: 200, Success: true},
-						Result:  test.Unmarshal(`{"id": "10"}`),
+						Result:  rawResult(`{"id": "10"}`),
 					},
 					"sidekick": {
 						Details: []interface{}{web.StatementDetails{Status: 200, Success: true}, web.StatementDetails{Status: 200, Success: true}},
@@ -168,7 +169,7 @@ func TestMakeQueryResponse(t *testing.T) {
 						MaxAge:  restql.ResourceCacheControlValue{Exist: true, Time: 400},
 						SMaxAge: restql.ResourceCacheControlValue{Exist: true, Time: 300},
 					},
-					ResponseBody: test.Unmarshal(`{"id": "12345abcde"}`),
+					ResponseBody: restql.NewResponseBodyFromValue(test.NoOpLogger, test.Unmarshal(`{"id": "12345abcde"}`)),
 				},
 			},
 			false,
@@ -177,7 +178,7 @@ func TestMakeQueryResponse(t *testing.T) {
 				Body: map[string]web.StatementResult{
 					"hero": {
 						Details: web.StatementDetails{Status: 200, Success: true},
-						Result:  test.Unmarshal(`{"id": "12345abcde"}`),
+						Result:  rawResult(`{"id": "12345abcde"}`),
 					},
 				},
 				Headers: map[string]string{"Cache-Control": "max-age=400, s-maxage=300"},
@@ -192,7 +193,7 @@ func TestMakeQueryResponse(t *testing.T) {
 					CacheControl: restql.ResourceCacheControl{
 						MaxAge: restql.ResourceCacheControlValue{Exist: true, Time: 400},
 					},
-					ResponseBody: test.Unmarshal(`{"id": "12345abcde"}`),
+					ResponseBody: restql.NewResponseBodyFromValue(test.NoOpLogger, test.Unmarshal(`{"id": "12345abcde"}`)),
 				},
 			},
 			false,
@@ -201,7 +202,7 @@ func TestMakeQueryResponse(t *testing.T) {
 				Body: map[string]web.StatementResult{
 					"hero": {
 						Details: web.StatementDetails{Status: 200, Success: true},
-						Result:  test.Unmarshal(`{"id": "12345abcde"}`),
+						Result:  rawResult(`{"id": "12345abcde"}`),
 					},
 				},
 				Headers: map[string]string{"Cache-Control": "max-age=400"},
@@ -216,7 +217,7 @@ func TestMakeQueryResponse(t *testing.T) {
 					CacheControl: restql.ResourceCacheControl{
 						SMaxAge: restql.ResourceCacheControlValue{Exist: true, Time: 300},
 					},
-					ResponseBody: test.Unmarshal(`{"id": "12345abcde"}`),
+					ResponseBody: restql.NewResponseBodyFromValue(test.NoOpLogger, test.Unmarshal(`{"id": "12345abcde"}`)),
 				},
 			},
 			false,
@@ -225,7 +226,7 @@ func TestMakeQueryResponse(t *testing.T) {
 				Body: map[string]web.StatementResult{
 					"hero": {
 						Details: web.StatementDetails{Status: 200, Success: true},
-						Result:  test.Unmarshal(`{"id": "12345abcde"}`),
+						Result:  rawResult(`{"id": "12345abcde"}`),
 					},
 				},
 				Headers: map[string]string{"Cache-Control": "s-maxage=300"},
@@ -240,7 +241,7 @@ func TestMakeQueryResponse(t *testing.T) {
 					CacheControl: restql.ResourceCacheControl{
 						NoCache: true,
 					},
-					ResponseBody: test.Unmarshal(`{"id": "12345abcde"}`),
+					ResponseBody: restql.NewResponseBodyFromValue(test.NoOpLogger, test.Unmarshal(`{"id": "12345abcde"}`)),
 				},
 			},
 			false,
@@ -249,7 +250,7 @@ func TestMakeQueryResponse(t *testing.T) {
 				Body: map[string]web.StatementResult{
 					"hero": {
 						Details: web.StatementDetails{Status: 200, Success: true},
-						Result:  test.Unmarshal(`{"id": "12345abcde"}`),
+						Result:  rawResult(`{"id": "12345abcde"}`),
 					},
 				},
 				Headers: map[string]string{"Cache-Control": "no-cache"},
@@ -265,7 +266,7 @@ func TestMakeQueryResponse(t *testing.T) {
 						MaxAge:  restql.ResourceCacheControlValue{Exist: true, Time: 1000},
 						SMaxAge: restql.ResourceCacheControlValue{Exist: true, Time: 300},
 					},
-					ResponseBody: nil,
+					ResponseBody: &restql.ResponseBody{},
 				},
 				"sidekick": restql.DoneResource{
 					Status:  200,
@@ -274,7 +275,7 @@ func TestMakeQueryResponse(t *testing.T) {
 						MaxAge:  restql.ResourceCacheControlValue{Exist: true, Time: 400},
 						SMaxAge: restql.ResourceCacheControlValue{Exist: true, Time: 1800},
 					},
-					ResponseBody: nil,
+					ResponseBody: &restql.ResponseBody{},
 				},
 			},
 			false,
@@ -303,7 +304,7 @@ func TestMakeQueryResponse(t *testing.T) {
 						MaxAge:  restql.ResourceCacheControlValue{Exist: true, Time: 400},
 						SMaxAge: restql.ResourceCacheControlValue{Exist: true, Time: 600},
 					},
-					ResponseBody: nil,
+					ResponseBody: &restql.ResponseBody{},
 				},
 				"sidekick": restql.DoneResources{
 					restql.DoneResource{
@@ -313,7 +314,7 @@ func TestMakeQueryResponse(t *testing.T) {
 							MaxAge:  restql.ResourceCacheControlValue{Exist: true, Time: 100},
 							SMaxAge: restql.ResourceCacheControlValue{Exist: true, Time: 1800},
 						},
-						ResponseBody: nil,
+						ResponseBody: &restql.ResponseBody{},
 					},
 					restql.DoneResource{
 						Status:  200,
@@ -322,7 +323,7 @@ func TestMakeQueryResponse(t *testing.T) {
 							MaxAge:  restql.ResourceCacheControlValue{Exist: true, Time: 400},
 							SMaxAge: restql.ResourceCacheControlValue{Exist: true, Time: 1800},
 						},
-						ResponseBody: nil,
+						ResponseBody: &restql.ResponseBody{},
 					},
 				},
 			},
@@ -348,7 +349,7 @@ func TestMakeQueryResponse(t *testing.T) {
 				"hero": restql.DoneResource{
 					Status:       200,
 					Success:      true,
-					ResponseBody: test.Unmarshal(`{"id": "12345abcde"}`),
+					ResponseBody: restql.NewResponseBodyFromValue(test.NoOpLogger, test.Unmarshal(`{"id": "12345abcde"}`)),
 					ResponseHeaders: map[string]string{
 						"TransactionId": "abdcefg",
 					},
@@ -356,7 +357,7 @@ func TestMakeQueryResponse(t *testing.T) {
 				"sidekick": restql.DoneResource{
 					Status:       200,
 					Success:      true,
-					ResponseBody: test.Unmarshal(`{"id": "12345abcde"}`),
+					ResponseBody: restql.NewResponseBodyFromValue(test.NoOpLogger, test.Unmarshal(`{"id": "12345abcde"}`)),
 					ResponseHeaders: map[string]string{
 						"TID": "123456",
 					},
@@ -368,11 +369,11 @@ func TestMakeQueryResponse(t *testing.T) {
 				Body: map[string]web.StatementResult{
 					"hero": {
 						Details: web.StatementDetails{Status: 200, Success: true},
-						Result:  test.Unmarshal(`{"id": "12345abcde"}`),
+						Result:  rawResult(`{"id": "12345abcde"}`),
 					},
 					"sidekick": {
 						Details: web.StatementDetails{Status: 200, Success: true},
-						Result:  test.Unmarshal(`{"id": "12345abcde"}`),
+						Result:  rawResult(`{"id": "12345abcde"}`),
 					},
 				},
 				Headers: map[string]string{
@@ -387,7 +388,7 @@ func TestMakeQueryResponse(t *testing.T) {
 				"hero": restql.DoneResource{
 					Status:       200,
 					Success:      true,
-					ResponseBody: test.Unmarshal(`{"id": "12345abcde"}`),
+					ResponseBody: restql.NewResponseBodyFromValue(test.NoOpLogger, test.Unmarshal(`{"id": "12345abcde"}`)),
 					ResponseHeaders: map[string]string{
 						"TransactionId": "abdcefg",
 					},
@@ -396,7 +397,7 @@ func TestMakeQueryResponse(t *testing.T) {
 					Status:       500,
 					Success:      false,
 					IgnoreErrors: true,
-					ResponseBody: test.Unmarshal(`{"id": "12345abcde"}`),
+					ResponseBody: restql.NewResponseBodyFromValue(test.NoOpLogger, test.Unmarshal(`{"id": "12345abcde"}`)),
 					ResponseHeaders: map[string]string{
 						"TID": "123456",
 					},
@@ -408,11 +409,11 @@ func TestMakeQueryResponse(t *testing.T) {
 				Body: map[string]web.StatementResult{
 					"hero": {
 						Details: web.StatementDetails{Status: 200, Success: true},
-						Result:  test.Unmarshal(`{"id": "12345abcde"}`),
+						Result:  rawResult(`{"id": "12345abcde"}`),
 					},
 					"sidekick": {
 						Details: web.StatementDetails{Status: 500, Success: false, Metadata: web.StatementMetadata{IgnoreErrors: "ignore"}},
-						Result:  test.Unmarshal(`{"id": "12345abcde"}`),
+						Result:  rawResult(`{"id": "12345abcde"}`),
 					},
 				},
 				Headers: map[string]string{
@@ -488,4 +489,13 @@ func TestCalculateStatusCode(t *testing.T) {
 			test.Equal(t, got, tt.expected)
 		})
 	}
+}
+
+func rawResult(s string) json.RawMessage {
+	b, err := json.Marshal(test.Unmarshal(s))
+	if err != nil {
+		panic(err)
+	}
+
+	return json.RawMessage(b)
 }

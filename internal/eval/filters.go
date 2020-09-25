@@ -11,11 +11,11 @@ import (
 
 // ApplyFilters returns a version of the already resolved Resources
 // only with the fields defined by the `only` clause.
-func ApplyFilters(log restql.Logger, query domain.Query, resources restql.Resources) (restql.Resources, error) {
-	result := make(restql.Resources)
+func ApplyFilters(log restql.Logger, query domain.Query, resources domain.Resources) (domain.Resources, error) {
+	result := make(domain.Resources)
 
 	for _, stmt := range query.Statements {
-		resourceID := restql.NewResourceID(stmt)
+		resourceID := domain.NewResourceID(stmt)
 		dr := resources[resourceID]
 
 		filtered, err := applyOnlyFilters(stmt.Only, dr)
@@ -37,7 +37,8 @@ func applyOnlyFilters(filters []interface{}, resourceResult interface{}) (interf
 
 	switch resourceResult := resourceResult.(type) {
 	case restql.DoneResource:
-		result, err := extractWithFilters(buildFilterTree(filters), resourceResult.ResponseBody)
+		body := resourceResult.ResponseBody.Unmarshal()
+		result, err := extractWithFilters(buildFilterTree(filters), body)
 		if err != nil {
 			return nil, err
 		}
@@ -263,14 +264,14 @@ func parsePath(s interface{}) []interface{} {
 
 // ApplyHidden returns a version of the already resolved Resources
 // removing the statement results with the `hidden` clause.
-func ApplyHidden(query domain.Query, resources restql.Resources) restql.Resources {
-	result := make(restql.Resources)
+func ApplyHidden(query domain.Query, resources domain.Resources) domain.Resources {
+	result := make(domain.Resources)
 
 	for _, stmt := range query.Statements {
 		if stmt.Hidden {
 			continue
 		}
-		resourceID := restql.NewResourceID(stmt)
+		resourceID := domain.NewResourceID(stmt)
 		dr := resources[resourceID]
 
 		result[resourceID] = dr

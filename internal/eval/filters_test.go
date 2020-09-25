@@ -16,12 +16,12 @@ func TestHiddenFilter(t *testing.T) {
 		{Resource: "sidekick"},
 	}}
 
-	resources := restql.Resources{
+	resources := domain.Resources{
 		"hero":     restql.DoneResource{ResponseBody: nil},
 		"sidekick": restql.DoneResource{ResponseBody: nil},
 	}
 
-	expectedResources := restql.Resources{
+	expectedResources := domain.Resources{
 		"sidekick": restql.DoneResource{ResponseBody: nil},
 	}
 
@@ -34,17 +34,17 @@ func TestOnlyFilters(t *testing.T) {
 	tests := []struct {
 		name      string
 		query     domain.Query
-		resources restql.Resources
-		expected  restql.Resources
+		resources domain.Resources
+		expected  domain.Resources
 	}{
 		{
 			"should do nothing if there is no filter",
 			domain.Query{Statements: []domain.Statement{{Resource: "hero"}, {Resource: "sidekick"}}},
-			restql.Resources{
+			domain.Resources{
 				"hero":     restql.DoneResource{ResponseBody: nil},
 				"sidekick": restql.DoneResource{ResponseBody: nil},
 			},
-			restql.Resources{
+			domain.Resources{
 				"hero":     restql.DoneResource{ResponseBody: nil},
 				"sidekick": restql.DoneResource{ResponseBody: nil},
 			},
@@ -52,11 +52,11 @@ func TestOnlyFilters(t *testing.T) {
 		{
 			"should do nothing if there is resource result is a primitive",
 			domain.Query{Statements: []domain.Statement{{Resource: "auth"}}},
-			restql.Resources{
-				"auth": restql.DoneResource{ResponseBody: "1234567890abcdefg"},
+			domain.Resources{
+				"auth": restql.DoneResource{ResponseBody: restql.NewResponseBodyFromValue(test.NoOpLogger, "1234567890abcdefg")},
 			},
-			restql.Resources{
-				"auth": restql.DoneResource{ResponseBody: "1234567890abcdefg"},
+			domain.Resources{
+				"auth": restql.DoneResource{ResponseBody: restql.NewResponseBodyFromValue(test.NoOpLogger, "1234567890abcdefg")},
 			},
 		},
 		{
@@ -65,14 +65,14 @@ func TestOnlyFilters(t *testing.T) {
 				Resource: "hero",
 				Only:     []interface{}{[]string{"name"}, []string{"age"}},
 			}}},
-			restql.Resources{
+			domain.Resources{
 				"hero": restql.DoneResource{
-					ResponseBody: test.Unmarshal(`{ "id": "12345", "name": "batman", "age": 42 }`),
+					ResponseBody: restql.NewResponseBodyFromValue(test.NoOpLogger, test.Unmarshal(`{ "id": "12345", "name": "batman", "age": 42 }`)),
 				},
 			},
-			restql.Resources{
+			domain.Resources{
 				"hero": restql.DoneResource{
-					ResponseBody: test.Unmarshal(`{ "name": "batman", "age": 42 }`),
+					ResponseBody: restql.NewResponseBodyFromValue(test.NoOpLogger, test.Unmarshal(`{ "name": "batman", "age": 42 }`)),
 				},
 			},
 		},
@@ -82,14 +82,14 @@ func TestOnlyFilters(t *testing.T) {
 				Resource: "hero",
 				Only:     []interface{}{[]string{"name"}, []string{"age"}},
 			}}},
-			restql.Resources{
+			domain.Resources{
 				"hero": restql.DoneResource{
-					ResponseBody: test.Unmarshal(`{ "id": "12345", "name": "batman" }`),
+					ResponseBody: restql.NewResponseBodyFromValue(test.NoOpLogger, test.Unmarshal(`{ "id": "12345", "name": "batman" }`)),
 				},
 			},
-			restql.Resources{
+			domain.Resources{
 				"hero": restql.DoneResource{
-					ResponseBody: test.Unmarshal(`{ "name": "batman" }`),
+					ResponseBody: restql.NewResponseBodyFromValue(test.NoOpLogger, test.Unmarshal(`{ "name": "batman" }`)),
 				},
 			},
 		},
@@ -99,14 +99,17 @@ func TestOnlyFilters(t *testing.T) {
 				Resource: "hero",
 				Only:     []interface{}{[]string{"city", "name"}, []string{"city", "population"}},
 			}}},
-			restql.Resources{
+			domain.Resources{
 				"hero": restql.DoneResource{
-					ResponseBody: test.Unmarshal(`{ "id": "12345", "name": "batman", "age": 42, "city": { "name": "gotham", "population": 10000000 } }`),
+					ResponseBody: restql.NewResponseBodyFromValue(
+						test.NoOpLogger,
+						test.Unmarshal(`{ "id": "12345", "name": "batman", "age": 42, "city": { "name": "gotham", "population": 10000000 } }`),
+					),
 				},
 			},
-			restql.Resources{
+			domain.Resources{
 				"hero": restql.DoneResource{
-					ResponseBody: test.Unmarshal(`{ "city": { "name": "gotham", "population": 10000000 } }`),
+					ResponseBody: restql.NewResponseBodyFromValue(test.NoOpLogger, test.Unmarshal(`{ "city": { "name": "gotham", "population": 10000000 } }`)),
 				},
 			},
 		},
@@ -116,14 +119,20 @@ func TestOnlyFilters(t *testing.T) {
 				Resource: "hero",
 				Only:     []interface{}{[]string{"id"}, []string{"nested", "some-field", "even-more-nested"}},
 			}}},
-			restql.Resources{
+			domain.Resources{
 				"hero": restql.DoneResource{
-					ResponseBody: test.Unmarshal(`{ "id": "12345", "nested": {"some-field": {"even-more-nested": "abcdef", "other-field": 1} } }`),
+					ResponseBody: restql.NewResponseBodyFromValue(
+						test.NoOpLogger,
+						test.Unmarshal(`{ "id": "12345", "nested": {"some-field": {"even-more-nested": "abcdef", "other-field": 1} } }`),
+					),
 				},
 			},
-			restql.Resources{
+			domain.Resources{
 				"hero": restql.DoneResource{
-					ResponseBody: test.Unmarshal(`{ "id": "12345", "nested": {"some-field": {"even-more-nested": "abcdef"} } }`),
+					ResponseBody: restql.NewResponseBodyFromValue(
+						test.NoOpLogger,
+						test.Unmarshal(`{ "id": "12345", "nested": {"some-field": {"even-more-nested": "abcdef"} } }`),
+					),
 				},
 			},
 		},
@@ -133,14 +142,20 @@ func TestOnlyFilters(t *testing.T) {
 				Resource: "hero",
 				Only:     []interface{}{[]string{"weapons", "name"}},
 			}}},
-			restql.Resources{
+			domain.Resources{
 				"hero": restql.DoneResource{
-					ResponseBody: test.Unmarshal(`{ "id": "12345", "weapons": [{"id": 1, "name": "belt"}, {"id": 2, "name": "batarang"}] }`),
+					ResponseBody: restql.NewResponseBodyFromValue(
+						test.NoOpLogger,
+						test.Unmarshal(`{ "id": "12345", "weapons": [{"id": 1, "name": "belt"}, {"id": 2, "name": "batarang"}] }`),
+					),
 				},
 			},
-			restql.Resources{
+			domain.Resources{
 				"hero": restql.DoneResource{
-					ResponseBody: test.Unmarshal(`{"weapons": [{"name": "belt"}, {"name": "batarang"}] }`),
+					ResponseBody: restql.NewResponseBodyFromValue(
+						test.NoOpLogger,
+						test.Unmarshal(`{"weapons": [{"name": "belt"}, {"name": "batarang"}] }`),
+					),
 				},
 			},
 		},
@@ -150,14 +165,14 @@ func TestOnlyFilters(t *testing.T) {
 				Resource: "hero",
 				Only:     []interface{}{[]string{"weapons"}},
 			}}},
-			restql.Resources{
+			domain.Resources{
 				"hero": restql.DoneResource{
-					ResponseBody: test.Unmarshal(`{ "id": "12345", "weapons": ["belt", "batarang"] }`),
+					ResponseBody: restql.NewResponseBodyFromValue(test.NoOpLogger, test.Unmarshal(`{ "id": "12345", "weapons": ["belt", "batarang"] }`)),
 				},
 			},
-			restql.Resources{
+			domain.Resources{
 				"hero": restql.DoneResource{
-					ResponseBody: test.Unmarshal(`{"weapons": ["belt", "batarang"] }`),
+					ResponseBody: restql.NewResponseBodyFromValue(test.NoOpLogger, test.Unmarshal(`{"weapons": ["belt", "batarang"] }`)),
 				},
 			},
 		},
@@ -167,14 +182,20 @@ func TestOnlyFilters(t *testing.T) {
 				Resource: "hero",
 				Only:     []interface{}{[]string{"weapons", "nested", "some-field", "even-more-nested"}},
 			}}},
-			restql.Resources{
+			domain.Resources{
 				"hero": restql.DoneResource{
-					ResponseBody: test.Unmarshal(`{ "id": "12345", "weapons": [{"id": 1, "name": "belt", "nested": {"some-field": {"even-more-nested": "abcdef"} }}, {"id": 2, "name": "batarang", "nested": {"some-field": {"even-more-nested": "abcdef"} }}] }`),
+					ResponseBody: restql.NewResponseBodyFromValue(
+						test.NoOpLogger,
+						test.Unmarshal(`{ "id": "12345", "weapons": [{"id": 1, "name": "belt", "nested": {"some-field": {"even-more-nested": "abcdef"} }}, {"id": 2, "name": "batarang", "nested": {"some-field": {"even-more-nested": "abcdef"} }}] }`),
+					),
 				},
 			},
-			restql.Resources{
+			domain.Resources{
 				"hero": restql.DoneResource{
-					ResponseBody: test.Unmarshal(`{"weapons": [{"nested": {"some-field": {"even-more-nested": "abcdef"} }}, {"nested": {"some-field": {"even-more-nested": "abcdef"} }}] }`),
+					ResponseBody: restql.NewResponseBodyFromValue(
+						test.NoOpLogger,
+						test.Unmarshal(`{"weapons": [{"nested": {"some-field": {"even-more-nested": "abcdef"} }}, {"nested": {"some-field": {"even-more-nested": "abcdef"} }}] }`),
+					),
 				},
 			},
 		},
@@ -184,14 +205,20 @@ func TestOnlyFilters(t *testing.T) {
 				Resource: "hero",
 				Only:     []interface{}{[]string{"weapons", "name"}, []string{"weapons", "properties", "name"}, []string{"weapons", "properties", "value"}},
 			}}},
-			restql.Resources{
+			domain.Resources{
 				"hero": restql.DoneResource{
-					ResponseBody: test.Unmarshal(`{ "id": "12345", "weapons": [{"id": 1, "name": "belt", "properties": [{"name": "color", "value": "yellow"}, {"name": "weight", "value": "10"}]}, {"id": 2, "name": "batarang", "properties": [{"name": "color", "value": "black"}, {"name": "weight", "value": "1"}]}] }`),
+					ResponseBody: restql.NewResponseBodyFromValue(
+						test.NoOpLogger,
+						test.Unmarshal(`{ "id": "12345", "weapons": [{"id": 1, "name": "belt", "properties": [{"name": "color", "value": "yellow"}, {"name": "weight", "value": "10"}]}, {"id": 2, "name": "batarang", "properties": [{"name": "color", "value": "black"}, {"name": "weight", "value": "1"}]}] }`),
+					),
 				},
 			},
-			restql.Resources{
+			domain.Resources{
 				"hero": restql.DoneResource{
-					ResponseBody: test.Unmarshal(`{"weapons": [{"name": "belt", "properties": [{"name": "color", "value": "yellow"}, {"name": "weight", "value": "10"}]}, {"name": "batarang", "properties": [{"name": "color", "value": "black"}, {"name": "weight", "value": "1"}]}] }`),
+					ResponseBody: restql.NewResponseBodyFromValue(
+						test.NoOpLogger,
+						test.Unmarshal(`{"weapons": [{"name": "belt", "properties": [{"name": "color", "value": "yellow"}, {"name": "weight", "value": "10"}]}, {"name": "batarang", "properties": [{"name": "color", "value": "black"}, {"name": "weight", "value": "1"}]}] }`),
+					),
 				},
 			},
 		},
@@ -201,14 +228,20 @@ func TestOnlyFilters(t *testing.T) {
 				Resource: "hero",
 				Only:     []interface{}{[]string{"name"}, []string{"age"}},
 			}}},
-			restql.Resources{
+			domain.Resources{
 				"hero": restql.DoneResource{
-					ResponseBody: test.Unmarshal(`[{ "id": "12345", "name": "batman", "age": 42 },{ "id": "67890", "name": "wonder woman", "age": 35 }]`),
+					ResponseBody: restql.NewResponseBodyFromValue(
+						test.NoOpLogger,
+						test.Unmarshal(`[{ "id": "12345", "name": "batman", "age": 42 },{ "id": "67890", "name": "wonder woman", "age": 35 }]`),
+					),
 				},
 			},
-			restql.Resources{
+			domain.Resources{
 				"hero": restql.DoneResource{
-					ResponseBody: test.Unmarshal(`[{ "name": "batman", "age": 42 },{ "name": "wonder woman", "age": 35 }]`),
+					ResponseBody: restql.NewResponseBodyFromValue(
+						test.NoOpLogger,
+						test.Unmarshal(`[{ "name": "batman", "age": 42 },{ "name": "wonder woman", "age": 35 }]`),
+					),
 				},
 			},
 		},
@@ -218,23 +251,35 @@ func TestOnlyFilters(t *testing.T) {
 				Resource: "hero",
 				Only:     []interface{}{[]string{"name"}, []string{"age"}},
 			}}},
-			restql.Resources{
+			domain.Resources{
 				"hero": restql.DoneResources{
 					restql.DoneResource{
-						ResponseBody: test.Unmarshal(`{ "id": "12345", "name": "batman", "age": 42 }`),
+						ResponseBody: restql.NewResponseBodyFromValue(
+							test.NoOpLogger,
+							test.Unmarshal(`{ "id": "12345", "name": "batman", "age": 42 }`),
+						),
 					},
 					restql.DoneResource{
-						ResponseBody: test.Unmarshal(`{ "id": "56789", "name": "wonder woman", "age": 35 }`),
+						ResponseBody: restql.NewResponseBodyFromValue(
+							test.NoOpLogger,
+							test.Unmarshal(`{ "id": "56789", "name": "wonder woman", "age": 35 }`),
+						),
 					},
 				},
 			},
-			restql.Resources{
+			domain.Resources{
 				"hero": restql.DoneResources{
 					restql.DoneResource{
-						ResponseBody: test.Unmarshal(`{ "name": "batman", "age": 42 }`),
+						ResponseBody: restql.NewResponseBodyFromValue(
+							test.NoOpLogger,
+							test.Unmarshal(`{ "name": "batman", "age": 42 }`),
+						),
 					},
 					restql.DoneResource{
-						ResponseBody: test.Unmarshal(`{ "name": "wonder woman", "age": 35 }`),
+						ResponseBody: restql.NewResponseBodyFromValue(
+							test.NoOpLogger,
+							test.Unmarshal(`{ "name": "wonder woman", "age": 35 }`),
+						),
 					},
 				},
 			},
@@ -250,14 +295,20 @@ func TestOnlyFilters(t *testing.T) {
 					[]string{"age"},
 				},
 			}}},
-			restql.Resources{
+			domain.Resources{
 				"hero": restql.DoneResource{
-					ResponseBody: test.Unmarshal(`{ "id": "12345", "name": "batman", "age": 42, "city": "Gotham" }`),
+					ResponseBody: restql.NewResponseBodyFromValue(
+						test.NoOpLogger,
+						test.Unmarshal(`{ "id": "12345", "name": "batman", "age": 42, "city": "Gotham" }`),
+					),
 				},
 			},
-			restql.Resources{
+			domain.Resources{
 				"hero": restql.DoneResource{
-					ResponseBody: test.Unmarshal(`{ "name": "batman", "age": 42, "city": "Gotham" }`),
+					ResponseBody: restql.NewResponseBodyFromValue(
+						test.NoOpLogger,
+						test.Unmarshal(`{ "name": "batman", "age": 42, "city": "Gotham" }`),
+					),
 				},
 			},
 		},
@@ -267,14 +318,20 @@ func TestOnlyFilters(t *testing.T) {
 				Resource: "hero",
 				Only:     []interface{}{domain.Match{Value: []string{"id"}, Arg: regexp.MustCompile("9$")}, domain.Match{Value: []string{"name"}, Arg: regexp.MustCompile("^b")}, domain.Match{Value: []string{"age"}, Arg: regexp.MustCompile("42")}},
 			}}},
-			restql.Resources{
+			domain.Resources{
 				"hero": restql.DoneResource{
-					ResponseBody: test.Unmarshal(`{ "id": "12345", "name": "batman", "age": 42 }`),
+					ResponseBody: restql.NewResponseBodyFromValue(
+						test.NoOpLogger,
+						test.Unmarshal(`{ "id": "12345", "name": "batman", "age": 42 }`),
+					),
 				},
 			},
-			restql.Resources{
+			domain.Resources{
 				"hero": restql.DoneResource{
-					ResponseBody: test.Unmarshal(`{ "name": "batman", "age": 42 }`),
+					ResponseBody: restql.NewResponseBodyFromValue(
+						test.NoOpLogger,
+						test.Unmarshal(`{ "name": "batman", "age": 42 }`),
+					),
 				},
 			},
 		},
@@ -284,14 +341,20 @@ func TestOnlyFilters(t *testing.T) {
 				Resource: "hero",
 				Only:     []interface{}{domain.Match{Value: []string{"weapons"}, Arg: regexp.MustCompile("^b")}},
 			}}},
-			restql.Resources{
+			domain.Resources{
 				"hero": restql.DoneResource{
-					ResponseBody: test.Unmarshal(`{ "id": "12345", "weapons": ["belt", "batarang", "katana"] }`),
+					ResponseBody: restql.NewResponseBodyFromValue(
+						test.NoOpLogger,
+						test.Unmarshal(`{ "id": "12345", "weapons": ["belt", "batarang", "katana"] }`),
+					),
 				},
 			},
-			restql.Resources{
+			domain.Resources{
 				"hero": restql.DoneResource{
-					ResponseBody: test.Unmarshal(`{ "weapons": ["belt", "batarang"] }`),
+					ResponseBody: restql.NewResponseBodyFromValue(
+						test.NoOpLogger,
+						test.Unmarshal(`{ "weapons": ["belt", "batarang"] }`),
+					),
 				},
 			},
 		},
@@ -301,14 +364,20 @@ func TestOnlyFilters(t *testing.T) {
 				Resource: "hero",
 				Only:     []interface{}{[]string{"*"}},
 			}}},
-			restql.Resources{
+			domain.Resources{
 				"hero": restql.DoneResource{
-					ResponseBody: test.Unmarshal(`{ "id": "12345", "name": "batman", "age": 42 }`),
+					ResponseBody: restql.NewResponseBodyFromValue(
+						test.NoOpLogger,
+						test.Unmarshal(`{ "id": "12345", "name": "batman", "age": 42 }`),
+					),
 				},
 			},
-			restql.Resources{
+			domain.Resources{
 				"hero": restql.DoneResource{
-					ResponseBody: test.Unmarshal(`{ "id": "12345", "name": "batman", "age": 42 }`),
+					ResponseBody: restql.NewResponseBodyFromValue(
+						test.NoOpLogger,
+						test.Unmarshal(`{ "id": "12345", "name": "batman", "age": 42 }`),
+					),
 				},
 			},
 		},
@@ -318,14 +387,20 @@ func TestOnlyFilters(t *testing.T) {
 				Resource: "hero",
 				Only:     []interface{}{[]string{"*"}, domain.Match{Value: []string{"name"}, Arg: regexp.MustCompile("^c")}},
 			}}},
-			restql.Resources{
+			domain.Resources{
 				"hero": restql.DoneResource{
-					ResponseBody: test.Unmarshal(`{ "id": "12345", "name": "batman", "age": 42 }`),
+					ResponseBody: restql.NewResponseBodyFromValue(
+						test.NoOpLogger,
+						test.Unmarshal(`{ "id": "12345", "name": "batman", "age": 42 }`),
+					),
 				},
 			},
-			restql.Resources{
+			domain.Resources{
 				"hero": restql.DoneResource{
-					ResponseBody: test.Unmarshal(`{ "id": "12345", "age": 42 }`),
+					ResponseBody: restql.NewResponseBodyFromValue(
+						test.NoOpLogger,
+						test.Unmarshal(`{ "id": "12345", "age": 42 }`),
+					),
 				},
 			},
 		},
@@ -333,7 +408,7 @@ func TestOnlyFilters(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := eval.ApplyFilters(test.NoOpLogger{}, tt.query, tt.resources)
+			got, err := eval.ApplyFilters(test.NoOpLogger, tt.query, tt.resources)
 
 			test.VerifyError(t, err)
 			test.Equal(t, got, tt.expected)

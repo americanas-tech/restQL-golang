@@ -215,7 +215,7 @@ func TestNewTimeoutResponse(t *testing.T) {
 				RequestHeaders: map[string]string{"X-TID": "12345abdef"},
 				RequestParams:  map[string]interface{}{"id": "123456"},
 				ResponseTime:   100,
-				ResponseBody:   timeoutErr.Error(),
+				ResponseBody:   restql.NewResponseBodyFromValue(test.NoOpLogger, timeoutErr.Error()),
 			},
 		},
 		{
@@ -241,14 +241,14 @@ func TestNewTimeoutResponse(t *testing.T) {
 				RequestHeaders: map[string]string{"X-TID": "12345abdef"},
 				RequestParams:  map[string]interface{}{"id": "123456"},
 				ResponseTime:   100,
-				ResponseBody:   timeoutErr.Error(),
+				ResponseBody:   restql.NewResponseBodyFromValue(test.NoOpLogger, timeoutErr.Error()),
 			},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := runner.NewErrorResponse(timeoutErr, tt.request, tt.response, tt.options)
+			got := runner.NewErrorResponse(test.NoOpLogger, timeoutErr, tt.request, tt.response, tt.options)
 
 			test.Equal(t, got, tt.expected)
 		})
@@ -264,10 +264,13 @@ func TestNewEmptyChainedResponse(t *testing.T) {
 			Status:       400,
 			Success:      false,
 			IgnoreErrors: false,
-			ResponseBody: "The request was skipped due to missing { :id } param value",
+			ResponseBody: restql.NewResponseBodyFromValue(
+				test.NoOpLogger,
+				"The request was skipped due to missing { :id } param value",
+			),
 		}
 
-		got := runner.NewEmptyChainedResponse(nil, params, options)
+		got := runner.NewEmptyChainedResponse(test.NoOpLogger, params, options)
 
 		test.Equal(t, got, expected)
 	})
@@ -280,10 +283,13 @@ func TestNewEmptyChainedResponse(t *testing.T) {
 			Status:       400,
 			Success:      false,
 			IgnoreErrors: false,
-			ResponseBody: "The request was skipped due to missing { :id :name :city } param value",
+			ResponseBody: restql.NewResponseBodyFromValue(
+				test.NoOpLogger,
+				"The request was skipped due to missing { :id :name :city } param value",
+			),
 		}
 
-		got := runner.NewEmptyChainedResponse(nil, params, options)
+		got := runner.NewEmptyChainedResponse(test.NoOpLogger, params, options)
 
 		test.Equal(t, got, expected)
 	})
@@ -296,10 +302,13 @@ func TestNewEmptyChainedResponse(t *testing.T) {
 			Status:       400,
 			Success:      false,
 			IgnoreErrors: true,
-			ResponseBody: "The request was skipped due to missing { :id } param value",
+			ResponseBody: restql.NewResponseBodyFromValue(
+				test.NoOpLogger,
+				"The request was skipped due to missing { :id } param value",
+			),
 		}
 
-		got := runner.NewEmptyChainedResponse(nil, params, options)
+		got := runner.NewEmptyChainedResponse(test.NoOpLogger, params, options)
 
 		test.Equal(t, got, expected)
 	})
