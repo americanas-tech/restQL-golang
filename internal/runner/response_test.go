@@ -1,6 +1,7 @@
 package runner_test
 
 import (
+	"github.com/b2wdigital/restQL-golang/v4/pkg/restql"
 	"testing"
 	"time"
 
@@ -12,35 +13,35 @@ import (
 func TestNewDoneResource(t *testing.T) {
 	tests := []struct {
 		name     string
-		request  domain.HTTPRequest
-		response domain.HTTPResponse
+		request  restql.HTTPRequest
+		response restql.HTTPResponse
 		options  runner.DoneResourceOptions
 		expected domain.DoneResource
 	}{
 		{
 			"should create done resource for successful execution",
-			domain.HTTPRequest{},
-			domain.HTTPResponse{StatusCode: 200, Body: nil},
+			restql.HTTPRequest{},
+			restql.HTTPResponse{StatusCode: 200, Body: nil},
 			runner.DoneResourceOptions{},
 			domain.DoneResource{Status: 200, Success: true, IgnoreErrors: false, ResponseBody: nil},
 		},
 		{
 			"should create done resource for failed execution",
-			domain.HTTPRequest{},
-			domain.HTTPResponse{StatusCode: 400, Body: nil},
+			restql.HTTPRequest{},
+			restql.HTTPResponse{StatusCode: 400, Body: nil},
 			runner.DoneResourceOptions{},
 			domain.DoneResource{Status: 400, Success: false, IgnoreErrors: false, ResponseBody: nil},
 		},
 		{
 			"should create done resource with debug",
-			domain.HTTPRequest{
+			restql.HTTPRequest{
 				Schema:  "http",
 				Host:    "hero.io",
 				Path:    "/api",
 				Query:   map[string]interface{}{"id": "123456"},
 				Headers: map[string]string{"X-TID": "12345abdef"},
 			},
-			domain.HTTPResponse{
+			restql.HTTPResponse{
 				URL:        "http://hero.io/api",
 				StatusCode: 200,
 				Body:       nil,
@@ -62,8 +63,8 @@ func TestNewDoneResource(t *testing.T) {
 		},
 		{
 			"should create done resource with ignore errors",
-			domain.HTTPRequest{},
-			domain.HTTPResponse{StatusCode: 200, Body: nil},
+			restql.HTTPRequest{},
+			restql.HTTPResponse{StatusCode: 200, Body: nil},
 			runner.DoneResourceOptions{IgnoreErrors: true},
 			domain.DoneResource{
 				Status:       200,
@@ -74,8 +75,8 @@ func TestNewDoneResource(t *testing.T) {
 		},
 		{
 			"should create done resource with cache control information returned by resource",
-			domain.HTTPRequest{},
-			domain.HTTPResponse{StatusCode: 200, Body: nil, Headers: map[string]string{"Cache-Control": "max-age=400, s-maxage=600"}},
+			restql.HTTPRequest{},
+			restql.HTTPResponse{StatusCode: 200, Body: nil, Headers: map[string]string{"Cache-Control": "max-age=400, s-maxage=600"}},
 			runner.DoneResourceOptions{},
 			domain.DoneResource{
 				Status:  200,
@@ -91,8 +92,8 @@ func TestNewDoneResource(t *testing.T) {
 		},
 		{
 			"should create done resource with cache control information returned by resource",
-			domain.HTTPRequest{},
-			domain.HTTPResponse{StatusCode: 200, Body: nil, Headers: map[string]string{"Cache-Control": "no-cache"}},
+			restql.HTTPRequest{},
+			restql.HTTPResponse{StatusCode: 200, Body: nil, Headers: map[string]string{"Cache-Control": "no-cache"}},
 			runner.DoneResourceOptions{},
 			domain.DoneResource{
 				Status:  200,
@@ -107,8 +108,8 @@ func TestNewDoneResource(t *testing.T) {
 		},
 		{
 			"should create done resource with cache control information defined in statement if not returned by resource",
-			domain.HTTPRequest{},
-			domain.HTTPResponse{StatusCode: 200, Body: nil},
+			restql.HTTPRequest{},
+			restql.HTTPResponse{StatusCode: 200, Body: nil},
 			runner.DoneResourceOptions{MaxAge: 100, SMaxAge: 300},
 			domain.DoneResource{
 				Status:  200,
@@ -123,8 +124,8 @@ func TestNewDoneResource(t *testing.T) {
 		},
 		{
 			"should create done resource with cache control information defined in statement if not returned by resource",
-			domain.HTTPRequest{},
-			domain.HTTPResponse{StatusCode: 200, Body: nil},
+			restql.HTTPRequest{},
+			restql.HTTPResponse{StatusCode: 200, Body: nil},
 			runner.DoneResourceOptions{MaxAge: 100},
 			domain.DoneResource{
 				Status:  200,
@@ -138,8 +139,8 @@ func TestNewDoneResource(t *testing.T) {
 		},
 		{
 			"should create done resource with minimum cache control information between the returned by resource and the defined in statement",
-			domain.HTTPRequest{},
-			domain.HTTPResponse{StatusCode: 200, Body: nil, Headers: map[string]string{"Cache-Control": "max-age=100, s-maxage=600"}},
+			restql.HTTPRequest{},
+			restql.HTTPResponse{StatusCode: 200, Body: nil, Headers: map[string]string{"Cache-Control": "max-age=100, s-maxage=600"}},
 			runner.DoneResourceOptions{MaxAge: 400, SMaxAge: 300},
 			domain.DoneResource{
 				Status:  200,
@@ -155,8 +156,8 @@ func TestNewDoneResource(t *testing.T) {
 		},
 		{
 			"should create done resource with minimum cache control information between the returned by resource and the defined in statement",
-			domain.HTTPRequest{},
-			domain.HTTPResponse{StatusCode: 200, Body: nil, Headers: map[string]string{"Cache-Control": "no-cache"}},
+			restql.HTTPRequest{},
+			restql.HTTPResponse{StatusCode: 200, Body: nil, Headers: map[string]string{"Cache-Control": "no-cache"}},
 			runner.DoneResourceOptions{MaxAge: 400, SMaxAge: 300},
 			domain.DoneResource{
 				Status:  200,
@@ -186,21 +187,21 @@ func TestNewTimeoutResponse(t *testing.T) {
 
 	tests := []struct {
 		name     string
-		request  domain.HTTPRequest
-		response domain.HTTPResponse
+		request  restql.HTTPRequest
+		response restql.HTTPResponse
 		options  runner.DoneResourceOptions
 		expected domain.DoneResource
 	}{
 		{
 			"should create response for time outed execution",
-			domain.HTTPRequest{
+			restql.HTTPRequest{
 				Schema:  "http",
 				Host:    "hero.io",
 				Path:    "/api",
 				Query:   map[string]interface{}{"id": "123456"},
 				Headers: map[string]string{"X-TID": "12345abdef"},
 			},
-			domain.HTTPResponse{
+			restql.HTTPResponse{
 				StatusCode: 408,
 				URL:        "http://hero.io/api",
 				Duration:   100 * time.Millisecond,
@@ -219,14 +220,14 @@ func TestNewTimeoutResponse(t *testing.T) {
 		},
 		{
 			"should create response for time outed execution with ignore errors",
-			domain.HTTPRequest{
+			restql.HTTPRequest{
 				Schema:  "http",
 				Host:    "hero.io",
 				Path:    "/api",
 				Query:   map[string]interface{}{"id": "123456"},
 				Headers: map[string]string{"X-TID": "12345abdef"},
 			},
-			domain.HTTPResponse{
+			restql.HTTPResponse{
 				StatusCode: 408,
 				URL:        "http://hero.io/api",
 				Duration:   100 * time.Millisecond,
@@ -266,7 +267,7 @@ func TestNewEmptyChainedResponse(t *testing.T) {
 			ResponseBody: "The request was skipped due to missing { :id } param value",
 		}
 
-		got := runner.NewEmptyChainedResponse(params, options)
+		got := runner.NewEmptyChainedResponse(nil, params, options)
 
 		test.Equal(t, got, expected)
 	})
@@ -282,7 +283,7 @@ func TestNewEmptyChainedResponse(t *testing.T) {
 			ResponseBody: "The request was skipped due to missing { :id :name :city } param value",
 		}
 
-		got := runner.NewEmptyChainedResponse(params, options)
+		got := runner.NewEmptyChainedResponse(nil, params, options)
 
 		test.Equal(t, got, expected)
 	})
@@ -298,7 +299,7 @@ func TestNewEmptyChainedResponse(t *testing.T) {
 			ResponseBody: "The request was skipped due to missing { :id } param value",
 		}
 
-		got := runner.NewEmptyChainedResponse(params, options)
+		got := runner.NewEmptyChainedResponse(nil, params, options)
 
 		test.Equal(t, got, expected)
 	})

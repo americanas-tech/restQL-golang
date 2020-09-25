@@ -30,7 +30,8 @@ func ApplyAggregators(query domain.Query, resources domain.Resources) domain.Res
 func aggregateOriginOnTarget(path []string, origin interface{}, target interface{}) {
 	switch target := target.(type) {
 	case domain.DoneResource:
-		aggregateOriginOnTarget(path, origin, target.ResponseBody)
+		body := target.ResponseBody.Unmarshal()
+		aggregateOriginOnTarget(path, origin, body)
 	case domain.DoneResources:
 		aggregateOriginOnListTarget(path, origin, target)
 	case []interface{}:
@@ -45,7 +46,8 @@ func aggregateOriginOnTarget(path []string, origin interface{}, target interface
 		}
 
 		if len(path) == 1 {
-			setOriginOnTarget(field, origin, target)
+			//setOriginOnTarget(field, origin, target)
+			target[field] = parseOrigin(origin)
 		} else {
 			aggregateOriginOnTarget(path[1:], origin, nextTarget)
 		}
@@ -56,7 +58,8 @@ func aggregateOriginOnTarget(path []string, origin interface{}, target interface
 func aggregateOriginOnListTarget(path []string, origin interface{}, target []interface{}) {
 	switch origin := origin.(type) {
 	case domain.DoneResource:
-		aggregateOriginOnTarget(path, origin.ResponseBody, target)
+		body := origin.ResponseBody.Unmarshal()
+		aggregateOriginOnTarget(path, body, target)
 	case domain.DoneResources:
 		for i, t := range target {
 			aggregateOriginOnTarget(path, origin[i], t)
@@ -75,16 +78,19 @@ func aggregateOriginOnListTarget(path []string, origin interface{}, target []int
 func setOriginOnTarget(field string, origin interface{}, target interface{}) {
 	switch target := target.(type) {
 	case domain.DoneResource:
-		setOriginOnTarget(field, origin, target.ResponseBody)
+		body := target.ResponseBody.Unmarshal()
+		setOriginOnTarget(field, origin, body)
 	case map[string]interface{}:
 		target[field] = parseOrigin(origin)
+
 	}
 }
 
 func parseOrigin(origin interface{}) interface{} {
 	switch origin := origin.(type) {
 	case domain.DoneResource:
-		return origin.ResponseBody
+		body := origin.ResponseBody.Unmarshal()
+		return body
 	case domain.DoneResources:
 		result := make([]interface{}, len(origin))
 		for i, o := range origin {
@@ -99,7 +105,8 @@ func parseOrigin(origin interface{}) interface{} {
 func cleanOriginResult(origin interface{}) interface{} {
 	switch origin := origin.(type) {
 	case domain.DoneResource:
-		origin.ResponseBody = nil
+		origin.ResponseBody.SetValue(nil)
+		origin.ResponseBody.SetBytes(nil)
 		return origin
 	case domain.DoneResources:
 		result := make(domain.DoneResources, len(origin))

@@ -27,7 +27,7 @@ var queryMethodToHTTPMethod = map[string]string{
 }
 
 // MakeRequest builds a HTTPRequest from a statement.
-func MakeRequest(defaultResourceTimeout time.Duration, forwardPrefix string, statement domain.Statement, queryCtx restql.QueryContext) domain.HTTPRequest {
+func MakeRequest(defaultResourceTimeout time.Duration, forwardPrefix string, statement domain.Statement, queryCtx restql.QueryContext) restql.HTTPRequest {
 	mapping := queryCtx.Mappings[statement.Resource]
 	method := queryMethodToHTTPMethod[statement.Method]
 	headers := makeHeaders(statement, queryCtx)
@@ -35,7 +35,7 @@ func MakeRequest(defaultResourceTimeout time.Duration, forwardPrefix string, sta
 	queryParams := makeQueryParams(forwardPrefix, statement, mapping, queryCtx)
 	timeout := parseTimeout(defaultResourceTimeout, statement)
 
-	req := domain.HTTPRequest{
+	req := restql.HTTPRequest{
 		Method:  method,
 		Schema:  mapping.Schema(),
 		Host:    mapping.Host(),
@@ -52,7 +52,7 @@ func MakeRequest(defaultResourceTimeout time.Duration, forwardPrefix string, sta
 	return req
 }
 
-func makeBody(statement domain.Statement, mapping restql.Mapping) domain.Body {
+func makeBody(statement domain.Statement, mapping restql.Mapping) restql.Body {
 	if statement.With.Body != nil {
 		return statement.With.Body
 	}

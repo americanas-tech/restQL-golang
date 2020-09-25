@@ -36,7 +36,7 @@ func (e Executor) DoStatement(ctx context.Context, statement domain.Statement, q
 
 	emptyChainedParams := GetEmptyChainedParams(statement)
 	if len(emptyChainedParams) > 0 {
-		emptyChainedResponse := NewEmptyChainedResponse(emptyChainedParams, drOptions)
+		emptyChainedResponse := NewEmptyChainedResponse(log, emptyChainedParams, drOptions)
 		log.Debug("request execution skipped due to empty chained parameters", "resource", statement.Resource, "method", statement.Method)
 		return emptyChainedResponse
 	}
@@ -47,7 +47,7 @@ func (e Executor) DoStatement(ctx context.Context, statement domain.Statement, q
 
 	response, err := e.client.Do(ctx, request)
 	if err != nil {
-		errorResponse := NewErrorResponse(err, request, response, drOptions)
+		errorResponse := NewErrorResponse(log, err, request, response, drOptions)
 		log.Debug("request execution failed", "error", err, "resource", statement.Resource, "method", statement.Method, "response", errorResponse)
 		return errorResponse
 	}

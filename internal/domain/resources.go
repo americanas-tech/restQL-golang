@@ -1,5 +1,7 @@
 package domain
 
+import "github.com/b2wdigital/restQL-golang/v4/pkg/restql"
+
 // ResourceID is an unique identifier used by a statement.
 // If an alias is present, it is used. Otherwise, the resource
 // name.
@@ -82,7 +84,7 @@ type DoneResource struct {
 	RequestHeaders  map[string]string
 	RequestBody     interface{}
 	ResponseHeaders map[string]string
-	ResponseBody    interface{}
+	ResponseBody    *restql.ResponseBody
 	ResponseTime    int64
 }
 

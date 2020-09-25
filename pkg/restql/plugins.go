@@ -3,7 +3,6 @@ package restql
 import (
 	"context"
 	"errors"
-	"github.com/b2wdigital/restQL-golang/v4/internal/domain"
 	"log"
 	"net/http"
 	"net/url"
@@ -109,8 +108,8 @@ type LifecyclePlugin interface {
 	AfterTransaction(ctx context.Context, tr TransactionResponse) context.Context
 	BeforeQuery(ctx context.Context, query string, queryCtx QueryContext) context.Context
 	AfterQuery(ctx context.Context, query string, result map[string]interface{}) context.Context
-	BeforeRequest(ctx context.Context, request HttpRequest) context.Context
-	AfterRequest(ctx context.Context, request HttpRequest, response HttpResponse, err error) context.Context
+	BeforeRequest(ctx context.Context, request HTTPRequest) context.Context
+	AfterRequest(ctx context.Context, request HTTPRequest, response HTTPResponse, err error) context.Context
 }
 
 // TransactionRequest represents a query execution
@@ -128,16 +127,6 @@ type TransactionResponse struct {
 	Header http.Header
 	Body   []byte
 }
-
-// HttpRequest represents a HTTP call to be
-// made to an upstream dependency defined
-// by the mappings.
-type HttpRequest = domain.HTTPRequest
-
-// HttpResponse represents a HTTP call result
-// from an upstream dependency defined
-// by the mappings.
-type HttpResponse = domain.HTTPResponse
 
 // DatabasePlugin is the interface that defines
 // the obligatory operations needed from a database.

@@ -18,8 +18,8 @@ type Lifecycle interface {
 	AfterTransaction(ctx context.Context, requestCtx *fasthttp.RequestCtx) context.Context
 	BeforeQuery(ctx context.Context, query string, queryCtx restql.QueryContext) context.Context
 	AfterQuery(ctx context.Context, query string, result domain.Resources) context.Context
-	BeforeRequest(ctx context.Context, request domain.HTTPRequest) context.Context
-	AfterRequest(ctx context.Context, request domain.HTTPRequest, response domain.HTTPResponse, err error) context.Context
+	BeforeRequest(ctx context.Context, request restql.HTTPRequest) context.Context
+	AfterRequest(ctx context.Context, request restql.HTTPRequest, response restql.HTTPResponse, err error) context.Context
 }
 
 type pluginExecutor func(ctx context.Context, p restql.LifecyclePlugin) context.Context
@@ -63,18 +63,19 @@ func (m manager) BeforeQuery(ctx context.Context, query string, queryCtx restql.
 
 func (m manager) AfterQuery(ctx context.Context, query string, result domain.Resources) context.Context {
 	return m.executeAllPluginsWithContext(ctx, "AfterQuery", func(currentCtx context.Context, p restql.LifecyclePlugin) context.Context {
-		m := DecodeQueryResult(result)
-		return p.AfterQuery(currentCtx, query, m)
+		//todo: fix this
+		//m := DecodeQueryResult(result)
+		return p.AfterQuery(currentCtx, query, nil)
 	})
 }
 
-func (m manager) BeforeRequest(ctx context.Context, request domain.HTTPRequest) context.Context {
+func (m manager) BeforeRequest(ctx context.Context, request restql.HTTPRequest) context.Context {
 	return m.executeAllPluginsWithContext(ctx, "BeforeRequest", func(currentCtx context.Context, p restql.LifecyclePlugin) context.Context {
 		return p.BeforeRequest(currentCtx, request)
 	})
 }
 
-func (m manager) AfterRequest(ctx context.Context, request domain.HTTPRequest, response domain.HTTPResponse, err error) context.Context {
+func (m manager) AfterRequest(ctx context.Context, request restql.HTTPRequest, response restql.HTTPResponse, err error) context.Context {
 	return m.executeAllPluginsWithContext(ctx, "AfterRequest", func(currentCtx context.Context, p restql.LifecyclePlugin) context.Context {
 		return p.AfterRequest(currentCtx, request, response, err)
 	})
@@ -155,9 +156,9 @@ func (n noOpLifecycle) BeforeQuery(ctx context.Context, query string, queryCtx r
 func (n noOpLifecycle) AfterQuery(ctx context.Context, query string, result domain.Resources) context.Context {
 	return ctx
 }
-func (n noOpLifecycle) BeforeRequest(ctx context.Context, request domain.HTTPRequest) context.Context {
+func (n noOpLifecycle) BeforeRequest(ctx context.Context, request restql.HTTPRequest) context.Context {
 	return ctx
 }
-func (n noOpLifecycle) AfterRequest(ctx context.Context, request domain.HTTPRequest, response domain.HTTPResponse, err error) context.Context {
+func (n noOpLifecycle) AfterRequest(ctx context.Context, request restql.HTTPRequest, response restql.HTTPResponse, err error) context.Context {
 	return ctx
 }

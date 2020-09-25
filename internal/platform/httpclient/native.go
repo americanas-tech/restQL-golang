@@ -82,13 +82,13 @@ func newNativeHTTPClient(log restql.Logger, l plugins.Lifecycle, cfg *conf.Confi
 	}
 }
 
-func (nc *nativeHTTPClient) Do(ctx context.Context, request domain.HTTPRequest) (domain.HTTPResponse, error) {
+func (nc *nativeHTTPClient) Do(ctx context.Context, request restql.HTTPRequest) (restql.HTTPResponse, error) {
 	ctx = nc.lifecycle.BeforeRequest(ctx, request)
 	log := restql.GetLogger(ctx)
 
 	req, err := nc.makeRequest(request)
 	if err != nil {
-		return domain.HTTPResponse{}, err
+		return restql.HTTPResponse{}, err
 	}
 	requestURL := req.URL.String()
 	target := req.URL.Host
@@ -140,7 +140,7 @@ func (nc *nativeHTTPClient) Do(ctx context.Context, request domain.HTTPRequest) 
 		hr[k] = s[0]
 	}
 
-	httpResponse := domain.HTTPResponse{
+	httpResponse := restql.HTTPResponse{
 		URL:        requestURL,
 		StatusCode: response.StatusCode,
 		Body:       body,
@@ -153,7 +153,7 @@ func (nc *nativeHTTPClient) Do(ctx context.Context, request domain.HTTPRequest) 
 	return httpResponse, nil
 }
 
-func (nc *nativeHTTPClient) makeRequest(request domain.HTTPRequest) (*http.Request, error) {
+func (nc *nativeHTTPClient) makeRequest(request restql.HTTPRequest) (*http.Request, error) {
 	req := http.Request{
 		Method: request.Method,
 		URL:    makeURL(request),
@@ -178,7 +178,7 @@ func (nc *nativeHTTPClient) makeRequest(request domain.HTTPRequest) (*http.Reque
 	return &req, nil
 }
 
-func (nc *nativeHTTPClient) makeBody(request domain.HTTPRequest) (io.ReadCloser, error) {
+func (nc *nativeHTTPClient) makeBody(request restql.HTTPRequest) (io.ReadCloser, error) {
 	body := request.Body
 
 	if body, ok := body.(string); ok {
@@ -194,7 +194,9 @@ func (nc *nativeHTTPClient) makeBody(request domain.HTTPRequest) (io.ReadCloser,
 	return r, nil
 }
 
-func (nc *nativeHTTPClient) unmarshalBody(log restql.Logger, response *http.Response) (interface{}, error) {
+var errInvalidJson = errors.New("invalid json")
+
+func (nc *nativeHTTPClient) unmarshalBody(log restql.Logger, response *http.Response) (*restql.ResponseBody, error) {
 	target := response.Request.URL.Host
 	requestURL := response.Request.URL.String()
 	statusCode := response.StatusCode
@@ -206,28 +208,15 @@ func (nc *nativeHTTPClient) unmarshalBody(log restql.Logger, response *http.Resp
 		return nil, readErr
 	}
 
-	if len(bodyByte) == 0 || !json.Valid(bodyByte) {
-		body := string(bodyByte)
-		err := errors.New("invalid json")
-
-		log.Error("invalid json as body", err, "body", body, "url", requestURL, "target", target, "statusCode", statusCode)
-
-		return body, nil
+	rb := restql.NewResponseBodyFromBytes(log, bodyByte)
+	if !rb.Valid() {
+		log.Error("invalid json as body", errInvalidJson, "body", rb.Unmarshal(), "url", requestURL, "target", target, "statusCode", statusCode)
 	}
 
-	var responseBody interface{}
-	err := json.Unmarshal(bodyByte, &responseBody)
-	if err != nil {
-		body := string(bodyByte)
-		log.Error("failed to unmarshal response body", err, "body", body, "url", requestURL, "target", target, "statusCode", statusCode)
-
-		return body, nil
-	}
-
-	return responseBody, nil
+	return rb, nil
 }
 
-func makeURL(request domain.HTTPRequest) *url.URL {
+func makeURL(request restql.HTTPRequest) *url.URL {
 	u := &url.URL{
 		Host:   request.Host,
 		Scheme: request.Schema,
@@ -283,8 +272,8 @@ func parseMapParam(value map[string]interface{}) string {
 	return string(data)
 }
 
-func makeErrorResponse(requestURL string, responseTime time.Duration, statusCode int) domain.HTTPResponse {
-	return domain.HTTPResponse{
+func makeErrorResponse(requestURL string, responseTime time.Duration, statusCode int) restql.HTTPResponse {
+	return restql.HTTPResponse{
 		URL:        requestURL,
 		StatusCode: statusCode,
 		Duration:   responseTime,
