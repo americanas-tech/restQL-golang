@@ -134,13 +134,13 @@ func TestUpdateDone(t *testing.T) {
 		input := domain.Resources{"hero": doneStatement}
 
 		expectedDoneRequests := domain.Resources{
-			"hero": restql.DoneResource{Status: 200, ResponseBody: []byte{}},
+			"hero": restql.DoneResource{Status: 200, ResponseBody: &restql.ResponseBody{}},
 		}
 		expectedRequestedStatements := domain.Resources{}
 
 		state := runner.NewState(input)
 
-		response := restql.DoneResource{Status: 200, ResponseBody: []byte{}}
+		response := restql.DoneResource{Status: 200, ResponseBody: &restql.ResponseBody{}}
 
 		state.UpdateDone("hero", response)
 

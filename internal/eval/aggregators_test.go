@@ -35,12 +35,21 @@ func TestApplyAggregators(t *testing.T) {
 				{Resource: "sidekick", In: []string{"hero", "sidekick"}},
 			}},
 			domain.Resources{
-				"hero":     restql.DoneResource{ResponseBody: test.Unmarshal(`{ "id": 1, "name": "batman" }`)},
-				"sidekick": restql.DoneResource{ResponseBody: test.Unmarshal(`{ "id": 10, "name": "robin" }`)},
+				"hero":     restql.DoneResource{ResponseBody: restql.NewResponseBodyFromValue(
+					test.NoOpLogger,
+					test.Unmarshal(`{ "id": 1, "name": "batman" }`),
+				)},
+				"sidekick": restql.DoneResource{ResponseBody: restql.NewResponseBodyFromValue(
+					test.NoOpLogger,
+					test.Unmarshal(`{ "id": 10, "name": "robin" }`),
+				)},
 			},
 			domain.Resources{
-				"hero":     restql.DoneResource{ResponseBody: test.Unmarshal(`{ "id": 1, "name": "batman", "sidekick": { "id": 10, "name": "robin" } }`)},
-				"sidekick": restql.DoneResource{ResponseBody: nil},
+				"hero":     restql.DoneResource{ResponseBody: restql.NewResponseBodyFromValue(
+					test.NoOpLogger,
+					test.Unmarshal(`{ "id": 1, "name": "batman", "sidekick": { "id": 10, "name": "robin" } }`),
+				)},
+				"sidekick": restql.DoneResource{ResponseBody: &restql.ResponseBody{}},
 			},
 		},
 		{
@@ -50,12 +59,21 @@ func TestApplyAggregators(t *testing.T) {
 				{Resource: "sidekick", In: []string{"hero", "info", "partners", "sidekick"}},
 			}},
 			domain.Resources{
-				"hero":     restql.DoneResource{ResponseBody: test.Unmarshal(`{ "id": 1, "name": "batman" }`)},
-				"sidekick": restql.DoneResource{ResponseBody: test.Unmarshal(`{ "id": 10, "name": "robin" }`)},
+				"hero":     restql.DoneResource{ResponseBody: restql.NewResponseBodyFromValue(
+					test.NoOpLogger,
+					test.Unmarshal(`{ "id": 1, "name": "batman" }`),
+				)},
+				"sidekick": restql.DoneResource{ResponseBody: restql.NewResponseBodyFromValue(
+					test.NoOpLogger,
+					test.Unmarshal(`{ "id": 10, "name": "robin" }`),
+				)},
 			},
 			domain.Resources{
-				"hero":     restql.DoneResource{ResponseBody: test.Unmarshal(`{ "id": 1, "name": "batman", "info": { "partners": { "sidekick": { "id": 10, "name": "robin" } } } }`)},
-				"sidekick": restql.DoneResource{ResponseBody: nil},
+				"hero":     restql.DoneResource{ResponseBody: restql.NewResponseBodyFromValue(
+					test.NoOpLogger,
+					test.Unmarshal(`{ "id": 1, "name": "batman", "info": { "partners": { "sidekick": { "id": 10, "name": "robin" } } } }`),
+				)},
+				"sidekick": restql.DoneResource{ResponseBody: &restql.ResponseBody{}},
 			},
 		},
 		{
@@ -65,12 +83,21 @@ func TestApplyAggregators(t *testing.T) {
 				{Resource: "sidekick", In: []string{"hero", "sidekick"}},
 			}},
 			domain.Resources{
-				"hero":     restql.DoneResource{ResponseBody: test.Unmarshal(`{ "id": 1, "name": "batman" }`)},
-				"sidekick": restql.DoneResource{ResponseBody: test.Unmarshal(`[{ "id": 10, "name": "robin" }, { "id": 11, "name": "batgirl" }]`)},
+				"hero":     restql.DoneResource{ResponseBody: restql.NewResponseBodyFromValue(
+					test.NoOpLogger,
+					test.Unmarshal(`{ "id": 1, "name": "batman" }`),
+				)},
+				"sidekick": restql.DoneResource{ResponseBody: restql.NewResponseBodyFromValue(
+					test.NoOpLogger,
+					test.Unmarshal(`[{ "id": 10, "name": "robin" }, { "id": 11, "name": "batgirl" }]`),
+				)},
 			},
 			domain.Resources{
-				"hero":     restql.DoneResource{ResponseBody: test.Unmarshal(`{ "id": 1, "name": "batman", "sidekick":  [{ "id": 10, "name": "robin" }, { "id": 11, "name": "batgirl" }]}`)},
-				"sidekick": restql.DoneResource{ResponseBody: nil},
+				"hero":     restql.DoneResource{ResponseBody: restql.NewResponseBodyFromValue(
+					test.NoOpLogger,
+					test.Unmarshal(`{ "id": 1, "name": "batman", "sidekick":  [{ "id": 10, "name": "robin" }, { "id": 11, "name": "batgirl" }]}`),
+				)},
+				"sidekick": restql.DoneResource{ResponseBody: &restql.ResponseBody{}},
 			},
 		},
 		{
@@ -81,17 +108,32 @@ func TestApplyAggregators(t *testing.T) {
 			}},
 			domain.Resources{
 				"hero": restql.DoneResources{
-					restql.DoneResource{ResponseBody: test.Unmarshal(`{ "id": 1, "name": "batman" }`)},
-					restql.DoneResource{ResponseBody: test.Unmarshal(`{ "id": 2, "name": "wonder woman" }`)},
+					restql.DoneResource{ResponseBody: restql.NewResponseBodyFromValue(
+						test.NoOpLogger,
+						test.Unmarshal(`{ "id": 1, "name": "batman" }`),
+					)},
+					restql.DoneResource{ResponseBody: restql.NewResponseBodyFromValue(
+						test.NoOpLogger,
+						test.Unmarshal(`{ "id": 2, "name": "wonder woman" }`),
+					)},
 				},
-				"sidekick": restql.DoneResource{ResponseBody: test.Unmarshal(`{ "id": 10, "name": "robin" }`)},
+				"sidekick": restql.DoneResource{ResponseBody: restql.NewResponseBodyFromValue(
+					test.NoOpLogger,
+					test.Unmarshal(`{ "id": 10, "name": "robin" }`),
+				)},
 			},
 			domain.Resources{
 				"hero": restql.DoneResources{
-					restql.DoneResource{ResponseBody: test.Unmarshal(`{ "id": 1, "name": "batman", "sidekick": { "id": 10, "name": "robin" } }`)},
-					restql.DoneResource{ResponseBody: test.Unmarshal(`{ "id": 2, "name": "wonder woman", "sidekick": { "id": 10, "name": "robin" } }`)},
+					restql.DoneResource{ResponseBody: restql.NewResponseBodyFromValue(
+						test.NoOpLogger,
+						test.Unmarshal(`{ "id": 1, "name": "batman", "sidekick": { "id": 10, "name": "robin" } }`),
+					)},
+					restql.DoneResource{ResponseBody: restql.NewResponseBodyFromValue(
+						test.NoOpLogger,
+						test.Unmarshal(`{ "id": 2, "name": "wonder woman", "sidekick": { "id": 10, "name": "robin" } }`),
+					)},
 				},
-				"sidekick": restql.DoneResource{ResponseBody: nil},
+				"sidekick": restql.DoneResource{ResponseBody: &restql.ResponseBody{}},
 			},
 		},
 		{
@@ -101,12 +143,21 @@ func TestApplyAggregators(t *testing.T) {
 				{Resource: "sidekick", In: []string{"hero", "sidekick"}},
 			}},
 			domain.Resources{
-				"hero":     restql.DoneResource{ResponseBody: test.Unmarshal(`[{ "id": 1, "name": "batman" }, { "id": 2, "name": "wonder woman" }]`)},
-				"sidekick": restql.DoneResource{ResponseBody: test.Unmarshal(`{ "id": 10, "name": "robin" }`)},
+				"hero":     restql.DoneResource{ResponseBody: restql.NewResponseBodyFromValue(
+					test.NoOpLogger,
+					test.Unmarshal(`[{ "id": 1, "name": "batman" }, { "id": 2, "name": "wonder woman" }]`),
+				)},
+				"sidekick": restql.DoneResource{ResponseBody: restql.NewResponseBodyFromValue(
+					test.NoOpLogger,
+					test.Unmarshal(`{ "id": 10, "name": "robin" }`),
+				)},
 			},
 			domain.Resources{
-				"hero":     restql.DoneResource{ResponseBody: test.Unmarshal(`[{ "id": 1, "name": "batman", "sidekick": { "id": 10, "name": "robin" } }, { "id": 2, "name": "wonder woman", "sidekick": { "id": 10, "name": "robin" } }]`)},
-				"sidekick": restql.DoneResource{ResponseBody: nil},
+				"hero":     restql.DoneResource{ResponseBody: restql.NewResponseBodyFromValue(
+					test.NoOpLogger,
+					test.Unmarshal(`[{ "id": 1, "name": "batman", "sidekick": { "id": 10, "name": "robin" } }, { "id": 2, "name": "wonder woman", "sidekick": { "id": 10, "name": "robin" } }]`),
+				)},
+				"sidekick": restql.DoneResource{ResponseBody: &restql.ResponseBody{}},
 			},
 		},
 		{
@@ -116,20 +167,31 @@ func TestApplyAggregators(t *testing.T) {
 				{Resource: "sidekick", In: []string{"hero", "sidekick"}},
 			}},
 			domain.Resources{
-				"hero": restql.DoneResource{ResponseBody: test.Unmarshal(`{ "id": 1, "name": "batman" }`)},
+				"hero": restql.DoneResource{ResponseBody: restql.NewResponseBodyFromValue(
+					test.NoOpLogger,
+					test.Unmarshal(`{ "id": 1, "name": "batman" }`),
+				)},
 				"sidekick": restql.DoneResources{
-					restql.DoneResource{ResponseBody: test.Unmarshal(`{ "id": 10, "name": "robin" }`)},
-					restql.DoneResource{ResponseBody: test.Unmarshal(`{ "id": 11, "name": "batgirl" }`)},
+					restql.DoneResource{ResponseBody: restql.NewResponseBodyFromValue(
+						test.NoOpLogger,
+						test.Unmarshal(`{ "id": 10, "name": "robin" }`),
+					)},
+					restql.DoneResource{ResponseBody: restql.NewResponseBodyFromValue(
+						test.NoOpLogger,
+						test.Unmarshal(`{ "id": 11, "name": "batgirl" }`),
+					)},
 				},
 			},
 			domain.Resources{
 				"hero": restql.DoneResource{
-
-					ResponseBody: test.Unmarshal(`{ "id": 1, "name": "batman", "sidekick": [{ "id": 10, "name": "robin" }, { "id": 11, "name": "batgirl" }] }`),
+					ResponseBody: restql.NewResponseBodyFromValue(
+						test.NoOpLogger,
+						test.Unmarshal(`{ "id": 1, "name": "batman", "sidekick": [{ "id": 10, "name": "robin" }, { "id": 11, "name": "batgirl" }] }`),
+					),
 				},
 				"sidekick": restql.DoneResources{
-					restql.DoneResource{ResponseBody: nil},
-					restql.DoneResource{ResponseBody: nil},
+					restql.DoneResource{ResponseBody: &restql.ResponseBody{}},
+					restql.DoneResource{ResponseBody: &restql.ResponseBody{}},
 				},
 			},
 		},
@@ -141,28 +203,44 @@ func TestApplyAggregators(t *testing.T) {
 			}},
 			domain.Resources{
 				"hero": restql.DoneResources{
-					restql.DoneResource{ResponseBody: test.Unmarshal(`{ "id": 1, "name": "batman"}`)},
-					restql.DoneResource{ResponseBody: test.Unmarshal(`{ "id": 2, "name": "wonder woman"}`)},
+					restql.DoneResource{ResponseBody: restql.NewResponseBodyFromValue(
+						test.NoOpLogger,
+						test.Unmarshal(`{ "id": 1, "name": "batman"}`),
+					)},
+					restql.DoneResource{ResponseBody: restql.NewResponseBodyFromValue(
+						test.NoOpLogger,
+						test.Unmarshal(`{ "id": 2, "name": "wonder woman"}`),
+					)},
 				},
 				"sidekick": restql.DoneResources{
-					restql.DoneResource{ResponseBody: test.Unmarshal(`{ "id": 10, "name": "robin" }`)},
-					restql.DoneResource{ResponseBody: test.Unmarshal(`{ "id": 11, "name": "batgirl" }`)},
+					restql.DoneResource{ResponseBody: restql.NewResponseBodyFromValue(
+						test.NoOpLogger,
+						test.Unmarshal(`{ "id": 10, "name": "robin" }`),
+					)},
+					restql.DoneResource{ResponseBody: restql.NewResponseBodyFromValue(
+						test.NoOpLogger,
+						test.Unmarshal(`{ "id": 11, "name": "batgirl" }`),
+					)},
 				},
 			},
 			domain.Resources{
 				"hero": restql.DoneResources{
 					restql.DoneResource{
-
-						ResponseBody: test.Unmarshal(`{ "id": 1, "name": "batman", "sidekick": { "id": 10, "name": "robin" } }`),
+						ResponseBody: restql.NewResponseBodyFromValue(
+							test.NoOpLogger,
+							test.Unmarshal(`{ "id": 1, "name": "batman", "sidekick": { "id": 10, "name": "robin" } }`),
+						),
 					},
 					restql.DoneResource{
-
-						ResponseBody: test.Unmarshal(`{ "id": 2, "name": "wonder woman", "sidekick": { "id": 11, "name": "batgirl" } }`),
+						ResponseBody: restql.NewResponseBodyFromValue(
+							test.NoOpLogger,
+							test.Unmarshal(`{ "id": 2, "name": "wonder woman", "sidekick": { "id": 11, "name": "batgirl" } }`),
+						),
 					},
 				},
 				"sidekick": restql.DoneResources{
-					restql.DoneResource{ResponseBody: nil},
-					restql.DoneResource{ResponseBody: nil},
+					restql.DoneResource{ResponseBody: &restql.ResponseBody{}},
+					restql.DoneResource{ResponseBody: &restql.ResponseBody{}},
 				},
 			},
 		},
@@ -173,12 +251,21 @@ func TestApplyAggregators(t *testing.T) {
 				{Resource: "sidekick", In: []string{"hero", "sidekick"}},
 			}},
 			domain.Resources{
-				"hero":     restql.DoneResource{ResponseBody: test.Unmarshal(`[{ "id": 1, "name": "batman" }, { "id": 2, "name": "wonder woman" }]`)},
-				"sidekick": restql.DoneResource{ResponseBody: test.Unmarshal(`[{ "id": 10, "name": "robin" }, { "id": 11, "name": "batgirl" }]`)},
+				"hero":     restql.DoneResource{ResponseBody: restql.NewResponseBodyFromValue(
+					test.NoOpLogger,
+					test.Unmarshal(`[{ "id": 1, "name": "batman" }, { "id": 2, "name": "wonder woman" }]`),
+				)},
+				"sidekick": restql.DoneResource{ResponseBody: restql.NewResponseBodyFromValue(
+					test.NoOpLogger,
+					test.Unmarshal(`[{ "id": 10, "name": "robin" }, { "id": 11, "name": "batgirl" }]`),
+				)},
 			},
 			domain.Resources{
-				"hero":     restql.DoneResource{ResponseBody: test.Unmarshal(`[{ "id": 1, "name": "batman", "sidekick": { "id": 10, "name": "robin" } }, { "id": 2, "name": "wonder woman", "sidekick": { "id": 11, "name": "batgirl" } }]`)},
-				"sidekick": restql.DoneResource{ResponseBody: nil},
+				"hero":     restql.DoneResource{ResponseBody: restql.NewResponseBodyFromValue(
+					test.NoOpLogger,
+					test.Unmarshal(`[{ "id": 1, "name": "batman", "sidekick": { "id": 10, "name": "robin" } }, { "id": 2, "name": "wonder woman", "sidekick": { "id": 11, "name": "batgirl" } }]`),
+				)},
+				"sidekick": restql.DoneResource{ResponseBody: &restql.ResponseBody{}},
 			},
 		},
 	}

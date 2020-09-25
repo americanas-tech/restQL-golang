@@ -794,8 +794,7 @@ from people
 				"success": true,
 				"status": 200,
 				"metadata": {}
-			},
-			"result": "%s" 
+			}
 		},
 		"people": {
 			"details": {
@@ -805,7 +804,7 @@ from people
 			},
 			"result": %s
 		}
-	}`, yavinResponse, tatooineResponse, peopleResponse)
+	}`, yavinResponse, peopleResponse)
 
 	mockServer := test.NewMockServer(mockPort)
 	defer mockServer.Teardown()

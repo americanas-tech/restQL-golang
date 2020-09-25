@@ -24,20 +24,41 @@ func NewResponseBodyFromValue(log Logger, v interface{}) *ResponseBody {
 	return r
 }
 
+func (r *ResponseBody) GetBytes() []byte {
+	return r.jsonBytes
+}
+
 func (r *ResponseBody) SetBytes(b []byte) {
 	r.jsonBytes = b
+}
+
+func (r *ResponseBody) GetValue() interface{} {
+	return r.jsonValue
 }
 
 func (r *ResponseBody) SetValue(v interface{}) {
 	r.jsonValue = v
 }
 
-func (r *ResponseBody) Marshal() ([]byte, error) {
+func (r *ResponseBody) Marshal() (interface{}, error) {
 	if r.jsonValue != nil {
-		return json.Marshal(r.jsonValue)
+		b, err := json.Marshal(r.jsonValue)
+		if err != nil {
+			return nil, err
+		}
+
+		return json.RawMessage(b), nil
 	}
 
-	return r.jsonBytes, nil
+	if len(r.jsonBytes) == 0 {
+		return nil, nil
+	}
+
+	if !json.Valid(r.jsonBytes) {
+		return string(r.jsonBytes), nil
+	}
+
+	return json.RawMessage(r.jsonBytes), nil
 }
 
 func (r *ResponseBody) Unmarshal() interface{} {
