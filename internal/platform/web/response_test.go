@@ -423,7 +423,7 @@ func TestMakeQueryResponse(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := web.MakeQueryResponse(tt.queryResult, tt.debug)
+			got, _ := web.MakeQueryResponse(tt.queryResult, tt.debug)
 			test.Equal(t, got, tt.expected)
 		})
 	}

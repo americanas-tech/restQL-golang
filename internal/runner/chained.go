@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/b2wdigital/restQL-golang/v4/internal/domain"
+	"github.com/b2wdigital/restQL-golang/v4/pkg/restql"
 	"github.com/pkg/errors"
 	"math"
 	"strings"
@@ -210,7 +211,8 @@ func resolveWithSingleRequest(path []string, done domain.DoneResource) interface
 		return EmptyChained
 	}
 
-	valueFromBody, found := getValueFromBody(path, done.ResponseBody)
+	body := done.ResponseBody.Unmarshal()
+	valueFromBody, found := getValueFromBody(path, body)
 	if found {
 		return valueFromBody
 	}
@@ -231,7 +233,7 @@ func toPath(chain domain.Chain) []string {
 	return r
 }
 
-func getValueFromBody(pathToValue []string, b domain.Body) (interface{}, bool) {
+func getValueFromBody(pathToValue []string, b restql.Body) (interface{}, bool) {
 	if b == nil {
 		return nil, false
 	}

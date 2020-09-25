@@ -99,7 +99,11 @@ func (r restQl) RunAdHocQuery(reqCtx *fasthttp.RequestCtx) error {
 	}
 
 	debugEnabled := isDebugEnabled(input)
-	response := MakeQueryResponse(result, debugEnabled)
+	response, err := MakeQueryResponse(result, debugEnabled)
+	if err != nil {
+		return RespondError(reqCtx, err)
+	}
+
 	return Respond(reqCtx, response.Body, response.StatusCode, response.Headers)
 }
 
@@ -156,7 +160,11 @@ func (r restQl) RunSavedQuery(reqCtx *fasthttp.RequestCtx) error {
 	}
 
 	debugEnabled := isDebugEnabled(input)
-	response := MakeQueryResponse(result, debugEnabled)
+	response, err := MakeQueryResponse(result, debugEnabled)
+	if err != nil {
+		return RespondError(reqCtx, err)
+	}
+
 	return Respond(reqCtx, response.Body, response.StatusCode, response.Headers)
 }
 

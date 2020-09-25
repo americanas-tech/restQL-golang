@@ -41,7 +41,7 @@ func applyOnlyFilters(filters []interface{}, resourceResult interface{}) (interf
 		if err != nil {
 			return nil, err
 		}
-		resourceResult.ResponseBody = result
+		resourceResult.ResponseBody.SetValue(result)
 
 		return resourceResult, nil
 	case domain.DoneResources:

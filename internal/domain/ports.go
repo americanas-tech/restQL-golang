@@ -2,8 +2,8 @@ package domain
 
 import (
 	"context"
+	"github.com/b2wdigital/restQL-golang/v4/pkg/restql"
 	"github.com/pkg/errors"
-	"time"
 )
 
 // ErrRequestTimeout is the error returned by HTTPClient
@@ -22,32 +22,5 @@ type EnvSource interface {
 // Do takes an HTTPRequest and execute it respecting
 // the cancellation signal from the given Context.
 type HTTPClient interface {
-	Do(ctx context.Context, request HTTPRequest) (HTTPResponse, error)
-}
-
-// Headers represents all HTTP header in a request or response.
-type Headers map[string]string
-
-// Body represents a HTTP body in a request or response.
-type Body interface{}
-
-// HTTPRequest describe a HTTP call to be made by HTTPClient.
-type HTTPRequest struct {
-	Method  string
-	Schema  string
-	Host    string
-	Path    string
-	Query   map[string]interface{}
-	Body    Body
-	Headers Headers
-	Timeout time.Duration
-}
-
-// HTTPResponse describe a HTTP response returned by HTTPClient.
-type HTTPResponse struct {
-	URL        string
-	StatusCode int
-	Body       Body
-	Headers    Headers
-	Duration   time.Duration
+	Do(ctx context.Context, request restql.HTTPRequest) (restql.HTTPResponse, error)
 }

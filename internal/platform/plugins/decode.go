@@ -20,7 +20,9 @@ func parseResource(resource interface{}) map[string]interface{} {
 	switch resource := resource.(type) {
 	case domain.DoneResource:
 		m["details"] = parseDetails(resource)
-		m["result"] = resource.ResponseBody
+		//todo: handle err and avoid unmarshal
+		body := resource.ResponseBody.Unmarshal()
+		m["result"] = body
 
 		return m
 	case domain.DoneResources:

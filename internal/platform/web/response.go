@@ -91,21 +91,33 @@ type QueryResponse struct {
 }
 
 // MakeQueryResponse create a query execution response for the client.
-func MakeQueryResponse(queryResult domain.Resources, debug bool) QueryResponse {
+func MakeQueryResponse(queryResult domain.Resources, debug bool) (QueryResponse, error) {
 	m := make(map[string]StatementResult)
 	for key, resource := range queryResult {
-		m[string(key)] = parseResource(resource, debug)
+		r, err := parseResource(resource, debug)
+		if err != nil {
+			return QueryResponse{}, err
+		}
+
+		m[string(key)] = r
 	}
 
 	statusCode := CalculateStatusCode(queryResult)
 	headers := makeHeaders(queryResult)
-	return QueryResponse{Body: m, StatusCode: statusCode, Headers: headers}
+	return QueryResponse{Body: m, StatusCode: statusCode, Headers: headers}, nil
 }
 
-func parseResource(resource interface{}, debug bool) StatementResult {
+func parseResource(resource interface{}, debug bool) (StatementResult, error) {
 	switch resource := resource.(type) {
 	case domain.DoneResource:
-		return StatementResult{Details: parseDetails(resource, debug), Result: resource.ResponseBody}
+		//todo: handle err
+		body, err := resource.ResponseBody.Marshal()
+		if err != nil {
+			return StatementResult{}, err
+		}
+
+		jsonBody := json.RawMessage(body)
+		return StatementResult{Details: parseDetails(resource, debug), Result: jsonBody}, nil
 	case domain.DoneResources:
 		details := make([]interface{}, len(resource))
 		results := make([]interface{}, len(resource))
@@ -113,7 +125,10 @@ func parseResource(resource interface{}, debug bool) StatementResult {
 		hasResult := false
 
 		for i, r := range resource {
-			result := parseResource(r, debug)
+			result, err := parseResource(r, debug)
+			if err != nil {
+				return StatementResult{}, err
+			}
 
 			d := result.Details
 			if d != nil {
@@ -128,12 +143,12 @@ func parseResource(resource interface{}, debug bool) StatementResult {
 		}
 
 		if !hasResult {
-			return StatementResult{Details: details, Result: nil}
+			return StatementResult{Details: details, Result: nil}, nil
 		}
 
-		return StatementResult{Details: details, Result: results}
+		return StatementResult{Details: details, Result: results}, nil
 	default:
-		return StatementResult{}
+		return StatementResult{}, nil
 	}
 }
 

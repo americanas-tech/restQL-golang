@@ -2,6 +2,7 @@ package runner
 
 import (
 	"bytes"
+	"github.com/b2wdigital/restQL-golang/v4/pkg/restql"
 	"regexp"
 	"strconv"
 
@@ -19,7 +20,7 @@ type DoneResourceOptions struct {
 }
 
 // NewDoneResource constructs a DoneResourceOptions value.
-func NewDoneResource(request domain.HTTPRequest, response domain.HTTPResponse, options DoneResourceOptions) domain.DoneResource {
+func NewDoneResource(request restql.HTTPRequest, response restql.HTTPResponse, options DoneResourceOptions) domain.DoneResource {
 	dr := domain.DoneResource{
 		Status:          response.StatusCode,
 		Success:         response.StatusCode >= 200 && response.StatusCode < 400,
@@ -39,12 +40,14 @@ func NewDoneResource(request domain.HTTPRequest, response domain.HTTPResponse, o
 }
 
 // NewErrorResponse builds a DoneResource value for a failed HTTP call.
-func NewErrorResponse(err error, request domain.HTTPRequest, response domain.HTTPResponse, options DoneResourceOptions) domain.DoneResource {
+func NewErrorResponse(log restql.Logger, err error, request restql.HTTPRequest, response restql.HTTPResponse, options DoneResourceOptions) domain.DoneResource {
+	rb := restql.NewResponseBodyFromValue(log, err.Error())
+
 	return domain.DoneResource{
 		Status:          response.StatusCode,
 		Success:         false,
 		IgnoreErrors:    options.IgnoreErrors,
-		ResponseBody:    err.Error(),
+		ResponseBody:    rb,
 		Method:          request.Method,
 		URL:             response.URL,
 		RequestParams:   request.Query,
@@ -57,7 +60,7 @@ func NewErrorResponse(err error, request domain.HTTPRequest, response domain.HTT
 
 // NewEmptyChainedResponse builds a DoneResource for a statement
 // with unresolved chain parameters.
-func NewEmptyChainedResponse(params []string, options DoneResourceOptions) domain.DoneResource {
+func NewEmptyChainedResponse(log restql.Logger, params []string, options DoneResourceOptions) domain.DoneResource {
 	var buf bytes.Buffer
 
 	buf.WriteString("The request was skipped due to missing { ")
@@ -68,11 +71,12 @@ func NewEmptyChainedResponse(params []string, options DoneResourceOptions) domai
 	}
 	buf.WriteString("} param value")
 
+	rb := restql.NewResponseBodyFromValue(log, buf.String())
 	return domain.DoneResource{
 		Status:       400,
 		Success:      false,
 		IgnoreErrors: options.IgnoreErrors,
-		ResponseBody: buf.String(),
+		ResponseBody: rb,
 	}
 }
 
@@ -112,7 +116,7 @@ func isEmptyChained(value interface{}) bool {
 	}
 }
 
-func makeCacheControl(response domain.HTTPResponse, options DoneResourceOptions) domain.ResourceCacheControl {
+func makeCacheControl(response restql.HTTPResponse, options DoneResourceOptions) domain.ResourceCacheControl {
 	headerCacheControl, headerFound := getCacheControlOptionsFromHeader(response)
 	defaultCacheControl, defaultFound := getDefaultCacheControlOptions(options)
 
@@ -188,7 +192,7 @@ var maxAgeHeaderRegex = regexp.MustCompile("max-age=(\\d+)")
 var smaxAgeHeaderRegex = regexp.MustCompile("s-maxage=(\\d+)")
 var noCacheHeaderRegex = regexp.MustCompile("no-cache")
 
-func getCacheControlOptionsFromHeader(response domain.HTTPResponse) (cc domain.ResourceCacheControl, found bool) {
+func getCacheControlOptionsFromHeader(response restql.HTTPResponse) (cc domain.ResourceCacheControl, found bool) {
 	cacheControl, ok := response.Headers["Cache-Control"]
 	if !ok {
 		return domain.ResourceCacheControl{}, false
