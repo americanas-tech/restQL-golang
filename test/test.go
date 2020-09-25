@@ -36,7 +36,7 @@ var mappingComparer = cmp.Comparer(func(x, y restql.Mapping) bool {
 })
 
 var responseBodyComparer = cmp.Comparer(func(x, y restql.ResponseBody) bool {
-	return bytes.Equal(x.GetBytes(), y.GetBytes()) || cmp.Equal(x.GetValue(), y.GetBytes())
+	return bytes.Equal(x.Bytes(), y.Bytes()) || cmp.Equal(x.Value(), y.Bytes())
 })
 
 func Equal(t *testing.T, got, expected interface{}) {

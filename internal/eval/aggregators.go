@@ -108,8 +108,7 @@ func parseOrigin(origin interface{}) interface{} {
 func cleanOriginResult(origin interface{}) interface{} {
 	switch origin := origin.(type) {
 	case restql.DoneResource:
-		origin.ResponseBody.SetValue(nil)
-		origin.ResponseBody.SetBytes(nil)
+		origin.ResponseBody.Clear()
 		return origin
 	case restql.DoneResources:
 		result := make(restql.DoneResources, len(origin))
