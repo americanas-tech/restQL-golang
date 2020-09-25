@@ -1,9 +1,10 @@
 package web_test
 
 import (
+	"github.com/b2wdigital/restQL-golang/v4/internal/domain"
+	"github.com/b2wdigital/restQL-golang/v4/pkg/restql"
 	"testing"
 
-	"github.com/b2wdigital/restQL-golang/v4/internal/domain"
 	"github.com/b2wdigital/restQL-golang/v4/internal/platform/web"
 	"github.com/b2wdigital/restQL-golang/v4/test"
 )
@@ -18,7 +19,7 @@ func TestMakeQueryResponse(t *testing.T) {
 		{
 			"should make response for simple result",
 			domain.Resources{
-				"hero": domain.DoneResource{
+				"hero": restql.DoneResource{
 					Status:       200,
 					Success:      true,
 					ResponseBody: test.Unmarshal(`{"id": "12345abcde"}`),
@@ -39,7 +40,7 @@ func TestMakeQueryResponse(t *testing.T) {
 		{
 			"should make response with metadata",
 			domain.Resources{
-				"hero": domain.DoneResource{
+				"hero": restql.DoneResource{
 					Status:       200,
 					Success:      true,
 					IgnoreErrors: true,
@@ -61,7 +62,7 @@ func TestMakeQueryResponse(t *testing.T) {
 		{
 			"should make response with debugging",
 			domain.Resources{
-				"hero": domain.DoneResource{
+				"hero": restql.DoneResource{
 					Status:          200,
 					Success:         true,
 					URL:             "http://hero.io/api",
@@ -95,13 +96,13 @@ func TestMakeQueryResponse(t *testing.T) {
 		{
 			"should make response for multiplexed result",
 			domain.Resources{
-				"hero": domain.DoneResources{
-					domain.DoneResource{
+				"hero": restql.DoneResources{
+					restql.DoneResource{
 						Status:       200,
 						Success:      true,
 						ResponseBody: test.Unmarshal(`{"id": "12345abcde"}`),
 					},
-					domain.DoneResource{
+					restql.DoneResource{
 						Status:       200,
 						Success:      true,
 						ResponseBody: test.Unmarshal(`{"id": "67890fghij"}`),
@@ -123,18 +124,18 @@ func TestMakeQueryResponse(t *testing.T) {
 		{
 			"should make response for aggregated multiplexed result",
 			domain.Resources{
-				"hero": domain.DoneResource{
+				"hero": restql.DoneResource{
 					Status:       200,
 					Success:      true,
 					ResponseBody: test.Unmarshal(`{"id": "10"}`),
 				},
-				"sidekick": domain.DoneResources{
-					domain.DoneResource{
+				"sidekick": restql.DoneResources{
+					restql.DoneResource{
 						Status:       200,
 						Success:      true,
 						ResponseBody: nil,
 					},
-					domain.DoneResource{
+					restql.DoneResource{
 						Status:       200,
 						Success:      true,
 						ResponseBody: nil,
@@ -160,12 +161,12 @@ func TestMakeQueryResponse(t *testing.T) {
 		{
 			"should make response with cache control header for simple result",
 			domain.Resources{
-				"hero": domain.DoneResource{
+				"hero": restql.DoneResource{
 					Status:  200,
 					Success: true,
-					CacheControl: domain.ResourceCacheControl{
-						MaxAge:  domain.ResourceCacheControlValue{Exist: true, Time: 400},
-						SMaxAge: domain.ResourceCacheControlValue{Exist: true, Time: 300},
+					CacheControl: restql.ResourceCacheControl{
+						MaxAge:  restql.ResourceCacheControlValue{Exist: true, Time: 400},
+						SMaxAge: restql.ResourceCacheControlValue{Exist: true, Time: 300},
 					},
 					ResponseBody: test.Unmarshal(`{"id": "12345abcde"}`),
 				},
@@ -185,11 +186,11 @@ func TestMakeQueryResponse(t *testing.T) {
 		{
 			"should make response with cache control header containing only max-age directive",
 			domain.Resources{
-				"hero": domain.DoneResource{
+				"hero": restql.DoneResource{
 					Status:  200,
 					Success: true,
-					CacheControl: domain.ResourceCacheControl{
-						MaxAge: domain.ResourceCacheControlValue{Exist: true, Time: 400},
+					CacheControl: restql.ResourceCacheControl{
+						MaxAge: restql.ResourceCacheControlValue{Exist: true, Time: 400},
 					},
 					ResponseBody: test.Unmarshal(`{"id": "12345abcde"}`),
 				},
@@ -209,11 +210,11 @@ func TestMakeQueryResponse(t *testing.T) {
 		{
 			"should make response with cache control header containing only s-maxage directive",
 			domain.Resources{
-				"hero": domain.DoneResource{
+				"hero": restql.DoneResource{
 					Status:  200,
 					Success: true,
-					CacheControl: domain.ResourceCacheControl{
-						SMaxAge: domain.ResourceCacheControlValue{Exist: true, Time: 300},
+					CacheControl: restql.ResourceCacheControl{
+						SMaxAge: restql.ResourceCacheControlValue{Exist: true, Time: 300},
 					},
 					ResponseBody: test.Unmarshal(`{"id": "12345abcde"}`),
 				},
@@ -233,10 +234,10 @@ func TestMakeQueryResponse(t *testing.T) {
 		{
 			"should make response with cache control header containing only no-cache directive",
 			domain.Resources{
-				"hero": domain.DoneResource{
+				"hero": restql.DoneResource{
 					Status:  200,
 					Success: true,
-					CacheControl: domain.ResourceCacheControl{
+					CacheControl: restql.ResourceCacheControl{
 						NoCache: true,
 					},
 					ResponseBody: test.Unmarshal(`{"id": "12345abcde"}`),
@@ -257,21 +258,21 @@ func TestMakeQueryResponse(t *testing.T) {
 		{
 			"should make response with minimum cache control header",
 			domain.Resources{
-				"hero": domain.DoneResource{
+				"hero": restql.DoneResource{
 					Status:  200,
 					Success: true,
-					CacheControl: domain.ResourceCacheControl{
-						MaxAge:  domain.ResourceCacheControlValue{Exist: true, Time: 1000},
-						SMaxAge: domain.ResourceCacheControlValue{Exist: true, Time: 300},
+					CacheControl: restql.ResourceCacheControl{
+						MaxAge:  restql.ResourceCacheControlValue{Exist: true, Time: 1000},
+						SMaxAge: restql.ResourceCacheControlValue{Exist: true, Time: 300},
 					},
 					ResponseBody: nil,
 				},
-				"sidekick": domain.DoneResource{
+				"sidekick": restql.DoneResource{
 					Status:  200,
 					Success: true,
-					CacheControl: domain.ResourceCacheControl{
-						MaxAge:  domain.ResourceCacheControlValue{Exist: true, Time: 400},
-						SMaxAge: domain.ResourceCacheControlValue{Exist: true, Time: 1800},
+					CacheControl: restql.ResourceCacheControl{
+						MaxAge:  restql.ResourceCacheControlValue{Exist: true, Time: 400},
+						SMaxAge: restql.ResourceCacheControlValue{Exist: true, Time: 1800},
 					},
 					ResponseBody: nil,
 				},
@@ -295,31 +296,31 @@ func TestMakeQueryResponse(t *testing.T) {
 		{
 			"should make response with minimum cache control header for multiplexed result",
 			domain.Resources{
-				"hero": domain.DoneResource{
+				"hero": restql.DoneResource{
 					Status:  200,
 					Success: true,
-					CacheControl: domain.ResourceCacheControl{
-						MaxAge:  domain.ResourceCacheControlValue{Exist: true, Time: 400},
-						SMaxAge: domain.ResourceCacheControlValue{Exist: true, Time: 600},
+					CacheControl: restql.ResourceCacheControl{
+						MaxAge:  restql.ResourceCacheControlValue{Exist: true, Time: 400},
+						SMaxAge: restql.ResourceCacheControlValue{Exist: true, Time: 600},
 					},
 					ResponseBody: nil,
 				},
-				"sidekick": domain.DoneResources{
-					domain.DoneResource{
+				"sidekick": restql.DoneResources{
+					restql.DoneResource{
 						Status:  200,
 						Success: true,
-						CacheControl: domain.ResourceCacheControl{
-							MaxAge:  domain.ResourceCacheControlValue{Exist: true, Time: 100},
-							SMaxAge: domain.ResourceCacheControlValue{Exist: true, Time: 1800},
+						CacheControl: restql.ResourceCacheControl{
+							MaxAge:  restql.ResourceCacheControlValue{Exist: true, Time: 100},
+							SMaxAge: restql.ResourceCacheControlValue{Exist: true, Time: 1800},
 						},
 						ResponseBody: nil,
 					},
-					domain.DoneResource{
+					restql.DoneResource{
 						Status:  200,
 						Success: true,
-						CacheControl: domain.ResourceCacheControl{
-							MaxAge:  domain.ResourceCacheControlValue{Exist: true, Time: 400},
-							SMaxAge: domain.ResourceCacheControlValue{Exist: true, Time: 1800},
+						CacheControl: restql.ResourceCacheControl{
+							MaxAge:  restql.ResourceCacheControlValue{Exist: true, Time: 400},
+							SMaxAge: restql.ResourceCacheControlValue{Exist: true, Time: 1800},
 						},
 						ResponseBody: nil,
 					},
@@ -344,7 +345,7 @@ func TestMakeQueryResponse(t *testing.T) {
 		{
 			"should make response with upstream headers",
 			domain.Resources{
-				"hero": domain.DoneResource{
+				"hero": restql.DoneResource{
 					Status:       200,
 					Success:      true,
 					ResponseBody: test.Unmarshal(`{"id": "12345abcde"}`),
@@ -352,7 +353,7 @@ func TestMakeQueryResponse(t *testing.T) {
 						"TransactionId": "abdcefg",
 					},
 				},
-				"sidekick": domain.DoneResource{
+				"sidekick": restql.DoneResource{
 					Status:       200,
 					Success:      true,
 					ResponseBody: test.Unmarshal(`{"id": "12345abcde"}`),
@@ -383,7 +384,7 @@ func TestMakeQueryResponse(t *testing.T) {
 		{
 			"should make response with upstream headers except from failed responses",
 			domain.Resources{
-				"hero": domain.DoneResource{
+				"hero": restql.DoneResource{
 					Status:       200,
 					Success:      true,
 					ResponseBody: test.Unmarshal(`{"id": "12345abcde"}`),
@@ -391,7 +392,7 @@ func TestMakeQueryResponse(t *testing.T) {
 						"TransactionId": "abdcefg",
 					},
 				},
-				"sidekick": domain.DoneResource{
+				"sidekick": restql.DoneResource{
 					Status:       500,
 					Success:      false,
 					IgnoreErrors: true,
@@ -439,42 +440,42 @@ func TestCalculateStatusCode(t *testing.T) {
 		{
 			"should return 200 when resources are successful",
 			domain.Resources{
-				"hero":     domain.DoneResource{Status: 200},
-				"sidekick": domain.DoneResource{Status: 204},
-				"villain":  domain.DoneResource{Status: 201},
+				"hero":     restql.DoneResource{Status: 200},
+				"sidekick": restql.DoneResource{Status: 204},
+				"villain":  restql.DoneResource{Status: 201},
 			},
 			200,
 		},
 		{
 			"should return max status code",
 			domain.Resources{
-				"hero":     domain.DoneResource{Status: 200},
-				"sidekick": domain.DoneResource{Status: 500},
-				"villain":  domain.DoneResource{Status: 408},
+				"hero":     restql.DoneResource{Status: 200},
+				"sidekick": restql.DoneResource{Status: 500},
+				"villain":  restql.DoneResource{Status: 408},
 			},
 			500,
 		},
 		{
 			"should return max status code",
 			domain.Resources{
-				"hero": domain.DoneResources{
-					domain.DoneResources{
-						domain.DoneResource{Status: 200},
-						domain.DoneResource{Status: 200},
-						domain.DoneResource{Status: 408},
+				"hero": restql.DoneResources{
+					restql.DoneResources{
+						restql.DoneResource{Status: 200},
+						restql.DoneResource{Status: 200},
+						restql.DoneResource{Status: 408},
 					},
 				},
-				"sidekick": domain.DoneResource{Status: 204},
-				"villain":  domain.DoneResource{Status: 400},
+				"sidekick": restql.DoneResource{Status: 204},
+				"villain":  restql.DoneResource{Status: 400},
 			},
 			408,
 		},
 		{
 			"should return max status code expect for result marked with ignore",
 			domain.Resources{
-				"hero":     domain.DoneResource{Status: 200},
-				"sidekick": domain.DoneResource{Status: 500, IgnoreErrors: true},
-				"villain":  domain.DoneResource{Status: 400, IgnoreErrors: true},
+				"hero":     restql.DoneResource{Status: 200},
+				"sidekick": restql.DoneResource{Status: 500, IgnoreErrors: true},
+				"villain":  restql.DoneResource{Status: 400, IgnoreErrors: true},
 			},
 			200,
 		},

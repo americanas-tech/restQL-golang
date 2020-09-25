@@ -11,11 +11,11 @@ import (
 
 // ApplyFilters returns a version of the already resolved Resources
 // only with the fields defined by the `only` clause.
-func ApplyFilters(log restql.Logger, query domain.Query, resources domain.Resources) (domain.Resources, error) {
-	result := make(domain.Resources)
+func ApplyFilters(log restql.Logger, query domain.Query, resources restql.Resources) (restql.Resources, error) {
+	result := make(restql.Resources)
 
 	for _, stmt := range query.Statements {
-		resourceID := domain.NewResourceID(stmt)
+		resourceID := restql.NewResourceID(stmt)
 		dr := resources[resourceID]
 
 		filtered, err := applyOnlyFilters(stmt.Only, dr)
@@ -36,7 +36,7 @@ func applyOnlyFilters(filters []interface{}, resourceResult interface{}) (interf
 	}
 
 	switch resourceResult := resourceResult.(type) {
-	case domain.DoneResource:
+	case restql.DoneResource:
 		result, err := extractWithFilters(buildFilterTree(filters), resourceResult.ResponseBody)
 		if err != nil {
 			return nil, err
@@ -44,8 +44,8 @@ func applyOnlyFilters(filters []interface{}, resourceResult interface{}) (interf
 		resourceResult.ResponseBody.SetValue(result)
 
 		return resourceResult, nil
-	case domain.DoneResources:
-		list := make(domain.DoneResources, len(resourceResult))
+	case restql.DoneResources:
+		list := make(restql.DoneResources, len(resourceResult))
 		for i, r := range resourceResult {
 			list[i], _ = applyOnlyFilters(filters, r)
 		}
@@ -263,14 +263,14 @@ func parsePath(s interface{}) []interface{} {
 
 // ApplyHidden returns a version of the already resolved Resources
 // removing the statement results with the `hidden` clause.
-func ApplyHidden(query domain.Query, resources domain.Resources) domain.Resources {
-	result := make(domain.Resources)
+func ApplyHidden(query domain.Query, resources restql.Resources) restql.Resources {
+	result := make(restql.Resources)
 
 	for _, stmt := range query.Statements {
 		if stmt.Hidden {
 			continue
 		}
-		resourceID := domain.NewResourceID(stmt)
+		resourceID := restql.NewResourceID(stmt)
 		dr := resources[resourceID]
 
 		result[resourceID] = dr

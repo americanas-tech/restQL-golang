@@ -70,3 +70,39 @@ func (r *ResponseBody) Valid() bool {
 
 	return len(r.jsonBytes) > 0 && json.Valid(r.jsonBytes)
 }
+
+// ResourceCacheControlValue represents the values a cache control
+// directive is able to have.
+// It can either be present and have a integer time value or
+// not be present in the upstream response.
+type ResourceCacheControlValue struct {
+	Exist bool
+	Time  int
+}
+
+// ResourceCacheControl represent cache control directives
+// returned by upstream during statement resolution.
+type ResourceCacheControl struct {
+	NoCache bool
+	MaxAge  ResourceCacheControlValue
+	SMaxAge ResourceCacheControlValue
+}
+
+// DoneResource represents a statement result.
+type DoneResource struct {
+	Status          int
+	Success         bool
+	IgnoreErrors    bool
+	CacheControl    ResourceCacheControl
+	Method          string
+	URL             string
+	RequestParams   map[string]interface{}
+	RequestHeaders  map[string]string
+	RequestBody     interface{}
+	ResponseHeaders map[string]string
+	ResponseBody    *ResponseBody
+	ResponseTime    int64
+}
+
+// DoneResources represents a multiplexed statement result.
+type DoneResources []interface{}

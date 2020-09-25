@@ -92,12 +92,14 @@ func (ms *MockServer) Teardown() {
 	ms.server.Close()
 }
 
-type NoOpLogger struct{}
+var NoOpLogger restql.Logger = noOpLogger{}
 
-func (n NoOpLogger) Panic(msg string, fields ...interface{})            {}
-func (n NoOpLogger) Fatal(msg string, fields ...interface{})            {}
-func (n NoOpLogger) Error(msg string, err error, fields ...interface{}) {}
-func (n NoOpLogger) Warn(msg string, fields ...interface{})             {}
-func (n NoOpLogger) Info(msg string, fields ...interface{})             {}
-func (n NoOpLogger) Debug(msg string, fields ...interface{})            {}
-func (n NoOpLogger) With(key string, value interface{}) restql.Logger   { return n }
+type noOpLogger struct{}
+
+func (n noOpLogger) Panic(msg string, fields ...interface{})            {}
+func (n noOpLogger) Fatal(msg string, fields ...interface{})            {}
+func (n noOpLogger) Error(msg string, err error, fields ...interface{}) {}
+func (n noOpLogger) Warn(msg string, fields ...interface{})             {}
+func (n noOpLogger) Info(msg string, fields ...interface{})             {}
+func (n noOpLogger) Debug(msg string, fields ...interface{})            {}
+func (n noOpLogger) With(key string, value interface{}) restql.Logger   { return n }

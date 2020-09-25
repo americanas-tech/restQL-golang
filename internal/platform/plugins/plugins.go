@@ -2,11 +2,11 @@ package plugins
 
 import (
 	"context"
+	"github.com/b2wdigital/restQL-golang/v4/internal/domain"
 	"net/http"
 	"net/url"
 	"runtime/debug"
 
-	"github.com/b2wdigital/restQL-golang/v4/internal/domain"
 	"github.com/b2wdigital/restQL-golang/v4/pkg/restql"
 	"github.com/pkg/errors"
 	"github.com/valyala/fasthttp"
@@ -63,9 +63,12 @@ func (m manager) BeforeQuery(ctx context.Context, query string, queryCtx restql.
 
 func (m manager) AfterQuery(ctx context.Context, query string, result domain.Resources) context.Context {
 	return m.executeAllPluginsWithContext(ctx, "AfterQuery", func(currentCtx context.Context, p restql.LifecyclePlugin) context.Context {
-		//todo: fix this
-		//m := DecodeQueryResult(result)
-		return p.AfterQuery(currentCtx, query, nil)
+		r := make(map[string]interface{})
+		for id, resource := range result {
+			r[string(id)] = resource
+		}
+
+		return p.AfterQuery(currentCtx, query, r)
 	})
 }
 
