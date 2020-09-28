@@ -20,9 +20,10 @@ import (
 
 var build string
 
+// Start initialize a restQL runtime as a server
 func Start() {
 	if err := startServer(); err != nil {
-		fmt.Printf("[ERROR] failed to startServer api : %v", err)
+		fmt.Printf("[ERROR] failed to start restQL : %v", err)
 		os.Exit(1)
 	}
 }
@@ -64,14 +65,16 @@ func startServer() error {
 	api := &fasthttp.Server{
 		Name:                          "restql",
 		Handler:                       apiHandler,
-		TCPKeepalive:                  false,
+		TCPKeepalive:                  true,
+		IdleTimeout:                   serverCfg.IdleTimeout,
 		ReadTimeout:                   serverCfg.ReadTimeout,
 		DisableHeaderNamesNormalizing: true,
 	}
 	health := &fasthttp.Server{
 		Name:                          "health",
 		Handler:                       web.Health(log, cfg),
-		TCPKeepalive:                  false,
+		TCPKeepalive:                  true,
+		IdleTimeout:                   serverCfg.IdleTimeout,
 		ReadTimeout:                   serverCfg.ReadTimeout,
 		DisableHeaderNamesNormalizing: true,
 	}

@@ -44,6 +44,7 @@ type Config struct {
 			EnableFullPprof         bool          `env:"RESTQL_ENABLE_FULL_PPROF"`
 			GracefulShutdownTimeout time.Duration `yaml:"gracefulShutdownTimeout"`
 			ReadTimeout             time.Duration `yaml:"readTimeout"`
+			IdleTimeout             time.Duration `yaml:"idleTimeout"`
 
 			Middlewares struct {
 				RequestID *requestIDConf `yaml:"requestId"`

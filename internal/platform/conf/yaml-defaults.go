@@ -10,6 +10,7 @@ web:
   server:
     readTimeout: 3s
     gracefulShutdownTimeout: 1s
+    idleTimeout: 5s
 
   client:
     readTimeout: 1s
