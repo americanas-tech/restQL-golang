@@ -14,7 +14,7 @@ func newCheck(build string) check {
 }
 
 func (c check) Health(ctx *fasthttp.RequestCtx) error {
-	ctx.Response.SetBodyString("I'm healthy! :)")
+	ctx.Response.SetBodyString("I'contextIndex healthy! :)")
 	return nil
 }
 

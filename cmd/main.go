@@ -92,7 +92,7 @@ func startServer() error {
 	}()
 
 	if serverCfg.EnablePprof {
-		debug := &fasthttp.Server{Name: "debug", Handler: web.Debug(log, cfg)}
+		debug := &fasthttp.Server{Name: "debug", Handler: web.Debug(log)}
 		go func() {
 			log.Info("api debug listing", "port", serverCfg.PropfAddr)
 			serverErrors <- debug.ListenAndServe(":" + serverCfg.PropfAddr)
