@@ -2,10 +2,9 @@ package middleware
 
 import (
 	"fmt"
-	"github.com/b2wdigital/restQL-golang/v4/pkg/restql"
-
 	"github.com/b2wdigital/restQL-golang/v4/internal/platform/conf"
 	"github.com/b2wdigital/restQL-golang/v4/internal/platform/plugins"
+	"github.com/b2wdigital/restQL-golang/v4/pkg/restql"
 	"github.com/valyala/fasthttp"
 )
 
@@ -21,35 +20,54 @@ func (nm noopMiddleware) Apply(h fasthttp.RequestHandler) fasthttp.RequestHandle
 	return h
 }
 
-// Apply takes a base handler and a slice of middlewares,
-// applying each one in the order they are given.
-func Apply(log restql.Logger, h fasthttp.RequestHandler, mws []Middleware) fasthttp.RequestHandler {
+// Decorator is a type responsible for wrapping handlers
+// with default and config enabled middlewares.
+type Decorator struct {
+	log restql.Logger
+	cfg *conf.Config
+	pm  plugins.Lifecycle
+	cm  *ConnManager
+}
+
+// NewDecorator creates a middleware Decorator
+func NewDecorator(log restql.Logger, cfg *conf.Config, pm plugins.Lifecycle) *Decorator {
+	return &Decorator{
+		log: log,
+		cfg: cfg,
+		pm:  pm,
+		cm:  NewConnManager(log),
+	}
+}
+
+// Apply takes a base handler and fetches all middlewares enabled in configuration
+// decorating the argument with each one.
+func (d *Decorator) Apply(h fasthttp.RequestHandler) fasthttp.RequestHandler {
+	mws := d.fetchEnabled()
 	handler := h
 
 	for i := len(mws) - 1; i >= 0; i-- {
 		m := mws[i]
-		log.Debug(fmt.Sprintf("applying middleware %T", m))
+		d.log.Debug(fmt.Sprintf("applying middleware %T", m))
 		handler = m.Apply(handler)
 	}
 
 	return handler
 }
 
-// FetchEnabled returns all middlewares enabled in configuration
-func FetchEnabled(log restql.Logger, cfg *conf.Config, pm plugins.Lifecycle) []Middleware {
-	mws := []Middleware{newRecoverer(log), newNativeContext(), newTransaction(pm)}
+func (d *Decorator) fetchEnabled() []Middleware {
+	mws := []Middleware{newRecoverer(d.log), newNativeContext(d.cm), newTransaction(d.pm)}
 
-	mwCfg := cfg.HTTP.Server.Middlewares
+	mwCfg := d.cfg.HTTP.Server.Middlewares
 	if mwCfg.Timeout != nil {
-		mws = append(mws, newTimeout(mwCfg.Timeout.Duration, log))
+		mws = append(mws, newTimeout(mwCfg.Timeout.Duration, d.log))
 	}
 
 	if mwCfg.RequestID != nil {
-		mws = append(mws, newRequestID(mwCfg.RequestID.Header, mwCfg.RequestID.Strategy, log))
+		mws = append(mws, newRequestID(mwCfg.RequestID.Header, mwCfg.RequestID.Strategy, d.log))
 	}
 
 	if mwCfg.Cors != nil {
-		cors := newCors(log,
+		cors := newCors(d.log,
 			withAllowOrigins(mwCfg.Cors.AllowOrigin),
 			withAllowHeaders(mwCfg.Cors.AllowHeaders),
 			withAllowMethods(mwCfg.Cors.AllowMethods),

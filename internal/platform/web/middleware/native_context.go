@@ -5,17 +5,21 @@ import (
 	"github.com/valyala/fasthttp"
 )
 
-type nativeContext struct{}
+type nativeContext struct {
+	cm *ConnManager
+}
 
-func newNativeContext() nativeContext {
-	return nativeContext{}
+func newNativeContext(cm *ConnManager) nativeContext {
+	return nativeContext{cm: cm}
 }
 
 func (n nativeContext) Apply(h fasthttp.RequestHandler) fasthttp.RequestHandler {
-	return func(ctx *fasthttp.RequestCtx) {
-		WithNativeContext(ctx, context.Background())
+	return func(reqCtx *fasthttp.RequestCtx) {
+		ctx := n.cm.ContextForConnection(reqCtx.Conn())
 
-		h(ctx)
+		WithNativeContext(reqCtx, ctx)
+
+		h(reqCtx)
 	}
 }
 

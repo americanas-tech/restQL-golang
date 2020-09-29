@@ -1,6 +1,7 @@
 package web
 
 import (
+	"github.com/b2wdigital/restQL-golang/v4/internal/platform/web/middleware"
 	"github.com/b2wdigital/restQL-golang/v4/pkg/restql"
 	"net/http"
 
@@ -37,7 +38,9 @@ func API(log restql.Logger, cfg *conf.Config) (fasthttp.RequestHandler, error) {
 		log.Error("failed to initialize plugins", err)
 	}
 
-	app := newApp(log, cfg, lifecycle)
+	md := middleware.NewDecorator(log, cfg, lifecycle)
+
+	app := newApp(log, appOptions{MiddlewareDecorator: md})
 	client := httpclient.New(log, lifecycle, cfg)
 	executor := runner.NewExecutor(log, client, cfg.HTTP.QueryResourceTimeout, cfg.HTTP.ForwardPrefix)
 	r := runner.NewRunner(log, executor, cfg.HTTP.GlobalQueryTimeout)
@@ -69,18 +72,18 @@ func API(log restql.Logger, cfg *conf.Config) (fasthttp.RequestHandler, error) {
 
 // Health constructs a handler for system checks endpoints
 func Health(log restql.Logger, cfg *conf.Config) fasthttp.RequestHandler {
-	app := newApp(log, cfg, plugins.NoOpLifecycle)
+	app := newApp(log, appOptions{})
 	check := newCheck(cfg.Build)
 
 	app.Handle(http.MethodGet, "/health", check.Health)
 	app.Handle(http.MethodGet, "/resource-status", check.ResourceStatus)
 
-	return app.RequestHandlerWithoutMiddlewares()
+	return app.RequestHandler()
 }
 
 // Debug constructs a handler for profiling endpoints
-func Debug(log restql.Logger, cfg *conf.Config) fasthttp.RequestHandler {
-	app := newApp(log, cfg, plugins.NoOpLifecycle)
+func Debug(log restql.Logger) fasthttp.RequestHandler {
+	app := newApp(log, appOptions{})
 	d := newDebug()
 
 	app.Handle(http.MethodGet, "/debug/pprof/goroutine", d.Index)
@@ -91,5 +94,5 @@ func Debug(log restql.Logger, cfg *conf.Config) fasthttp.RequestHandler {
 
 	app.Handle(http.MethodGet, "/debug/pprof/profile", d.Profile)
 
-	return app.RequestHandlerWithoutMiddlewares()
+	return app.RequestHandler()
 }
