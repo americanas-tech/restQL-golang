@@ -65,22 +65,24 @@ func (cm *ConnManager) watchConn(conn net.Conn, callback func()) {
 	ticker := time.NewTicker(10 * time.Millisecond)
 
 	var sysErr error = nil
+	fdReader := func(fd uintptr) bool {
+		var buf = []byte{0}
+		n, _, err := syscall.Recvfrom(int(fd), buf, syscall.MSG_PEEK|syscall.MSG_DONTWAIT)
+		switch {
+		case n == 0 && err == nil:
+			sysErr = io.EOF
+		case err == syscall.EAGAIN || err == syscall.EWOULDBLOCK:
+			sysErr = nil
+		default:
+			sysErr = err
+		}
+		return true
+	}
+
 	for {
 		select {
 		case <-ticker.C:
-			err = rc.Read(func(fd uintptr) bool {
-				var buf = []byte{0}
-				n, _, err := syscall.Recvfrom(int(fd), buf, syscall.MSG_PEEK|syscall.MSG_DONTWAIT)
-				switch {
-				case n == 0 && err == nil:
-					sysErr = io.EOF
-				case err == syscall.EAGAIN || err == syscall.EWOULDBLOCK:
-					sysErr = nil
-				default:
-					sysErr = err
-				}
-				return true
-			})
+			err = rc.Read(fdReader)
 			if err != nil {
 				callback()
 				return

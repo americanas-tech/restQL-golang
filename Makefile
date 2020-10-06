@@ -5,7 +5,7 @@ peg:
 	pigeon ./internal/parser/ast/grammar.peg > ./internal/parser/ast/grammar.go
 
 dev:
-	RESTQL_PORT=9000 RESTQL_HEALTH_PORT=9001 RESTQL_DEBUG_PORT=9002 RESTQL_ENV=development go run -race -ldflags="-X github.com/b2wdigital/restQL-golang/v4/cmd.build=$(RESTQL_BUILD)" main.go
+	RESTQL_PORT=9000 RESTQL_HEALTH_PORT=9001 RESTQL_PPROF_PORT=9002 go run -race -ldflags="-X github.com/b2wdigital/restQL-golang/v4/cmd.build=$(RESTQL_BUILD)" main.go
 
 unit:
 	go test -race -count=1 ./internal/...
