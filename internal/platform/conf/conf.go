@@ -29,6 +29,10 @@ type corsConf struct {
 	ExposeHeaders string `yaml:"exposeHeaders" env:"RESTQL_CORS_EXPOSE_HEADERS"`
 }
 
+type requestCancellationConf struct {
+	Enabled bool `yaml:"enabled"`
+}
+
 // Config represents all parameters allowed in restQL runtime.
 type Config struct {
 	HTTP struct {
@@ -47,9 +51,10 @@ type Config struct {
 			IdleTimeout             time.Duration `yaml:"idleTimeout"`
 
 			Middlewares struct {
-				RequestID *requestIDConf `yaml:"requestId"`
-				Timeout   *timeoutConf   `yaml:"timeout"`
-				Cors      *corsConf      `yaml:"cors"`
+				RequestID           *requestIDConf           `yaml:"requestId"`
+				Timeout             *timeoutConf             `yaml:"timeout"`
+				Cors                *corsConf                `yaml:"cors"`
+				RequestCancellation *requestCancellationConf `yaml:"requestCancellation"`
 			} `yaml:"middlewares"`
 		} `yaml:"server"`
 

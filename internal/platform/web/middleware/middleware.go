@@ -31,11 +31,16 @@ type Decorator struct {
 
 // NewDecorator creates a middleware Decorator
 func NewDecorator(log restql.Logger, cfg *conf.Config, pm plugins.Lifecycle) *Decorator {
+	cmEnabled := false
+	if cfg.HTTP.Server.Middlewares.RequestCancellation != nil {
+		cmEnabled = cfg.HTTP.Server.Middlewares.RequestCancellation.Enabled
+	}
+
 	return &Decorator{
 		log: log,
 		cfg: cfg,
 		pm:  pm,
-		cm:  NewConnManager(log),
+		cm:  NewConnManager(log, cmEnabled),
 	}
 }
 

@@ -16,18 +16,23 @@ import (
 // When a connection is closed by the client it cancel
 // its context.
 type ConnManager struct {
+	enabled      bool
 	log          restql.Logger
 	contextIndex sync.Map
 }
 
 // NewConnManager creates a connection manager
-func NewConnManager(log restql.Logger) *ConnManager {
-	return &ConnManager{log: log}
+func NewConnManager(log restql.Logger, enabled bool) *ConnManager {
+	return &ConnManager{log: log, enabled: enabled}
 }
 
 // ContextForConnection get the connections context, if it exists.
 // Otherwise it create a context and start the connection watcher.
 func (cm *ConnManager) ContextForConnection(conn net.Conn) context.Context {
+	if !cm.enabled {
+		return context.Background()
+	}
+
 	connCtx, found := cm.contextIndex.Load(conn)
 	if !found {
 		return cm.initializeConnContext(conn)
