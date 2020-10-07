@@ -92,7 +92,7 @@ type Config struct {
 	} `yaml:"cache"`
 
 	Plugins struct {
-		Location string `yaml:"location" env:"RESTQL_PLUGINS_LOCATION"`
+		DisableDatabase bool `yaml:"disableDatabase" env:"RESTQL_PLUGINS_DATABASE_DISABLE"`
 	} `yaml:"plugins"`
 
 	Tenant string `env:"RESTQL_TENANT"`

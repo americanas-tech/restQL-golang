@@ -27,7 +27,8 @@ func API(log restql.Logger, cfg *conf.Config) (fasthttp.RequestHandler, error) {
 	parserCacheLoader := cache.New(log, cfg.Cache.Parser.MaxSize, cache.ParserCacheLoader(defaultParser))
 	parserCache := cache.NewParserCache(log, parserCacheLoader)
 
-	db, err := persistence.NewDatabase(log)
+	databaseDisabled := cfg.Plugins.DisableDatabase
+	db, err := persistence.NewDatabase(log, databaseDisabled)
 	if err != nil {
 		log.Error("failed to establish connection to database", err)
 		return nil, err

@@ -16,7 +16,11 @@ type Database interface {
 // NewDatabase constructs a Database compliant value
 // from the database plugin registered.
 // In case of no plugin, a noop implementation is returned.
-func NewDatabase(log restql.Logger) (Database, error) {
+func NewDatabase(log restql.Logger, disabled bool) (Database, error) {
+	if disabled {
+		return noOpDatabase{}, nil
+	}
+
 	pluginInfo, found := restql.GetDatabasePlugin()
 	if !found {
 		log.Info("no database plugin provided")
