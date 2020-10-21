@@ -6,7 +6,7 @@ import (
 )
 
 var defaults = []byte(`
-web:
+http:
   server:
     readTimeout: 3s
     gracefulShutdownTimeout: 1s
