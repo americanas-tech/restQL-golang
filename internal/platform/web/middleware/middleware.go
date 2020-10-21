@@ -72,12 +72,14 @@ func (d *Decorator) fetchEnabled() []Middleware {
 	}
 
 	if mwCfg.Cors != nil {
-		cors := newCors(d.log,
-			withAllowOrigins(mwCfg.Cors.AllowOrigin),
-			withAllowHeaders(mwCfg.Cors.AllowHeaders),
-			withAllowMethods(mwCfg.Cors.AllowMethods),
-			withExposedHeaders(mwCfg.Cors.ExposeHeaders),
-		)
+		cors := newCors(d.log, corsOptions{
+			AllowedOrigins:   mwCfg.Cors.AllowOrigin,
+			AllowedMethods:   mwCfg.Cors.AllowMethods,
+			AllowedHeaders:   mwCfg.Cors.AllowHeaders,
+			ExposedHeaders:   mwCfg.Cors.ExposeHeaders,
+			MaxAge:           mwCfg.Cors.MaxAge,
+			AllowCredentials: mwCfg.Cors.AllowCredentials,
+		})
 		mws = append(mws, cors)
 	}
 
