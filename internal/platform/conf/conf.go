@@ -23,10 +23,12 @@ type timeoutConf struct {
 }
 
 type corsConf struct {
-	AllowOrigin   string `yaml:"allowOrigin" env:"RESTQL_CORS_ALLOW_ORIGIN"`
-	AllowMethods  string `yaml:"allowMethods" env:"RESTQL_CORS_ALLOW_METHODS"`
-	AllowHeaders  string `yaml:"allowHeaders" env:"RESTQL_CORS_ALLOW_HEADERS"`
-	ExposeHeaders string `yaml:"exposeHeaders" env:"RESTQL_CORS_EXPOSE_HEADERS"`
+	AllowOrigin      string `yaml:"allowOrigin" env:"RESTQL_CORS_ALLOW_ORIGIN"`
+	AllowMethods     string `yaml:"allowMethods" env:"RESTQL_CORS_ALLOW_METHODS"`
+	AllowHeaders     string `yaml:"allowHeaders" env:"RESTQL_CORS_ALLOW_HEADERS"`
+	ExposeHeaders    string `yaml:"exposeHeaders" env:"RESTQL_CORS_EXPOSE_HEADERS"`
+	MaxAge           int    `yaml:"maxAge" env:"RESTQL_CORS_MAX_AGE"`
+	AllowCredentials bool   `yaml:"allowCredentials" env:"RESTQL_CORS_ALLOW_CREDENTIALS"`
 }
 
 type requestCancellationConf struct {

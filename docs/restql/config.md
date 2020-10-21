@@ -37,18 +37,18 @@ You can use the `pprof` tool to investigate restQL performance. To enable it set
 - Health port: set through `RESTQL_HEALTH_PORT` environment variable.
 - Profiler port: set through `RESTQL_PPROF_PORT` environment variable.
 
-**Graceful shutdown**: when restQL receives a `SIGTERM` signal it starts the shutdown, avoiding accepting new requests and waiting for the ongoing ones to finish before exiting. You can define a timeout for this process using `web.server.gracefulShutdownTimeout` field in the YAML configuration, after which restQL will break all running requests and exit.
+**Graceful shutdown**: when restQL receives a `SIGTERM` signal it starts the shutdown, avoiding accepting new requests and waiting for the ongoing ones to finish before exiting. You can define a timeout for this process using `http.server.gracefulShutdownTimeout` field in the YAML configuration, after which restQL will break all running requests and exit.
 
-**Read timeout**: you can specify the maximum time taken to read the client request to the restQL API through the `web.server.readTimeout` field.
+**Read timeout**: you can specify the maximum time taken to read the client request to the restQL API through the `http.server.readTimeout` field.
 
 **Middlewares**: currently restQL support 3 built-in middlewares, setting any of the fields automatically enable the given middleware.
 
-- Request ID: this middleware generates a unique id for each request restQL API receives. The `web.server.middlewares.requestId.header` field define the header name use to return the generated id. The `web.server.middlewares.requestId.strategy` defines how the id will be generated and can be either `base64` or `uuid`.
-- Timeout: this middleware limits the maximum time any request can take. The `web.server.middlewares.timeout.duration` field aceppt a time duration value.
+- Request ID: this middleware generates a unique id for each request restQL API receives. The `http.server.middlewares.requestId.header` field define the header name use to return the generated id. The `http.server.middlewares.requestId.strategy` defines how the id will be generated and can be either `base64` or `uuid`.
+- Timeout: this middleware limits the maximum time any request can take. The `http.server.middlewares.timeout.duration` field aceppt a time duration value.
 - CORS: Cross-Origin Resource Sharing is a specification that enables truly open access across domain-boundaries.
   You can configure your own CORS headers either via the configuration file:
   ```yaml
-  web:
+  http:
     server:
       middlewares:
         cors:
@@ -69,12 +69,12 @@ You can use the `pprof` tool to investigate restQL performance. To enable it set
 
 RestQL primary feature is performing optimized HTTP calls, but since each environment has different characteristics like workload and latency, it is important that you tune the parameters for the internal HTTP client in order to achieve the best performance. You can set these parameters throught the configuration file.
 
-- `web.client.connectionTimeout`: limits the time taken to establish a TCP connection with a host.
-- `web.client.maxRequestTimeout`: although every the timeout for calling a resource can be defined by the client in the query you can set a upper limit to request time, for example, if you set it to `2s` even though a query specifies a timeout of `10s` restQL will drop the request when it reachs its maximum timeout. It accepts a duration string.
-- `web.client.maxConnectionsPerHost`: limits the size of the connection pool for each host.
-- `web.client.maxIdleConnections`: limits the size of the global idle connection pool.
-- `web.client.maxIdleConnectionsPerHost`: limits the size of the idle connection pool for each host.
-- `web.client.maxIdleConnectionDuration`: set the time a connection will be kept open in idle state, after it the connection will be closed. It accepts a duration string.
+- `http.client.connectionTimeout`: limits the time taken to establish a TCP connection with a host.
+- `http.client.maxRequestTimeout`: although every the timeout for calling a resource can be defined by the client in the query you can set a upper limit to request time, for example, if you set it to `2s` even though a query specifies a timeout of `10s` restQL will drop the request when it reachs its maximum timeout. It accepts a duration string.
+- `http.client.maxConnectionsPerHost`: limits the size of the connection pool for each host.
+- `http.client.maxIdleConnections`: limits the size of the global idle connection pool.
+- `http.client.maxIdleConnectionsPerHost`: limits the size of the idle connection pool for each host.
+- `http.client.maxIdleConnectionDuration`: set the time a connection will be kept open in idle state, after it the connection will be closed. It accepts a duration string.
 
 ## Caching
 
