@@ -1,12 +1,12 @@
 package runner_test
 
 import (
-	"github.com/b2wdigital/restQL-golang/v4/pkg/restql"
 	"net/http"
 	"testing"
 
 	"github.com/b2wdigital/restQL-golang/v4/internal/domain"
 	"github.com/b2wdigital/restQL-golang/v4/internal/runner"
+	"github.com/b2wdigital/restQL-golang/v4/pkg/restql"
 	"github.com/b2wdigital/restQL-golang/v4/test"
 )
 
@@ -86,7 +86,7 @@ func TestMakeRequest(t *testing.T) {
 					"Content-Length":  "0",
 					"Connection":      "keepalive",
 					"Origin":          "www.test.com",
-					"Accept-Encoding": "gzip, deflate",
+					"accept-encoding": "gzip, deflate",
 				}},
 			},
 			restql.HTTPRequest{
