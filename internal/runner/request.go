@@ -2,20 +2,21 @@ package runner
 
 import (
 	"encoding/json"
-	"github.com/b2wdigital/restQL-golang/v4/internal/domain"
-	"github.com/b2wdigital/restQL-golang/v4/pkg/restql"
 	"net/http"
 	"strings"
 	"time"
+
+	"github.com/b2wdigital/restQL-golang/v4/internal/domain"
+	"github.com/b2wdigital/restQL-golang/v4/pkg/restql"
 )
 
-var disallowedHeaders = map[string]struct{}{
-	"host":            {},
-	"Content-Type":    {},
-	"Content-Length":  {},
-	"Connection":      {},
-	"Origin":          {},
-	"Accept-Encoding": {},
+var disallowedHeaders = []string{
+	"host",
+	"content-type",
+	"content-length",
+	"connection",
+	"origin",
+	"accept-encoding",
 }
 
 var queryMethodToHTTPMethod = map[string]string{
@@ -106,10 +107,19 @@ func makeHeaders(statement domain.Statement, queryCtx restql.QueryContext) map[s
 	return headers
 }
 
+func isDisallowedHeader(header string) bool {
+	for _, disallowedHeader := range disallowedHeaders {
+		if strings.EqualFold(header, disallowedHeader) {
+			return true
+		}
+	}
+	return false
+}
+
 func getForwardHeaders(queryCtx restql.QueryContext) map[string]string {
 	r := make(map[string]string)
 	for k, v := range queryCtx.Input.Headers {
-		if _, found := disallowedHeaders[k]; !found {
+		if !isDisallowedHeader(k) {
 			r[k] = v
 		}
 	}
