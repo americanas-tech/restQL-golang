@@ -52,10 +52,12 @@ You can use the `pprof` tool to investigate restQL performance. To enable it set
     server:
       middlewares:
         cors:
-          allowOrigin: ${allowed_custom_origin}
-          allowMethods: ${allowed_custom_methods}
-          allowHeaders: ${allowed_custom_headers}
-          exposeHeaders: ${allowed_custom_expose_headers}
+          allowOrigin: "example.com, hero.api"
+          allowMethods: "GET, POST"
+          allowHeaders: "X-TID, X-Custom"
+          allowCredentials: false
+          exposeHeaders: "X-TID"
+          maxAge: 10 # seconds, as per specification
   ```
   Or via environment variables:
   ```shell script
@@ -63,6 +65,8 @@ You can use the `pprof` tool to investigate restQL performance. To enable it set
   RESTQL_CORS_ALLOW_METHODS=${allowed_custom_methods}
   RESTQL_CORS_ALLOW_HEADERS=${allowed_custom_headers}
   RESTQL_CORS_EXPOSE_HEADERS=${allowed_custom_expose_headers}
+  RESTQL_CORS_ALLOW_CREDENTIALS=${allowed_credentials}
+  RESTQL_CORS_MAX_AGE=${allowed_max_age}
   ```
 
 ### Http Client
