@@ -522,3 +522,72 @@ from planets
 
 	test.Equal(t, body, test.Unmarshal(expectedResponse))
 }
+
+func TestHeadersShouldBeCaseInsensitiveWhenMergingWithForwardHeaders(t *testing.T) {
+	query := `
+from planets
+	headers
+		X-TID = "abcdef-12345"
+		accept = "application/json"
+`
+
+	planetResponse := `
+[{
+	"name": "Yavin IV",
+	"rotation_period": "24",
+	"orbital_period": "4818",
+	"diameter": "10200",
+	"climate": "temperate, tropical",
+	"gravity": "1 standard",
+	"terrain": "jungle, rainforests",
+	"surface_water": "8",
+	"population": "1000",
+	"residents": [],
+	"films": [1]
+}]
+`
+
+	expectedResponse := fmt.Sprintf(`
+	{
+		"planets": {
+			"details": {
+				"success": true,
+				"status": 200,
+				"metadata": {}
+			},
+			"result": %s 
+		}
+	}`, planetResponse)
+
+	mockServer := test.NewMockServer(mockPort)
+	defer mockServer.Teardown()
+
+	mockServer.Mux().HandleFunc("/api/planets/", func(w http.ResponseWriter, r *http.Request) {
+		test.Equal(t, r.Method, http.MethodGet)
+
+		xtid := r.Header.Get("X-TID")
+		test.Equal(t, xtid, "abcdef-12345")
+
+		accept := r.Header.Get("Accept")
+		test.Equal(t, accept, "application/json")
+
+		w.WriteHeader(200)
+		io.WriteString(w, planetResponse)
+	})
+	mockServer.Start()
+
+	request, err := http.NewRequest(http.MethodPost, adHocQueryUrl, strings.NewReader(query))
+	test.VerifyError(t, err)
+	request.Header.Set("Accept", "*/*")
+	request.Header.Set("Content-Type", "text/plain")
+
+	response, err := httpClient.Do(request)
+	test.VerifyError(t, err)
+	defer response.Body.Close()
+
+	var body map[string]interface{}
+	err = json.NewDecoder(response.Body).Decode(&body)
+	test.VerifyError(t, err)
+
+	test.Equal(t, body, test.Unmarshal(expectedResponse))
+}

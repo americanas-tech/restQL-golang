@@ -96,6 +96,7 @@ func makeHeaders(statement domain.Statement, queryCtx restql.QueryContext) map[s
 		if !ok {
 			continue
 		}
+		key = http.CanonicalHeaderKey(key)
 		headers[key] = str
 	}
 
@@ -120,6 +121,7 @@ func getForwardHeaders(queryCtx restql.QueryContext) map[string]string {
 	r := make(map[string]string)
 	for k, v := range queryCtx.Input.Headers {
 		if !isDisallowedHeader(k) {
+			k = http.CanonicalHeaderKey(k)
 			r[k] = v
 		}
 	}
