@@ -57,7 +57,7 @@ func TestMakeRequest(t *testing.T) {
 			"should make request with url and header from statement",
 			domain.Statement{Method: domain.FromMethod, Resource: "hero", Headers: map[string]interface{}{"X-TID": "1234567890"}},
 			restql.QueryContext{Mappings: map[string]restql.Mapping{"hero": mapping(t, "http://hero.io/api")}},
-			restql.HTTPRequest{Method: http.MethodGet, Schema: "http", Host: "hero.io", Path: "/api", Query: map[string]interface{}{}, Headers: map[string]string{"X-TID": "1234567890", "Content-Type": "application/json"}},
+			restql.HTTPRequest{Method: http.MethodGet, Schema: "http", Host: "hero.io", Path: "/api", Query: map[string]interface{}{}, Headers: map[string]string{"X-Tid": "1234567890", "Content-Type": "application/json"}},
 		},
 		{
 			"should make request with url path params resolved",
@@ -95,7 +95,7 @@ func TestMakeRequest(t *testing.T) {
 				Host:    "hero.io",
 				Path:    "/api",
 				Query:   map[string]interface{}{},
-				Headers: map[string]string{"X-TID": "1234567890", "Authorization": "Bearer abcdefgh", "Content-Type": "application/json"},
+				Headers: map[string]string{"X-Tid": "1234567890", "Authorization": "Bearer abcdefgh", "Content-Type": "application/json"},
 			},
 		},
 		{
@@ -103,6 +103,12 @@ func TestMakeRequest(t *testing.T) {
 			domain.Statement{Method: domain.ToMethod, Resource: "hero", With: domain.Params{Values: map[string]interface{}{"id": domain.AsBody{Value: []interface{}{"1", "2", "3"}}}}},
 			restql.QueryContext{Mappings: map[string]restql.Mapping{"hero": mapping(t, "http://hero.io/api")}},
 			restql.HTTPRequest{Method: http.MethodPost, Schema: "http", Host: "hero.io", Path: "/api", Query: map[string]interface{}{}, Body: []interface{}{"1", "2", "3"}, Headers: map[string]string{"Content-Type": "application/json"}},
+		},
+		{
+			"should make request with case-insensitive merged headers",
+			domain.Statement{Method: domain.FromMethod, Resource: "hero", Headers: map[string]interface{}{"X-TID": "1234567890", "accept": "application/json"}},
+			restql.QueryContext{Mappings: map[string]restql.Mapping{"hero": mapping(t, "http://hero.io/api")}, Input: restql.QueryInput{Headers: map[string]string{"Accept": "*/*"}}},
+			restql.HTTPRequest{Method: http.MethodGet, Schema: "http", Host: "hero.io", Path: "/api", Query: map[string]interface{}{}, Headers: map[string]string{"X-Tid": "1234567890", "Content-Type": "application/json", "Accept": "application/json"}},
 		},
 	}
 
