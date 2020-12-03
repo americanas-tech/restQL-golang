@@ -67,8 +67,6 @@ func (cm *ConnManager) watchConn(conn net.Conn, callback func()) {
 		return
 	}
 
-	ticker := time.NewTicker(10 * time.Millisecond)
-
 	var sysErr error = nil
 	fdReader := func(fd uintptr) bool {
 		var buf = []byte{0}
@@ -83,6 +81,9 @@ func (cm *ConnManager) watchConn(conn net.Conn, callback func()) {
 		}
 		return true
 	}
+
+	ticker := time.NewTicker(10 * time.Millisecond)
+	defer ticker.Stop()
 
 	for {
 		select {
