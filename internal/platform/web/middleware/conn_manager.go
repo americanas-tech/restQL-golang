@@ -68,8 +68,8 @@ func (cm *ConnManager) watchConn(conn net.Conn, callback func()) {
 	}
 
 	var sysErr error = nil
+	var buf = []byte{0}
 	fdReader := func(fd uintptr) bool {
-		var buf = []byte{0}
 		n, _, err := syscall.Recvfrom(int(fd), buf, syscall.MSG_PEEK|syscall.MSG_DONTWAIT)
 		switch {
 		case n == 0 && err == nil:
