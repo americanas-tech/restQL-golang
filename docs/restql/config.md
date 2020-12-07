@@ -44,7 +44,8 @@ You can use the `pprof` tool to investigate restQL performance. To enable it set
 **Middlewares**: currently restQL support 3 built-in middlewares, setting any of the fields automatically enable the given middleware.
 
 - Request ID: this middleware generates a unique id for each request restQL API receives. The `http.server.middlewares.requestId.header` field define the header name use to return the generated id. The `http.server.middlewares.requestId.strategy` defines how the id will be generated and can be either `base64` or `uuid`.
-- Timeout: this middleware limits the maximum time any request can take. The `http.server.middlewares.timeout.duration` field aceppt a time duration value.
+- Timeout: this middleware limits the maximum time any request can take. The `http.server.middlewares.timeout.duration` field accept a time duration value.
+- Request Cancellation: this middleware stops query execution when the client drops the connection. This improves fault response as it avoids unnecessary computation and reduces traffic on downstream APIs. By default, this middleware is disable but can be activated with the configuration field `http.server.middlewares.requestCancellation.enable`. You can also manage the connection watching interval with the field `http.server.middlewares.requestCancellation.watchingInterval`, which accepts a duration string.
 - CORS: Cross-Origin Resource Sharing is a specification that enables truly open access across domain-boundaries.
   You can configure your own CORS headers either via the configuration file:
   ```yaml
