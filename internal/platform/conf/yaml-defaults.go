@@ -9,8 +9,12 @@ var defaults = []byte(`
 http:
   server:
     readTimeout: 3s
-    gracefulShutdownTimeout: 1s
     idleTimeout: 5s
+    gracefulShutdownTimeout: 1s
+    middlewares:
+      requestCancellation:
+        enabled: false
+        watchInterval: 10ms
 
   client:
     readTimeout: 1s
