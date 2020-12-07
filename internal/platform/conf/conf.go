@@ -32,7 +32,8 @@ type corsConf struct {
 }
 
 type requestCancellationConf struct {
-	Enabled bool `yaml:"enabled"`
+	Enabled       bool          `yaml:"enabled"`
+	WatchInterval time.Duration `yaml:"watchInterval"`
 }
 
 // Config represents all parameters allowed in restQL runtime.
