@@ -2,9 +2,18 @@
 
 ## Running restQL
 
+### Using Go
 If you have Go installed then you can run `go get -u github.com/b2wdigital/restQL-golang` and have restQL in your `$GOBIN` directory. However, if you prefer you can download the binary for you OS in the [release page](https://github.com/b2wdigital/restQL-golang/releases).
 
-Then you can start the server runtime with `RESTQL_PORT=9000 RESTQL_MAPPING_PEOPLE=https://swapi.co/api/people restql`
+Then you can start the server runtime with `RESTQL_PORT=9000 RESTQL_HEALTH_PORT=9001 RESTQL_MAPPING_PEOPLE=https://swapi.co/api/people restql`
+
+### Using Docker
+First go to the [official Dockerhub page for restQL](https://hub.docker.com/r/b2wdigital/restql/tags) and choose a version.
+Then you can run `docker pull b2wdigital/restql:<version>` to get the latest version.
+
+Then, you can start the server with `docker run -e RESTQL_PORT=9000 -e RESTQL_HEALTH_PORT=9001 -e RESTQL_MAPPING_PEOPLE=https://swapi.co/api/people -p 9000:9000 -p 9001:9001 b2wdigital/restql:<version>`
+
+### Executing a Query
 
 The provided environment variable `RESTQL_MAPPING_PEOPLE` is what is called a mapping, it associates a name with a REST resource URL, in this case the resource will be mapped to the name `people`.
 
