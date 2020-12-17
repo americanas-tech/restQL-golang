@@ -3,7 +3,6 @@ package web
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"github.com/b2wdigital/restQL-golang/v4/internal/domain"
 	"github.com/b2wdigital/restQL-golang/v4/pkg/restql"
 	"net/http"
@@ -264,10 +263,17 @@ func getResponseHeader(resourceID string, response restql.DoneResource) map[stri
 		return nil
 	}
 
+	var buf bytes.Buffer
 	headers := make(map[string]string)
 	for hn, hv := range response.ResponseHeaders {
-		headerName := fmt.Sprintf("%s-%s", resourceID, hn)
+		buf.WriteString(resourceID)
+		buf.WriteRune('-')
+		buf.WriteString(hn)
+
+		headerName := buf.String()
 		headers[headerName] = hv
+
+		buf.Reset()
 	}
 
 	return headers
