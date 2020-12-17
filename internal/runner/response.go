@@ -3,8 +3,8 @@ package runner
 import (
 	"bytes"
 	"github.com/b2wdigital/restQL-golang/v4/pkg/restql"
-	"regexp"
 	"strconv"
+	"strings"
 
 	"github.com/b2wdigital/restQL-golang/v4/internal/domain"
 )
@@ -188,9 +188,9 @@ func getDefaultCacheControlOptions(options DoneResourceOptions) (cc restql.Resou
 	return cc, found
 }
 
-var maxAgeHeaderRegex = regexp.MustCompile("max-age=(\\d+)")
-var smaxAgeHeaderRegex = regexp.MustCompile("s-maxage=(\\d+)")
-var noCacheHeaderRegex = regexp.MustCompile("no-cache")
+func isComma(r rune) bool {
+	return r == ','
+}
 
 func getCacheControlOptionsFromHeader(response restql.HTTPResponse) (cc restql.ResourceCacheControl, found bool) {
 	cacheControl, ok := response.Headers["Cache-Control"]
@@ -198,37 +198,42 @@ func getCacheControlOptionsFromHeader(response restql.HTTPResponse) (cc restql.R
 		return restql.ResourceCacheControl{}, false
 	}
 
-	if noCacheHeaderRegex.MatchString(cacheControl) {
-		return restql.ResourceCacheControl{NoCache: true}, true
-	}
+	cacheControlFields := strings.FieldsFunc(cacheControl, isComma)
 
-	maxAgeMatches := maxAgeHeaderRegex.FindAllStringSubmatch(cacheControl, -1)
-	maxAgeValue, ok := extractCacheControlValueFromHeader(maxAgeMatches)
-	if ok {
-		found = true
-		cc.MaxAge = restql.ResourceCacheControlValue{Exist: true, Time: maxAgeValue}
-	}
+	for _, ccField := range cacheControlFields {
+		ccField = strings.TrimSpace(ccField)
 
-	smaxAgeMatches := smaxAgeHeaderRegex.FindAllStringSubmatch(cacheControl, -1)
-	smaxAgeValue, ok := extractCacheControlValueFromHeader(smaxAgeMatches)
-	if ok {
-		found = true
-		cc.SMaxAge = restql.ResourceCacheControlValue{Exist: true, Time: smaxAgeValue}
+		if strings.EqualFold(ccField, "no-cache") {
+			return restql.ResourceCacheControl{NoCache: true}, true
+		}
+
+		keyValue := strings.Split(ccField, "=")
+		if len(keyValue) < 2 {
+			continue
+		}
+
+		key, value := keyValue[0], keyValue[1]
+
+		if strings.EqualFold(key, "max-age") {
+			timeValue, err := strconv.Atoi(value)
+			if err != nil {
+				continue
+			}
+
+			found = true
+			cc.MaxAge = restql.ResourceCacheControlValue{Exist: true, Time: timeValue}
+		}
+
+		if strings.EqualFold(key, "s-maxage") {
+			timeValue, err := strconv.Atoi(value)
+			if err != nil {
+				continue
+			}
+
+			found = true
+			cc.SMaxAge = restql.ResourceCacheControlValue{Exist: true, Time: timeValue}
+		}
 	}
 
 	return cc, found
-}
-
-func extractCacheControlValueFromHeader(header [][]string) (int, bool) {
-	if len(header) <= 0 || len(header[0]) < 2 {
-		return 0, false
-	}
-
-	headerValue := header[0][1]
-	time, err := strconv.Atoi(headerValue)
-	if err != nil {
-		return 0, false
-	}
-
-	return time, true
 }
