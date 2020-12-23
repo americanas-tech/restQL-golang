@@ -66,6 +66,10 @@ func makeQueryArgs(queryArgs []byte, request restql.HTTPRequest) []byte {
 }
 
 func appendQueryArg(buf *bytes.Buffer, key string, value interface{}) {
+	if value == nil {
+		return
+	}
+
 	switch value := value.(type) {
 	case string:
 		appendStringParam(buf, key, value)
@@ -97,6 +101,10 @@ func appendMapParam(buf *bytes.Buffer, key string, value map[string]interface{})
 }
 
 func appendStringParam(buf *bytes.Buffer, key string, value string) {
+	if value == "" {
+		return
+	}
+
 	buf.Write(ampersand)
 	buf.WriteString(key)
 	buf.Write(equal)
