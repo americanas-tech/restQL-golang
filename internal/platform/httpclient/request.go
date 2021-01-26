@@ -57,9 +57,16 @@ func setupRequest(request restql.HTTPRequest, req *fasthttp.Request) error {
 
 func makeQueryArgs(queryArgs []byte, request restql.HTTPRequest) []byte {
 	buf := bytes.NewBuffer(queryArgs)
+	size := len(request.Query) - 1
 
+	i := 0
 	for key, value := range request.Query {
 		appendQueryArg(buf, key, value)
+		if i < size {
+			buf.Write(ampersand)
+		}
+
+		i++
 	}
 
 	return buf.Bytes()
@@ -82,8 +89,13 @@ func appendQueryArg(buf *bytes.Buffer, key string, value interface{}) {
 	case map[string]interface{}:
 		appendMapParam(buf, key, value)
 	case []interface{}:
-		for _, v := range value {
+		size := len(value) - 1
+		for i, v := range value {
 			appendQueryArg(buf, key, v)
+
+			if i < size {
+				buf.Write(ampersand)
+			}
 		}
 	}
 }
@@ -94,7 +106,6 @@ func appendMapParam(buf *bytes.Buffer, key string, value map[string]interface{})
 		return
 	}
 
-	buf.Write(ampersand)
 	buf.WriteString(key)
 	buf.Write(equal)
 	buf.WriteString(url.QueryEscape(string(data)))
@@ -105,7 +116,6 @@ func appendStringParam(buf *bytes.Buffer, key string, value string) {
 		return
 	}
 
-	buf.Write(ampersand)
 	buf.WriteString(key)
 	buf.Write(equal)
 	buf.WriteString(url.QueryEscape(value))
