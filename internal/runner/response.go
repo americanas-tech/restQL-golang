@@ -192,8 +192,19 @@ func isComma(r rune) bool {
 	return r == ','
 }
 
+func findCacheControlHeader(response restql.HTTPResponse) (string, bool) {
+	for k, v := range response.Headers {
+		if strings.EqualFold(k, "Cache-Control") {
+			return v, true
+		}
+	}
+
+	return "", false
+}
+
 func getCacheControlOptionsFromHeader(response restql.HTTPResponse) (cc restql.ResourceCacheControl, found bool) {
-	cacheControl, ok := response.Headers["Cache-Control"]
+	cacheControl, ok := findCacheControlHeader(response)
+
 	if !ok {
 		return restql.ResourceCacheControl{}, false
 	}
