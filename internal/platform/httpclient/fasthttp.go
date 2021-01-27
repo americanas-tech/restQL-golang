@@ -14,6 +14,8 @@ import (
 	"time"
 )
 
+var errInvalidJSON = errors.New("invalid json")
+
 type httpResult struct {
 	target   string
 	duration time.Duration
@@ -21,19 +23,19 @@ type httpResult struct {
 	response *fasthttp.Response
 }
 
-type fastHttpClient struct {
-	client        *fasthttp.Client
-	log           restql.Logger
-	pluginManager plugins.Lifecycle
-	responsePool  *sync.Pool
+type fastHTTPClient struct {
+	client       *fasthttp.Client
+	log          restql.Logger
+	lifecycle    plugins.Lifecycle
+	responsePool *sync.Pool
 }
 
-func newFastHttpClient(log restql.Logger, pm plugins.Lifecycle, cfg *conf.Config) *fastHttpClient {
+func newFastHTTPClient(log restql.Logger, pm plugins.Lifecycle, cfg *conf.Config) *fastHTTPClient {
 	clientCfg := cfg.HTTP.Client
 
 	r := &dnscache.Resolver{}
 	go func() {
-		t := time.NewTicker(10 * time.Minute)
+		t := time.NewTicker(clientCfg.DnsRefreshInterval)
 		defer t.Stop()
 		for range t.C {
 			r.Refresh(true)
@@ -75,19 +77,16 @@ func newFastHttpClient(log restql.Logger, pm plugins.Lifecycle, cfg *conf.Config
 		NoDefaultUserAgentHeader:      false,
 		DisableHeaderNamesNormalizing: true,
 		Dial:                          dialer.Dial,
-		//ReadTimeout:                   clientCfg.ReadTimeout,
-		//WriteTimeout:                  clientCfg.WriteTimeout,
-		MaxConnsPerHost:     clientCfg.MaxConnsPerHost,
-		MaxIdleConnDuration: clientCfg.MaxIdleConnDuration,
-		//MaxConnDuration:               clientCfg.MaxConnDuration,
-		MaxConnWaitTimeout: clientCfg.ConnTimeout,
+		MaxConnsPerHost:               clientCfg.MaxConnsPerHost,
+		MaxIdleConnDuration:           clientCfg.MaxIdleConnDuration,
+		MaxConnWaitTimeout:            clientCfg.ConnTimeout,
 	}
 
-	return &fastHttpClient{client: c, log: log, pluginManager: pm, responsePool: rp}
+	return &fastHTTPClient{client: c, log: log, lifecycle: pm, responsePool: rp}
 }
 
-func (hc *fastHttpClient) Do(ctx context.Context, request restql.HTTPRequest) (restql.HTTPResponse, error) {
-	requestCtx := hc.pluginManager.BeforeRequest(ctx, request)
+func (hc *fastHTTPClient) Do(ctx context.Context, request restql.HTTPRequest) (restql.HTTPResponse, error) {
+	requestCtx := hc.lifecycle.BeforeRequest(ctx, request)
 
 	c := hc.responsePool.Get().(chan httpResult)
 
@@ -123,7 +122,7 @@ func (hc *fastHttpClient) Do(ctx context.Context, request restql.HTTPRequest) (r
 
 		fasthttp.ReleaseResponse(hr.response)
 
-		hc.pluginManager.AfterRequest(requestCtx, request, response, hr.err)
+		hc.lifecycle.AfterRequest(requestCtx, request, response, hr.err)
 
 		return response, domain.ErrRequestTimeout
 	case hr.err != nil:
@@ -133,9 +132,14 @@ func (hc *fastHttpClient) Do(ctx context.Context, request restql.HTTPRequest) (r
 			fasthttp.ReleaseResponse(hr.response)
 		}
 
-		hc.pluginManager.AfterRequest(requestCtx, request, response, hr.err)
+		hc.lifecycle.AfterRequest(requestCtx, request, response, hr.err)
 
 		return response, errors.Wrap(hr.err, "request execution failed")
+	}
+
+	body, err := unmarshalBody(hc.log, hr.response)
+	if err != nil {
+		hc.log.Error("invalid json as body", err, "url", hr.target, "body", body.Unmarshal(), "statusCode", hr.response.StatusCode())
 	}
 
 	response := restql.HTTPResponse{
@@ -143,45 +147,12 @@ func (hc *fastHttpClient) Do(ctx context.Context, request restql.HTTPRequest) (r
 		StatusCode: hr.response.StatusCode(),
 		Headers:    readHeaders(hr.response),
 		Duration:   hr.duration,
-		Body:       hc.unmarshalBody(hc.log, hr.response),
+		Body:       body,
 	}
 
 	fasthttp.ReleaseResponse(hr.response)
 
-	hc.pluginManager.AfterRequest(requestCtx, request, response, hr.err)
+	hc.lifecycle.AfterRequest(requestCtx, request, response, hr.err)
 
 	return response, nil
-}
-
-func (hc *fastHttpClient) unmarshalBody(log restql.Logger, response *fasthttp.Response) *restql.ResponseBody {
-	//target := response.Request.URL.Host
-	//requestURL := response.Header.
-	statusCode := response.StatusCode
-	//
-	////response := restql.HTTPResponse{
-	////	URL:        requestURL,
-	////	StatusCode: res.StatusCode(),
-	////	Headers:    readHeaders(res),
-	////	Duration:   responseTime,
-	////}
-
-	bodyByte := response.Body()
-	bb := make([]byte, len(bodyByte))
-	copy(bb, bodyByte)
-
-	rb := restql.NewResponseBodyFromBytes(log, bb)
-	if !rb.Valid() {
-		log.Error("invalid json as body", errInvalidJson, "body", rb.Unmarshal(), "statusCode", statusCode)
-	}
-
-	return rb
-}
-
-func readHeaders(res *fasthttp.Response) restql.Headers {
-	h := make(restql.Headers)
-	res.Header.VisitAll(func(key, value []byte) {
-		h[string(key)] = string(value)
-	})
-
-	return h
 }

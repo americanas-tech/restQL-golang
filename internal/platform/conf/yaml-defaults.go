@@ -18,6 +18,7 @@ http:
 
   client:
     readTimeout: 1s
+    dnsRefreshInterval: 10m
     writeTimeout: 1s
     maxIdleConnectionsPerHost: 512
     maxIdleConnectionDuration: 10s

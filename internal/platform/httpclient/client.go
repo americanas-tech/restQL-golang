@@ -9,5 +9,5 @@ import (
 
 // New constructs an HTTPClient instances.
 func New(log restql.Logger, pm plugins.Lifecycle, cfg *conf.Config) domain.HTTPClient {
-	return newFastHttpClient(log, pm, cfg)
+	return newFastHTTPClient(log, pm, cfg)
 }

@@ -62,6 +62,7 @@ type Config struct {
 		} `yaml:"server"`
 
 		Client struct {
+			DnsRefreshInterval  time.Duration `yaml:"dnsRefreshInterval"`
 			ConnTimeout         time.Duration `yaml:"connectionTimeout"`
 			MaxRequestTimeout   time.Duration `yaml:"maxRequestTimeout"`
 			MaxConnsPerHost     int           `yaml:"maxConnectionsPerHost"`
