@@ -75,11 +75,15 @@ You can use the `pprof` tool to investigate restQL performance. To enable it set
 RestQL primary feature is performing optimized HTTP calls, but since each environment has different characteristics like workload and latency, it is important that you tune the parameters for the internal HTTP client in order to achieve the best performance. You can set these parameters throught the configuration file.
 
 - `http.client.connectionTimeout`: limits the time taken to establish a TCP connection with a host.
-- `http.client.maxRequestTimeout`: although every the timeout for calling a resource can be defined by the client in the query you can set a upper limit to request time, for example, if you set it to `2s` even though a query specifies a timeout of `10s` restQL will drop the request when it reachs its maximum timeout. It accepts a duration string.
+- `http.client.maxIdleConnectionDuration`: set the time a connection will be kept open in idle state, after it the connection will be closed. It accepts a duration string.
 - `http.client.maxConnectionsPerHost`: limits the size of the connection pool for each host.
+- `http.client.dnsRefreshInterval`: defines the time a DNS query result will be cached.
+
+
+*Deprecated on v4.2.0:*
+- `http.client.maxRequestTimeout`: although every the timeout for calling a resource can be defined by the client in the query you can set a upper limit to request time, for example, if you set it to `2s` even though a query specifies a timeout of `10s` restQL will drop the request when it reachs its maximum timeout. It accepts a duration string.
 - `http.client.maxIdleConnections`: limits the size of the global idle connection pool.
 - `http.client.maxIdleConnectionsPerHost`: limits the size of the idle connection pool for each host.
-- `http.client.maxIdleConnectionDuration`: set the time a connection will be kept open in idle state, after it the connection will be closed. It accepts a duration string.
 
 ## Caching
 
