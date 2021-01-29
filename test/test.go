@@ -1,7 +1,6 @@
 package test
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"github.com/b2wdigital/restQL-golang/v4/pkg/restql"
@@ -35,13 +34,13 @@ var mappingComparer = cmp.Comparer(func(x, y restql.Mapping) bool {
 		x.Host() == y.Host()
 })
 
-var responseBodyComparer = cmp.Comparer(func(x, y restql.ResponseBody) bool {
-	return bytes.Equal(x.Bytes(), y.Bytes()) || cmp.Equal(x.Value(), y.Bytes())
+var responseBodyTransformer = cmp.Transformer("ResponseBody", func(x restql.ResponseBody) interface{} {
+	return x.Unmarshal()
 })
 
 func Equal(t *testing.T, got, expected interface{}) {
-	if !cmp.Equal(got, expected, regexComparer, mappingComparer, responseBodyComparer) {
-		t.Errorf("got = %+#v, want = %+#v\nMismatch (-want +got):\n%s", got, expected, cmp.Diff(expected, got, regexComparer))
+	if !cmp.Equal(got, expected, regexComparer, mappingComparer, responseBodyTransformer) {
+		t.Errorf("got = %+#v, want = %+#v\nMismatch (-want +got):\n%s", got, expected, cmp.Diff(expected, got, regexComparer, responseBodyTransformer))
 	}
 }
 
