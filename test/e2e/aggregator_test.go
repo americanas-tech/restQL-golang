@@ -618,7 +618,7 @@ from planets
 	with 
 		id = "Yavin"
 
-from planets as planetSats in planets.satellites
+from planets as planetSats in planets.satellitesDetails
 	with 
 		id = planets.satellites
 	hidden
@@ -674,7 +674,8 @@ from planets as planetSats in planets.satellites
 				"surface_water": "8",
 				"population": "1000",
 				"residents": ["john", "janne"],
-				"satellites": [{
+				"satellites": ["Havoc"],
+				"satellitesDetails": [{
 					"name": "Havoc",
 					"rotation_period": 24.5,
 					"orbital_period": "4818",
@@ -726,7 +727,7 @@ from planets
 	with 
 		id = "Yavin"
 
-from planets as sats in planets.satellites
+from planets as sats in planets.satellitesDetails
 	with 
 		id = planets.satellites
 	only
@@ -784,7 +785,8 @@ from planets as sats in planets.satellites
 				"surface_water": "8",
 				"population": "1000",
 				"residents": ["john", "janne"],
-				"satellites": [{
+				"satellites": ["Havoc"],
+				"satellitesDetails": [{
 					"name": "Havoc",
 					"rotation_period": 24.5
 				}],
