@@ -2,8 +2,7 @@ package restql
 
 // SavedQuery represents a query stored in database.
 type SavedQuery struct {
-	Text       string
-	Deprecated bool
+	Text string
 }
 
 // QueryContext represents all data related

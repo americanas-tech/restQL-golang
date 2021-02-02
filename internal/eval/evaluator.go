@@ -70,10 +70,6 @@ func (e Evaluator) SavedQuery(ctx context.Context, queryOpts restql.QueryOptions
 	log := restql.GetLogger(ctx)
 	log.Debug("Saved query retrieved", "query", savedQuery)
 
-	if savedQuery.Deprecated {
-		return nil, domain.ErrQueryRevisionDeprecated{Revision: queryOpts.Revision}
-	}
-
 	return e.evaluateQuery(ctx, savedQuery.Text, queryOpts, queryInput)
 }
 
