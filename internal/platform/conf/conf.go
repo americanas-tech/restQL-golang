@@ -104,6 +104,8 @@ type Config struct {
 
 	Mappings map[string]string `yaml:"mappings"`
 
+	TenantMappings map[string]map[string]string `yaml:"tenants"`
+
 	Queries map[string]map[string][]string `yaml:"queries"`
 
 	Env EnvSource

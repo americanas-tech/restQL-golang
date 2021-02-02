@@ -10,23 +10,31 @@ import (
 	"github.com/b2wdigital/restQL-golang/v4/pkg/restql"
 )
 
-var envMappingRegex = regexp.MustCompile("^RESTQL_MAPPING_(\\w+)")
+var envMappingRegex = regexp.MustCompile("^RESTQL_MAPPING_([^_]+)$")
+var envMappingWithTenantRegex = regexp.MustCompile("^RESTQL_MAPPING_(\\w+)_(\\w+)$")
 
 // MappingsReader fetch indexed mappings from database,
 // configuration file and environment variable.
 type MappingsReader struct {
-	log   restql.Logger
-	env   map[string]restql.Mapping
-	local map[string]restql.Mapping
-	db    Database
+	log           restql.Logger
+	env           map[string]restql.Mapping
+	envWithTenant map[string]map[string]restql.Mapping
+	local         map[string]restql.Mapping
+	localByTenant map[string]map[string]restql.Mapping
+	db            Database
 }
 
 // NewMappingReader constructs a MappingsReader instance.
-func NewMappingReader(log restql.Logger, env domain.EnvSource, local map[string]string, db Database) MappingsReader {
+func NewMappingReader(log restql.Logger, env domain.EnvSource, local map[string]string, localByTenant map[string]map[string]string, db Database) MappingsReader {
 	envMappings := getMappingsFromEnv(log, env)
+	envWithTenantMappings := getMappingsFromEnvWithTenant(log, env)
 	localMappings := parseMappingsFromLocal(log, local)
+	localMappingsByTenant := make(map[string]map[string]restql.Mapping)
+	for t, m := range localByTenant {
+		localMappingsByTenant[t] = parseMappingsFromLocal(log, m)
+	}
 
-	return MappingsReader{log: log, env: envMappings, local: localMappings, db: db}
+	return MappingsReader{log: log, env: envMappings, envWithTenant: envWithTenantMappings, local: localMappings, localByTenant: localMappingsByTenant, db: db}
 }
 
 // FromTenant fetch the mappings for the given tenant.
@@ -41,10 +49,17 @@ func (mr MappingsReader) FromTenant(ctx context.Context, tenant string) (map[str
 		result[k] = v
 	}
 
+	localTenantMappings, found := mr.localByTenant[tenant]
+	if found {
+		for k, v := range localTenantMappings {
+			result[k] = v
+		}
+	}
+
 	dbMappings, err := mr.db.FindMappingsForTenant(ctx, tenant)
 	switch {
 	case err == errNoDatabase:
-		result = mr.applyEnvMappings(result)
+		result = mr.applyEnvMappings(result, tenant)
 
 		if len(result) == 0 {
 			return nil, mappingsFoundErr
@@ -62,7 +77,7 @@ func (mr MappingsReader) FromTenant(ctx context.Context, tenant string) (map[str
 		result[mapping.ResourceName()] = mapping
 	}
 
-	result = mr.applyEnvMappings(result)
+	result = mr.applyEnvMappings(result, tenant)
 
 	if len(result) == 0 {
 		return nil, mappingsFoundErr
@@ -72,10 +87,18 @@ func (mr MappingsReader) FromTenant(ctx context.Context, tenant string) (map[str
 	return result, nil
 }
 
-func (mr MappingsReader) applyEnvMappings(result map[string]restql.Mapping) map[string]restql.Mapping {
+func (mr MappingsReader) applyEnvMappings(result map[string]restql.Mapping, tenant string) map[string]restql.Mapping {
 	for k, v := range mr.env {
 		result[k] = v
 	}
+
+	tenantMappings, found := mr.envWithTenant[tenant]
+	if found {
+		for k, v := range tenantMappings {
+			result[k] = v
+		}
+	}
+
 	return result
 }
 
@@ -94,6 +117,36 @@ func getMappingsFromEnv(log restql.Logger, envSource domain.EnvSource) map[strin
 			}
 
 			result[resource] = mapping
+		}
+	}
+
+	return result
+}
+
+func getMappingsFromEnvWithTenant(log restql.Logger, envSource domain.EnvSource) map[string]map[string]restql.Mapping {
+	result := make(map[string]map[string]restql.Mapping)
+	env := envSource.GetAll()
+
+	for key, value := range env {
+		matches := envMappingWithTenantRegex.FindAllStringSubmatch(key, -1)
+		if len(matches) > 0 && len(matches[0]) >= 3 {
+			tenant := strings.ToLower(matches[0][1])
+			resource := strings.ToLower(matches[0][2])
+			mapping, err := restql.NewMapping(resource, value)
+			if err != nil {
+				log.Error("failed to create mapping", err)
+				continue
+			}
+
+			tenantMappings, found := result[tenant]
+			if !found {
+				result[tenant] = map[string]restql.Mapping{
+					resource: mapping,
+				}
+				continue
+			}
+
+			tenantMappings[resource] = mapping
 		}
 	}
 

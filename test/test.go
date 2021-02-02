@@ -40,7 +40,7 @@ var responseBodyTransformer = cmp.Transformer("ResponseBody", func(x restql.Resp
 
 func Equal(t *testing.T, got, expected interface{}) {
 	if !cmp.Equal(got, expected, regexComparer, mappingComparer, responseBodyTransformer) {
-		t.Errorf("got = %+#v, want = %+#v\nMismatch (-want +got):\n%s", got, expected, cmp.Diff(expected, got, regexComparer, responseBodyTransformer))
+		t.Errorf("got = %+#v, want = %+#v\nMismatch (-want +got):\n%s", got, expected, cmp.Diff(expected, got, regexComparer, mappingComparer, responseBodyTransformer))
 	}
 }
 
