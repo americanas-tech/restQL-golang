@@ -49,6 +49,7 @@ type Config struct {
 			PropfAddr               string        `env:"RESTQL_PPROF_PORT"`
 			EnablePprof             bool          `env:"RESTQL_ENABLE_PPROF"`
 			EnableFullPprof         bool          `env:"RESTQL_ENABLE_FULL_PPROF"`
+			EnableAdmin             bool          `yaml:"enableAdmin" env:"RESTQL_ENABLE_ADMIN"`
 			GracefulShutdownTimeout time.Duration `yaml:"gracefulShutdownTimeout"`
 			ReadTimeout             time.Duration `yaml:"readTimeout"`
 			IdleTimeout             time.Duration `yaml:"idleTimeout"`

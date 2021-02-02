@@ -132,8 +132,16 @@ type TransactionResponse struct {
 // the obligatory operations needed from a database.
 type DatabasePlugin interface {
 	Plugin
-	FindMappingsForTenant(ctx context.Context, tenantID string) ([]Mapping, error)
+
+	FindAllNamespaces(ctx context.Context) ([]string, error)
+	FindQueriesForNamespace(ctx context.Context, namespace string) (map[string]SavedQuery, error)
+	FindQueryWithAllRevisions(ctx context.Context, namespace string, queryName string) ([]SavedQuery, error)
 	FindQuery(ctx context.Context, namespace string, name string, revision int) (SavedQuery, error)
+	CreateQueryRevision(ctx context.Context, namespace string, queryName string, content string) error
+
+	FindAllTenants(ctx context.Context) ([]string, error)
+	FindMappingsForTenant(ctx context.Context, tenantID string) ([]Mapping, error)
+	SetMapping(ctx context.Context, tenantID string, mappingsName string, url string) error
 }
 
 // Errors returned by Database plugin
