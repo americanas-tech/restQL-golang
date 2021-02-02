@@ -35,7 +35,7 @@ func (qr QueryReader) Get(ctx context.Context, namespace, id string, revision in
 	if err != nil {
 		log.Info("query not found in local", "error", err, "namespace", namespace, "name", id, "revision", revision)
 	}
-	localQuery := restql.SavedQuery{Text: localQueryText}
+	localQuery := restql.SavedQuery{Name: id, Text: localQueryText, Revision: revision}
 
 	dbQuery, err := qr.db.FindQuery(ctx, namespace, id, revision)
 	switch {

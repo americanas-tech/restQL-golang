@@ -41,7 +41,6 @@ func API(log restql.Logger, cfg *conf.Config) (fasthttp.RequestHandler, error) {
 
 	md := middleware.NewDecorator(log, cfg, lifecycle)
 
-	app := newApp(log, appOptions{MiddlewareDecorator: md})
 	client := httpclient.New(log, lifecycle, cfg)
 	executor := runner.NewExecutor(log, client, cfg.HTTP.QueryResourceTimeout, cfg.HTTP.ForwardPrefix)
 	r := runner.NewRunner(log, executor, cfg.HTTP.GlobalQueryTimeout)
@@ -63,12 +62,27 @@ func API(log restql.Logger, cfg *conf.Config) (fasthttp.RequestHandler, error) {
 
 	restQl := newRestQl(log, cfg, e, defaultParser)
 
+	app := newApp(log, appOptions{MiddlewareDecorator: md})
 	app.Handle(http.MethodPost, "/validate-query", restQl.ValidateQuery)
 	app.Handle(http.MethodPost, "/run-query", restQl.RunAdHocQuery)
 	app.Handle(http.MethodGet, "/run-query/{namespace}/{queryId}/{revision}", restQl.RunSavedQuery)
 	app.Handle(http.MethodPost, "/run-query/{namespace}/{queryId}/{revision}", restQl.RunSavedQuery)
 
+	if cfg.HTTP.Server.EnableAdmin {
+		log.Info("administration api enabled")
+		app = admin(log, cfg, db, app)
+	}
+
 	return app.RequestHandler(), nil
+}
+
+// Admin adds handlers for administrative operations
+func admin(log restql.Logger, cfg *conf.Config, db persistence.Database, apiApp app) app {
+	admRepo := persistence.NewAdminRepository(log, db)
+	a := newAdmin(admRepo)
+	apiApp.Handle(http.MethodGet, "/admin/tenant", a.ListAllTenants)
+
+	return apiApp
 }
 
 // Health constructs a handler for system checks endpoints
