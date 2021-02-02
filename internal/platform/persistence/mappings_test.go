@@ -10,20 +10,21 @@ import (
 	"github.com/b2wdigital/restQL-golang/v4/test"
 )
 
-const defaultTenant = "default"
+const mytenant = "mytenant"
 
 func TestMappingsReader_Env(t *testing.T) {
 	envSource := stubEnvSource{
 		getAll: map[string]string{
-			"RESTQL_MAPPING_HERO":     "http://hero.api/",
-			"RESTQL_MAPPING_SIDEKICK": "http://sidekick.api/",
-			"RESTQL_MAPPING_":         "http://failed.api/",
-			"TEST_VAR":                "foo",
+			"RESTQL_MAPPING_HERO":             "http://hero.api/",
+			"RESTQL_MAPPING_SIDEKICK":         "http://sidekick.api/",
+			"RESTQL_MAPPING_":                 "http://failed.api/",
+			"RESTQL_MAPPING_MYTENANT_VILLAIN": "http://villain.api/",
+			"TEST_VAR":                        "foo",
 		},
 	}
 	db := stubDatabase{}
 
-	reader := NewMappingReader(noOpLogger, envSource, map[string]string{}, db)
+	reader := NewMappingReader(noOpLogger, envSource, map[string]string{}, map[string]map[string]string{}, db)
 
 	heroMapping, err := restql.NewMapping("hero", "http://hero.api/")
 	test.VerifyError(t, err)
@@ -31,12 +32,16 @@ func TestMappingsReader_Env(t *testing.T) {
 	sidekickMapping, err := restql.NewMapping("sidekick", "http://sidekick.api/")
 	test.VerifyError(t, err)
 
+	villainMapping, err := restql.NewMapping("villain", "http://villain.api/")
+	test.VerifyError(t, err)
+
 	expected := map[string]restql.Mapping{
 		"hero":     heroMapping,
 		"sidekick": sidekickMapping,
+		"villain":  villainMapping,
 	}
 
-	mappings, err := reader.FromTenant(context.Background(), defaultTenant)
+	mappings, err := reader.FromTenant(context.Background(), mytenant)
 
 	test.VerifyError(t, err)
 	test.Equal(t, mappings, expected)
@@ -48,9 +53,14 @@ func TestMappingsReader_Local(t *testing.T) {
 		"hero":     "http://hero.api/",
 		"sidekick": "http://sidekick.api/",
 	}
+	localByTenant := map[string]map[string]string{
+		mytenant: {
+			"villain": "http://villain.api/",
+		},
+	}
 	db := stubDatabase{}
 
-	reader := NewMappingReader(noOpLogger, envSource, local, db)
+	reader := NewMappingReader(noOpLogger, envSource, local, localByTenant, db)
 
 	heroMapping, err := restql.NewMapping("hero", "http://hero.api/")
 	test.VerifyError(t, err)
@@ -58,12 +68,16 @@ func TestMappingsReader_Local(t *testing.T) {
 	sidekickMapping, err := restql.NewMapping("sidekick", "http://sidekick.api/")
 	test.VerifyError(t, err)
 
+	villainMapping, err := restql.NewMapping("villain", "http://villain.api/")
+	test.VerifyError(t, err)
+
 	expected := map[string]restql.Mapping{
 		"hero":     heroMapping,
 		"sidekick": sidekickMapping,
+		"villain":  villainMapping,
 	}
 
-	mappings, err := reader.FromTenant(context.Background(), defaultTenant)
+	mappings, err := reader.FromTenant(context.Background(), mytenant)
 
 	test.VerifyError(t, err)
 	test.Equal(t, mappings, expected)
@@ -81,14 +95,14 @@ func TestMappingsReader_Database(t *testing.T) {
 
 	db := stubDatabase{findMappingsForTenant: []restql.Mapping{heroMapping, sidekickMapping}}
 
-	reader := NewMappingReader(noOpLogger, envSource, local, db)
+	reader := NewMappingReader(noOpLogger, envSource, local, nil, db)
 
 	expected := map[string]restql.Mapping{
 		"hero":     heroMapping,
 		"sidekick": sidekickMapping,
 	}
 
-	mappings, err := reader.FromTenant(context.Background(), defaultTenant)
+	mappings, err := reader.FromTenant(context.Background(), mytenant)
 
 	test.VerifyError(t, err)
 	test.Equal(t, mappings, expected)
@@ -118,7 +132,7 @@ func TestMappingsReader_ShouldOverwriteMappings(t *testing.T) {
 		},
 	}
 
-	reader := NewMappingReader(noOpLogger, envSource, local, db)
+	reader := NewMappingReader(noOpLogger, envSource, local, nil, db)
 
 	expected := map[string]restql.Mapping{
 		"hero":     heroMapping,
@@ -126,7 +140,7 @@ func TestMappingsReader_ShouldOverwriteMappings(t *testing.T) {
 		"villain":  villainMapping,
 	}
 
-	mappings, err := reader.FromTenant(context.Background(), defaultTenant)
+	mappings, err := reader.FromTenant(context.Background(), mytenant)
 
 	test.VerifyError(t, err)
 	test.Equal(t, mappings, expected)
@@ -137,6 +151,34 @@ var noOpLogger = logger.New(ioutil.Discard, logger.LogOptions{})
 type stubDatabase struct {
 	findMappingsForTenant []restql.Mapping
 	findQuery             restql.SavedQuery
+}
+
+func (s stubDatabase) Name() string {
+	panic("implement me")
+}
+
+func (s stubDatabase) FindAllNamespaces(ctx context.Context) ([]string, error) {
+	panic("implement me")
+}
+
+func (s stubDatabase) FindQueriesForNamespace(ctx context.Context, namespace string) (map[string]restql.SavedQuery, error) {
+	panic("implement me")
+}
+
+func (s stubDatabase) FindQueryWithAllRevisions(ctx context.Context, namespace string, queryName string) ([]restql.SavedQuery, error) {
+	panic("implement me")
+}
+
+func (s stubDatabase) CreateQueryRevision(ctx context.Context, namespace string, queryName string, content string) error {
+	panic("implement me")
+}
+
+func (s stubDatabase) FindAllTenants(ctx context.Context) ([]string, error) {
+	panic("implement me")
+}
+
+func (s stubDatabase) SetMapping(ctx context.Context, tenantID string, mappingsName string, url string) error {
+	panic("implement me")
 }
 
 func (s stubDatabase) FindMappingsForTenant(ctx context.Context, tenantID string) ([]restql.Mapping, error) {
