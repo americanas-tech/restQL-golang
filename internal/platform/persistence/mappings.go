@@ -37,6 +37,37 @@ func NewMappingReader(log restql.Logger, env domain.EnvSource, local map[string]
 	return MappingsReader{log: log, env: envMappings, envWithTenant: envWithTenantMappings, local: localMappings, localByTenant: localMappingsByTenant, db: db}
 }
 
+// ListTenants fetch all tenants under which mappings are organized
+func (mr MappingsReader) ListTenants(ctx context.Context) ([]string, error) {
+	tenantSet := make(map[string]struct{})
+
+	for tenant := range mr.envWithTenant {
+		tenantSet[tenant] = struct{}{}
+	}
+
+	dbTenants, err := mr.db.FindAllTenants(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, tenant := range dbTenants {
+		tenantSet[tenant] = struct{}{}
+	}
+
+	for tenant := range mr.localByTenant {
+		tenantSet[tenant] = struct{}{}
+	}
+
+	tenants := make([]string, len(tenantSet))
+	i := 0
+	for tenant := range tenantSet {
+		tenants[i] = tenant
+		i++
+	}
+
+	return tenants, nil
+}
+
 // FromTenant fetch the mappings for the given tenant.
 func (mr MappingsReader) FromTenant(ctx context.Context, tenant string) (map[string]restql.Mapping, error) {
 	log := restql.GetLogger(ctx)

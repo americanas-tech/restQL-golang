@@ -6,15 +6,15 @@ import (
 )
 
 type administrator struct {
-	admRepo *persistence.AdminRepository
+	mr persistence.MappingsReader
 }
 
-func newAdmin(admRepo *persistence.AdminRepository) *administrator {
-	return &administrator{admRepo: admRepo}
+func newAdmin(mr persistence.MappingsReader) *administrator {
+	return &administrator{mr: mr}
 }
 
 func (adm *administrator) ListAllTenants(ctx *fasthttp.RequestCtx) error {
-	tenants, err := adm.admRepo.ListAllTenants(ctx)
+	tenants, err := adm.mr.ListTenants(ctx)
 	if err != nil {
 		return RespondError(ctx, err)
 	}
