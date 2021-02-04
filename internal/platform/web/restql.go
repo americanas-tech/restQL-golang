@@ -74,7 +74,7 @@ func (r restQl) RunAdHocQuery(reqCtx *fasthttp.RequestCtx) error {
 		r.log.Error("failed to evaluated adhoc queryRevision", err)
 
 		switch {
-		case errors.Is(err, restql.ErrMappingsNotFoundInLocal):
+		case errors.Is(err, restql.ErrMappingsNotFound):
 			return RespondError(reqCtx, NewRequestError(err, http.StatusNotFound))
 		case errors.Is(err, restql.ErrDatabaseCommunicationFailed):
 			return RespondError(reqCtx, NewRequestError(err, http.StatusInsufficientStorage))
@@ -127,9 +127,9 @@ func (r restQl) RunSavedQuery(reqCtx *fasthttp.RequestCtx) error {
 		log.Error("failed to evaluated saved queryRevision", err)
 
 		switch {
-		case errors.Is(err, restql.ErrMappingsNotFoundInLocal):
+		case errors.Is(err, restql.ErrMappingsNotFound):
 			return RespondError(reqCtx, NewRequestError(err, http.StatusNotFound))
-		case errors.Is(err, restql.ErrQueryNotFoundInLocal):
+		case errors.Is(err, restql.ErrQueryNotFound):
 			return RespondError(reqCtx, NewRequestError(err, http.StatusNotFound))
 		case errors.Is(err, restql.ErrQueryNotFoundInDatabase):
 			return RespondError(reqCtx, NewRequestError(err, http.StatusNotFound))

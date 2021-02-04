@@ -79,7 +79,7 @@ func (adm administrator) NamespaceQueries(ctx *fasthttp.RequestCtx) error {
 
 	queriesForNamespace, err := adm.qr.ListQueriesForNamespace(ctx, namespace)
 	if err != nil {
-		return err
+		return RespondError(ctx, err)
 	}
 
 	queries := make(map[string][]queryRevision)

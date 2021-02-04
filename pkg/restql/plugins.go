@@ -151,10 +151,14 @@ var (
 	ErrDatabaseCommunicationFailed = errors.New("failed to communicate with the database")
 )
 
-// ErrMappingsNotFoundInLocal is the error returned when
+// ErrMappingsNotFound is the error returned when
 // the resource mappings is not found anywhere
-var ErrMappingsNotFoundInLocal = errors.New("mappings not found in local configuration")
+var ErrMappingsNotFound = errors.New("mappings not found in local configuration")
 
-// ErrQueryNotFoundInLocal is the error returned when
+// ErrQueryNotFound is the error returned when
 // the query text is not found anywhere
-var ErrQueryNotFoundInLocal = errors.New("query not found in local configuration")
+var ErrQueryNotFound = errors.New("query not found")
+
+// ErrNamespaceNotFound is the error returned when
+// the namespace is not found anywhere
+var ErrNamespaceNotFound = errors.New("namespace not found")

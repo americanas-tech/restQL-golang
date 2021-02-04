@@ -72,7 +72,7 @@ func (mr MappingsReader) ListTenants(ctx context.Context) ([]string, error) {
 func (mr MappingsReader) FromTenant(ctx context.Context, tenant string) (map[string]restql.Mapping, error) {
 	log := restql.GetLogger(ctx)
 	log.Debug("fetching mappings")
-	mappingsFoundErr := fmt.Errorf("%w: tenant %s", restql.ErrMappingsNotFoundInLocal, tenant)
+	mappingsFoundErr := fmt.Errorf("%w: tenant %s", restql.ErrMappingsNotFound, tenant)
 
 	result := make(map[string]restql.Mapping)
 
