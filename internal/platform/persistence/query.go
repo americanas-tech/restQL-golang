@@ -17,26 +17,7 @@ type QueryReader struct {
 // NewQueryReader constructs a QueryReader from the given
 // configuration and database.
 func NewQueryReader(log restql.Logger, local map[string]map[string][]string, db Database) QueryReader {
-	l := make(map[string]map[string][]restql.SavedQuery)
-	for namespace, queries := range local {
-		parsedQueries := make(map[string][]restql.SavedQuery)
-		for queryName, revisions := range queries {
-			parsedRevisions := make([]restql.SavedQuery, len(revisions))
-			for i, text := range revisions {
-				parsedRevisions[i] = restql.SavedQuery{
-					Name:     queryName,
-					Text:     text,
-					Revision: i + 1,
-					Source:   restql.ConfigFileSource,
-				}
-			}
-
-			parsedQueries[queryName] = parsedRevisions
-		}
-
-		l[namespace] = parsedQueries
-	}
-	return QueryReader{log: log, local: l, db: db}
+	return QueryReader{log: log, local: parseLocalQueries(local), db: db}
 }
 
 // Get retrieves a query by its identity (namespace, id and revision),
@@ -198,4 +179,70 @@ func setDatabaseSource(r []restql.SavedQuery) []restql.SavedQuery {
 	}
 
 	return r
+}
+
+var ErrCreateRevisionNotAllowed = errors.New("a local query cannot be updated with a new revision : remove it from the local configuration or migrate it to the database")
+
+type QueryWriter struct {
+	log   restql.Logger
+	local map[string]map[string][]restql.SavedQuery
+	db    Database
+}
+
+func NewQueryWriter(log restql.Logger, local map[string]map[string][]string, db Database) QueryWriter {
+	return QueryWriter{
+		log:   log,
+		local: parseLocalQueries(local),
+		db:    db,
+	}
+}
+
+func (qw QueryWriter) Write(ctx context.Context, namespace, name, content string) error {
+	if !qw.allowWrite(ctx, namespace, name) {
+		return ErrCreateRevisionNotAllowed
+	}
+
+	return qw.db.CreateQueryRevision(ctx, namespace, name, content)
+}
+
+func (qw QueryWriter) allowWrite(ctx context.Context, namespace string, name string) bool {
+	namespaceQueries, found := qw.local[namespace]
+	if !found {
+		return true
+	}
+
+	queryRevisions, found := namespaceQueries[name]
+	if !found {
+		return true
+	}
+
+	dbRevisions, err := qw.db.FindQueryWithAllRevisions(ctx, namespace, name)
+	if err != nil && err != restql.ErrQueryNotFoundInDatabase {
+		return false
+	}
+
+	return len(dbRevisions) > 0 || len(queryRevisions) == 0
+}
+
+func parseLocalQueries(local map[string]map[string][]string) map[string]map[string][]restql.SavedQuery {
+	l := make(map[string]map[string][]restql.SavedQuery)
+	for namespace, queries := range local {
+		parsedQueries := make(map[string][]restql.SavedQuery)
+		for queryName, revisions := range queries {
+			parsedRevisions := make([]restql.SavedQuery, len(revisions))
+			for i, text := range revisions {
+				parsedRevisions[i] = restql.SavedQuery{
+					Name:     queryName,
+					Text:     text,
+					Revision: i + 1,
+					Source:   restql.ConfigFileSource,
+				}
+			}
+
+			parsedQueries[queryName] = parsedRevisions
+		}
+
+		l[namespace] = parsedQueries
+	}
+	return l
 }

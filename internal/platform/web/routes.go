@@ -71,7 +71,9 @@ func API(log restql.Logger, cfg *conf.Config) (fasthttp.RequestHandler, error) {
 	if cfg.HTTP.Server.EnableAdmin {
 		log.Info("administration api enabled")
 		mw := persistence.NewMappingWriter(log, cfg.Env, cfg.Mappings, cfg.TenantMappings, db)
-		adm := newAdmin(mappingReader, mw, queryReader)
+		qw := persistence.NewQueryWriter(log, cfg.Queries, db)
+
+		adm := newAdmin(mappingReader, mw, queryReader, qw)
 		app = admin(log, adm, app)
 
 	}
@@ -89,6 +91,7 @@ func admin(log restql.Logger, adm *administrator, apiApp app) app {
 	apiApp.Handle(http.MethodGet, "/admin/namespace/{namespace}/query", adm.NamespaceQueries)
 	apiApp.Handle(http.MethodGet, "/admin/namespace/{namespace}/query/{queryId}", adm.QueryRevisions)
 	apiApp.Handle(http.MethodGet, "/admin/namespace/{namespace}/query/{queryId}/revision/{revision}", adm.Query)
+	apiApp.Handle(http.MethodPost, "/admin/namespace/{namespace}/query/{queryId}", adm.CreateQueryRevision)
 
 	return apiApp
 }
