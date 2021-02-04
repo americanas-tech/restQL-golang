@@ -21,13 +21,14 @@ type mapping struct {
 }
 
 type administrator struct {
-	mr persistence.MappingsReader
-	mw persistence.MappingsWriter
-	qr persistence.QueryReader
+	mr          persistence.MappingsReader
+	mw          persistence.MappingsWriter
+	qr          persistence.QueryReader
+	queryWriter persistence.QueryWriter
 }
 
-func newAdmin(mr persistence.MappingsReader, mw persistence.MappingsWriter, qr persistence.QueryReader) *administrator {
-	return &administrator{mr: mr, mw: mw, qr: qr}
+func newAdmin(mr persistence.MappingsReader, mw persistence.MappingsWriter, qr persistence.QueryReader, qw persistence.QueryWriter) *administrator {
+	return &administrator{mr: mr, mw: mw, qr: qr, queryWriter: qw}
 }
 
 func (adm *administrator) AllTenants(ctx *fasthttp.RequestCtx) error {
@@ -129,7 +130,7 @@ func (adm *administrator) QueryRevisions(ctx *fasthttp.RequestCtx) error {
 
 	queryName, err := pathParamString(ctx, "queryId")
 	if err != nil {
-		log.Error("failed to load queryRevision name path param", err)
+		log.Error("failed to load query name path param", err)
 		return err
 	}
 
@@ -162,7 +163,7 @@ func (adm *administrator) Query(ctx *fasthttp.RequestCtx) error {
 
 	queryName, err := pathParamString(ctx, "queryId")
 	if err != nil {
-		log.Error("failed to load queryRevision name path param", err)
+		log.Error("failed to load query name path param", err)
 		return err
 	}
 
@@ -223,6 +224,42 @@ func (adm *administrator) MapResource(ctx *fasthttp.RequestCtx) error {
 	}
 
 	err = adm.mw.Write(ctx, tenantName, resourceName, mrb.Url)
+	if err != nil {
+		e := &Error{Err: err, Status: fasthttp.StatusUnauthorized}
+		return RespondError(ctx, e)
+	}
+
+	return Respond(ctx, nil, fasthttp.StatusCreated, nil)
+}
+
+type createRevisionBody struct {
+	Text string `json:"text"`
+}
+
+func (adm *administrator) CreateQueryRevision(ctx *fasthttp.RequestCtx) error {
+	log := restql.GetLogger(ctx)
+
+	namespace, err := pathParamString(ctx, "namespace")
+	if err != nil {
+		log.Error("failed to load namespace path param", err)
+		return err
+	}
+
+	queryName, err := pathParamString(ctx, "queryId")
+	if err != nil {
+		log.Error("failed to load query name path param", err)
+		return err
+	}
+
+	var crb createRevisionBody
+
+	bytesBody := ctx.PostBody()
+	err = json.Unmarshal(bytesBody, &crb)
+	if err != nil {
+		return err
+	}
+
+	err = adm.queryWriter.Write(ctx, namespace, queryName, crb.Text)
 	if err != nil {
 		e := &Error{Err: err, Status: fasthttp.StatusUnauthorized}
 		return RespondError(ctx, e)
