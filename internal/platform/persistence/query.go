@@ -83,3 +83,65 @@ func (qr QueryReader) getQueryFromLocal(namespace string, id string, revision in
 	queryTxt := queriesByRevision[revision-1]
 	return queryTxt, nil
 }
+
+func (qr QueryReader) ListNamespaces(ctx context.Context) ([]string, error) {
+	namespaceSet := make(map[string]struct{})
+
+	for namespace := range qr.local {
+		namespaceSet[namespace] = struct{}{}
+	}
+
+	dbNamespaces, err := qr.db.FindAllNamespaces(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, namespace := range dbNamespaces {
+		namespaceSet[namespace] = struct{}{}
+	}
+
+	namespaces := make([]string, len(namespaceSet))
+	i := 0
+	for namespace := range namespaceSet {
+		namespaces[i] = namespace
+		i++
+	}
+
+	return namespaces, nil
+}
+
+func (qr QueryReader) ListQueriesForNamespace(ctx context.Context, namespace string) (map[string][]restql.SavedQuery, error) {
+	queries := make(map[string][]restql.SavedQuery)
+	for queryName, revisions := range qr.local[namespace] {
+		rs := make([]restql.SavedQuery, len(revisions))
+		for i, text := range revisions {
+			rs[i] = restql.SavedQuery{
+				Name:     queryName,
+				Text:     text,
+				Revision: i + 1,
+			}
+		}
+
+		queries[queryName] = rs
+	}
+
+	dbQueries, err := qr.db.FindQueriesForNamespace(ctx, namespace)
+	if err != nil {
+		return nil, err
+	}
+
+	for queryName, dbRevisions := range dbQueries {
+		localRevisions := queries[queryName]
+
+		if len(dbRevisions) > len(localRevisions) {
+			queries[queryName] = dbRevisions
+		} else {
+			for i, dbr := range dbRevisions {
+				localRevisions[i] = dbr
+			}
+			queries[queryName] = localRevisions
+		}
+	}
+
+	return queries, nil
+}

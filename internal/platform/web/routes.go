@@ -70,7 +70,7 @@ func API(log restql.Logger, cfg *conf.Config) (fasthttp.RequestHandler, error) {
 
 	if cfg.HTTP.Server.EnableAdmin {
 		log.Info("administration api enabled")
-		adm := newAdmin(mr)
+		adm := newAdmin(mr, qr)
 		app = admin(log, adm, app)
 
 	}
@@ -82,6 +82,9 @@ func API(log restql.Logger, cfg *conf.Config) (fasthttp.RequestHandler, error) {
 func admin(log restql.Logger, adm *administrator, apiApp app) app {
 	apiApp.Handle(http.MethodGet, "/admin/tenant", adm.ListAllTenants)
 	apiApp.Handle(http.MethodGet, "/admin/tenant/{tenantName}/mapping", adm.TenantMappings)
+
+	apiApp.Handle(http.MethodGet, "/admin/namespace", adm.ListAllNamespaces)
+	apiApp.Handle(http.MethodGet, "/admin/namespace/{namespace}/query", adm.NamespaceQueries)
 
 	return apiApp
 }
