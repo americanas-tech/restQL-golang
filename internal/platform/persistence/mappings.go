@@ -105,6 +105,7 @@ func (mr MappingsReader) FromTenant(ctx context.Context, tenant string) (map[str
 	}
 
 	for _, mapping := range dbMappings {
+		mapping.Source = restql.DatabaseSource
 		result[mapping.ResourceName()] = mapping
 	}
 
@@ -147,6 +148,7 @@ func getMappingsFromEnv(log restql.Logger, envSource domain.EnvSource) map[strin
 				continue
 			}
 
+			mapping.Source = restql.EnvSource
 			result[resource] = mapping
 		}
 	}
@@ -177,6 +179,7 @@ func getMappingsFromEnvWithTenant(log restql.Logger, envSource domain.EnvSource)
 				continue
 			}
 
+			mapping.Source = restql.EnvSource
 			tenantMappings[resource] = mapping
 		}
 	}
@@ -193,6 +196,7 @@ func parseMappingsFromLocal(log restql.Logger, local map[string]string) map[stri
 			continue
 		}
 
+		mapping.Source = restql.ConfigFileSource
 		result[k] = mapping
 	}
 

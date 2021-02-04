@@ -27,6 +27,8 @@ type Mapping struct {
 	query         map[string]interface{}
 	pathParams    []string
 	pathParamsSet map[string]struct{}
+
+	Source Source
 }
 
 // NewMapping constructs a Mapping value from a resource name
