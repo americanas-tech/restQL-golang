@@ -2,6 +2,7 @@ package persistence
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"regexp"
 	"strings"
@@ -132,6 +133,73 @@ func (mr MappingsReader) applyEnvMappings(result map[string]restql.Mapping, tena
 	}
 
 	return result
+}
+
+var ErrSetResourceMappingNotAllowed = errors.New("a resource mapping must have a source of type database in order to provide writing operations")
+
+type MappingsWriter struct {
+	log           restql.Logger
+	db            Database
+	env           map[string]restql.Mapping
+	envWithTenant map[string]map[string]restql.Mapping
+	local         map[string]restql.Mapping
+	localByTenant map[string]map[string]restql.Mapping
+}
+
+func NewMappingWriter(log restql.Logger, env domain.EnvSource, local map[string]string, localByTenant map[string]map[string]string, db Database) MappingsWriter {
+	envMappings := getMappingsFromEnv(log, env)
+	envWithTenantMappings := getMappingsFromEnvWithTenant(log, env)
+	localMappings := parseMappingsFromLocal(log, local)
+	localMappingsByTenant := make(map[string]map[string]restql.Mapping)
+	for t, m := range localByTenant {
+		localMappingsByTenant[t] = parseMappingsFromLocal(log, m)
+	}
+
+	return MappingsWriter{log: log, env: envMappings, envWithTenant: envWithTenantMappings, local: localMappings, localByTenant: localMappingsByTenant, db: db}
+}
+
+func (mw *MappingsWriter) Write(ctx context.Context, tenant string, resource string, url string) error {
+	if !mw.allowWrite(tenant, resource) {
+		log := restql.GetLogger(ctx)
+		log.Error("write operation on resource mapping not allowed", ErrSetResourceMappingNotAllowed, "tenant", tenant, "resource", resource)
+		return ErrSetResourceMappingNotAllowed
+	}
+
+	return mw.db.SetMapping(ctx, tenant, resource, url)
+}
+
+func (mw *MappingsWriter) allowWrite(tenant string, resourceName string) bool {
+	for resource := range mw.local {
+		if resource == resourceName {
+			return true
+		}
+	}
+
+	for resource := range mw.env {
+		if resource == resourceName {
+			return true
+		}
+	}
+
+	localTenantMappings, found := mw.localByTenant[tenant]
+	if found {
+		for resource := range localTenantMappings {
+			if resource == resourceName {
+				return true
+			}
+		}
+	}
+
+	envTenantMappings, found := mw.envWithTenant[tenant]
+	if found {
+		for resource := range envTenantMappings {
+			if resource == resourceName {
+				return true
+			}
+		}
+	}
+
+	return false
 }
 
 func getMappingsFromEnv(log restql.Logger, envSource domain.EnvSource) map[string]restql.Mapping {
