@@ -134,7 +134,7 @@ type DatabasePlugin interface {
 	Plugin
 
 	FindAllNamespaces(ctx context.Context) ([]string, error)
-	FindQueriesForNamespace(ctx context.Context, namespace string) (map[string]SavedQuery, error)
+	FindQueriesForNamespace(ctx context.Context, namespace string) (map[string][]SavedQuery, error)
 	FindQueryWithAllRevisions(ctx context.Context, namespace string, queryName string) ([]SavedQuery, error)
 	FindQuery(ctx context.Context, namespace string, name string, revision int) (SavedQuery, error)
 	CreateQueryRevision(ctx context.Context, namespace string, queryName string, content string) error

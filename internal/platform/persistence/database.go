@@ -50,11 +50,35 @@ func (n noOpDatabase) Name() string {
 }
 
 func (n noOpDatabase) FindAllNamespaces(ctx context.Context) ([]string, error) {
-	return nil, errNoDatabase
+	return []string{"demo", "cart", "checkout"}, nil
+
+	//return nil, errNoDatabase
 }
 
-func (n noOpDatabase) FindQueriesForNamespace(ctx context.Context, namespace string) (map[string]restql.SavedQuery, error) {
-	return nil, errNoDatabase
+func (n noOpDatabase) FindQueriesForNamespace(ctx context.Context, namespace string) (map[string][]restql.SavedQuery, error) {
+	return map[string][]restql.SavedQuery{
+		"db": {
+			{
+				Name:     "test",
+				Text:     "from test",
+				Revision: 1,
+			},
+			{
+				Name:     "test",
+				Text:     "from test only id",
+				Revision: 2,
+			},
+		},
+		"payment": {
+			{
+				Name:     "test-overwrite",
+				Text:     "from test",
+				Revision: 1,
+			},
+		},
+	}, nil
+
+	//return nil, errNoDatabase
 }
 
 func (n noOpDatabase) FindQueryWithAllRevisions(ctx context.Context, namespace string, queryName string) ([]restql.SavedQuery, error) {
