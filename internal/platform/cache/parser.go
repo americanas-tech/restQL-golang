@@ -20,7 +20,7 @@ func NewParserCache(log restql.Logger, c *Cache) ParserCache {
 	return ParserCache{log: log, cache: c}
 }
 
-// Parse returns a cached Query internal representation if
+// Parse returns a cached QueryRevisions internal representation if
 // present, transforming the query text into one otherwise.
 func (p ParserCache) Parse(queryStr string) (domain.Query, error) {
 	result, err := p.cache.Get(context.Background(), queryStr)

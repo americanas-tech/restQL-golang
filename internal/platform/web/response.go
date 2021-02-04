@@ -83,14 +83,14 @@ type StatementResult struct {
 	Result  interface{} `json:"result,omitempty"`
 }
 
-// QueryResponse represents the client format of the query result
+// QueryResponse represents the client format of the queryRevision result
 type QueryResponse struct {
 	StatusCode int
 	Body       map[string]StatementResult
 	Headers    map[string]string
 }
 
-// MakeQueryResponse create a query execution response for the client.
+// MakeQueryResponse create a queryRevision execution response for the client.
 func MakeQueryResponse(queryResult domain.Resources, debug bool) (QueryResponse, error) {
 	m := make(map[string]StatementResult)
 	for key, resource := range queryResult {

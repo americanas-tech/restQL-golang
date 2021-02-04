@@ -20,7 +20,7 @@ type QueryReader interface {
 // ValidationError is returned by Evaluator when
 // the query execution request contains invalid information.
 //• Namespace: is an empty string or is not present
-//• Query name: is an empty string or is not present
+//• QueryRevisions name: is an empty string or is not present
 //• Revision: is not a positive integer
 //• Tenant: is an empty string or is not present
 type ValidationError struct {

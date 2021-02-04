@@ -16,7 +16,7 @@ import (
 	"github.com/valyala/fasthttp"
 )
 
-// API constructs a handler for the restQL query related endpoints
+// API constructs a handler for the restQL queryRevision related endpoints
 func API(log restql.Logger, cfg *conf.Config) (fasthttp.RequestHandler, error) {
 	log.Debug("starting api")
 	defaultParser, err := parser.New()
@@ -63,10 +63,10 @@ func API(log restql.Logger, cfg *conf.Config) (fasthttp.RequestHandler, error) {
 	restQl := newRestQl(log, cfg, e, defaultParser)
 
 	app := newApp(log, appOptions{MiddlewareDecorator: md})
-	app.Handle(http.MethodPost, "/validate-query", restQl.ValidateQuery)
-	app.Handle(http.MethodPost, "/run-query", restQl.RunAdHocQuery)
-	app.Handle(http.MethodGet, "/run-query/{namespace}/{queryId}/{revision}", restQl.RunSavedQuery)
-	app.Handle(http.MethodPost, "/run-query/{namespace}/{queryId}/{revision}", restQl.RunSavedQuery)
+	app.Handle(http.MethodPost, "/validate-queryRevision", restQl.ValidateQuery)
+	app.Handle(http.MethodPost, "/run-queryRevision", restQl.RunAdHocQuery)
+	app.Handle(http.MethodGet, "/run-queryRevision/{namespace}/{queryId}/{revision}", restQl.RunSavedQuery)
+	app.Handle(http.MethodPost, "/run-queryRevision/{namespace}/{queryId}/{revision}", restQl.RunSavedQuery)
 
 	if cfg.HTTP.Server.EnableAdmin {
 		log.Info("administration api enabled")
@@ -80,11 +80,12 @@ func API(log restql.Logger, cfg *conf.Config) (fasthttp.RequestHandler, error) {
 
 // Admin adds handlers for administrative operations
 func admin(log restql.Logger, adm *administrator, apiApp app) app {
-	apiApp.Handle(http.MethodGet, "/admin/tenant", adm.ListAllTenants)
+	apiApp.Handle(http.MethodGet, "/admin/tenant", adm.AllTenants)
 	apiApp.Handle(http.MethodGet, "/admin/tenant/{tenantName}/mapping", adm.TenantMappings)
 
-	apiApp.Handle(http.MethodGet, "/admin/namespace", adm.ListAllNamespaces)
+	apiApp.Handle(http.MethodGet, "/admin/namespace", adm.AllNamespaces)
 	apiApp.Handle(http.MethodGet, "/admin/namespace/{namespace}/query", adm.NamespaceQueries)
+	apiApp.Handle(http.MethodGet, "/admin/namespace/{namespace}/query/{queryId}", adm.QueryRevisions)
 
 	return apiApp
 }
