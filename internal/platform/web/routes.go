@@ -70,17 +70,17 @@ func API(log restql.Logger, cfg *conf.Config) (fasthttp.RequestHandler, error) {
 
 	if cfg.HTTP.Server.EnableAdmin {
 		log.Info("administration api enabled")
-		app = admin(log, cfg, db, app)
+		adm := newAdmin(mr)
+		app = admin(log, adm, app)
+
 	}
 
 	return app.RequestHandler(), nil
 }
 
 // Admin adds handlers for administrative operations
-func admin(log restql.Logger, cfg *conf.Config, db persistence.Database, apiApp app) app {
-	admRepo := persistence.NewAdminRepository(log, db)
-	a := newAdmin(admRepo)
-	apiApp.Handle(http.MethodGet, "/admin/tenant", a.ListAllTenants)
+func admin(log restql.Logger, adm *administrator, apiApp app) app {
+	apiApp.Handle(http.MethodGet, "/admin/tenant", adm.ListAllTenants)
 
 	return apiApp
 }
