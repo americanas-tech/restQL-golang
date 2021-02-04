@@ -82,7 +82,15 @@ func (n noOpDatabase) FindQueriesForNamespace(ctx context.Context, namespace str
 }
 
 func (n noOpDatabase) FindQueryWithAllRevisions(ctx context.Context, namespace string, queryName string) ([]restql.SavedQuery, error) {
-	return nil, errNoDatabase
+	return []restql.SavedQuery{
+		{
+			Name:     queryName,
+			Text:     "from test",
+			Revision: 1,
+		},
+	}, nil
+
+	//return nil, errNoDatabase
 }
 
 func (n noOpDatabase) CreateQueryRevision(ctx context.Context, namespace string, queryName string, content string) error {

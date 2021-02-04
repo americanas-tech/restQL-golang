@@ -15,7 +15,7 @@ var urlRegex = regexp.MustCompile("(https?)://([^/]+)([^?]*)\\??(.*)")
 //• Path parameters: can be defined by placing a colon (:) before an identifier in the URL path,
 // for example "http://some.api/:id", will replace ":id" by the value of the "id" parameter
 // in the query definition.
-//• Query parameters: can be defined by placing a colon (:) before an identifier in the URL query,
+//• QueryRevisions parameters: can be defined by placing a colon (:) before an identifier in the URL query,
 // for example "http://some.api?:page", will replace ":page" by the value of the "page" parameter
 // in the query definition creating the URL "http://some.api?page=<value>".
 type Mapping struct {

@@ -15,7 +15,7 @@ func newAdmin(mr persistence.MappingsReader, qr persistence.QueryReader) *admini
 	return &administrator{mr: mr, qr: qr}
 }
 
-func (adm *administrator) ListAllTenants(ctx *fasthttp.RequestCtx) error {
+func (adm *administrator) AllTenants(ctx *fasthttp.RequestCtx) error {
 	tenants, err := adm.mr.ListTenants(ctx)
 	if err != nil {
 		return RespondError(ctx, err)
@@ -51,7 +51,7 @@ func (adm *administrator) TenantMappings(ctx *fasthttp.RequestCtx) error {
 	return Respond(ctx, data, fasthttp.StatusOK, nil)
 }
 
-func (adm administrator) ListAllNamespaces(ctx *fasthttp.RequestCtx) error {
+func (adm administrator) AllNamespaces(ctx *fasthttp.RequestCtx) error {
 	namespaces, err := adm.qr.ListNamespaces(ctx)
 	if err != nil {
 		return RespondError(ctx, err)
@@ -61,7 +61,7 @@ func (adm administrator) ListAllNamespaces(ctx *fasthttp.RequestCtx) error {
 	return Respond(ctx, data, fasthttp.StatusOK, nil)
 }
 
-type query struct {
+type queryRevision struct {
 	Name     string `json:"name"`
 	Text     string `json:"text"`
 	Revision int    `json:"revision"`
@@ -81,11 +81,11 @@ func (adm administrator) NamespaceQueries(ctx *fasthttp.RequestCtx) error {
 		return err
 	}
 
-	queries := make(map[string][]query)
+	queries := make(map[string][]queryRevision)
 	for queryName, savedQueries := range queriesForNamespace {
-		qs := make([]query, len(savedQueries))
+		qs := make([]queryRevision, len(savedQueries))
 		for i, savedQuery := range savedQueries {
-			qs[i] = query{
+			qs[i] = queryRevision{
 				Name:     savedQuery.Name,
 				Text:     savedQuery.Text,
 				Revision: savedQuery.Revision,
@@ -96,5 +96,38 @@ func (adm administrator) NamespaceQueries(ctx *fasthttp.RequestCtx) error {
 	}
 
 	data := map[string]interface{}{"namespace": namespace, "queries": queries}
+	return Respond(ctx, data, fasthttp.StatusOK, nil)
+}
+
+func (adm *administrator) QueryRevisions(ctx *fasthttp.RequestCtx) error {
+	log := restql.GetLogger(ctx)
+
+	namespace, err := pathParamString(ctx, "namespace")
+	if err != nil {
+		log.Error("failed to load namespace path param", err)
+		return err
+	}
+
+	queryName, err := pathParamString(ctx, "queryId")
+	if err != nil {
+		log.Error("failed to load queryRevision name path param", err)
+		return err
+	}
+
+	rs, err := adm.qr.ListQueryRevisions(ctx, namespace, queryName)
+	if err != nil {
+		return RespondError(ctx, err)
+	}
+
+	queryRevisions := make([]queryRevision, len(rs))
+	for i, r := range rs {
+		queryRevisions[i] = queryRevision{
+			Name:     r.Name,
+			Text:     r.Text,
+			Revision: r.Revision,
+		}
+	}
+
+	data := map[string]interface{}{"namespace": namespace, "query": queryName, "revisions": queryRevisions}
 	return Respond(ctx, data, fasthttp.StatusOK, nil)
 }

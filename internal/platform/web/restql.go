@@ -37,10 +37,10 @@ func (r restQl) ValidateQuery(ctx *fasthttp.RequestCtx) error {
 	queryTxt := string(ctx.PostBody())
 	_, err := r.parser.Parse(queryTxt)
 	if err != nil {
-		r.log.Error("an error occurred when parsing query", err)
+		r.log.Error("an error occurred when parsing queryRevision", err)
 
 		e := &Error{
-			Err:    errors.Wrap(err, "invalid query"),
+			Err:    errors.Wrap(err, "invalid queryRevision"),
 			Status: http.StatusUnprocessableEntity,
 		}
 
@@ -56,14 +56,14 @@ func (r restQl) RunAdHocQuery(reqCtx *fasthttp.RequestCtx) error {
 
 	tenant, err := makeTenant(reqCtx, r.config.Tenant)
 	if err != nil {
-		r.log.Error("failed to build query options", err)
+		r.log.Error("failed to build queryRevision options", err)
 		return RespondError(reqCtx, NewRequestError(err, http.StatusBadRequest))
 	}
 	options := restql.QueryOptions{Tenant: tenant}
 
 	input, err := makeQueryInput(reqCtx, r.log)
 	if err != nil {
-		r.log.Error("failed to build query input", err)
+		r.log.Error("failed to build queryRevision input", err)
 		return RespondError(reqCtx, NewRequestError(err, http.StatusBadRequest))
 	}
 
@@ -71,7 +71,7 @@ func (r restQl) RunAdHocQuery(reqCtx *fasthttp.RequestCtx) error {
 
 	result, err := r.evaluator.AdHocQuery(ctx, queryTxt, options, input)
 	if err != nil {
-		r.log.Error("failed to evaluated adhoc query", err)
+		r.log.Error("failed to evaluated adhoc queryRevision", err)
 
 		switch {
 		case errors.Is(err, restql.ErrMappingsNotFoundInLocal):
@@ -112,19 +112,19 @@ func (r restQl) RunSavedQuery(reqCtx *fasthttp.RequestCtx) error {
 
 	options, err := makeQueryOptions(reqCtx, log, r.config.Tenant)
 	if err != nil {
-		log.Error("failed to build query options", err)
+		log.Error("failed to build queryRevision options", err)
 		return RespondError(reqCtx, NewRequestError(err, http.StatusBadRequest))
 	}
 
 	input, err := makeQueryInput(reqCtx, log)
 	if err != nil {
-		log.Error("failed to build query input", err)
+		log.Error("failed to build queryRevision input", err)
 		return RespondError(reqCtx, NewRequestError(err, http.StatusBadRequest))
 	}
 
 	result, err := r.evaluator.SavedQuery(ctx, options, input)
 	if err != nil {
-		log.Error("failed to evaluated saved query", err)
+		log.Error("failed to evaluated saved queryRevision", err)
 
 		switch {
 		case errors.Is(err, restql.ErrMappingsNotFoundInLocal):
@@ -173,7 +173,7 @@ func makeQueryOptions(ctx *fasthttp.RequestCtx, log restql.Logger, envTenant str
 
 	queryID, err := pathParamString(ctx, "queryId")
 	if err != nil {
-		log.Error("failed to load query id path param", err)
+		log.Error("failed to load queryRevision id path param", err)
 		return restql.QueryOptions{}, err
 	}
 

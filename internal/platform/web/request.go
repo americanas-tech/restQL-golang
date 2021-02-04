@@ -9,14 +9,14 @@ import (
 
 var (
 	errInvalidNamespace  = errors.New("invalid namespace")
-	errInvalidQueryID    = errors.New("invalid query id")
+	errInvalidQueryID    = errors.New("invalid queryRevision id")
 	errInvalidRevision   = errors.New("invalid revision")
 	errInvalidTenantName = errors.New("invalid tenant name")
 )
 
 var pathParamNameToError = map[string]error{
 	"namespace":  errInvalidNamespace,
-	"query":      errInvalidQueryID,
+	"queryId":    errInvalidQueryID,
 	"revision":   errInvalidRevision,
 	"tenantName": errInvalidTenantName,
 }
