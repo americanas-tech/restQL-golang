@@ -1,6 +1,7 @@
 package web
 
 import (
+	"encoding/json"
 	"github.com/b2wdigital/restQL-golang/v4/internal/platform/persistence"
 	"github.com/b2wdigital/restQL-golang/v4/pkg/restql"
 	"github.com/valyala/fasthttp"
@@ -21,11 +22,12 @@ type mapping struct {
 
 type administrator struct {
 	mr persistence.MappingsReader
+	mw persistence.MappingsWriter
 	qr persistence.QueryReader
 }
 
-func newAdmin(mr persistence.MappingsReader, qr persistence.QueryReader) *administrator {
-	return &administrator{mr: mr, qr: qr}
+func newAdmin(mr persistence.MappingsReader, mw persistence.MappingsWriter, qr persistence.QueryReader) *administrator {
+	return &administrator{mr: mr, mw: mw, qr: qr}
 }
 
 func (adm *administrator) AllTenants(ctx *fasthttp.RequestCtx) error {
@@ -191,6 +193,42 @@ func (adm *administrator) Query(ctx *fasthttp.RequestCtx) error {
 	}
 
 	return Respond(ctx, data, fasthttp.StatusOK, nil)
+}
+
+type mapResourceBody struct {
+	Url string `json:"url"`
+}
+
+func (adm *administrator) MapResource(ctx *fasthttp.RequestCtx) error {
+	log := restql.GetLogger(ctx)
+
+	tenantName, err := pathParamString(ctx, "tenantName")
+	if err != nil {
+		log.Error("failed to load tenant name path param", err)
+		return err
+	}
+
+	resourceName, err := pathParamString(ctx, "resource")
+	if err != nil {
+		log.Error("failed to load resource name path param", err)
+		return err
+	}
+
+	var mrb mapResourceBody
+
+	bytesBody := ctx.PostBody()
+	err = json.Unmarshal(bytesBody, &mrb)
+	if err != nil {
+		return err
+	}
+
+	err = adm.mw.Write(ctx, tenantName, resourceName, mrb.Url)
+	if err != nil {
+		e := &Error{Err: err, Status: fasthttp.StatusUnauthorized}
+		return RespondError(ctx, e)
+	}
+
+	return Respond(ctx, nil, fasthttp.StatusCreated, nil)
 }
 
 func filterQueriesBySource(queryRevisions []restql.SavedQuery, source restql.Source) []restql.SavedQuery {

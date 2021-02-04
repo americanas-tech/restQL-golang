@@ -8,10 +8,11 @@ import (
 )
 
 var (
-	errInvalidNamespace  = errors.New("invalid namespace")
-	errInvalidQueryID    = errors.New("invalid queryRevision id")
-	errInvalidRevision   = errors.New("invalid revision")
-	errInvalidTenantName = errors.New("invalid tenant name")
+	errInvalidNamespace    = errors.New("invalid namespace")
+	errInvalidQueryID      = errors.New("invalid queryRevision id")
+	errInvalidRevision     = errors.New("invalid revision")
+	errInvalidTenantName   = errors.New("invalid tenant name")
+	errInvalidResourceName = errors.New("invalid resource name")
 )
 
 var pathParamNameToError = map[string]error{
@@ -19,6 +20,7 @@ var pathParamNameToError = map[string]error{
 	"queryId":    errInvalidQueryID,
 	"revision":   errInvalidRevision,
 	"tenantName": errInvalidTenantName,
+	"resource":   errInvalidResourceName,
 }
 
 func pathParamString(ctx *fasthttp.RequestCtx, name string) (string, error) {

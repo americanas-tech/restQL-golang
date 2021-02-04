@@ -45,17 +45,17 @@ func API(log restql.Logger, cfg *conf.Config) (fasthttp.RequestHandler, error) {
 	executor := runner.NewExecutor(log, client, cfg.HTTP.QueryResourceTimeout, cfg.HTTP.ForwardPrefix)
 	r := runner.NewRunner(log, executor, cfg.HTTP.GlobalQueryTimeout)
 
-	mr := persistence.NewMappingReader(log, cfg.Env, cfg.Mappings, cfg.TenantMappings, db)
+	mappingReader := persistence.NewMappingReader(log, cfg.Env, cfg.Mappings, cfg.TenantMappings, db)
 	tenantCache := cache.New(log, cfg.Cache.Mappings.MaxSize,
-		cache.TenantCacheLoader(mr),
+		cache.TenantCacheLoader(mappingReader),
 		cache.WithExpiration(cfg.Cache.Mappings.Expiration),
 		cache.WithRefreshInterval(cfg.Cache.Mappings.RefreshInterval),
 		cache.WithRefreshQueueLength(cfg.Cache.Mappings.RefreshQueueLength),
 	)
 	cacheMr := cache.NewMappingsReaderCache(log, tenantCache)
 
-	qr := persistence.NewQueryReader(log, cfg.Queries, db)
-	queryCache := cache.New(log, cfg.Cache.Query.MaxSize, cache.QueryCacheLoader(qr))
+	queryReader := persistence.NewQueryReader(log, cfg.Queries, db)
+	queryCache := cache.New(log, cfg.Cache.Query.MaxSize, cache.QueryCacheLoader(queryReader))
 	cacheQr := cache.NewQueryReaderCache(log, queryCache)
 
 	e := eval.NewEvaluator(log, cacheMr, cacheQr, r, parserCache, lifecycle)
@@ -70,7 +70,8 @@ func API(log restql.Logger, cfg *conf.Config) (fasthttp.RequestHandler, error) {
 
 	if cfg.HTTP.Server.EnableAdmin {
 		log.Info("administration api enabled")
-		adm := newAdmin(mr, qr)
+		mw := persistence.NewMappingWriter(log, cfg.Env, cfg.Mappings, cfg.TenantMappings, db)
+		adm := newAdmin(mappingReader, mw, queryReader)
 		app = admin(log, adm, app)
 
 	}
@@ -82,6 +83,7 @@ func API(log restql.Logger, cfg *conf.Config) (fasthttp.RequestHandler, error) {
 func admin(log restql.Logger, adm *administrator, apiApp app) app {
 	apiApp.Handle(http.MethodGet, "/admin/tenant", adm.AllTenants)
 	apiApp.Handle(http.MethodGet, "/admin/tenant/{tenantName}/mapping", adm.TenantMappings)
+	apiApp.Handle(http.MethodPost, "/admin/tenant/{tenantName}/mapping/{resource}", adm.MapResource)
 
 	apiApp.Handle(http.MethodGet, "/admin/namespace", adm.AllNamespaces)
 	apiApp.Handle(http.MethodGet, "/admin/namespace/{namespace}/query", adm.NamespaceQueries)
