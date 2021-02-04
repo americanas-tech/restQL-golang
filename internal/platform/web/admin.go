@@ -4,6 +4,7 @@ import (
 	"github.com/b2wdigital/restQL-golang/v4/internal/platform/persistence"
 	"github.com/b2wdigital/restQL-golang/v4/pkg/restql"
 	"github.com/valyala/fasthttp"
+	"strconv"
 )
 
 type administrator struct {
@@ -129,5 +130,48 @@ func (adm *administrator) QueryRevisions(ctx *fasthttp.RequestCtx) error {
 	}
 
 	data := map[string]interface{}{"namespace": namespace, "query": queryName, "revisions": queryRevisions}
+	return Respond(ctx, data, fasthttp.StatusOK, nil)
+}
+
+func (adm *administrator) Query(ctx *fasthttp.RequestCtx) error {
+	log := restql.GetLogger(ctx)
+
+	namespace, err := pathParamString(ctx, "namespace")
+	if err != nil {
+		log.Error("failed to load namespace path param", err)
+		return err
+	}
+
+	queryName, err := pathParamString(ctx, "queryId")
+	if err != nil {
+		log.Error("failed to load queryRevision name path param", err)
+		return err
+	}
+
+	revisionStr, err := pathParamString(ctx, "revision")
+	if err != nil {
+		log.Error("failed to load revision path param", err)
+		return err
+	}
+
+	revision, err := strconv.Atoi(revisionStr)
+	if err != nil {
+		log.Error("failed to parse revision path param", err)
+		return err
+	}
+
+	savedQuery, err := adm.qr.Get(ctx, namespace, queryName, revision)
+	if err != nil {
+		return RespondError(ctx, err)
+	}
+
+	data := map[string]interface{}{
+		"namespace": namespace,
+		"name":      savedQuery.Name,
+		"revision": map[string]string{
+			"text": savedQuery.Text,
+		},
+	}
+
 	return Respond(ctx, data, fasthttp.StatusOK, nil)
 }

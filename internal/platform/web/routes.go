@@ -86,6 +86,7 @@ func admin(log restql.Logger, adm *administrator, apiApp app) app {
 	apiApp.Handle(http.MethodGet, "/admin/namespace", adm.AllNamespaces)
 	apiApp.Handle(http.MethodGet, "/admin/namespace/{namespace}/query", adm.NamespaceQueries)
 	apiApp.Handle(http.MethodGet, "/admin/namespace/{namespace}/query/{queryId}", adm.QueryRevisions)
+	apiApp.Handle(http.MethodGet, "/admin/namespace/{namespace}/query/{queryId}/revision/{revision}", adm.Query)
 
 	return apiApp
 }
