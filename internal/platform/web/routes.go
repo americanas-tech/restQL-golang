@@ -81,6 +81,7 @@ func API(log restql.Logger, cfg *conf.Config) (fasthttp.RequestHandler, error) {
 // Admin adds handlers for administrative operations
 func admin(log restql.Logger, adm *administrator, apiApp app) app {
 	apiApp.Handle(http.MethodGet, "/admin/tenant", adm.ListAllTenants)
+	apiApp.Handle(http.MethodGet, "/admin/tenant/{tenantName}/mapping", adm.TenantMappings)
 
 	return apiApp
 }
