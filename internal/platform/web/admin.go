@@ -7,6 +7,18 @@ import (
 	"strconv"
 )
 
+type queryRevision struct {
+	Name     string `json:"name"`
+	Text     string `json:"text"`
+	Revision int    `json:"revision"`
+	Source   string `json:"source"`
+}
+
+type mapping struct {
+	URL    string `json:"url"`
+	Source string `json:"source"`
+}
+
 type administrator struct {
 	mr persistence.MappingsReader
 	qr persistence.QueryReader
@@ -35,19 +47,26 @@ func (adm *administrator) TenantMappings(ctx *fasthttp.RequestCtx) error {
 		return err
 	}
 
+	sourceFilter := restql.Source(ctx.QueryArgs().Peek("source"))
+
 	mappings, err := adm.mr.FromTenant(ctx, tenantName)
 	if err != nil {
 		return RespondError(ctx, err)
 	}
 
-	urls := make(map[string]string)
-	for resourceName, mapping := range mappings {
-		urls[resourceName] = mapping.URL()
+	mappings = filterMappingsBySource(mappings, sourceFilter)
+
+	ms := make(map[string]mapping)
+	for resourceName, m := range mappings {
+		ms[resourceName] = mapping{
+			URL:    m.URL(),
+			Source: string(m.Source),
+		}
 	}
 
 	data := map[string]interface{}{
 		"tenant":   tenantName,
-		"mappings": urls,
+		"mappings": ms,
 	}
 	return Respond(ctx, data, fasthttp.StatusOK, nil)
 }
@@ -62,12 +81,6 @@ func (adm administrator) AllNamespaces(ctx *fasthttp.RequestCtx) error {
 	return Respond(ctx, data, fasthttp.StatusOK, nil)
 }
 
-type queryRevision struct {
-	Name     string `json:"name"`
-	Text     string `json:"text"`
-	Revision int    `json:"revision"`
-}
-
 func (adm administrator) NamespaceQueries(ctx *fasthttp.RequestCtx) error {
 	log := restql.GetLogger(ctx)
 
@@ -77,6 +90,8 @@ func (adm administrator) NamespaceQueries(ctx *fasthttp.RequestCtx) error {
 		return err
 	}
 
+	sourceFilter := restql.Source(ctx.QueryArgs().Peek("source"))
+
 	queriesForNamespace, err := adm.qr.ListQueriesForNamespace(ctx, namespace)
 	if err != nil {
 		return RespondError(ctx, err)
@@ -84,13 +99,14 @@ func (adm administrator) NamespaceQueries(ctx *fasthttp.RequestCtx) error {
 
 	queries := make(map[string][]queryRevision)
 	for queryName, savedQueries := range queriesForNamespace {
+		savedQueries = filterQueriesBySource(savedQueries, sourceFilter)
+		if len(savedQueries) == 0 {
+			continue
+		}
+
 		qs := make([]queryRevision, len(savedQueries))
 		for i, savedQuery := range savedQueries {
-			qs[i] = queryRevision{
-				Name:     savedQuery.Name,
-				Text:     savedQuery.Text,
-				Revision: savedQuery.Revision,
-			}
+			qs[i] = toQueryRevision(savedQuery)
 		}
 
 		queries[queryName] = qs
@@ -115,18 +131,18 @@ func (adm *administrator) QueryRevisions(ctx *fasthttp.RequestCtx) error {
 		return err
 	}
 
+	sourceFilter := restql.Source(ctx.QueryArgs().Peek("source"))
+
 	rs, err := adm.qr.ListQueryRevisions(ctx, namespace, queryName)
 	if err != nil {
 		return RespondError(ctx, err)
 	}
 
+	rs = filterQueriesBySource(rs, sourceFilter)
+
 	queryRevisions := make([]queryRevision, len(rs))
 	for i, r := range rs {
-		queryRevisions[i] = queryRevision{
-			Name:     r.Name,
-			Text:     r.Text,
-			Revision: r.Revision,
-		}
+		queryRevisions[i] = toQueryRevision(r)
 	}
 
 	data := map[string]interface{}{"namespace": namespace, "query": queryName, "revisions": queryRevisions}
@@ -168,10 +184,52 @@ func (adm *administrator) Query(ctx *fasthttp.RequestCtx) error {
 	data := map[string]interface{}{
 		"namespace": namespace,
 		"name":      savedQuery.Name,
+		"source":    savedQuery.Source,
 		"revision": map[string]string{
 			"text": savedQuery.Text,
 		},
 	}
 
 	return Respond(ctx, data, fasthttp.StatusOK, nil)
+}
+
+func filterQueriesBySource(queryRevisions []restql.SavedQuery, source restql.Source) []restql.SavedQuery {
+	if source == "" {
+		return queryRevisions
+	}
+
+	var result []restql.SavedQuery
+
+	for _, qr := range queryRevisions {
+		if qr.Source == source {
+			result = append(result, qr)
+		}
+	}
+
+	return result
+}
+
+func filterMappingsBySource(mappings map[string]restql.Mapping, source restql.Source) map[string]restql.Mapping {
+	if source == "" {
+		return mappings
+	}
+
+	result := make(map[string]restql.Mapping)
+
+	for _, m := range mappings {
+		if m.Source == source {
+			result[m.ResourceName()] = m
+		}
+	}
+
+	return result
+}
+
+func toQueryRevision(sq restql.SavedQuery) queryRevision {
+	return queryRevision{
+		Name:     sq.Name,
+		Text:     sq.Text,
+		Revision: sq.Revision,
+		Source:   string(sq.Source),
+	}
 }

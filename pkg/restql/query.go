@@ -1,10 +1,19 @@
 package restql
 
+type Source string
+
+var (
+	DatabaseSource   Source = "database"
+	ConfigFileSource Source = "config"
+	EnvSource        Source = "env"
+)
+
 // SavedQuery represents a query stored in database.
 type SavedQuery struct {
 	Name     string
 	Text     string
 	Revision int
+	Source   Source
 }
 
 // QueryContext represents all data related

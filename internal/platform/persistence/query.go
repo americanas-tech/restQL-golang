@@ -27,6 +27,7 @@ func NewQueryReader(log restql.Logger, local map[string]map[string][]string, db 
 					Name:     queryName,
 					Text:     text,
 					Revision: i + 1,
+					Source:   restql.ConfigFileSource,
 				}
 			}
 
@@ -66,6 +67,7 @@ func (qr QueryReader) Get(ctx context.Context, namespace, id string, revision in
 	}
 
 	if dbQuery.Text != "" {
+		dbQuery.Source = restql.DatabaseSource
 		return dbQuery, nil
 	}
 
@@ -139,6 +141,8 @@ func (qr QueryReader) ListQueriesForNamespace(ctx context.Context, namespace str
 	}
 
 	for queryName, dbRevisions := range dbQueries {
+		dbRevisions = setDatabaseSource(dbRevisions)
+		qr.log.Info("db revision", "value", dbRevisions)
 		localRevisions := queries[queryName]
 		queries[queryName] = unionLists(localRevisions, dbRevisions)
 	}
@@ -163,6 +167,8 @@ func (qr QueryReader) ListQueryRevisions(ctx context.Context, namespace string, 
 		log.Error("fail to find query revisions from database", err)
 	}
 
+	dbRevisions = setDatabaseSource(dbRevisions)
+
 	if len(localRevisions) == 0 && len(dbRevisions) == 0 {
 		return nil, restql.ErrQueryNotFound
 	}
@@ -183,4 +189,13 @@ func unionLists(a, b []restql.SavedQuery) []restql.SavedQuery {
 	}
 
 	return result
+}
+
+func setDatabaseSource(r []restql.SavedQuery) []restql.SavedQuery {
+	for i, savedQuery := range r {
+		savedQuery.Source = restql.DatabaseSource
+		r[i] = savedQuery
+	}
+
+	return r
 }
