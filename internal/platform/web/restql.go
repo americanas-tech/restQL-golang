@@ -38,7 +38,7 @@ func (r restQl) ValidateQuery(ctx *fasthttp.RequestCtx) error {
 	queryTxt := string(ctx.PostBody())
 	_, err := r.parser.Parse(queryTxt)
 	if err != nil {
-		r.log.Error("an error occurred when parsing queryRevision", err)
+		r.log.Error("an error occurred when parsing query", err)
 		e := fmt.Errorf("%w: %s", parser.ErrInvalidQuery, err)
 
 		return RespondError(ctx, e, errToStatusCode)
@@ -109,7 +109,7 @@ func (r restQl) RunSavedQuery(reqCtx *fasthttp.RequestCtx) error {
 
 	result, err := r.evaluator.SavedQuery(ctx, options, input)
 	if err != nil {
-		log.Error("failed to evaluated saved queryRevision", err)
+		log.Error("failed to evaluated saved query", err)
 
 		return RespondError(reqCtx, err, errToStatusCode)
 	}
@@ -132,7 +132,7 @@ func makeQueryOptions(ctx *fasthttp.RequestCtx, log restql.Logger, envTenant str
 
 	queryID, err := pathParamString(ctx, "queryId")
 	if err != nil {
-		log.Error("failed to load queryRevision id path param", err)
+		log.Error("failed to load query id path param", err)
 		return restql.QueryOptions{}, err
 	}
 
