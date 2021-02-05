@@ -153,7 +153,7 @@ var (
 
 // ErrMappingsNotFound is the error returned when
 // the resource mappings is not found anywhere
-var ErrMappingsNotFound = errors.New("mappings not found in local configuration")
+var ErrMappingsNotFound = errors.New("mappings not found")
 
 // ErrQueryNotFound is the error returned when
 // the query text is not found anywhere
