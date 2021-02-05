@@ -78,6 +78,7 @@ func (qr QueryReader) getQueryFromLocal(namespace string, id string, revision in
 	return savedQuery, nil
 }
 
+// ListNamespaces fetches all namespace on config, env and database
 func (qr QueryReader) ListNamespaces(ctx context.Context) ([]string, error) {
 	namespaceSet := make(map[string]struct{})
 
@@ -105,6 +106,8 @@ func (qr QueryReader) ListNamespaces(ctx context.Context) ([]string, error) {
 	return namespaces, nil
 }
 
+// ListQueriesForNamespace fetches the queries under the given namespace,
+// stored on config file, env or database.
 func (qr QueryReader) ListQueriesForNamespace(ctx context.Context, namespace string) (map[string][]restql.SavedQuery, error) {
 	queries := make(map[string][]restql.SavedQuery)
 	for queryName, revisions := range qr.local[namespace] {
@@ -130,6 +133,8 @@ func (qr QueryReader) ListQueriesForNamespace(ctx context.Context, namespace str
 	return queries, nil
 }
 
+// ListQueryRevisions fetch revisions for a query on the given namespace,
+// stored on the config file, env or database.
 func (qr QueryReader) ListQueryRevisions(ctx context.Context, namespace string, queryName string) ([]restql.SavedQuery, error) {
 	var localRevisions []restql.SavedQuery
 
@@ -180,14 +185,19 @@ func setDatabaseSource(r []restql.SavedQuery) []restql.SavedQuery {
 	return r
 }
 
+// ErrCreateRevisionNotAllowed is returned when trying to write a query revision
+// on a query stored on local or env.
 var ErrCreateRevisionNotAllowed = errors.New("a local query cannot be updated with a new revision : remove it from the local configuration or migrate it to the database")
 
+// QueryWriter is the entity that create a new query revision
+// when it is stored on the database.
 type QueryWriter struct {
 	log   restql.Logger
 	local map[string]map[string][]restql.SavedQuery
 	db    Database
 }
 
+// NewQueryWriter creates a QueryWriter instance
 func NewQueryWriter(log restql.Logger, local map[string]map[string][]string, db Database) QueryWriter {
 	return QueryWriter{
 		log:   log,
@@ -196,6 +206,7 @@ func NewQueryWriter(log restql.Logger, local map[string]map[string][]string, db 
 	}
 }
 
+// Write creates a new query revision
 func (qw QueryWriter) Write(ctx context.Context, namespace, name, content string) error {
 	if !qw.allowWrite(ctx, namespace, name) {
 		return ErrCreateRevisionNotAllowed
