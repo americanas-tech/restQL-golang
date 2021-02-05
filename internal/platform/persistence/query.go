@@ -123,7 +123,6 @@ func (qr QueryReader) ListQueriesForNamespace(ctx context.Context, namespace str
 
 	for queryName, dbRevisions := range dbQueries {
 		dbRevisions = setDatabaseSource(dbRevisions)
-		qr.log.Info("db revision", "value", dbRevisions)
 		localRevisions := queries[queryName]
 		queries[queryName] = unionLists(localRevisions, dbRevisions)
 	}
