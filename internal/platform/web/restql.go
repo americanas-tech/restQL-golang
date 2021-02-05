@@ -2,6 +2,7 @@ package web
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -17,8 +18,9 @@ import (
 var jsonContentType = "application/json"
 
 var (
-	errInvalidRevisionType = errors.New("invalid revision : must be an integer")
-	errInvalidTenant       = errors.New("invalid tenant : no value provided")
+	errInvalidRevisionType     = errors.New("invalid revision : must be an integer")
+	errInvalidTenant           = errors.New("invalid tenant : no value provided")
+	errFailedToReadRequestBody = errors.New("failed to read and unmarshal request body")
 )
 
 type restQl struct {
@@ -37,13 +39,9 @@ func (r restQl) ValidateQuery(ctx *fasthttp.RequestCtx) error {
 	_, err := r.parser.Parse(queryTxt)
 	if err != nil {
 		r.log.Error("an error occurred when parsing queryRevision", err)
+		e := fmt.Errorf("%w: %s", parser.ErrInvalidQuery, err)
 
-		e := &Error{
-			Err:    errors.Wrap(err, "invalid queryRevision"),
-			Status: http.StatusUnprocessableEntity,
-		}
-
-		return RespondError(ctx, e)
+		return RespondError(ctx, e, errToStatusCode)
 	}
 
 	return Respond(ctx, nil, http.StatusOK, nil)
@@ -55,45 +53,36 @@ func (r restQl) RunAdHocQuery(reqCtx *fasthttp.RequestCtx) error {
 
 	tenant, err := makeTenant(reqCtx, r.config.Tenant)
 	if err != nil {
-		r.log.Error("failed to build queryRevision options", err)
-		return RespondError(reqCtx, NewRequestError(err, http.StatusBadRequest))
+		r.log.Error("failed to build query options", err)
+		return RespondError(reqCtx, err, errToStatusCode)
 	}
 	options := restql.QueryOptions{Tenant: tenant}
 
 	input, err := makeQueryInput(reqCtx, r.log)
 	if err != nil {
-		r.log.Error("failed to build queryRevision input", err)
-		return RespondError(reqCtx, NewRequestError(err, http.StatusBadRequest))
+		r.log.Error("failed to build query input", err)
+		return RespondError(reqCtx, err, errToStatusCode)
 	}
 
 	queryTxt := string(reqCtx.PostBody())
 
 	result, err := r.evaluator.AdHocQuery(ctx, queryTxt, options, input)
 	if err != nil {
-		r.log.Error("failed to evaluated adhoc queryRevision", err)
+		r.log.Error("failed to evaluated adhoc query", err)
 
-		switch {
-		case errors.Is(err, restql.ErrMappingsNotFound):
-			return RespondError(reqCtx, NewRequestError(err, http.StatusNotFound))
-		case errors.Is(err, restql.ErrDatabaseCommunicationFailed):
-			return RespondError(reqCtx, NewRequestError(err, http.StatusInsufficientStorage))
-		case errors.Is(err, eval.ErrValidation):
-			return RespondError(reqCtx, NewRequestError(err, http.StatusUnprocessableEntity))
-		case errors.Is(err, eval.ErrParser):
-			return RespondError(reqCtx, NewRequestError(err, http.StatusBadRequest))
-		case errors.Is(err, eval.ErrTimeout):
-			return RespondError(reqCtx, NewRequestError(err, http.StatusBadRequest))
-		case errors.Is(err, eval.ErrMapping):
-			return RespondError(reqCtx, NewRequestError(err, http.StatusInternalServerError))
-		default:
-			return RespondError(reqCtx, err)
+		adhocErrToStatusCode := make(map[error]int)
+		for err, status := range errToStatusCode {
+			adhocErrToStatusCode[err] = status
 		}
+		adhocErrToStatusCode[eval.ErrParser] = http.StatusBadRequest
+
+		return RespondError(reqCtx, err, adhocErrToStatusCode)
 	}
 
 	debugEnabled := isDebugEnabled(input)
 	response, err := MakeQueryResponse(result, debugEnabled)
 	if err != nil {
-		return RespondError(reqCtx, err)
+		return RespondError(reqCtx, err, errToStatusCode)
 	}
 
 	return Respond(reqCtx, response.Body, response.StatusCode, response.Headers)
@@ -108,48 +97,27 @@ func (r restQl) RunSavedQuery(reqCtx *fasthttp.RequestCtx) error {
 
 	options, err := makeQueryOptions(reqCtx, log, r.config.Tenant)
 	if err != nil {
-		log.Error("failed to build queryRevision options", err)
-		return RespondError(reqCtx, NewRequestError(err, http.StatusBadRequest))
+		log.Error("failed to build query options", err)
+		return RespondError(reqCtx, err, errToStatusCode)
 	}
 
 	input, err := makeQueryInput(reqCtx, log)
 	if err != nil {
-		log.Error("failed to build queryRevision input", err)
-		return RespondError(reqCtx, NewRequestError(err, http.StatusBadRequest))
+		log.Error("failed to build query input", err)
+		return RespondError(reqCtx, err, errToStatusCode)
 	}
 
 	result, err := r.evaluator.SavedQuery(ctx, options, input)
 	if err != nil {
 		log.Error("failed to evaluated saved queryRevision", err)
 
-		switch {
-		case errors.Is(err, restql.ErrMappingsNotFound):
-			return RespondError(reqCtx, NewRequestError(err, http.StatusNotFound))
-		case errors.Is(err, restql.ErrQueryNotFound):
-			return RespondError(reqCtx, NewRequestError(err, http.StatusNotFound))
-		case errors.Is(err, restql.ErrQueryNotFoundInDatabase):
-			return RespondError(reqCtx, NewRequestError(err, http.StatusNotFound))
-		case errors.Is(err, restql.ErrMappingsNotFoundInDatabase):
-			return RespondError(reqCtx, NewRequestError(err, http.StatusNotFound))
-		case errors.Is(err, restql.ErrDatabaseCommunicationFailed):
-			return RespondError(reqCtx, NewRequestError(err, http.StatusInsufficientStorage))
-		case errors.Is(err, eval.ErrValidation):
-			return RespondError(reqCtx, NewRequestError(err, http.StatusUnprocessableEntity))
-		case errors.Is(err, eval.ErrParser):
-			return RespondError(reqCtx, NewRequestError(err, http.StatusInternalServerError))
-		case errors.Is(err, eval.ErrTimeout):
-			return RespondError(reqCtx, NewRequestError(err, http.StatusRequestTimeout))
-		case errors.Is(err, eval.ErrMapping):
-			return RespondError(reqCtx, NewRequestError(err, http.StatusInternalServerError))
-		default:
-			return RespondError(reqCtx, err)
-		}
+		return RespondError(reqCtx, err, errToStatusCode)
 	}
 
 	debugEnabled := isDebugEnabled(input)
 	response, err := MakeQueryResponse(result, debugEnabled)
 	if err != nil {
-		return RespondError(reqCtx, err)
+		return RespondError(reqCtx, err, errToStatusCode)
 	}
 
 	return Respond(reqCtx, response.Body, response.StatusCode, response.Headers)
@@ -251,7 +219,7 @@ func makeQueryInput(ctx *fasthttp.RequestCtx, log restql.Logger) (restql.QueryIn
 			err := json.Unmarshal(requestBody, &b)
 			if err != nil {
 				log.Error("failed to unmarshal request body", err)
-				return restql.QueryInput{}, err
+				return restql.QueryInput{}, fmt.Errorf("%w: %s", errFailedToReadRequestBody, err)
 			}
 
 			input.Body = b

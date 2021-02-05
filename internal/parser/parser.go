@@ -1,9 +1,13 @@
 package parser
 
 import (
+	"errors"
 	"github.com/b2wdigital/restQL-golang/v4/internal/domain"
 	"github.com/b2wdigital/restQL-golang/v4/internal/parser/ast"
 )
+
+// ErrInvalidQuery represents a given query that not comply with the restQL syntax
+var ErrInvalidQuery = errors.New("invalid query")
 
 // Parser is the interface implemented by types that
 // can transform a query string into an internal representation.
