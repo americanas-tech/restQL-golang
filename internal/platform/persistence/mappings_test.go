@@ -161,7 +161,7 @@ func (s stubDatabase) FindAllNamespaces(ctx context.Context) ([]string, error) {
 	panic("implement me")
 }
 
-func (s stubDatabase) FindQueriesForNamespace(ctx context.Context, namespace string) (map[string]restql.SavedQuery, error) {
+func (s stubDatabase) FindQueriesForNamespace(ctx context.Context, namespace string) (map[string][]restql.SavedQuery, error) {
 	panic("implement me")
 }
 
