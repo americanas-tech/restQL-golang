@@ -171,13 +171,13 @@ func (mw *MappingsWriter) Write(ctx context.Context, tenant string, resource str
 func (mw *MappingsWriter) allowWrite(tenant string, resourceName string) bool {
 	for resource := range mw.local {
 		if resource == resourceName {
-			return true
+			return false
 		}
 	}
 
 	for resource := range mw.env {
 		if resource == resourceName {
-			return true
+			return false
 		}
 	}
 
@@ -185,7 +185,7 @@ func (mw *MappingsWriter) allowWrite(tenant string, resourceName string) bool {
 	if found {
 		for resource := range localTenantMappings {
 			if resource == resourceName {
-				return true
+				return false
 			}
 		}
 	}
@@ -194,12 +194,12 @@ func (mw *MappingsWriter) allowWrite(tenant string, resourceName string) bool {
 	if found {
 		for resource := range envTenantMappings {
 			if resource == resourceName {
-				return true
+				return false
 			}
 		}
 	}
 
-	return false
+	return true
 }
 
 func getMappingsFromEnv(log restql.Logger, envSource domain.EnvSource) map[string]restql.Mapping {
