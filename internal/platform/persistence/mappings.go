@@ -42,20 +42,21 @@ func NewMappingReader(log restql.Logger, env domain.EnvSource, local map[string]
 func (mr MappingsReader) ListTenants(ctx context.Context) ([]string, error) {
 	tenantSet := make(map[string]struct{})
 
-	for tenant := range mr.envWithTenant {
+	for tenant := range mr.localByTenant {
 		tenantSet[tenant] = struct{}{}
 	}
 
 	dbTenants, err := mr.db.FindAllTenants(ctx)
 	if err != nil {
-		return nil, err
+		log := restql.GetLogger(ctx)
+		log.Error("fail to read tenants from database", err)
+	} else {
+		for _, tenant := range dbTenants {
+			tenantSet[tenant] = struct{}{}
+		}
 	}
 
-	for _, tenant := range dbTenants {
-		tenantSet[tenant] = struct{}{}
-	}
-
-	for tenant := range mr.localByTenant {
+	for tenant := range mr.envWithTenant {
 		tenantSet[tenant] = struct{}{}
 	}
 
@@ -73,7 +74,7 @@ func (mr MappingsReader) ListTenants(ctx context.Context) ([]string, error) {
 func (mr MappingsReader) FromTenant(ctx context.Context, tenant string) (map[string]restql.Mapping, error) {
 	log := restql.GetLogger(ctx)
 	log.Debug("fetching mappings")
-	mappingsFoundErr := fmt.Errorf("%w: tenant %s", restql.ErrMappingsNotFound, tenant)
+	errMappingsFound := fmt.Errorf("%w: tenant %s", restql.ErrMappingsNotFound, tenant)
 
 	result := make(map[string]restql.Mapping)
 
@@ -90,11 +91,11 @@ func (mr MappingsReader) FromTenant(ctx context.Context, tenant string) (map[str
 
 	dbMappings, err := mr.db.FindMappingsForTenant(ctx, tenant)
 	switch {
-	case err == errNoDatabase:
+	case err == errNoDatabase || errors.Is(err, restql.ErrMappingsNotFoundInDatabase):
 		result = mr.applyEnvMappings(result, tenant)
 
 		if len(result) == 0 {
-			return nil, mappingsFoundErr
+			return nil, errMappingsFound
 		}
 
 		log.Debug("tenant mappings", "value", result)
@@ -113,7 +114,7 @@ func (mr MappingsReader) FromTenant(ctx context.Context, tenant string) (map[str
 	result = mr.applyEnvMappings(result, tenant)
 
 	if len(result) == 0 {
-		return nil, mappingsFoundErr
+		return nil, errMappingsFound
 	}
 
 	log.Debug("tenant mappings", "value", result)
