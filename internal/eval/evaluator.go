@@ -14,10 +14,10 @@ import (
 
 // Validation errors returned be Evaluator
 var (
-	ErrInvalidRevision  = errors.New("revision must be greater than 0")
-	ErrInvalidQueryID   = errors.New("query id must be not empty")
-	ErrInvalidNamespace = errors.New("namespace must be not empty")
-	ErrInvalidTenant    = errors.New("tenant must be not empty")
+	errInvalidRevision  = errors.New("revision must be greater than 0")
+	errInvalidQueryID   = errors.New("query id must be not empty")
+	errInvalidNamespace = errors.New("namespace must be not empty")
+	errInvalidTenant    = errors.New("tenant must be not empty")
 )
 
 // Evaluator is the interpreter of the restQL language.
@@ -47,7 +47,7 @@ func NewEvaluator(log restql.Logger, mr MappingsReader, qr QueryReader, r runner
 // the options and HTTP information.
 func (e Evaluator) AdHocQuery(ctx context.Context, queryTxt string, queryOpts restql.QueryOptions, queryInput restql.QueryInput) (domain.Resources, error) {
 	if queryOpts.Tenant == "" {
-		return nil, ValidationError{ErrInvalidTenant}
+		return nil, fmt.Errorf("%w: %s", ErrValidation, errInvalidTenant)
 	}
 
 	return e.evaluateQuery(ctx, queryTxt, queryOpts, queryInput)
@@ -79,7 +79,7 @@ func (e Evaluator) evaluateQuery(ctx context.Context, queryTxt string, queryOpts
 	query, err := e.parser.Parse(queryTxt)
 	if err != nil {
 		log.Debug("failed to parse query", "error", err)
-		return nil, ParserError{errors.Wrap(err, "invalid query syntax")}
+		return nil, fmt.Errorf("%w: invalid query syntax %s", ErrParser, err)
 	}
 
 	mappings, err := e.mappingsReader.FromTenant(ctx, queryOpts.Tenant)
@@ -107,9 +107,9 @@ func (e Evaluator) evaluateQuery(ctx context.Context, queryTxt string, queryOpts
 	resources, err := e.runner.ExecuteQuery(queryCtx, query, queryContext)
 	switch {
 	case err == runner.ErrQueryTimedOut:
-		return nil, TimeoutError{Err: err}
+		return nil, fmt.Errorf("%w: %s", ErrTimeout, err)
 	case errors.Is(err, runner.ErrInvalidChainedParameter):
-		return nil, ParserError{Err: err}
+		return nil, fmt.Errorf("%w: %s", ErrParser, err)
 	case err != nil:
 		return nil, err
 	}
@@ -133,8 +133,7 @@ func validateQueryResources(query domain.Query, mappings map[string]restql.Mappi
 	for _, s := range query.Statements {
 		_, found := mappings[s.Resource]
 		if !found {
-			err := errors.Errorf("statement should reference a valid mapped resource. Error was in %s", s.Resource)
-			return MappingError{Err: err}
+			return fmt.Errorf("%w: statement should reference a valid mapped resource. Error was in %s", ErrMapping, s.Resource)
 		}
 	}
 
@@ -143,19 +142,19 @@ func validateQueryResources(query domain.Query, mappings map[string]restql.Mappi
 
 func validateQueryOptions(queryOpts restql.QueryOptions) error {
 	if queryOpts.Revision <= 0 {
-		return ValidationError{ErrInvalidRevision}
+		return fmt.Errorf("%w: %s", ErrValidation, errInvalidRevision)
 	}
 
 	if queryOpts.Id == "" {
-		return ValidationError{ErrInvalidQueryID}
+		return fmt.Errorf("%w: %s", ErrValidation, errInvalidQueryID)
 	}
 
 	if queryOpts.Namespace == "" {
-		return ValidationError{ErrInvalidNamespace}
+		return fmt.Errorf("%w: %s", ErrValidation, errInvalidNamespace)
 	}
 
 	if queryOpts.Tenant == "" {
-		return ValidationError{ErrInvalidTenant}
+		return fmt.Errorf("%w: %s", ErrValidation, errInvalidTenant)
 	}
 
 	return nil

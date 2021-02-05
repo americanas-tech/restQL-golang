@@ -1,9 +1,5 @@
 package domain
 
-import (
-	"fmt"
-)
-
 // Methods available to be used in query statements.
 const (
 	FromMethod   string = "from"
@@ -56,13 +52,3 @@ type Variable struct {
 
 // Chain is the internal representation of a chain parameter value.
 type Chain []interface{}
-
-// ErrQueryRevisionDeprecated represents an error from fetching
-// a query marked as deprecated.
-type ErrQueryRevisionDeprecated struct {
-	Revision int
-}
-
-func (e ErrQueryRevisionDeprecated) Error() string {
-	return fmt.Sprintf("the revision %d is deprecated", e.Revision)
-}
