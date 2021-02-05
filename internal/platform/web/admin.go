@@ -9,10 +9,17 @@ import (
 )
 
 type queryRevision struct {
-	Name     string `json:"name"`
-	Text     string `json:"text"`
-	Revision int    `json:"revision"`
-	Source   string `json:"source"`
+	Name     string `json:"name,omitempty"`
+	Text     string `json:"text,omitempty"`
+	Revision int    `json:"revision,omitempty"`
+	Source   string `json:"source,omitempty"`
+}
+
+type query struct {
+	Namespace string          `json:"namespace"`
+	Name      string          `json:"name"`
+	Revisions []queryRevision `json:"revisions"`
+	Source    string          `json:"source,omitempty"`
 }
 
 type mapping struct {
@@ -100,19 +107,22 @@ func (adm administrator) NamespaceQueries(ctx *fasthttp.RequestCtx) error {
 		return RespondError(ctx, err, errToStatusCode)
 	}
 
-	queries := make(map[string][]queryRevision)
+	queries := make([]query, len(queriesForNamespace))
+	i := 0
 	for queryName, savedQueries := range queriesForNamespace {
 		savedQueries = filterQueriesBySource(savedQueries, sourceFilter)
-		if len(savedQueries) == 0 {
-			continue
+
+		rs := make([]queryRevision, len(savedQueries))
+		for j, savedQuery := range savedQueries {
+			rs[j] = queryRevision{
+				Text:     savedQuery.Text,
+				Revision: savedQuery.Revision,
+				Source:   string(savedQuery.Source),
+			}
 		}
 
-		qs := make([]queryRevision, len(savedQueries))
-		for i, savedQuery := range savedQueries {
-			qs[i] = toQueryRevision(savedQuery)
-		}
-
-		queries[queryName] = qs
+		queries[i] = query{Name: queryName, Revisions: rs}
+		i++
 	}
 
 	data := map[string]interface{}{"namespace": namespace, "queries": queries}
@@ -148,7 +158,11 @@ func (adm *administrator) QueryRevisions(ctx *fasthttp.RequestCtx) error {
 		queryRevisions[i] = toQueryRevision(r)
 	}
 
-	data := map[string]interface{}{"namespace": namespace, "query": queryName, "revisions": queryRevisions}
+	data := query{
+		Namespace: namespace,
+		Name:      queryName,
+		Revisions: queryRevisions,
+	}
 	return Respond(ctx, data, fasthttp.StatusOK, nil)
 }
 
