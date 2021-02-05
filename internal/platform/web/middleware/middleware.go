@@ -81,5 +81,10 @@ func (d *Decorator) fetchEnabled() []Middleware {
 		mws = append(mws, cors)
 	}
 
+	if d.cfg.HTTP.Server.Admin.Enable {
+		admAuth := newAdminAuthorization(d.log, d.cfg.HTTP.Server.Admin.AuthorizationCode)
+		mws = append(mws, admAuth)
+	}
+
 	return mws
 }

@@ -44,12 +44,16 @@ type Config struct {
 		QueryResourceTimeout time.Duration `env:"RESTQL_QUERY_RESOURCE_TIMEOUT" envDefault:"5s"`
 
 		Server struct {
-			APIAddr                 string        `env:"RESTQL_PORT,required"`
-			APIHealthAddr           string        `env:"RESTQL_HEALTH_PORT,required"`
-			PropfAddr               string        `env:"RESTQL_PPROF_PORT"`
-			EnablePprof             bool          `env:"RESTQL_ENABLE_PPROF"`
-			EnableFullPprof         bool          `env:"RESTQL_ENABLE_FULL_PPROF"`
-			EnableAdmin             bool          `yaml:"enableAdmin" env:"RESTQL_ENABLE_ADMIN"`
+			APIAddr         string `env:"RESTQL_PORT,required"`
+			APIHealthAddr   string `env:"RESTQL_HEALTH_PORT,required"`
+			PropfAddr       string `env:"RESTQL_PPROF_PORT"`
+			EnablePprof     bool   `env:"RESTQL_ENABLE_PPROF"`
+			EnableFullPprof bool   `env:"RESTQL_ENABLE_FULL_PPROF"`
+			Admin           struct {
+				Enable            bool   `yaml:"enable" env:"RESTQL_ADMIN_ENABLE"`
+				AuthorizationCode string `yaml:"authorizationCode" env:"RESTQL_ADMIN_AUTHORIZATION_CODE"`
+			} `yaml:"admin"`
+
 			GracefulShutdownTimeout time.Duration `yaml:"gracefulShutdownTimeout"`
 			ReadTimeout             time.Duration `yaml:"readTimeout"`
 			IdleTimeout             time.Duration `yaml:"idleTimeout"`

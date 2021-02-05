@@ -136,8 +136,10 @@ func (mr MappingsReader) applyEnvMappings(result map[string]restql.Mapping, tena
 	return result
 }
 
+// ErrSetResourceMappingNotAllowed is returned when trying to write a resource mapping on a resource stored on local or env.
 var ErrSetResourceMappingNotAllowed = errors.New("a resource mapping must have a source of type database in order to provide writing operations")
 
+// MappingsWriter is the entity that maps resource name to URL.
 type MappingsWriter struct {
 	log           restql.Logger
 	db            Database
@@ -147,6 +149,7 @@ type MappingsWriter struct {
 	localByTenant map[string]map[string]restql.Mapping
 }
 
+// NewMappingWriter creates an instance of MappingsWriter
 func NewMappingWriter(log restql.Logger, env domain.EnvSource, local map[string]string, localByTenant map[string]map[string]string, db Database) MappingsWriter {
 	envMappings := getMappingsFromEnv(log, env)
 	envWithTenantMappings := getMappingsFromEnvWithTenant(log, env)
@@ -159,6 +162,7 @@ func NewMappingWriter(log restql.Logger, env domain.EnvSource, local map[string]
 	return MappingsWriter{log: log, env: envMappings, envWithTenant: envWithTenantMappings, local: localMappings, localByTenant: localMappingsByTenant, db: db}
 }
 
+// Write sets a URL to a resource name under the given tenant
 func (mw *MappingsWriter) Write(ctx context.Context, tenant string, resource string, url string) error {
 	if !mw.allowWrite(tenant, resource) {
 		log := restql.GetLogger(ctx)

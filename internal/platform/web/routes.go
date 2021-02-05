@@ -39,8 +39,6 @@ func API(log restql.Logger, cfg *conf.Config) (fasthttp.RequestHandler, error) {
 		log.Error("failed to initialize plugins", err)
 	}
 
-	md := middleware.NewDecorator(log, cfg, lifecycle)
-
 	client := httpclient.New(log, lifecycle, cfg)
 	executor := runner.NewExecutor(log, client, cfg.HTTP.QueryResourceTimeout, cfg.HTTP.ForwardPrefix)
 	r := runner.NewRunner(log, executor, cfg.HTTP.GlobalQueryTimeout)
@@ -62,27 +60,28 @@ func API(log restql.Logger, cfg *conf.Config) (fasthttp.RequestHandler, error) {
 
 	restQl := newRestQl(log, cfg, e, defaultParser)
 
+	md := middleware.NewDecorator(log, cfg, lifecycle)
 	app := newApp(log, appOptions{MiddlewareDecorator: md})
 	app.Handle(http.MethodPost, "/validate-query", restQl.ValidateQuery)
 	app.Handle(http.MethodPost, "/run-query", restQl.RunAdHocQuery)
 	app.Handle(http.MethodGet, "/run-query/{namespace}/{queryId}/{revision}", restQl.RunSavedQuery)
 	app.Handle(http.MethodPost, "/run-query/{namespace}/{queryId}/{revision}", restQl.RunSavedQuery)
 
-	if cfg.HTTP.Server.EnableAdmin {
+	if cfg.HTTP.Server.Admin.Enable {
 		log.Info("administration api enabled")
 		mw := persistence.NewMappingWriter(log, cfg.Env, cfg.Mappings, cfg.TenantMappings, db)
 		qw := persistence.NewQueryWriter(log, cfg.Queries, db)
 
 		adm := newAdmin(mappingReader, mw, queryReader, qw)
-		app = admin(log, adm, app)
+		app = registerAdminEndpoints(adm, app)
 
 	}
 
 	return app.RequestHandler(), nil
 }
 
-// Admin adds handlers for administrative operations
-func admin(log restql.Logger, adm *administrator, apiApp app) app {
+// registerAdminEndpoints adds handlers for administrative operations
+func registerAdminEndpoints(adm *administrator, apiApp app) app {
 	apiApp.Handle(http.MethodGet, "/admin/tenant", adm.AllTenants)
 	apiApp.Handle(http.MethodGet, "/admin/tenant/{tenantName}/mapping", adm.TenantMappings)
 	apiApp.Handle(http.MethodPost, "/admin/tenant/{tenantName}/mapping/{resource}", adm.MapResource)
