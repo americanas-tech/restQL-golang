@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/b2wdigital/restQL-golang/v4/internal/domain"
 	"github.com/b2wdigital/restQL-golang/v4/internal/eval"
 	"github.com/b2wdigital/restQL-golang/v4/internal/parser"
 	"github.com/b2wdigital/restQL-golang/v4/internal/platform/conf"
@@ -78,16 +77,13 @@ func (r restQl) RunAdHocQuery(reqCtx *fasthttp.RequestCtx) error {
 			return RespondError(reqCtx, NewRequestError(err, http.StatusNotFound))
 		case errors.Is(err, restql.ErrDatabaseCommunicationFailed):
 			return RespondError(reqCtx, NewRequestError(err, http.StatusInsufficientStorage))
-		}
-
-		switch err := err.(type) {
-		case eval.ValidationError:
+		case errors.Is(err, eval.ErrValidation):
 			return RespondError(reqCtx, NewRequestError(err, http.StatusUnprocessableEntity))
-		case eval.ParserError:
+		case errors.Is(err, eval.ErrParser):
 			return RespondError(reqCtx, NewRequestError(err, http.StatusBadRequest))
-		case eval.TimeoutError:
-			return RespondError(reqCtx, NewRequestError(err, http.StatusRequestTimeout))
-		case eval.MappingError:
+		case errors.Is(err, eval.ErrTimeout):
+			return RespondError(reqCtx, NewRequestError(err, http.StatusBadRequest))
+		case errors.Is(err, eval.ErrMapping):
 			return RespondError(reqCtx, NewRequestError(err, http.StatusInternalServerError))
 		default:
 			return RespondError(reqCtx, err)
@@ -137,19 +133,14 @@ func (r restQl) RunSavedQuery(reqCtx *fasthttp.RequestCtx) error {
 			return RespondError(reqCtx, NewRequestError(err, http.StatusNotFound))
 		case errors.Is(err, restql.ErrDatabaseCommunicationFailed):
 			return RespondError(reqCtx, NewRequestError(err, http.StatusInsufficientStorage))
-		}
-
-		switch err := err.(type) {
-		case eval.ValidationError:
+		case errors.Is(err, eval.ErrValidation):
 			return RespondError(reqCtx, NewRequestError(err, http.StatusUnprocessableEntity))
-		case eval.TimeoutError:
+		case errors.Is(err, eval.ErrParser):
+			return RespondError(reqCtx, NewRequestError(err, http.StatusInternalServerError))
+		case errors.Is(err, eval.ErrTimeout):
 			return RespondError(reqCtx, NewRequestError(err, http.StatusRequestTimeout))
-		case eval.ParserError:
+		case errors.Is(err, eval.ErrMapping):
 			return RespondError(reqCtx, NewRequestError(err, http.StatusInternalServerError))
-		case eval.MappingError:
-			return RespondError(reqCtx, NewRequestError(err, http.StatusInternalServerError))
-		case domain.ErrQueryRevisionDeprecated:
-			return RespondError(reqCtx, NewRequestError(err, http.StatusBadRequest))
 		default:
 			return RespondError(reqCtx, err)
 		}
