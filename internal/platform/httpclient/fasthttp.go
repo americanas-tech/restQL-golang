@@ -116,7 +116,7 @@ func (hc *fastHTTPClient) Do(ctx context.Context, request restql.HTTPRequest) (r
 	hc.responsePool.Put(c)
 
 	switch {
-	case hr.err == fasthttp.ErrTimeout:
+	case hr.err == fasthttp.ErrTimeout || hr.err == fasthttp.ErrDialTimeout || hr.err == fasthttp.ErrTLSHandshakeTimeout:
 		hc.log.Info("request timed out", "url", hr.target, "method", request.Method, "duration-ms", hr.duration.Milliseconds())
 		response := makeErrorResponse(hr.target, hr.duration, fasthttp.StatusRequestTimeout)
 
