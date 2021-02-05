@@ -37,6 +37,8 @@ You can use the `pprof` tool to investigate restQL performance. To enable it set
 - Health port: set through `RESTQL_HEALTH_PORT` environment variable.
 - Profiler port: set through `RESTQL_PPROF_PORT` environment variable.
 
+**Enable Administrative API**: restQL exposes a set of endpoints to configure queries and mappings stored on the database. One can enable it through the `http.server.admin.enable` field or the `RESTQL_ADMIN_ENABLE` environment variable. To find more about it go to [Administrative API](/restql/admin.md). 
+
 **Graceful shutdown**: when restQL receives a `SIGTERM` signal it starts the shutdown, avoiding accepting new requests and waiting for the ongoing ones to finish before exiting. You can define a timeout for this process using `http.server.gracefulShutdownTimeout` field in the YAML configuration, after which restQL will break all running requests and exit.
 
 **Read timeout**: you can specify the maximum time taken to read the client request to the restQL API through the `http.server.readTimeout` field.
