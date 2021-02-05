@@ -2,7 +2,6 @@ package web
 
 import (
 	"encoding/json"
-	"errors"
 	"github.com/b2wdigital/restQL-golang/v4/internal/platform/persistence"
 	"github.com/b2wdigital/restQL-golang/v4/pkg/restql"
 	"github.com/valyala/fasthttp"
@@ -32,29 +31,10 @@ func newAdmin(mr persistence.MappingsReader, mw persistence.MappingsWriter, qr p
 	return &administrator{mr: mr, mw: mw, qr: qr, queryWriter: qw}
 }
 
-func (adm *administrator) handleError(ctx *fasthttp.RequestCtx, err error) error {
-	switch {
-	case errors.Is(err, restql.ErrNamespaceNotFound):
-		return RespondError(ctx, NewRequestError(err, fasthttp.StatusNotFound))
-	case errors.Is(err, restql.ErrMappingsNotFound):
-		return RespondError(ctx, NewRequestError(err, fasthttp.StatusNotFound))
-	case errors.Is(err, restql.ErrQueryNotFound):
-		return RespondError(ctx, NewRequestError(err, fasthttp.StatusNotFound))
-	case errors.Is(err, persistence.ErrSetResourceMappingNotAllowed):
-		return RespondError(ctx, NewRequestError(err, fasthttp.StatusUnauthorized))
-	case errors.Is(err, persistence.ErrCreateRevisionNotAllowed):
-		return RespondError(ctx, NewRequestError(err, fasthttp.StatusUnauthorized))
-	case errors.Is(err, restql.ErrDatabaseCommunicationFailed):
-		return RespondError(ctx, NewRequestError(err, fasthttp.StatusInternalServerError))
-	default:
-		return nil
-	}
-}
-
 func (adm *administrator) AllTenants(ctx *fasthttp.RequestCtx) error {
 	tenants, err := adm.mr.ListTenants(ctx)
 	if err != nil {
-		return adm.handleError(ctx, err)
+		return RespondError(ctx, err, errToStatusCode)
 	}
 
 	data := map[string]interface{}{"tenants": tenants}
@@ -74,7 +54,7 @@ func (adm *administrator) TenantMappings(ctx *fasthttp.RequestCtx) error {
 
 	mappings, err := adm.mr.FromTenant(ctx, tenantName)
 	if err != nil {
-		return adm.handleError(ctx, err)
+		return RespondError(ctx, err, errToStatusCode)
 	}
 
 	mappings = filterMappingsBySource(mappings, sourceFilter)
@@ -97,7 +77,7 @@ func (adm *administrator) TenantMappings(ctx *fasthttp.RequestCtx) error {
 func (adm administrator) AllNamespaces(ctx *fasthttp.RequestCtx) error {
 	namespaces, err := adm.qr.ListNamespaces(ctx)
 	if err != nil {
-		return adm.handleError(ctx, err)
+		return RespondError(ctx, err, errToStatusCode)
 	}
 
 	data := map[string]interface{}{"namespaces": namespaces}
@@ -117,7 +97,7 @@ func (adm administrator) NamespaceQueries(ctx *fasthttp.RequestCtx) error {
 
 	queriesForNamespace, err := adm.qr.ListQueriesForNamespace(ctx, namespace)
 	if err != nil {
-		return adm.handleError(ctx, err)
+		return RespondError(ctx, err, errToStatusCode)
 	}
 
 	queries := make(map[string][]queryRevision)
@@ -158,7 +138,7 @@ func (adm *administrator) QueryRevisions(ctx *fasthttp.RequestCtx) error {
 
 	rs, err := adm.qr.ListQueryRevisions(ctx, namespace, queryName)
 	if err != nil {
-		return adm.handleError(ctx, err)
+		return RespondError(ctx, err, errToStatusCode)
 	}
 
 	rs = filterQueriesBySource(rs, sourceFilter)
@@ -201,7 +181,7 @@ func (adm *administrator) Query(ctx *fasthttp.RequestCtx) error {
 
 	savedQuery, err := adm.qr.Get(ctx, namespace, queryName, revision)
 	if err != nil {
-		return adm.handleError(ctx, err)
+		return RespondError(ctx, err, errToStatusCode)
 	}
 
 	data := map[string]interface{}{
@@ -245,7 +225,7 @@ func (adm *administrator) MapResource(ctx *fasthttp.RequestCtx) error {
 
 	err = adm.mw.Write(ctx, tenantName, resourceName, mrb.Url)
 	if err != nil {
-		return adm.handleError(ctx, err)
+		return RespondError(ctx, err, errToStatusCode)
 	}
 
 	return Respond(ctx, nil, fasthttp.StatusCreated, nil)
@@ -280,7 +260,7 @@ func (adm *administrator) CreateQueryRevision(ctx *fasthttp.RequestCtx) error {
 
 	err = adm.queryWriter.Write(ctx, namespace, queryName, crb.Text)
 	if err != nil {
-		return adm.handleError(ctx, err)
+		return RespondError(ctx, err, errToStatusCode)
 	}
 
 	return Respond(ctx, nil, fasthttp.StatusCreated, nil)

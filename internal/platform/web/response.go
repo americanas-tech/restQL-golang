@@ -3,13 +3,42 @@ package web
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"github.com/b2wdigital/restQL-golang/v4/internal/domain"
+	"github.com/b2wdigital/restQL-golang/v4/internal/eval"
+	"github.com/b2wdigital/restQL-golang/v4/internal/parser"
+	"github.com/b2wdigital/restQL-golang/v4/internal/platform/persistence"
 	"github.com/b2wdigital/restQL-golang/v4/pkg/restql"
 	"net/http"
 	"strconv"
 
 	"github.com/valyala/fasthttp"
 )
+
+var errToStatusCode = map[error]int{
+	restql.ErrMappingsNotFound:                  fasthttp.StatusNotFound,
+	restql.ErrQueryNotFound:                     fasthttp.StatusNotFound,
+	restql.ErrNamespaceNotFound:                 fasthttp.StatusNotFound,
+	restql.ErrQueryNotFoundInDatabase:           fasthttp.StatusNotFound,
+	restql.ErrMappingsNotFoundInDatabase:        fasthttp.StatusNotFound,
+	restql.ErrDatabaseCommunicationFailed:       fasthttp.StatusInsufficientStorage,
+	eval.ErrValidation:                          fasthttp.StatusUnprocessableEntity,
+	eval.ErrParser:                              fasthttp.StatusInternalServerError,
+	eval.ErrTimeout:                             fasthttp.StatusRequestTimeout,
+	eval.ErrMapping:                             fasthttp.StatusInternalServerError,
+	parser.ErrInvalidQuery:                      fasthttp.StatusUnprocessableEntity,
+	persistence.ErrSetResourceMappingNotAllowed: fasthttp.StatusUnauthorized,
+	persistence.ErrCreateRevisionNotAllowed:     fasthttp.StatusUnauthorized,
+	errPathParamNotFound:                        fasthttp.StatusUnprocessableEntity,
+	errInvalidTenant:                            fasthttp.StatusBadRequest,
+	errInvalidRevisionType:                      fasthttp.StatusBadRequest,
+	errFailedToReadRequestBody:                  http.StatusBadRequest,
+}
+
+// ErrorResponse is the form used for API responses from failures in the API.
+type ErrorResponse struct {
+	Error string `json:"error"`
+}
 
 // Respond write the information back to the client.
 func Respond(ctx *fasthttp.RequestCtx, data interface{}, statusCode int, headers map[string]string) error {
@@ -30,27 +59,23 @@ func Respond(ctx *fasthttp.RequestCtx, data interface{}, statusCode int, headers
 }
 
 // RespondError translate the error and write it back to the client.
-func RespondError(ctx *fasthttp.RequestCtx, err error) error {
+func RespondError(ctx *fasthttp.RequestCtx, err error, toStatusCode map[error]int) error {
+	status := findStatusCode(toStatusCode, err)
 
-	// If the error was of the type *Error, the handler has
-	// a specific status code and error to return.
-	if webErr, ok := err.(*Error); ok {
-		er := ErrorResponse{
-			Error: webErr.Err.Error(),
-		}
-		if err := Respond(ctx, er, webErr.Status, nil); err != nil {
-			return err
-		}
-		return nil
-	}
-
-	er := ErrorResponse{
-		Error: err.Error(),
-	}
-	if err := Respond(ctx, er, http.StatusInternalServerError, nil); err != nil {
+	er := ErrorResponse{Error: err.Error()}
+	if err := Respond(ctx, er, status, nil); err != nil {
 		return err
 	}
 	return nil
+}
+
+func findStatusCode(toStatusCode map[error]int, err error) int {
+	for e, status := range toStatusCode {
+		if errors.Is(err, e) {
+			return status
+		}
+	}
+	return fasthttp.StatusInternalServerError
 }
 
 // StatementDebugging represents the client format of debugging information

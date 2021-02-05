@@ -33,7 +33,7 @@ func (a app) Handle(method, url string, handler handler) {
 		if err != nil {
 			a.log.Error("handler has an error", err)
 
-			if err := RespondError(ctx, err); err != nil {
+			if err := RespondError(ctx, err, errToStatusCode); err != nil {
 				a.log.Error("failed to send error response", err)
 			}
 		}
