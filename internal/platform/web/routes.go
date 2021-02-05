@@ -16,7 +16,7 @@ import (
 	"github.com/valyala/fasthttp"
 )
 
-// API constructs a handler for the restQL queryRevision related endpoints
+// API constructs a handler for the restQL query related endpoints
 func API(log restql.Logger, cfg *conf.Config) (fasthttp.RequestHandler, error) {
 	log.Debug("starting api")
 	defaultParser, err := parser.New()
@@ -63,10 +63,10 @@ func API(log restql.Logger, cfg *conf.Config) (fasthttp.RequestHandler, error) {
 	restQl := newRestQl(log, cfg, e, defaultParser)
 
 	app := newApp(log, appOptions{MiddlewareDecorator: md})
-	app.Handle(http.MethodPost, "/validate-queryRevision", restQl.ValidateQuery)
-	app.Handle(http.MethodPost, "/run-queryRevision", restQl.RunAdHocQuery)
-	app.Handle(http.MethodGet, "/run-queryRevision/{namespace}/{queryId}/{revision}", restQl.RunSavedQuery)
-	app.Handle(http.MethodPost, "/run-queryRevision/{namespace}/{queryId}/{revision}", restQl.RunSavedQuery)
+	app.Handle(http.MethodPost, "/validate-query", restQl.ValidateQuery)
+	app.Handle(http.MethodPost, "/run-query", restQl.RunAdHocQuery)
+	app.Handle(http.MethodGet, "/run-query/{namespace}/{queryId}/{revision}", restQl.RunSavedQuery)
+	app.Handle(http.MethodPost, "/run-query/{namespace}/{queryId}/{revision}", restQl.RunSavedQuery)
 
 	if cfg.HTTP.Server.EnableAdmin {
 		log.Info("administration api enabled")
