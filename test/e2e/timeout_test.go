@@ -101,7 +101,7 @@ from people
 
 	expectedResponse := `
 	{
-		"error": "query timed out"
+		"error": "timeout: query timed out"
 	}`
 
 	mockServer := test.NewMockServer(mockPort)

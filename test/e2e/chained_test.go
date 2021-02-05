@@ -974,7 +974,7 @@ from people
 
 	expectedResponse := `
 	{
-		"error": "chained parameter targeting unknown statement : foo.leader"
+		"error": "parsing error: chained parameter targeting unknown statement : foo.leader"
 	}`
 
 	response, err := httpClient.Post(adHocQueryUrl, "text/plain", strings.NewReader(query))
