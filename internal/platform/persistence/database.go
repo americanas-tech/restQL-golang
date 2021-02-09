@@ -50,35 +50,15 @@ func (n noOpDatabase) Name() string {
 }
 
 func (n noOpDatabase) FindAllNamespaces(ctx context.Context) ([]string, error) {
-	return []string{"demo", "cart", "checkout"}, nil
-
-	//return nil, errNoDatabase
+	return nil, errNoDatabase
 }
 
 func (n noOpDatabase) FindQueriesForNamespace(ctx context.Context, namespace string) (map[string][]restql.SavedQuery, error) {
-	return map[string][]restql.SavedQuery{
-		"test": {
-			{
-				Name:     "test",
-				Text:     "from test",
-				Revision: 1,
-			},
-		},
-	}, nil
-
-	//return nil, errNoDatabase
+	return nil, errNoDatabase
 }
 
 func (n noOpDatabase) FindQueryWithAllRevisions(ctx context.Context, namespace string, queryName string) ([]restql.SavedQuery, error) {
-	return []restql.SavedQuery{
-		{
-			Name:     "sku",
-			Text:     "from test",
-			Revision: 1,
-		},
-	}, nil
-
-	//return nil, errNoDatabase
+	return nil, errNoDatabase
 }
 
 func (n noOpDatabase) CreateQueryRevision(ctx context.Context, namespace string, queryName string, content string) error {
@@ -86,9 +66,7 @@ func (n noOpDatabase) CreateQueryRevision(ctx context.Context, namespace string,
 }
 
 func (n noOpDatabase) FindAllTenants(ctx context.Context) ([]string, error) {
-	return []string{"dc", "marvel", "vertigo"}, nil
-
-	//return nil, errNoDatabase
+	return nil, errNoDatabase
 }
 
 func (n noOpDatabase) SetMapping(ctx context.Context, tenantID string, mappingsName string, url string) error {
@@ -96,10 +74,7 @@ func (n noOpDatabase) SetMapping(ctx context.Context, tenantID string, mappingsN
 }
 
 func (n noOpDatabase) FindMappingsForTenant(ctx context.Context, tenantID string) ([]restql.Mapping, error) {
-	mapping, _ := restql.NewMapping("villain", "http://vilain.com")
-	return []restql.Mapping{
-		mapping,
-	}, nil
+	return nil, errNoDatabase
 }
 
 func (n noOpDatabase) FindQuery(ctx context.Context, namespace string, name string, revision int) (restql.SavedQuery, error) {
