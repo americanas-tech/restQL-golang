@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/pkg/errors"
 	"github.com/valyala/fasthttp"
+	"net/url"
 )
 
 var errPathParamNotFound = errors.New("invalid path param, not found")
@@ -14,5 +15,10 @@ func pathParamString(ctx *fasthttp.RequestCtx, name string) (string, error) {
 		return "", fmt.Errorf("%w: %s", errPathParamNotFound, name)
 	}
 
-	return param, nil
+	unescaped, err := url.QueryUnescape(param)
+	if err != nil {
+		return param, nil
+	}
+
+	return unescaped, nil
 }

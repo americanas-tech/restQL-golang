@@ -19,7 +19,10 @@ func newAdminAuthorization(log restql.Logger, code string) adminAuthorization {
 
 func (a adminAuthorization) Apply(h fasthttp.RequestHandler) fasthttp.RequestHandler {
 	return func(ctx *fasthttp.RequestCtx) {
-		if bytes.Contains(ctx.Request.URI().Path(), adminPrefix) && string(ctx.Method()) != fasthttp.MethodGet {
+		isAdminRequest := bytes.Contains(ctx.Request.URI().Path(), adminPrefix)
+		method := string(ctx.Method())
+
+		if isAdminRequest && (method != fasthttp.MethodOptions && method != fasthttp.MethodGet) {
 			bearerCode := getBearerToken(ctx)
 			if len(bearerCode) == 0 {
 				ctx.Response.SetStatusCode(fasthttp.StatusUnauthorized)
