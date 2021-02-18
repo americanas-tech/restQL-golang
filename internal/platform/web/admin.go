@@ -121,7 +121,7 @@ func (adm administrator) NamespaceQueries(ctx *fasthttp.RequestCtx) error {
 			}
 		}
 
-		queries[i] = query{Name: queryName, Revisions: rs}
+		queries[i] = query{Name: queryName, Namespace: namespace, Revisions: rs}
 		i++
 	}
 
