@@ -72,9 +72,8 @@ func API(log restql.Logger, cfg *conf.Config) (fasthttp.RequestHandler, error) {
 		mw := persistence.NewMappingWriter(log, cfg.Env, cfg.Mappings, cfg.TenantMappings, db)
 		qw := persistence.NewQueryWriter(log, cfg.Queries, db)
 
-		adm := newAdmin(mappingReader, mw, queryReader, qw)
+		adm := newAdmin(mappingReader, mw, queryReader, qw, cfg.HTTP.Server.Admin.AuthorizationCode)
 		app = registerAdminEndpoints(adm, app)
-
 	}
 
 	return app.RequestHandler(), nil

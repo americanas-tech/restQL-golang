@@ -1,6 +1,7 @@
 package web
 
 import (
+	"bytes"
 	"encoding/json"
 	"github.com/b2wdigital/restQL-golang/v4/internal/platform/persistence"
 	"github.com/b2wdigital/restQL-golang/v4/pkg/restql"
@@ -28,14 +29,15 @@ type mapping struct {
 }
 
 type administrator struct {
-	mr          persistence.MappingsReader
-	mw          persistence.MappingsWriter
-	qr          persistence.QueryReader
-	queryWriter persistence.QueryWriter
+	mr                persistence.MappingsReader
+	mw                persistence.MappingsWriter
+	qr                persistence.QueryReader
+	queryWriter       persistence.QueryWriter
+	authorizationCode []byte
 }
 
-func newAdmin(mr persistence.MappingsReader, mw persistence.MappingsWriter, qr persistence.QueryReader, qw persistence.QueryWriter) *administrator {
-	return &administrator{mr: mr, mw: mw, qr: qr, queryWriter: qw}
+func newAdmin(mr persistence.MappingsReader, mw persistence.MappingsWriter, qr persistence.QueryReader, qw persistence.QueryWriter, authorizationCode string) *administrator {
+	return &administrator{mr: mr, mw: mw, qr: qr, queryWriter: qw, authorizationCode: []byte(authorizationCode)}
 }
 
 func (adm *administrator) AllTenants(ctx *fasthttp.RequestCtx) error {
@@ -217,6 +219,11 @@ type mapResourceBody struct {
 func (adm *administrator) MapResource(ctx *fasthttp.RequestCtx) error {
 	log := restql.GetLogger(ctx)
 
+	if !isAuthorized(ctx, adm.authorizationCode) {
+		ctx.Response.SetStatusCode(fasthttp.StatusUnauthorized)
+		return nil
+	}
+
 	tenantName, err := pathParamString(ctx, "tenantName")
 	if err != nil {
 		log.Error("failed to load tenant name path param", err)
@@ -243,6 +250,30 @@ func (adm *administrator) MapResource(ctx *fasthttp.RequestCtx) error {
 	}
 
 	return Respond(ctx, nil, fasthttp.StatusCreated, nil)
+}
+
+func isAuthorized(ctx *fasthttp.RequestCtx, authorizationCode []byte) bool {
+	bearerCode := getBearerToken(ctx)
+	if len(bearerCode) == 0 {
+		return false
+	}
+
+	bearerCode = bytes.TrimPrefix(bearerCode, []byte("Bearer"))
+	bearerCode = bytes.TrimPrefix(bearerCode, []byte("bearer"))
+	bearerCode = bytes.TrimSpace(bearerCode)
+
+	return bytes.Equal(bearerCode, authorizationCode)
+}
+
+func getBearerToken(ctx *fasthttp.RequestCtx) []byte {
+	bearerCode := ctx.Request.Header.Peek("Authorization")
+	if len(bearerCode) > 0 {
+		return bearerCode
+	}
+
+	bearerCode = ctx.Request.Header.Peek("authorization")
+
+	return bearerCode
 }
 
 type createRevisionBody struct {
