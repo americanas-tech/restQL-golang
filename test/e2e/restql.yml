@@ -11,12 +11,13 @@ logging:
   level: debug
   format: pretty
 
-mappings:
-  planets: http://localhost:65000/api/planets/:id
-  people: http://localhost:65000/api/people/:id
-  starships: http://localhost:65000/api/starships?:id&:name
-  planets-prod: https://swapi.dev/api/planets/:id
-  people-prod: https://swapi.dev/api//people/:id
+tenants:
+  DEFAULT:
+    planets: http://localhost:65000/api/planets/:id
+    people: http://localhost:65000/api/people/:id
+    starships: http://localhost:65000/api/starships?:id&:name
+    planets-prod: https://swapi.dev/api/planets/:id
+    people-prod: https://swapi.dev/api//people/:id
 
 queries:
   test:

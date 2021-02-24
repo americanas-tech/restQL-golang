@@ -11,31 +11,26 @@ import (
 	"github.com/b2wdigital/restQL-golang/v4/pkg/restql"
 )
 
-var envMappingRegex = regexp.MustCompile("^RESTQL_MAPPING_([^_]+)$")
 var envMappingWithTenantRegex = regexp.MustCompile("^RESTQL_MAPPING_(\\w+)_(\\w+)$")
 
 // MappingsReader fetch indexed mappings from database,
 // configuration file and environment variable.
 type MappingsReader struct {
 	log           restql.Logger
-	env           map[string]restql.Mapping
-	envWithTenant map[string]map[string]restql.Mapping
-	local         map[string]restql.Mapping
+	env           map[string]map[string]restql.Mapping
 	localByTenant map[string]map[string]restql.Mapping
 	db            Database
 }
 
 // NewMappingReader constructs a MappingsReader instance.
-func NewMappingReader(log restql.Logger, env domain.EnvSource, local map[string]string, localByTenant map[string]map[string]string, db Database) MappingsReader {
-	envMappings := getMappingsFromEnv(log, env)
-	envWithTenantMappings := getMappingsFromEnvWithTenant(log, env)
-	localMappings := parseMappingsFromLocal(log, local)
-	localMappingsByTenant := make(map[string]map[string]restql.Mapping)
-	for t, m := range localByTenant {
-		localMappingsByTenant[t] = parseMappingsFromLocal(log, m)
+func NewMappingReader(log restql.Logger, env domain.EnvSource, local map[string]map[string]string, db Database) MappingsReader {
+	envWithTenantMappings := getMappingsFromEnv(log, env)
+	localMappings := make(map[string]map[string]restql.Mapping)
+	for t, m := range local {
+		localMappings[t] = parseMappingsFromLocal(log, m)
 	}
 
-	return MappingsReader{log: log, env: envMappings, envWithTenant: envWithTenantMappings, local: localMappings, localByTenant: localMappingsByTenant, db: db}
+	return MappingsReader{log: log, env: envWithTenantMappings, localByTenant: localMappings, db: db}
 }
 
 // ListTenants fetch all tenants under which mappings are organized
@@ -56,7 +51,7 @@ func (mr MappingsReader) ListTenants(ctx context.Context) ([]string, error) {
 		}
 	}
 
-	for tenant := range mr.envWithTenant {
+	for tenant := range mr.env {
 		tenantSet[tenant] = struct{}{}
 	}
 
@@ -77,10 +72,6 @@ func (mr MappingsReader) FromTenant(ctx context.Context, tenant string) (map[str
 	errMappingsFound := fmt.Errorf("%w: tenant %s", restql.ErrMappingsNotFound, tenant)
 
 	result := make(map[string]restql.Mapping)
-
-	for k, v := range mr.local {
-		result[k] = v
-	}
 
 	localTenantMappings, found := mr.localByTenant[tenant]
 	if found {
@@ -117,16 +108,11 @@ func (mr MappingsReader) FromTenant(ctx context.Context, tenant string) (map[str
 		return nil, errMappingsFound
 	}
 
-	log.Debug("tenant mappings", "value", result)
 	return result, nil
 }
 
 func (mr MappingsReader) applyEnvMappings(result map[string]restql.Mapping, tenant string) map[string]restql.Mapping {
-	for k, v := range mr.env {
-		result[k] = v
-	}
-
-	tenantMappings, found := mr.envWithTenant[tenant]
+	tenantMappings, found := mr.env[tenant]
 	if found {
 		for k, v := range tenantMappings {
 			result[k] = v
@@ -141,25 +127,21 @@ var ErrSetResourceMappingNotAllowed = errors.New("a resource mapping must have a
 
 // MappingsWriter is the entity that maps resource name to URL.
 type MappingsWriter struct {
-	log           restql.Logger
-	db            Database
-	env           map[string]restql.Mapping
-	envWithTenant map[string]map[string]restql.Mapping
-	local         map[string]restql.Mapping
-	localByTenant map[string]map[string]restql.Mapping
+	log   restql.Logger
+	db    Database
+	env   map[string]map[string]restql.Mapping
+	local map[string]map[string]restql.Mapping
 }
 
 // NewMappingWriter creates an instance of MappingsWriter
-func NewMappingWriter(log restql.Logger, env domain.EnvSource, local map[string]string, localByTenant map[string]map[string]string, db Database) MappingsWriter {
+func NewMappingWriter(log restql.Logger, env domain.EnvSource, local map[string]map[string]string, db Database) MappingsWriter {
 	envMappings := getMappingsFromEnv(log, env)
-	envWithTenantMappings := getMappingsFromEnvWithTenant(log, env)
-	localMappings := parseMappingsFromLocal(log, local)
-	localMappingsByTenant := make(map[string]map[string]restql.Mapping)
-	for t, m := range localByTenant {
-		localMappingsByTenant[t] = parseMappingsFromLocal(log, m)
+	localMappings := make(map[string]map[string]restql.Mapping)
+	for t, m := range local {
+		localMappings[t] = parseMappingsFromLocal(log, m)
 	}
 
-	return MappingsWriter{log: log, env: envMappings, envWithTenant: envWithTenantMappings, local: localMappings, localByTenant: localMappingsByTenant, db: db}
+	return MappingsWriter{log: log, env: envMappings, local: localMappings, db: db}
 }
 
 // Write sets a URL to a resource name under the given tenant
@@ -174,19 +156,7 @@ func (mw *MappingsWriter) Write(ctx context.Context, tenant string, resource str
 }
 
 func (mw *MappingsWriter) allowWrite(tenant string, resourceName string) bool {
-	for resource := range mw.local {
-		if resource == resourceName {
-			return false
-		}
-	}
-
-	for resource := range mw.env {
-		if resource == resourceName {
-			return false
-		}
-	}
-
-	localTenantMappings, found := mw.localByTenant[tenant]
+	localTenantMappings, found := mw.local[tenant]
 	if found {
 		for resource := range localTenantMappings {
 			if resource == resourceName {
@@ -195,7 +165,7 @@ func (mw *MappingsWriter) allowWrite(tenant string, resourceName string) bool {
 		}
 	}
 
-	envTenantMappings, found := mw.envWithTenant[tenant]
+	envTenantMappings, found := mw.env[tenant]
 	if found {
 		for resource := range envTenantMappings {
 			if resource == resourceName {
@@ -207,29 +177,7 @@ func (mw *MappingsWriter) allowWrite(tenant string, resourceName string) bool {
 	return true
 }
 
-func getMappingsFromEnv(log restql.Logger, envSource domain.EnvSource) map[string]restql.Mapping {
-	result := make(map[string]restql.Mapping)
-	env := envSource.GetAll()
-
-	for key, value := range env {
-		matches := envMappingRegex.FindAllStringSubmatch(key, -1)
-		if len(matches) > 0 && len(matches[0]) >= 2 {
-			resource := strings.ToLower(matches[0][1])
-			mapping, err := restql.NewMapping(resource, value)
-			if err != nil {
-				log.Error("failed to create mapping", err)
-				continue
-			}
-
-			mapping.Source = restql.EnvSource
-			result[resource] = mapping
-		}
-	}
-
-	return result
-}
-
-func getMappingsFromEnvWithTenant(log restql.Logger, envSource domain.EnvSource) map[string]map[string]restql.Mapping {
+func getMappingsFromEnv(log restql.Logger, envSource domain.EnvSource) map[string]map[string]restql.Mapping {
 	result := make(map[string]map[string]restql.Mapping)
 	env := envSource.GetAll()
 

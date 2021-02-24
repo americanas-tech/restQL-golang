@@ -24,7 +24,7 @@ func TestMappingsReader_Env(t *testing.T) {
 	}
 	db := stubDatabase{}
 
-	reader := NewMappingReader(noOpLogger, envSource, map[string]string{}, map[string]map[string]string{}, db)
+	reader := NewMappingReader(noOpLogger, envSource, map[string]map[string]string{}, db)
 
 	heroMapping, err := restql.NewMapping("hero", "http://hero.api/")
 	test.VerifyError(t, err)
@@ -60,7 +60,7 @@ func TestMappingsReader_Local(t *testing.T) {
 	}
 	db := stubDatabase{}
 
-	reader := NewMappingReader(noOpLogger, envSource, local, localByTenant, db)
+	reader := NewMappingReader(noOpLogger, envSource, localByTenant, db)
 
 	heroMapping, err := restql.NewMapping("hero", "http://hero.api/")
 	test.VerifyError(t, err)
@@ -95,7 +95,7 @@ func TestMappingsReader_Database(t *testing.T) {
 
 	db := stubDatabase{findMappingsForTenant: []restql.Mapping{heroMapping, sidekickMapping}}
 
-	reader := NewMappingReader(noOpLogger, envSource, local, nil, db)
+	reader := NewMappingReader(noOpLogger, envSource, nil, db)
 
 	expected := map[string]restql.Mapping{
 		"hero":     heroMapping,
@@ -132,7 +132,7 @@ func TestMappingsReader_ShouldOverwriteMappings(t *testing.T) {
 		},
 	}
 
-	reader := NewMappingReader(noOpLogger, envSource, local, nil, db)
+	reader := NewMappingReader(noOpLogger, envSource, nil, db)
 
 	expected := map[string]restql.Mapping{
 		"hero":     heroMapping,

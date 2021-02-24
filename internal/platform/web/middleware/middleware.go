@@ -31,7 +31,7 @@ type Decorator struct {
 
 // NewDecorator creates a middleware Decorator
 func NewDecorator(log restql.Logger, cfg *conf.Config, pm plugins.Lifecycle) *Decorator {
-	cmEnabled := cfg.HTTP.Server.Middlewares.RequestCancellation.Enabled
+	cmEnabled := cfg.HTTP.Server.Middlewares.RequestCancellation.Enable
 	cmWatchingInterval := cfg.HTTP.Server.Middlewares.RequestCancellation.WatchInterval
 
 	return &Decorator{
@@ -61,15 +61,15 @@ func (d *Decorator) fetchEnabled() []Middleware {
 	mws := []Middleware{newRecoverer(d.log), newNativeContext(d.cm), newTransaction(d.pm)}
 
 	mwCfg := d.cfg.HTTP.Server.Middlewares
-	if mwCfg.Timeout != nil {
+	if mwCfg.Timeout.Enable {
 		mws = append(mws, newTimeout(mwCfg.Timeout.Duration, d.log))
 	}
 
-	if mwCfg.RequestID != nil {
+	if mwCfg.RequestID.Enable {
 		mws = append(mws, newRequestID(mwCfg.RequestID.Header, mwCfg.RequestID.Strategy, d.log))
 	}
 
-	if mwCfg.Cors != nil {
+	if mwCfg.Cors.Enable {
 		cors := newCors(d.log, corsOptions{
 			AllowedOrigins:   mwCfg.Cors.AllowOrigin,
 			AllowedMethods:   mwCfg.Cors.AllowMethods,
