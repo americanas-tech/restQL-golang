@@ -184,7 +184,7 @@ func getMappingsFromEnv(log restql.Logger, envSource domain.EnvSource) map[strin
 	for key, value := range env {
 		matches := envMappingWithTenantRegex.FindAllStringSubmatch(key, -1)
 		if len(matches) > 0 && len(matches[0]) >= 3 {
-			tenant := strings.ToLower(matches[0][1])
+			tenant := matches[0][1]
 			resource := strings.ToLower(matches[0][2])
 			mapping, err := restql.NewMapping(resource, value)
 			if err != nil {
