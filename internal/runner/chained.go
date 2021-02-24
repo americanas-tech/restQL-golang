@@ -33,7 +33,7 @@ func resolveStatement(stmt interface{}, doneResources domain.Resources) interfac
 	case domain.Statement:
 		params := stmt.With.Values
 		for paramName, value := range params {
-			v := resolveValue(value, doneResources)
+			v := resolveValue(value, doneResources, resolverOptions{explode: true})
 			if v == nil {
 				continue
 			}
@@ -42,7 +42,7 @@ func resolveStatement(stmt interface{}, doneResources domain.Resources) interfac
 
 		headers := stmt.Headers
 		for name, value := range headers {
-			resolved := resolveValue(value, doneResources)
+			resolved := resolveValue(value, doneResources, resolverOptions{explode: true})
 			if resolved == nil {
 				continue
 			}
@@ -81,28 +81,34 @@ func stringify(value interface{}) (string, error) {
 	}
 }
 
-func resolveValue(value interface{}, doneResources domain.Resources) interface{} {
+type resolverOptions struct {
+	explode bool
+}
+
+func resolveValue(value interface{}, doneResources domain.Resources, options resolverOptions) interface{} {
 	switch param := value.(type) {
 	case domain.Chain:
 		return resolveChainParam(param, doneResources)
+	case domain.NoExplode:
+		return resolveValue(param.Target(), doneResources, resolverOptions{explode: false})
 	case domain.Function:
 		return param.Map(func(target interface{}) interface{} {
-			return resolveValue(target, doneResources)
+			return resolveValue(target, doneResources, options)
 		})
 	case []interface{}:
-		return resolveListParam(param, doneResources)
+		return resolveListParam(param, doneResources, options)
 	case map[string]interface{}:
-		return resolveObjectParam(param, doneResources)
+		return resolveObjectParam(param, doneResources, options)
 	default:
 		return value
 	}
 }
 
-func resolveObjectParam(objectParam map[string]interface{}, doneResources domain.Resources) interface{} {
+func resolveObjectParam(objectParam map[string]interface{}, doneResources domain.Resources, options resolverOptions) interface{} {
 	result := make(map[string]interface{})
 
 	for key, value := range objectParam {
-		v := resolveValue(value, doneResources)
+		v := resolveValue(value, doneResources, options)
 		if v == nil {
 			continue
 		}
@@ -110,7 +116,11 @@ func resolveObjectParam(objectParam map[string]interface{}, doneResources domain
 		result[key] = v
 	}
 
-	return explodeListValuesInNewMaps(result)
+	if options.explode {
+		return explodeListValuesInNewMaps(result)
+	}
+
+	return result
 }
 
 func explodeListValuesInNewMaps(m map[string]interface{}) interface{} {
@@ -166,12 +176,12 @@ func minimumListValueLength(m map[string]interface{}) int {
 	return int(result)
 }
 
-func resolveListParam(listParam []interface{}, doneResources domain.Resources) []interface{} {
+func resolveListParam(listParam []interface{}, doneResources domain.Resources, options resolverOptions) []interface{} {
 	result := make([]interface{}, len(listParam))
 	copy(result, listParam)
 
 	for i, value := range result {
-		result[i] = resolveValue(value, doneResources)
+		result[i] = resolveValue(value, doneResources, options)
 	}
 
 	return result

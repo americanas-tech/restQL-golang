@@ -1322,6 +1322,200 @@ to planets
 	test.Equal(t, body, test.Unmarshal(expectedResponse))
 }
 
+func TestExplodeWithStaticObjectParameterWithListInsideOnToStatement(t *testing.T) {
+	query := `
+from planets
+	with 
+		id = 1
+
+to people with 
+	profiles = [{homeworld: "Yavin", friends: ["mark", "janne"]},
+				{homeworld: "Yavin", friends: ["john", "anne"]}] -> no-multiplex
+`
+
+	planetResponse := `
+{
+	"id": 1,
+	"name": "Yavin",
+	"rotation_period": 24.5,
+	"orbital_period": "4818",
+	"diameter": "10200",
+	"climate": "temperate, tropical",
+	"gravity": "1 standard",
+	"terrain": { "north": "jungle", "south": "rainforests" },
+	"surface_water": "8",
+	"population": "1000",
+	"leader": "Yavin King",
+	"residents": ["john", "janne"],
+	"films": [1]
+}
+`
+
+	people := `
+{
+	"inserted": 2
+}
+`
+
+	expectedResponse := fmt.Sprintf(`
+	{
+		"planets": {
+			"details": {
+				"success": true,
+				"status": 200,
+				"metadata": {}
+			},
+			"result": %s 
+		},
+		"people": {
+			"details": {
+				"success": true,
+				"status": 200,
+				"metadata": {}
+			},
+			"result": %s
+		}
+	}`, planetResponse, people)
+
+	mockServer := test.NewMockServer(mockPort)
+	defer mockServer.Teardown()
+
+	mockServer.Mux().HandleFunc("/api/planets/1", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(200)
+		io.WriteString(w, planetResponse)
+	})
+	mockServer.Mux().HandleFunc("/api/people/", func(w http.ResponseWriter, r *http.Request) {
+		test.Equal(t, r.Method, http.MethodPost)
+		expectedBody := map[string]interface{}{
+			"profiles": []interface{}{
+				[]interface{}{
+					map[string]interface{}{"homeworld": "Yavin", "friends": "mark"},
+					map[string]interface{}{"homeworld": "Yavin", "friends": "janne"},
+				},
+				[]interface{}{
+					map[string]interface{}{"homeworld": "Yavin", "friends": "john"},
+					map[string]interface{}{"homeworld": "Yavin", "friends": "anne"},
+				},
+			},
+		}
+
+		var body map[string]interface{}
+		err := json.NewDecoder(r.Body).Decode(&body)
+		test.VerifyError(t, err)
+
+		test.Equal(t, body, expectedBody)
+
+		io.WriteString(w, people)
+	})
+	mockServer.Start()
+
+	response, err := httpClient.Post(adHocQueryUrl, "text/plain", strings.NewReader(query))
+	test.VerifyError(t, err)
+	defer response.Body.Close()
+
+	test.Equal(t, response.StatusCode, 200)
+
+	var body map[string]interface{}
+	err = json.NewDecoder(response.Body).Decode(&body)
+	test.VerifyError(t, err)
+
+	test.Equal(t, body, test.Unmarshal(expectedResponse))
+}
+
+func TestNoExplodeWithStaticObjectParameterWithListInsideOnToStatement(t *testing.T) {
+	query := `
+from planets
+	with 
+		id = 1
+
+to people with 
+	profiles = [{homeworld: "Yavin", friends: ["mark", "janne"]},
+				{homeworld: "Yavin", friends: ["john", "anne"]}] -> no-explode -> no-multiplex
+`
+
+	planetResponse := `
+{
+	"id": 1,
+	"name": "Yavin",
+	"rotation_period": 24.5,
+	"orbital_period": "4818",
+	"diameter": "10200",
+	"climate": "temperate, tropical",
+	"gravity": "1 standard",
+	"terrain": { "north": "jungle", "south": "rainforests" },
+	"surface_water": "8",
+	"population": "1000",
+	"leader": "Yavin King",
+	"residents": ["john", "janne"],
+	"films": [1]
+}
+`
+
+	people := `
+{
+	"inserted": 2
+}
+`
+
+	expectedResponse := fmt.Sprintf(`
+	{
+		"planets": {
+			"details": {
+				"success": true,
+				"status": 200,
+				"metadata": {}
+			},
+			"result": %s 
+		},
+		"people": {
+			"details": {
+				"success": true,
+				"status": 200,
+				"metadata": {}
+			},
+			"result": %s
+		}
+	}`, planetResponse, people)
+
+	mockServer := test.NewMockServer(mockPort)
+	defer mockServer.Teardown()
+
+	mockServer.Mux().HandleFunc("/api/planets/1", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(200)
+		io.WriteString(w, planetResponse)
+	})
+	mockServer.Mux().HandleFunc("/api/people/", func(w http.ResponseWriter, r *http.Request) {
+		test.Equal(t, r.Method, http.MethodPost)
+		expectedBody := map[string]interface{}{
+			"profiles": []interface{}{
+				map[string]interface{}{"homeworld": "Yavin", "friends": []interface{}{"mark", "janne"}},
+				map[string]interface{}{"homeworld": "Yavin", "friends": []interface{}{"john", "anne"}},
+			},
+		}
+
+		var body map[string]interface{}
+		err := json.NewDecoder(r.Body).Decode(&body)
+		test.VerifyError(t, err)
+
+		test.Equal(t, body, expectedBody)
+
+		io.WriteString(w, people)
+	})
+	mockServer.Start()
+
+	response, err := httpClient.Post(adHocQueryUrl, "text/plain", strings.NewReader(query))
+	test.VerifyError(t, err)
+	defer response.Body.Close()
+
+	test.Equal(t, response.StatusCode, 200)
+
+	var body map[string]interface{}
+	err = json.NewDecoder(response.Body).Decode(&body)
+	test.VerifyError(t, err)
+
+	test.Equal(t, body, test.Unmarshal(expectedResponse))
+}
+
 func removeWhitespaces(s string) string {
 	return strings.Join(strings.Fields(s), "")
 }

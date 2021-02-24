@@ -221,8 +221,8 @@ func TestResolveChainedValues(t *testing.T) {
 			domain.Resources{"resource-name": domain.Statement{Resource: "resource-name", With: domain.Params{Values: map[string]interface{}{"id": "abcdef", "xtid": "12345678"}}}},
 			domain.Resources{"resource-name": domain.Statement{Resource: "resource-name", With: domain.Params{Values: map[string]interface{}{"id": domain.Chain{"done-resource", "location"}, "xtid": domain.Chain{"done-resource", "x-tid"}}}}},
 			domain.Resources{"done-resource": restql.DoneResource{
-				Status: 200,
-				ResponseBody: restql.NewResponseBodyFromValue(test.NoOpLogger, test.Unmarshal(`{"id": "abcdef"}`)),
+				Status:          200,
+				ResponseBody:    restql.NewResponseBodyFromValue(test.NoOpLogger, test.Unmarshal(`{"id": "abcdef"}`)),
 				ResponseHeaders: map[string]string{"location": "abcdef", "X-TID": "12345678"}},
 			},
 		},
@@ -254,6 +254,18 @@ func TestResolveChainedValues(t *testing.T) {
 			"Returns a statement with object param with resolved list values exploded",
 			domain.Resources{"resource-name": domain.Statement{Resource: "resource-name", With: domain.Params{Values: map[string]interface{}{"info": domain.NoMultiplex{Value: []interface{}{map[string]interface{}{"weapon": "batarang"}, map[string]interface{}{"weapon": "batbelt"}}}}}}},
 			domain.Resources{"resource-name": domain.Statement{Resource: "resource-name", With: domain.Params{Values: map[string]interface{}{"info": domain.NoMultiplex{Value: map[string]interface{}{"weapon": domain.Chain{"done-resource", "hero", "weapons"}}}}}}},
+			domain.Resources{"done-resource": restql.DoneResource{Status: 200, ResponseBody: restql.NewResponseBodyFromValue(test.NoOpLogger, test.Unmarshal(`{"hero": {"weapons": ["batarang", "batbelt"]}}`))}},
+		},
+		{
+			"Returns a statement with object param with resolved list values not exploded",
+			domain.Resources{"resource-name": domain.Statement{Resource: "resource-name", With: domain.Params{Values: map[string]interface{}{"info": domain.NoMultiplex{Value: map[string]interface{}{"weapon": []interface{}{"batarang", "batbelt"}}}}}}},
+			domain.Resources{"resource-name": domain.Statement{Resource: "resource-name", With: domain.Params{Values: map[string]interface{}{"info": domain.NoMultiplex{Value: domain.NoExplode{Value: map[string]interface{}{"weapon": domain.Chain{"done-resource", "hero", "weapons"}}}}}}}},
+			domain.Resources{"done-resource": restql.DoneResource{Status: 200, ResponseBody: restql.NewResponseBodyFromValue(test.NoOpLogger, test.Unmarshal(`{"hero": {"weapons": ["batarang", "batbelt"]}}`))}},
+		},
+		{
+			"Returns a statement with object param with resolved list values not exploded",
+			domain.Resources{"resource-name": domain.Statement{Resource: "resource-name", With: domain.Params{Values: map[string]interface{}{"info": domain.NoMultiplex{Value: map[string]interface{}{"weapon": []interface{}{"batarang", "batbelt"}}}}}}},
+			domain.Resources{"resource-name": domain.Statement{Resource: "resource-name", With: domain.Params{Values: map[string]interface{}{"info": domain.NoExplode{Value: domain.NoMultiplex{Value: map[string]interface{}{"weapon": domain.Chain{"done-resource", "hero", "weapons"}}}}}}}},
 			domain.Resources{"done-resource": restql.DoneResource{Status: 200, ResponseBody: restql.NewResponseBodyFromValue(test.NoOpLogger, test.Unmarshal(`{"hero": {"weapons": ["batarang", "batbelt"]}}`))}},
 		},
 	}

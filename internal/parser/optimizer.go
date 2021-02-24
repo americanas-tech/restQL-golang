@@ -141,6 +141,8 @@ func applyFunctions(v interface{}, functions []string) interface{} {
 			v = domain.JSON{Value: v}
 		case ast.Flatten:
 			v = domain.Flatten{Value: v}
+		case ast.NoExplode:
+			v = domain.NoExplode{Value: v}
 		}
 	}
 

@@ -346,7 +346,7 @@ from people
 	test.Equal(t, body, test.Unmarshal(expectedResponse))
 }
 
-func TestFlatteningWithStaticParameterOnFromStatement(t *testing.T) {
+func TestNoMultiplexWithStaticParameterOnFromStatement(t *testing.T) {
 	query := `
 from planets
 	with
@@ -407,7 +407,7 @@ from planets
 	test.Equal(t, body, test.Unmarshal(expectedResponse))
 }
 
-func TestFlatteningWithChainedParameterOnFromStatement(t *testing.T) {
+func TestNoMultiplexWithChainedParameterOnFromStatement(t *testing.T) {
 	query := `
 from planets
 	with 
@@ -516,7 +516,7 @@ from people
 	test.Equal(t, body, test.Unmarshal(expectedResponse))
 }
 
-func TestFlatteningWithStaticObjectParameterOnFromStatement(t *testing.T) {
+func TestNoMultiplexWithStaticObjectParameterOnFromStatement(t *testing.T) {
 	query := `
 from planets
 	with 

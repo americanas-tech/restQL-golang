@@ -247,6 +247,11 @@ func TestQueryParser(t *testing.T) {
 		
 				 from villain as v`,
 		},
+		{
+			"Unique from statement with no explode applied to parameter",
+			domain.Query{Statements: []domain.Statement{{Method: "from", Resource: "hero", With: domain.Params{Values: map[string]interface{}{"info": domain.NoExplode{Value: map[string]interface{}{"weapons": []interface{}{"batrang", "batbelt"}}}}}}}},
+			`from hero with info = {weapons: ["batrang", "batbelt"]} -> no-explode`,
+		},
 	}
 
 	queryParser, err := parser.New()
