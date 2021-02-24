@@ -1,7 +1,7 @@
 package middleware
 
 import (
-	"github.com/b2wdigital/restQL-golang/v4/internal/platform/plugins"
+	"github.com/b2wdigital/restQL-golang/v5/internal/platform/plugins"
 	"github.com/valyala/fasthttp"
 )
 

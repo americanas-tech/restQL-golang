@@ -2,8 +2,8 @@ package parser
 
 import (
 	"errors"
-	"github.com/b2wdigital/restQL-golang/v4/internal/domain"
-	"github.com/b2wdigital/restQL-golang/v4/internal/parser/ast"
+	"github.com/b2wdigital/restQL-golang/v5/internal/domain"
+	"github.com/b2wdigital/restQL-golang/v5/internal/parser/ast"
 )
 
 // ErrInvalidQuery represents a given query that not comply with the restQL syntax

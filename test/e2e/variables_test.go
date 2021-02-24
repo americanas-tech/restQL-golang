@@ -10,7 +10,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/b2wdigital/restQL-golang/v4/test"
+	"github.com/b2wdigital/restQL-golang/v5/test"
 )
 
 const savedQueryUrl = "http://localhost:9000/run-query/test/variable-resolution/1?tenant=DEFAULT"

@@ -6,11 +6,11 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/b2wdigital/restQL-golang/v4/internal/eval"
-	"github.com/b2wdigital/restQL-golang/v4/internal/parser"
-	"github.com/b2wdigital/restQL-golang/v4/internal/platform/conf"
-	"github.com/b2wdigital/restQL-golang/v4/internal/platform/web/middleware"
-	"github.com/b2wdigital/restQL-golang/v4/pkg/restql"
+	"github.com/b2wdigital/restQL-golang/v5/internal/eval"
+	"github.com/b2wdigital/restQL-golang/v5/internal/parser"
+	"github.com/b2wdigital/restQL-golang/v5/internal/platform/conf"
+	"github.com/b2wdigital/restQL-golang/v5/internal/platform/web/middleware"
+	"github.com/b2wdigital/restQL-golang/v5/pkg/restql"
 	"github.com/pkg/errors"
 	"github.com/valyala/fasthttp"
 )

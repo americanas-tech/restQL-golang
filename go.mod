@@ -1,4 +1,4 @@
-module github.com/b2wdigital/restQL-golang/v4
+module github.com/b2wdigital/restQL-golang/v5
 
 go 1.15
 

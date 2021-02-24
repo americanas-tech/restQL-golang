@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"regexp"
 
-	"github.com/b2wdigital/restQL-golang/v4/internal/domain"
-	"github.com/b2wdigital/restQL-golang/v4/pkg/restql"
+	"github.com/b2wdigital/restQL-golang/v5/internal/domain"
+	"github.com/b2wdigital/restQL-golang/v5/pkg/restql"
 	"github.com/pkg/errors"
 )
 

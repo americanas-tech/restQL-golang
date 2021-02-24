@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/b2wdigital/restQL-golang/v4/internal/parser/ast"
-	"github.com/b2wdigital/restQL-golang/v4/test"
+	"github.com/b2wdigital/restQL-golang/v5/internal/parser/ast"
+	"github.com/b2wdigital/restQL-golang/v5/test"
 )
 
 func String(s string) *string {

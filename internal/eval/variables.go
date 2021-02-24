@@ -2,10 +2,10 @@ package eval
 
 import (
 	"encoding/json"
-	"github.com/b2wdigital/restQL-golang/v4/pkg/restql"
+	"github.com/b2wdigital/restQL-golang/v5/pkg/restql"
 	"strconv"
 
-	"github.com/b2wdigital/restQL-golang/v4/internal/domain"
+	"github.com/b2wdigital/restQL-golang/v5/internal/domain"
 )
 
 // ResolveVariables returns a restQL query with all variables

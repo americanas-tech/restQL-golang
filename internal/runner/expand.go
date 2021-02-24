@@ -3,7 +3,7 @@ package runner
 import (
 	"math"
 
-	"github.com/b2wdigital/restQL-golang/v4/internal/domain"
+	"github.com/b2wdigital/restQL-golang/v5/internal/domain"
 )
 
 const (

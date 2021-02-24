@@ -1,12 +1,12 @@
 package eval_test
 
 import (
-	"github.com/b2wdigital/restQL-golang/v4/internal/eval"
-	"github.com/b2wdigital/restQL-golang/v4/pkg/restql"
+	"github.com/b2wdigital/restQL-golang/v5/internal/eval"
+	"github.com/b2wdigital/restQL-golang/v5/pkg/restql"
 	"testing"
 
-	"github.com/b2wdigital/restQL-golang/v4/internal/domain"
-	"github.com/b2wdigital/restQL-golang/v4/test"
+	"github.com/b2wdigital/restQL-golang/v5/internal/domain"
+	"github.com/b2wdigital/restQL-golang/v5/test"
 )
 
 func TestResolveVariables(t *testing.T) {

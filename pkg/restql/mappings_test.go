@@ -1,10 +1,10 @@
 package restql_test
 
 import (
-	"github.com/b2wdigital/restQL-golang/v4/pkg/restql"
+	"github.com/b2wdigital/restQL-golang/v5/pkg/restql"
 	"testing"
 
-	"github.com/b2wdigital/restQL-golang/v4/test"
+	"github.com/b2wdigital/restQL-golang/v5/test"
 )
 
 func TestMappingsPathWithParams(t *testing.T) {

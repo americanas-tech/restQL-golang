@@ -2,12 +2,12 @@ package web_test
 
 import (
 	"encoding/json"
-	"github.com/b2wdigital/restQL-golang/v4/internal/domain"
-	"github.com/b2wdigital/restQL-golang/v4/pkg/restql"
+	"github.com/b2wdigital/restQL-golang/v5/internal/domain"
+	"github.com/b2wdigital/restQL-golang/v5/pkg/restql"
 	"testing"
 
-	"github.com/b2wdigital/restQL-golang/v4/internal/platform/web"
-	"github.com/b2wdigital/restQL-golang/v4/test"
+	"github.com/b2wdigital/restQL-golang/v5/internal/platform/web"
+	"github.com/b2wdigital/restQL-golang/v5/test"
 )
 
 func TestMakeQueryResponse(t *testing.T) {
@@ -71,7 +71,7 @@ func TestMakeQueryResponse(t *testing.T) {
 					ResponseHeaders: map[string]string{"X-New-Token": "efgefgefg"},
 					RequestParams:   map[string]interface{}{"filter": "no"},
 					ResponseTime:    100,
-					ResponseBody: restql.NewResponseBodyFromValue(test.NoOpLogger, test.Unmarshal(`{"id": "12345abcde"}`)),
+					ResponseBody:    restql.NewResponseBodyFromValue(test.NoOpLogger, test.Unmarshal(`{"id": "12345abcde"}`)),
 				},
 			},
 			true,

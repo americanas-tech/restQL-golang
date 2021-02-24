@@ -4,9 +4,9 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/b2wdigital/restQL-golang/v4/internal/domain"
-	"github.com/b2wdigital/restQL-golang/v4/internal/parser"
-	"github.com/b2wdigital/restQL-golang/v4/test"
+	"github.com/b2wdigital/restQL-golang/v5/internal/domain"
+	"github.com/b2wdigital/restQL-golang/v5/internal/parser"
+	"github.com/b2wdigital/restQL-golang/v5/test"
 )
 
 func TestQueryParser(t *testing.T) {

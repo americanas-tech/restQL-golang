@@ -7,8 +7,8 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/b2wdigital/restQL-golang/v4/internal/domain"
-	"github.com/b2wdigital/restQL-golang/v4/pkg/restql"
+	"github.com/b2wdigital/restQL-golang/v5/internal/domain"
+	"github.com/b2wdigital/restQL-golang/v5/pkg/restql"
 )
 
 var envMappingWithTenantRegex = regexp.MustCompile("^RESTQL_MAPPING_(\\w+)_(\\w+)$")

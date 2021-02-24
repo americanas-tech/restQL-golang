@@ -1,7 +1,7 @@
 package runner
 
 import (
-	"github.com/b2wdigital/restQL-golang/v4/internal/domain"
+	"github.com/b2wdigital/restQL-golang/v5/internal/domain"
 )
 
 // State tracks the status of the statements to be resolved
