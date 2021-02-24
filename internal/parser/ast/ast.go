@@ -20,6 +20,7 @@ const (
 	JSON                = "json"
 	AsBody              = "as-body"
 	Flatten             = "flatten"
+	NoExplode           = "no-explode"
 )
 
 // Query is the root of the restQL AST.

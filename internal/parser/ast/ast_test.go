@@ -314,7 +314,7 @@ func TestAstGenerator(t *testing.T) {
 			}}}}}}},
 		},
 		{
-			"Get query with list query parameters flattened",
+			"Get query with list query parameters not multiplexed",
 			`from hero with weapons = ["sword", "shield"] -> no-multiplex`,
 			ast.Query{Blocks: []ast.Block{{
 				Method:   ast.FromMethod,
@@ -338,7 +338,7 @@ func TestAstGenerator(t *testing.T) {
 			}}},
 		},
 		{
-			"Get query with chained query parameters flattened",
+			"Get query with chained query parameters not multiplexed",
 			`from hero with id = done-resource.id -> no-multiplex`,
 			ast.Query{Blocks: []ast.Block{{
 				Method:   ast.FromMethod,
@@ -813,6 +813,35 @@ func TestAstGenerator(t *testing.T) {
 					},
 				},
 			}},
+		},
+		{
+			"Get query with object query parameters not exploded",
+			`from hero with info = {weapons: ["batrang", "batbelt"]} -> no-explode`,
+			ast.Query{Blocks: []ast.Block{{
+				Method:   ast.FromMethod,
+				Resource: "hero",
+				Qualifiers: []ast.Qualifier{
+					{
+						With: &ast.Parameters{
+							KeyValues: []ast.KeyValue{
+								{
+									Key: "info",
+									Value: ast.Value{Object: []ast.ObjectEntry{
+										{
+											Key: "weapons",
+											Value: ast.Value{List: []ast.Value{
+												{Primitive: &ast.Primitive{String: String("batrang")}},
+												{Primitive: &ast.Primitive{String: String("batbelt")}},
+											}},
+										},
+									}},
+									Functions: []string{"no-explode"},
+								},
+							},
+						},
+					},
+				},
+			}}},
 		},
 	}
 

@@ -24,7 +24,7 @@ func (nm NoMultiplex) Target() interface{} {
 }
 
 // Map apply the given function to the Target value
-// preserving the NoMultiplex as wrapper.
+// preserving the NoMultiplex as a wrapper.
 func (nm NoMultiplex) Map(fn func(target interface{}) interface{}) Function {
 	return NoMultiplex{Value: fn(nm.Value)}
 }
@@ -40,7 +40,7 @@ func (j JSON) Target() interface{} {
 }
 
 // Map apply the given function to the Target value
-// preserving the JSON as wrapper.
+// preserving the JSON as a wrapper.
 func (j JSON) Map(fn func(target interface{}) interface{}) Function {
 	return JSON{Value: fn(j.Value)}
 }
@@ -56,7 +56,7 @@ func (b Base64) Target() interface{} {
 }
 
 // Map apply the given function to the Target value
-// preserving the Base64 as wrapper.
+// preserving the Base64 as a wrapper.
 func (b Base64) Map(fn func(target interface{}) interface{}) Function {
 	return Base64{Value: fn(b.Value)}
 }
@@ -74,7 +74,7 @@ func (m Match) Target() interface{} {
 }
 
 // Map apply the given function to the Target value
-// preserving the Match as wrapper.
+// preserving the Match as a wrapper.
 func (m Match) Map(fn func(target interface{}) interface{}) Function {
 	return Match{Value: fn(m.Value), Arg: m.Arg}
 }
@@ -92,7 +92,7 @@ func (ab AsBody) Target() interface{} {
 }
 
 // Map apply the given function to the Target value
-// preserving the AsBody as wrapper.
+// preserving the AsBody as a wrapper.
 func (ab AsBody) Map(fn func(target interface{}) interface{}) Function {
 	return AsBody{Value: fn(ab.Value)}
 }
@@ -109,7 +109,24 @@ func (f Flatten) Target() interface{} {
 }
 
 // Map apply the given function to the Target value
-// preserving the Flatten as wrapper.
+// preserving the Flatten as a wrapper.
 func (f Flatten) Map(fn func(target interface{}) interface{}) Function {
 	return Flatten{Value: fn(f.Value)}
+}
+
+// NoExplode is a Function that disable object explosion
+// when resolving with values.
+type NoExplode struct {
+	Value interface{}
+}
+
+// Target return the value upon which NoExplode will be applied.
+func (f NoExplode) Target() interface{} {
+	return f.Value
+}
+
+// Map apply the given function to the Target value
+// preserving the NoExplode as a wrapper.
+func (f NoExplode) Map(fn func(target interface{}) interface{}) Function {
+	return NoExplode{Value: fn(f.Value)}
 }
