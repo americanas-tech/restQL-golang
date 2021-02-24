@@ -305,6 +305,53 @@ Using `no-multiplex`, restQL will perform just **one** HTTP call, as follows:
 
 `GET http://some.api/superhero?id=1&id=2&id=3`
 
+## Object explosion
+
+Whenever restQL finds an Object value with a list field in a `with` parameter, it will perform an **explosion**, which means it will turn the object into a list of objects for each list value.
+
+```restql
+to superheroes
+    with
+        profiles = {
+          cities: ["Gotham", "Metropoles"]
+        }
+```
+
+In this case, restQL will build the following body:
+
+```json
+{
+  "profiles": [
+    {
+      "cities": "Gotham"
+    },
+    {
+      "cities": "Metropoles"
+    }
+  ]
+}
+```
+
+If this behaviour is not what you want, but rather send the object as is, you can disable the explosion of any parameter by using the **apply** operator `->` with the `no-explode` function.
+
+```restql
+to superheroes
+    with
+        profiles = {
+          cities: ["Gotham", "Metropoles"]
+        } -> no-explode
+```
+
+Using `no-explode`, restQL will send the following body:
+
+```json
+{
+  "profiles": {
+    "cities": ["Gotham", "Metropoles"]
+  }
+}
+```
+
 ## Selecting the returned fields
 
 When the response of a given statement is bloated you may want to filter the fields in order to reduce query payload. You can do this by adding an `only` clause to the end of a statement, simply listing the fields you want:
