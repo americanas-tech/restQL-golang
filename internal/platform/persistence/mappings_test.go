@@ -2,6 +2,7 @@ package persistence
 
 import (
 	"context"
+	"fmt"
 	"github.com/b2wdigital/restQL-golang/v4/pkg/restql"
 	"io/ioutil"
 	"testing"
@@ -15,11 +16,11 @@ const mytenant = "mytenant"
 func TestMappingsReader_Env(t *testing.T) {
 	envSource := stubEnvSource{
 		getAll: map[string]string{
-			"RESTQL_MAPPING_HERO":             "http://hero.api/",
-			"RESTQL_MAPPING_SIDEKICK":         "http://sidekick.api/",
-			"RESTQL_MAPPING_":                 "http://failed.api/",
-			"RESTQL_MAPPING_MYTENANT_VILLAIN": "http://villain.api/",
-			"TEST_VAR":                        "foo",
+			"RESTQL_MAPPING_mytenant_HERO":     "http://hero.api/",
+			"RESTQL_MAPPING_mytenant_SIDEKICK": "http://sidekick.api/",
+			"RESTQL_MAPPING_":                  "http://failed.api/",
+			"RESTQL_MAPPING_mytenant_VILLAIN":  "http://villain.api/",
+			"TEST_VAR":                         "foo",
 		},
 	}
 	db := stubDatabase{}
@@ -49,32 +50,20 @@ func TestMappingsReader_Env(t *testing.T) {
 
 func TestMappingsReader_Local(t *testing.T) {
 	envSource := stubEnvSource{getAll: map[string]string{}}
-	local := map[string]string{
-		"hero":     "http://hero.api/",
-		"sidekick": "http://sidekick.api/",
-	}
-	localByTenant := map[string]map[string]string{
+	local := map[string]map[string]string{
 		mytenant: {
 			"villain": "http://villain.api/",
 		},
 	}
 	db := stubDatabase{}
 
-	reader := NewMappingReader(noOpLogger, envSource, localByTenant, db)
-
-	heroMapping, err := restql.NewMapping("hero", "http://hero.api/")
-	test.VerifyError(t, err)
-
-	sidekickMapping, err := restql.NewMapping("sidekick", "http://sidekick.api/")
-	test.VerifyError(t, err)
+	reader := NewMappingReader(noOpLogger, envSource, local, db)
 
 	villainMapping, err := restql.NewMapping("villain", "http://villain.api/")
 	test.VerifyError(t, err)
 
 	expected := map[string]restql.Mapping{
-		"hero":     heroMapping,
-		"sidekick": sidekickMapping,
-		"villain":  villainMapping,
+		"villain": villainMapping,
 	}
 
 	mappings, err := reader.FromTenant(context.Background(), mytenant)
@@ -85,7 +74,7 @@ func TestMappingsReader_Local(t *testing.T) {
 
 func TestMappingsReader_Database(t *testing.T) {
 	envSource := stubEnvSource{getAll: map[string]string{}}
-	local := map[string]string{}
+	local := map[string]map[string]string{}
 
 	heroMapping, err := restql.NewMapping("hero", "http://hero.api/")
 	test.VerifyError(t, err)
@@ -95,7 +84,7 @@ func TestMappingsReader_Database(t *testing.T) {
 
 	db := stubDatabase{findMappingsForTenant: []restql.Mapping{heroMapping, sidekickMapping}}
 
-	reader := NewMappingReader(noOpLogger, envSource, nil, db)
+	reader := NewMappingReader(noOpLogger, envSource, local, db)
 
 	expected := map[string]restql.Mapping{
 		"hero":     heroMapping,
@@ -118,21 +107,23 @@ func TestMappingsReader_ShouldOverwriteMappings(t *testing.T) {
 	villainMapping, err := restql.NewMapping("villain", "http://villain.api/")
 	test.VerifyError(t, err)
 
-	local := map[string]string{
-		"hero":     "http://hero.api/",
-		"sidekick": "http://sidekick.api/",
-		"villain":  "http://villain.api/",
+	local := map[string]map[string]string{
+		mytenant: {
+			"hero":     "http://hero.api/",
+			"sidekick": "http://sidekick.api/",
+			"villain":  "http://villain.api/",
+		},
 	}
 	db := stubDatabase{
 		findMappingsForTenant: []restql.Mapping{sidekickMapping},
 	}
 	envSource := stubEnvSource{
 		getAll: map[string]string{
-			"RESTQL_MAPPING_HERO": "https://hero.com/api/",
+			fmt.Sprintf("RESTQL_MAPPING_%s_HERO", mytenant): "https://hero.com/api/",
 		},
 	}
 
-	reader := NewMappingReader(noOpLogger, envSource, nil, db)
+	reader := NewMappingReader(noOpLogger, envSource, local, db)
 
 	expected := map[string]restql.Mapping{
 		"hero":     heroMapping,
