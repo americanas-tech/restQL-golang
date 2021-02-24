@@ -14,15 +14,18 @@ import (
 const configFileName = "restql.yml"
 
 type requestIDConf struct {
+	Enable   bool   `yaml:"enable"`
 	Header   string `yaml:"header"`
 	Strategy string `yaml:"strategy"`
 }
 
 type timeoutConf struct {
+	Enable   bool   `yaml:"enable"`
 	Duration string `yaml:"duration"`
 }
 
 type corsConf struct {
+	Enable           bool   `yaml:"enable" env:"RESTQL_CORS_ENABLED"`
 	AllowOrigin      string `yaml:"allowOrigin" env:"RESTQL_CORS_ALLOW_ORIGIN"`
 	AllowMethods     string `yaml:"allowMethods" env:"RESTQL_CORS_ALLOW_METHODS"`
 	AllowHeaders     string `yaml:"allowHeaders" env:"RESTQL_CORS_ALLOW_HEADERS"`
@@ -32,7 +35,7 @@ type corsConf struct {
 }
 
 type requestCancellationConf struct {
-	Enabled       bool          `yaml:"enabled"`
+	Enable        bool          `yaml:"enable"`
 	WatchInterval time.Duration `yaml:"watchInterval"`
 }
 
@@ -59,10 +62,10 @@ type Config struct {
 			IdleTimeout             time.Duration `yaml:"idleTimeout"`
 
 			Middlewares struct {
-				RequestID           *requestIDConf           `yaml:"requestId"`
-				Timeout             *timeoutConf             `yaml:"timeout"`
-				Cors                *corsConf                `yaml:"cors"`
-				RequestCancellation *requestCancellationConf `yaml:"requestCancellation"`
+				RequestID           requestIDConf           `yaml:"requestId"`
+				Timeout             timeoutConf             `yaml:"timeout"`
+				Cors                corsConf                `yaml:"cors"`
+				RequestCancellation requestCancellationConf `yaml:"requestCancellation"`
 			} `yaml:"middlewares"`
 		} `yaml:"server"`
 
@@ -105,8 +108,6 @@ type Config struct {
 	} `yaml:"plugins"`
 
 	Tenant string `env:"RESTQL_TENANT"`
-
-	Mappings map[string]string `yaml:"mappings"`
 
 	TenantMappings map[string]map[string]string `yaml:"tenants"`
 

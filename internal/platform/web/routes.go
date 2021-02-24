@@ -43,7 +43,7 @@ func API(log restql.Logger, cfg *conf.Config) (fasthttp.RequestHandler, error) {
 	executor := runner.NewExecutor(log, client, cfg.HTTP.QueryResourceTimeout, cfg.HTTP.ForwardPrefix)
 	r := runner.NewRunner(log, executor, cfg.HTTP.GlobalQueryTimeout)
 
-	mappingReader := persistence.NewMappingReader(log, cfg.Env, cfg.Mappings, cfg.TenantMappings, db)
+	mappingReader := persistence.NewMappingReader(log, cfg.Env, cfg.TenantMappings, db)
 	tenantCache := cache.New(log, cfg.Cache.Mappings.MaxSize,
 		cache.TenantCacheLoader(mappingReader),
 		cache.WithExpiration(cfg.Cache.Mappings.Expiration),
@@ -69,7 +69,7 @@ func API(log restql.Logger, cfg *conf.Config) (fasthttp.RequestHandler, error) {
 
 	if cfg.HTTP.Server.Admin.Enable {
 		log.Info("administration api enabled")
-		mw := persistence.NewMappingWriter(log, cfg.Env, cfg.Mappings, cfg.TenantMappings, db)
+		mw := persistence.NewMappingWriter(log, cfg.Env, cfg.TenantMappings, db)
 		qw := persistence.NewQueryWriter(log, cfg.Queries, db)
 
 		adm := newAdmin(mappingReader, mw, queryReader, qw, cfg.HTTP.Server.Admin.AuthorizationCode)
