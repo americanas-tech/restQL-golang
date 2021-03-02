@@ -1,6 +1,6 @@
 # github.com/BurntSushi/toml v0.3.1
 github.com/BurntSushi/toml
-# github.com/andybalholm/brotli v1.0.0
+# github.com/andybalholm/brotli v1.0.1
 github.com/andybalholm/brotli
 # github.com/bluele/gcache v0.0.0-20190518031135-bc40bd653833
 ## explicit
@@ -27,7 +27,7 @@ github.com/google/uuid
 # github.com/imdario/mergo v0.3.11
 ## explicit
 github.com/imdario/mergo
-# github.com/klauspost/compress v1.11.0
+# github.com/klauspost/compress v1.11.9
 ## explicit
 github.com/klauspost/compress/flate
 github.com/klauspost/compress/gzip
@@ -48,7 +48,7 @@ github.com/rs/zerolog/log
 github.com/savsgio/gotils
 # github.com/valyala/bytebufferpool v1.0.0
 github.com/valyala/bytebufferpool
-# github.com/valyala/fasthttp v1.16.0
+# github.com/valyala/fasthttp v1.22.0
 ## explicit
 github.com/valyala/fasthttp
 github.com/valyala/fasthttp/fasthttpadaptor

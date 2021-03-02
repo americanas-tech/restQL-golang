@@ -11,6 +11,11 @@ import (
 	"time"
 )
 
+const (
+	rChar = byte('\r')
+	nChar = byte('\n')
+)
+
 // ResponseHeader represents HTTP response header.
 //
 // It is forbidden copying ResponseHeader instances.
@@ -63,6 +68,7 @@ type RequestHeader struct {
 
 	method      []byte
 	requestURI  []byte
+	proto       []byte
 	host        []byte
 	contentType []byte
 	userAgent   []byte
@@ -450,6 +456,26 @@ func (h *RequestHeader) SetMethodBytes(method []byte) {
 	h.method = append(h.method[:0], method...)
 }
 
+// Protocol returns HTTP protocol.
+func (h *RequestHeader) Protocol() []byte {
+	if len(h.proto) == 0 {
+		return strHTTP11
+	}
+	return h.proto
+}
+
+// SetProtocol sets HTTP request protocol.
+func (h *RequestHeader) SetProtocol(method string) {
+	h.proto = append(h.proto[:0], method...)
+	h.noHTTP11 = !bytes.Equal(h.proto, strHTTP11)
+}
+
+// SetProtocolBytes sets HTTP request protocol.
+func (h *RequestHeader) SetProtocolBytes(method []byte) {
+	h.proto = append(h.proto[:0], method...)
+	h.noHTTP11 = !bytes.Equal(h.proto, strHTTP11)
+}
+
 // RequestURI returns RequestURI from the first HTTP request line.
 func (h *RequestHeader) RequestURI() []byte {
 	requestURI := h.requestURI
@@ -675,6 +701,7 @@ func (h *RequestHeader) resetSkipNormalize() {
 	h.contentLengthBytes = h.contentLengthBytes[:0]
 
 	h.method = h.method[:0]
+	h.proto = h.proto[:0]
 	h.requestURI = h.requestURI[:0]
 	h.host = h.host[:0]
 	h.contentType = h.contentType[:0]
@@ -717,6 +744,7 @@ func (h *RequestHeader) CopyTo(dst *RequestHeader) {
 	dst.contentLength = h.contentLength
 	dst.contentLengthBytes = append(dst.contentLengthBytes[:0], h.contentLengthBytes...)
 	dst.method = append(dst.method[:0], h.method...)
+	dst.proto = append(dst.proto[:0], h.proto...)
 	dst.requestURI = append(dst.requestURI[:0], h.requestURI...)
 	dst.host = append(dst.host[:0], h.host...)
 	dst.contentType = append(dst.contentType[:0], h.contentType...)
@@ -1011,6 +1039,16 @@ func (h *RequestHeader) SetCookieBytesKV(key, value []byte) {
 }
 
 // DelClientCookie instructs the client to remove the given cookie.
+// This doesn't work for a cookie with specific domain or path,
+// you should delete it manually like:
+//
+//      c := AcquireCookie()
+//      c.SetKey(key)
+//      c.SetDomain("example.com")
+//      c.SetPath("/path")
+//      c.SetExpire(CookieExpireDelete)
+//      h.SetCookie(c)
+//      ReleaseCookie(c)
 //
 // Use DelCookie if you want just removing the cookie from response header.
 func (h *ResponseHeader) DelClientCookie(key string) {
@@ -1024,6 +1062,16 @@ func (h *ResponseHeader) DelClientCookie(key string) {
 }
 
 // DelClientCookieBytes instructs the client to remove the given cookie.
+// This doesn't work for a cookie with specific domain or path,
+// you should delete it manually like:
+//
+//      c := AcquireCookie()
+//      c.SetKey(key)
+//      c.SetDomain("example.com")
+//      c.SetPath("/path")
+//      c.SetExpire(CookieExpireDelete)
+//      h.SetCookie(c)
+//      ReleaseCookie(c)
 //
 // Use DelCookieBytes if you want just removing the cookie from response header.
 func (h *ResponseHeader) DelClientCookieBytes(key []byte) {
@@ -1419,7 +1467,7 @@ func bufferSnippet(b []byte) string {
 
 func isOnlyCRLF(b []byte) bool {
 	for _, ch := range b {
-		if ch != '\r' && ch != '\n' {
+		if ch != rChar && ch != nChar {
 			return false
 		}
 	}
@@ -1576,7 +1624,7 @@ func (h *RequestHeader) AppendBytes(dst []byte) []byte {
 	dst = append(dst, ' ')
 	dst = append(dst, h.RequestURI()...)
 	dst = append(dst, ' ')
-	dst = append(dst, strHTTP11...)
+	dst = append(dst, h.Protocol()...)
 	dst = append(dst, strCRLF...)
 
 	userAgent := h.UserAgent()
@@ -1711,16 +1759,21 @@ func (h *RequestHeader) parseFirstLine(buf []byte) (int, error) {
 	h.method = append(h.method[:0], b[:n]...)
 	b = b[n+1:]
 
+	protoStr := strHTTP11
 	// parse requestURI
 	n = bytes.LastIndexByte(b, ' ')
 	if n < 0 {
 		h.noHTTP11 = true
 		n = len(b)
+		protoStr = strHTTP10
 	} else if n == 0 {
 		return 0, fmt.Errorf("requestURI cannot be empty in %q", buf)
 	} else if !bytes.Equal(b[n+1:], strHTTP11) {
 		h.noHTTP11 = true
+		protoStr = b[n+1:]
 	}
+
+	h.proto = append(h.proto[:0], protoStr...)
 	h.requestURI = append(h.requestURI[:0], b[:n]...)
 
 	return len(buf) - len(bNext), nil
@@ -1731,7 +1784,7 @@ func peekRawHeader(buf, key []byte) []byte {
 	if n < 0 {
 		return nil
 	}
-	if n > 0 && buf[n-1] != '\n' {
+	if n > 0 && buf[n-1] != nChar {
 		return nil
 	}
 	n += len(key)
@@ -1747,22 +1800,22 @@ func peekRawHeader(buf, key []byte) []byte {
 	}
 	n++
 	buf = buf[n:]
-	n = bytes.IndexByte(buf, '\n')
+	n = bytes.IndexByte(buf, nChar)
 	if n < 0 {
 		return nil
 	}
-	if n > 0 && buf[n-1] == '\r' {
+	if n > 0 && buf[n-1] == rChar {
 		n--
 	}
 	return buf[:n]
 }
 
 func readRawHeaders(dst, buf []byte) ([]byte, int, error) {
-	n := bytes.IndexByte(buf, '\n')
+	n := bytes.IndexByte(buf, nChar)
 	if n < 0 {
 		return dst[:0], 0, errNeedMore
 	}
-	if (n == 1 && buf[0] == '\r') || n == 0 {
+	if (n == 1 && buf[0] == rChar) || n == 0 {
 		// empty headers
 		return dst, n + 1, nil
 	}
@@ -1772,13 +1825,13 @@ func readRawHeaders(dst, buf []byte) ([]byte, int, error) {
 	m := n
 	for {
 		b = b[m:]
-		m = bytes.IndexByte(b, '\n')
+		m = bytes.IndexByte(b, nChar)
 		if m < 0 {
 			return dst, 0, errNeedMore
 		}
 		m++
 		n += m
-		if (m == 2 && b[0] == '\r') || m == 1 {
+		if (m == 2 && b[0] == rChar) || m == 1 {
 			dst = append(dst, buf[:n]...)
 			return dst, n, nil
 		}
@@ -1834,7 +1887,7 @@ func (h *ResponseHeader) parseHeaders(buf []byte) (int, error) {
 				}
 			case 't':
 				if caseInsensitiveCompare(s.key, strTransferEncoding) {
-					if !bytes.Equal(s.value, strIdentity) {
+					if len(s.value) > 0 && !bytes.Equal(s.value, strIdentity) {
 						h.contentLength = -1
 						h.h = setArgBytes(h.h, strTransferEncoding, strChunked, argsHasValue)
 					}
@@ -1958,7 +2011,7 @@ func (h *RequestHeader) collectCookies() {
 
 	for i, n := 0, len(h.h); i < n; i++ {
 		kv := &h.h[i]
-		if bytes.Equal(kv.key, strCookie) {
+		if caseInsensitiveCompare(kv.key, strCookie) {
 			h.cookies = parseRequestCookies(h.cookies, kv.value)
 			tmp := *kv
 			copy(h.h[i:], h.h[i+1:])
@@ -2011,12 +2064,12 @@ func (s *headerScanner) next() bool {
 		s.initialized = true
 	}
 	bLen := len(s.b)
-	if bLen >= 2 && s.b[0] == '\r' && s.b[1] == '\n' {
+	if bLen >= 2 && s.b[0] == rChar && s.b[1] == nChar {
 		s.b = s.b[2:]
 		s.hLen += 2
 		return false
 	}
-	if bLen >= 1 && s.b[0] == '\n' {
+	if bLen >= 1 && s.b[0] == nChar {
 		s.b = s.b[1:]
 		s.hLen++
 		return false
@@ -2029,7 +2082,7 @@ func (s *headerScanner) next() bool {
 		n = bytes.IndexByte(s.b, ':')
 
 		// There can't be a \n inside the header name, check for this.
-		x := bytes.IndexByte(s.b, '\n')
+		x := bytes.IndexByte(s.b, nChar)
 		if x < 0 {
 			// A header name should always at some point be followed by a \n
 			// even if it's the one that terminates the header block.
@@ -2062,7 +2115,7 @@ func (s *headerScanner) next() bool {
 		n = s.nextNewLine
 		s.nextNewLine = -1
 	} else {
-		n = bytes.IndexByte(s.b, '\n')
+		n = bytes.IndexByte(s.b, nChar)
 	}
 	if n < 0 {
 		s.err = errNeedMore
@@ -2076,10 +2129,10 @@ func (s *headerScanner) next() bool {
 		if s.b[n+1] != ' ' && s.b[n+1] != '\t' {
 			break
 		}
-		d := bytes.IndexByte(s.b[n+1:], '\n')
+		d := bytes.IndexByte(s.b[n+1:], nChar)
 		if d <= 0 {
 			break
-		} else if d == 1 && s.b[n+1] == '\r' {
+		} else if d == 1 && s.b[n+1] == rChar {
 			break
 		}
 		e := n + d + 1
@@ -2100,7 +2153,7 @@ func (s *headerScanner) next() bool {
 	s.hLen += n + 1
 	s.b = s.b[n+1:]
 
-	if n > 0 && s.value[n-1] == '\r' {
+	if n > 0 && s.value[n-1] == rChar {
 		n--
 	}
 	for n > 0 && s.value[n-1] == ' ' {
@@ -2156,12 +2209,12 @@ func hasHeaderValue(s, value []byte) bool {
 }
 
 func nextLine(b []byte) ([]byte, []byte, error) {
-	nNext := bytes.IndexByte(b, '\n')
+	nNext := bytes.IndexByte(b, nChar)
 	if nNext < 0 {
 		return nil, nil, errNeedMore
 	}
 	n := nNext
-	if n > 0 && b[n-1] == '\r' {
+	if n > 0 && b[n-1] == rChar {
 		n--
 	}
 	return b[:n], b[nNext+1:], nil
@@ -2169,7 +2222,9 @@ func nextLine(b []byte) ([]byte, []byte, error) {
 
 func initHeaderKV(kv *argsKV, key, value string, disableNormalizing bool) {
 	kv.key = getHeaderKeyBytes(kv, key, disableNormalizing)
+	// https://tools.ietf.org/html/rfc7230#section-3.2.4
 	kv.value = append(kv.value[:0], value...)
+	kv.value = removeNewLines(kv.value)
 }
 
 func getHeaderKeyBytes(kv *argsKV, key string, disableNormalizing bool) []byte {
@@ -2189,9 +2244,9 @@ func normalizeHeaderValue(ov, ob []byte, headerLength int) (nv, nb []byte, nhl i
 	lineStart := false
 	for read := 0; read < length; read++ {
 		c := ov[read]
-		if c == '\r' || c == '\n' {
+		if c == rChar || c == nChar {
 			shrunk++
-			if c == '\n' {
+			if c == nChar {
 				lineStart = true
 			}
 			continue
@@ -2209,13 +2264,13 @@ func normalizeHeaderValue(ov, ob []byte, headerLength int) (nv, nb []byte, nhl i
 
 	// Check if we need to skip \r\n or just \n
 	skip := 0
-	if ob[write] == '\r' {
-		if ob[write+1] == '\n' {
+	if ob[write] == rChar {
+		if ob[write+1] == nChar {
 			skip += 2
 		} else {
 			skip++
 		}
-	} else if ob[write] == '\n' {
+	} else if ob[write] == nChar {
 		skip++
 	}
 
@@ -2246,6 +2301,37 @@ func normalizeHeaderKey(b []byte, disableNormalizing bool) {
 		}
 		*p = toLowerTable[*p]
 	}
+}
+
+// removeNewLines will replace `\r` and `\n` with an empty space
+func removeNewLines(raw []byte) []byte {
+	// check if a `\r` is present and save the position.
+	// if no `\r` is found, check if a `\n` is present.
+	foundR := bytes.IndexByte(raw, rChar)
+	foundN := bytes.IndexByte(raw, nChar)
+	start := 0
+
+	if foundN != -1 {
+		if foundR > foundN {
+			start = foundN
+		} else if foundR != -1 {
+			start = foundR
+		}
+	} else if foundR != -1 {
+		start = foundR
+	} else {
+		return raw
+	}
+
+	for i := start; i < len(raw); i++ {
+		switch raw[i] {
+		case rChar, nChar:
+			raw[i] = ' '
+		default:
+			continue
+		}
+	}
+	return raw
 }
 
 // AppendNormalizedHeaderKey appends normalized header key (name) to dst
