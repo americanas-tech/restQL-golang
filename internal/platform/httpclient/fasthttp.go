@@ -2,6 +2,7 @@ package httpclient
 
 import (
 	"context"
+	"fmt"
 	"github.com/b2wdigital/restQL-golang/v5/internal/domain"
 	"github.com/b2wdigital/restQL-golang/v5/internal/platform/conf"
 	"github.com/b2wdigital/restQL-golang/v5/internal/platform/plugins"
@@ -122,7 +123,8 @@ func (hc *fastHTTPClient) Do(ctx context.Context, request restql.HTTPRequest) (r
 
 		fasthttp.ReleaseResponse(hr.response)
 
-		hc.lifecycle.AfterRequest(requestCtx, request, response, hr.err)
+		err := fmt.Errorf("%w: %s", hr.err, domain.ErrRequestTimeout)
+		hc.lifecycle.AfterRequest(requestCtx, request, response, err)
 
 		return response, domain.ErrRequestTimeout
 	case hr.err != nil:
