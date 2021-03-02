@@ -10,11 +10,11 @@ require (
 	github.com/google/go-cmp v0.5.2
 	github.com/google/uuid v1.1.2
 	github.com/imdario/mergo v0.3.11
-	github.com/klauspost/compress v1.11.0 // indirect
+	github.com/klauspost/compress v1.11.9 // indirect
 	github.com/pkg/errors v0.9.1
 	github.com/rs/dnscache v0.0.0-20190621150935-06bb5526f76b
 	github.com/rs/zerolog v1.20.0
-	github.com/valyala/fasthttp v1.16.0
+	github.com/valyala/fasthttp v1.22.0
 	go.uber.org/automaxprocs v1.3.0
 	golang.org/x/lint v0.0.0-20200302205851-738671d3881b // indirect
 	golang.org/x/sync v0.0.0-20200625203802-6e8e738ad208
