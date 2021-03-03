@@ -110,6 +110,12 @@ func TestMakeRequest(t *testing.T) {
 			restql.QueryContext{Mappings: map[string]restql.Mapping{"hero": mapping(t, "http://hero.io/api")}, Input: restql.QueryInput{Headers: map[string]string{"Accept": "*/*"}}},
 			restql.HTTPRequest{Method: http.MethodGet, Schema: "http", Host: "hero.io", Path: "/api", Query: map[string]interface{}{}, Headers: map[string]string{"X-Tid": "1234567890", "Content-Type": "application/json", "Accept": "application/json"}},
 		},
+		{
+			"should make request with url and query params from statement, filtering non-primitive ones",
+			domain.Statement{Method: domain.FromMethod, Resource: "hero", With: domain.Params{Values: map[string]interface{}{"id": "123456", "name": domain.Chain{"failed-resource", "name"}}}},
+			restql.QueryContext{Mappings: map[string]restql.Mapping{"hero": mapping(t, "http://hero.io/api")}},
+			restql.HTTPRequest{Method: http.MethodGet, Schema: "http", Host: "hero.io", Path: "/api", Query: map[string]interface{}{"id": "123456"}, Headers: map[string]string{"Content-Type": "application/json"}},
+		},
 	}
 
 	forwardPrefix := "c_"

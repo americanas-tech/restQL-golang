@@ -140,11 +140,39 @@ func makeQueryParams(forwardPrefix string, statement domain.Statement, mapping r
 			if mapping.IsPathParam(key) {
 				continue
 			}
+
+			if !isPrimitiveValue(value) {
+				continue
+			}
+
 			queryArgs[key] = value
 		}
 	}
 
 	return queryArgs
+}
+
+func isPrimitiveValue(value interface{}) bool {
+	if value == nil {
+		return false
+	}
+
+	switch value.(type) {
+	case string:
+		return true
+	case bool:
+		return true
+	case int:
+		return true
+	case float64:
+		return true
+	case map[string]interface{}:
+		return true
+	case []interface{}:
+		return true
+	default:
+		return false
+	}
 }
 
 func getForwardParams(forwardPrefix string, queryCtx restql.QueryContext) map[string]interface{} {
