@@ -45,7 +45,7 @@ func (r Runner) ExecuteQuery(ctx context.Context, query domain.Query, queryCtx r
 	}
 	defer cancel()
 
-	resources, err := r.initializeResources(query, queryCtx)
+	resources, err := r.initializeResources(query)
 	if err != nil {
 		return nil, err
 	}
@@ -104,10 +104,15 @@ func (r Runner) parseQueryTimeout(query domain.Query) (time.Duration, bool) {
 	return time.Millisecond * time.Duration(duration), true
 }
 
-func (r Runner) initializeResources(query domain.Query, queryCtx restql.QueryContext) (domain.Resources, error) {
+func (r Runner) initializeResources(query domain.Query) (domain.Resources, error) {
 	resources := domain.NewResources(query.Statements)
 
-	err := ValidateChainedValues(resources)
+	err := ValidateDependsOnTarget(resources)
+	if err != nil {
+		return nil, err
+	}
+
+	err = ValidateChainedValues(resources)
 	if err != nil {
 		return nil, err
 	}
@@ -146,6 +151,7 @@ func (sw *stateWorker) Run() {
 		}
 
 		availableResources = ResolveChainedValues(availableResources, sw.state.Done())
+		availableResources = ResolveDependsOn(availableResources, sw.state.Done())
 		availableResources = ApplyEncoders(availableResources, sw.log)
 		availableResources = MultiplexStatements(availableResources)
 		availableResources = UnwrapNoMultiplex(availableResources)

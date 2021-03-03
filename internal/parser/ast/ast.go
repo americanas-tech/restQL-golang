@@ -58,6 +58,7 @@ type Qualifier struct {
 	With         *Parameters
 	Only         []Filter
 	Headers      []HeaderItem
+	DependsOn    string
 	Hidden       bool
 	Timeout      *TimeoutValue
 	MaxAge       *MaxAgeValue
@@ -167,6 +168,10 @@ type MaxAgeValue variableOrInt
 // SMaxAgeValue is the syntax node representing
 // the value in the `s-max-age` clause.
 type SMaxAgeValue variableOrInt
+
+// DependsOnValue is the syntax node representing
+// the value in the `depends-on` clause.
+type DependsOnValue string
 
 // Generator encapsulate the parsing implementation
 // used to transform a query string into an AST.

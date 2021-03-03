@@ -52,6 +52,14 @@ func (s *State) canRequestMultiplexedGroup(statements []interface{}) bool {
 }
 
 func (s *State) canRequest(statement domain.Statement) bool {
+	dependsOnTarget := statement.DependsOn.Target
+	if dependsOnTarget != "" {
+		_, found := s.done[domain.ResourceID(dependsOnTarget)]
+		if !found {
+			return false
+		}
+	}
+
 	for _, v := range statement.With.Values {
 		if !s.isValueResolved(v) {
 			return false

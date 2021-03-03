@@ -24,6 +24,7 @@ type Statement struct {
 	Resource     string
 	Alias        string
 	In           []string
+	DependsOn    DependsOn
 	Headers      map[string]interface{}
 	Timeout      interface{}
 	With         Params
@@ -52,3 +53,9 @@ type Variable struct {
 
 // Chain is the internal representation of a chain parameter value.
 type Chain []interface{}
+
+// DependsOn is the internal representation of the `depends-on` clause.
+type DependsOn struct {
+	Target   string
+	Resolved bool
+}

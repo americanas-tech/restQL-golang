@@ -98,6 +98,8 @@ func newBlock(action, modifiers, with, filter, ignore interface{}) (Block, error
 				q = Qualifier{MaxAge: m}
 			case *SMaxAgeValue:
 				q = Qualifier{SMaxAge: m}
+			case DependsOnValue:
+				q = Qualifier{DependsOn: string(m)}
 			default:
 				continue
 			}
@@ -531,6 +533,11 @@ func newSmaxAge(value interface{}) (*SMaxAgeValue, error) {
 	default:
 		return &SMaxAgeValue{}, fmt.Errorf("got an unknown type : %T", value)
 	}
+}
+
+func newDependsOn(target interface{}) (DependsOnValue, error) {
+	d := target.(string)
+	return DependsOnValue(d), nil
 }
 
 type ignoreErrors bool

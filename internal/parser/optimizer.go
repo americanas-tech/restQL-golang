@@ -92,6 +92,10 @@ func makeStatement(block ast.Block) (domain.Statement, error) {
 			s.CacheControl.SMaxAge = value
 		}
 
+		if qualifier.DependsOn != "" {
+			s.DependsOn = domain.DependsOn{Target: qualifier.DependsOn}
+		}
+
 		s.Hidden = qualifier.Hidden || s.Hidden
 		s.IgnoreErrors = qualifier.IgnoreErrors || s.IgnoreErrors
 	}

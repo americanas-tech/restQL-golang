@@ -252,6 +252,18 @@ func TestQueryParser(t *testing.T) {
 			domain.Query{Statements: []domain.Statement{{Method: "from", Resource: "hero", With: domain.Params{Values: map[string]interface{}{"info": domain.NoExplode{Value: map[string]interface{}{"weapons": []interface{}{"batrang", "batbelt"}}}}}}}},
 			`from hero with info = {weapons: ["batrang", "batbelt"]} -> no-explode`,
 		},
+		{
+			"Multiple statements with second using depends on first",
+			domain.Query{Statements: []domain.Statement{
+				{Method: "from", Resource: "hero"},
+				{Method: "from", Resource: "sidekick", DependsOn: domain.DependsOn{Target: "hero"}},
+			}},
+			`
+					from hero
+					from sidekick
+						depends-on hero
+			`,
+		},
 	}
 
 	queryParser, err := parser.New()
