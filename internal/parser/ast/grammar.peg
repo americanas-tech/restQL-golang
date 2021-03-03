@@ -50,7 +50,7 @@ IN <- WS_MAND "in" WS_MAND t:(IDENT_WITH_DOT) {
 	return newIn(t)
 }
 
-MODIFIER_RULE <- m:(HEADERS / TIMEOUT / MAX_AGE / S_MAX_AGE)+ {
+MODIFIER_RULE <- m:(HEADERS / TIMEOUT / MAX_AGE / S_MAX_AGE / DEPENDS_ON)+ {
 	return m, nil
 }
 
@@ -154,6 +154,11 @@ MAX_AGE <- WS_MAND "max-age" WS_MAND t:(VARIABLE / Integer) {
 
 S_MAX_AGE <- WS_MAND "s-max-age" WS_MAND t:(VARIABLE / Integer) {
 	return newSmaxAge(t)
+}
+
+
+DEPENDS_ON <- WS_MAND "depends-on" WS_MAND t:(IDENT) {
+	return newDependsOn(t)
 }
 
 FLAGS_RULE <- WS_MAND i:IGNORE_FLAG is:(WS LS WS IGNORE_FLAG)* {

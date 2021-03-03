@@ -350,3 +350,53 @@ func TestGetEmptyChainedParams(t *testing.T) {
 		})
 	}
 }
+
+func TestNewDependsOnUnresolvedResponse(t *testing.T) {
+	t.Run("should create response for unresolved statement", func(t *testing.T) {
+		statement := domain.Statement{
+			DependsOn: domain.DependsOn{
+				Target:   "failed-resource",
+				Resolved: false,
+			},
+		}
+		options := runner.DoneResourceOptions{}
+
+		expected := restql.DoneResource{
+			Status:       400,
+			Success:      false,
+			IgnoreErrors: false,
+			ResponseBody: restql.NewResponseBodyFromValue(
+				test.NoOpLogger,
+				"The request was skipped due to unresolved dependency { failed-resource }",
+			),
+		}
+
+		got := runner.NewNewDependsOnUnresolvedResponse(test.NoOpLogger, statement, options)
+
+		test.Equal(t, got, expected)
+	})
+
+	t.Run("should create response for empty chained statement with ignore errors", func(t *testing.T) {
+		statement := domain.Statement{
+			DependsOn: domain.DependsOn{
+				Target:   "failed-resource",
+				Resolved: false,
+			},
+		}
+		options := runner.DoneResourceOptions{IgnoreErrors: true}
+
+		expected := restql.DoneResource{
+			Status:       400,
+			Success:      false,
+			IgnoreErrors: true,
+			ResponseBody: restql.NewResponseBodyFromValue(
+				test.NoOpLogger,
+				"The request was skipped due to unresolved dependency { failed-resource }",
+			),
+		}
+
+		got := runner.NewNewDependsOnUnresolvedResponse(test.NoOpLogger, statement, options)
+
+		test.Equal(t, got, expected)
+	})
+}

@@ -110,6 +110,8 @@ func (e Evaluator) evaluateQuery(ctx context.Context, queryTxt string, queryOpts
 		return nil, fmt.Errorf("%w: %s", ErrTimeout, err)
 	case errors.Is(err, runner.ErrInvalidChainedParameter):
 		return nil, fmt.Errorf("%w: %s", ErrParser, err)
+	case errors.Is(err, runner.ErrInvalidDependsOnTarget):
+		return nil, fmt.Errorf("%w: %s", ErrParser, err)
 	case err != nil:
 		return nil, err
 	}

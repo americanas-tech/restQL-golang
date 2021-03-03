@@ -116,6 +116,22 @@ func isEmptyChained(value interface{}) bool {
 	}
 }
 
+func NewNewDependsOnUnresolvedResponse(log restql.Logger, stmt domain.Statement, options DoneResourceOptions) restql.DoneResource {
+	var buf bytes.Buffer
+
+	buf.WriteString("The request was skipped due to unresolved dependency { ")
+	buf.WriteString(stmt.DependsOn.Target)
+	buf.WriteString(" }")
+
+	rb := restql.NewResponseBodyFromValue(log, buf.String())
+	return restql.DoneResource{
+		Status:       400,
+		Success:      false,
+		IgnoreErrors: options.IgnoreErrors,
+		ResponseBody: rb,
+	}
+}
+
 func makeCacheControl(response restql.HTTPResponse, options DoneResourceOptions) restql.ResourceCacheControl {
 	headerCacheControl, headerFound := getCacheControlOptionsFromHeader(response)
 	defaultCacheControl, defaultFound := getDefaultCacheControlOptions(options)

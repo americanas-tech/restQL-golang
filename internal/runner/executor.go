@@ -34,6 +34,12 @@ func (e Executor) DoStatement(ctx context.Context, statement domain.Statement, q
 		SMaxAge:      statement.CacheControl.SMaxAge,
 	}
 
+	if !statement.DependsOn.Resolved {
+		failedDependsOnResponse := NewNewDependsOnUnresolvedResponse(log, statement, drOptions)
+		log.Debug("request execution skipped due to unresolved dependency", "resource", statement.Resource, "method", statement.Method)
+		return failedDependsOnResponse
+	}
+
 	emptyChainedParams := GetEmptyChainedParams(statement)
 	if len(emptyChainedParams) > 0 {
 		emptyChainedResponse := NewEmptyChainedResponse(log, emptyChainedParams, drOptions)

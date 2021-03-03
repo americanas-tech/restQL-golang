@@ -843,6 +843,50 @@ func TestAstGenerator(t *testing.T) {
 				},
 			}}},
 		},
+		{
+			"Get query with depends on condition",
+			`
+				from cart
+				with
+					id = $id
+
+				from sku
+				depends-on cart
+				with
+					sku = "something"
+			`,
+			ast.Query{Blocks: []ast.Block{
+				{
+					Method:   ast.FromMethod,
+					Resource: "cart",
+					Qualifiers: []ast.Qualifier{
+						{
+							With: &ast.Parameters{
+								KeyValues: []ast.KeyValue{
+									{Key: "id", Value: ast.Value{Variable: String("id")}},
+								},
+							},
+						},
+					},
+				},
+				{
+					Method:   ast.FromMethod,
+					Resource: "sku",
+					Qualifiers: []ast.Qualifier{
+						{
+							DependsOn: "cart",
+						},
+						{
+							With: &ast.Parameters{
+								KeyValues: []ast.KeyValue{
+									{Key: "sku", Value: ast.Value{Primitive: &ast.Primitive{String: String("something")}}},
+								},
+							},
+						},
+					},
+				},
+			}},
+		},
 	}
 
 	generator, err := ast.New()
