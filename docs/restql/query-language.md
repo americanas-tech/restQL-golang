@@ -406,7 +406,7 @@ In this case we use two functions. First, we encode the key/value structure as a
 
 ## Aggregating result in another statement
 
-RestQL provides a aggregation clause that allows you to easily append a statement result into another. To achieve this use the `in` clause, for example:
+RestQL provides an aggregation clause that allows you to easily append a statement result into another. To achieve this use the `in` clause, for example:
 
 ```restql
 from hero
@@ -456,6 +456,32 @@ from ratings
 ```
 
 The query above will return a success HTTP status code even when the ratings resources returns an error.
+
+### Explicit dependency
+
+There are two types of statement dependency on restQL: implicit and explicit.
+
+Implicit dependency is inferred by restQL through chained parameters. For example, if we have a query like
+```restql
+from hero
+
+from sidekick
+    with
+        id = hero.sidekick.id
+```
+This declares that the `sidekick` statement has an dependency on the `hero` statement, since to build the request to the `sidekick` API restQL needs data presented on `hero` response.
+
+However, there are cases where we would like statements to have a dependency link, but we don't need to pipe any data from one to another. For example, when we create a new resource and would like to refresh the list of all resource.
+
+We can achieve this by setting an explicit dependency through the `depends-on` keyword, like this:
+```restql
+to hero
+    with
+        name = "Super restQL"
+        
+from hero as allHeroes
+    depends-on hero
+```
 
 ### Cache Control
 
