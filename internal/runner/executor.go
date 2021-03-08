@@ -2,7 +2,6 @@ package runner
 
 import (
 	"context"
-	"sync"
 	"time"
 
 	"github.com/b2wdigital/restQL-golang/v5/internal/domain"
@@ -63,46 +62,4 @@ func (e Executor) DoStatement(ctx context.Context, statement domain.Statement, q
 	log.Debug("request execution done", "resource", statement.Resource, "method", statement.Method, "response", dr)
 
 	return dr
-}
-
-// DoMultiplexedStatement process multiplexed statements into a result by executing the relevant HTTP calls to the upstream dependency.
-func (e Executor) DoMultiplexedStatement(ctx context.Context, statements []interface{}, queryCtx restql.QueryContext) restql.DoneResources {
-	responseChans := make([]chan interface{}, len(statements))
-	for i := range responseChans {
-		responseChans[i] = make(chan interface{}, 1)
-	}
-
-	var wg sync.WaitGroup
-
-	wg.Add(len(statements))
-	for i, stmt := range statements {
-		i, stmt := i, stmt
-		ch := responseChans[i]
-
-		go func() {
-			response := e.doCurrentStatement(ctx, stmt, queryCtx)
-			ch <- response
-			wg.Done()
-		}()
-	}
-
-	wg.Wait()
-
-	responses := make(restql.DoneResources, len(statements))
-	for i, ch := range responseChans {
-		responses[i] = <-ch
-	}
-
-	return responses
-}
-
-func (e Executor) doCurrentStatement(ctx context.Context, stmt interface{}, queryCtx restql.QueryContext) interface{} {
-	switch stmt := stmt.(type) {
-	case domain.Statement:
-		return e.DoStatement(ctx, stmt, queryCtx)
-	case []interface{}:
-		return e.DoMultiplexedStatement(ctx, stmt, queryCtx)
-	default:
-		return nil
-	}
 }
