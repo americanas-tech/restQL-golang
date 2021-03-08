@@ -2,6 +2,7 @@ package runner
 
 import (
 	"context"
+	"sync"
 	"time"
 
 	"github.com/b2wdigital/restQL-golang/v5/internal/domain"
@@ -198,20 +199,56 @@ func (rw *requestWorker) Run() {
 
 			switch statement := statement.(type) {
 			case domain.Statement:
-				go func() {
-					response := rw.executor.DoStatement(rw.ctx, statement, rw.queryCtx)
-					writeResult(rw.ctx, rw.resultCh, result{ResourceIdentifier: resourceID, Response: response})
-				}()
+				rw.runStatement(statement, resourceID, func(r result) {
+					writeResult(rw.ctx, rw.resultCh, r)
+				})
 			case []interface{}:
-				go func() {
-					responses := rw.executor.DoMultiplexedStatement(rw.ctx, statement, rw.queryCtx)
-					writeResult(rw.ctx, rw.resultCh, result{ResourceIdentifier: resourceID, Response: responses})
-				}()
+				rw.runMultiplexedStatement(statement, resourceID)
 			}
 		case <-rw.ctx.Done():
 			return
 		}
 	}
+}
+
+func (rw *requestWorker) runMultiplexedStatement(statements []interface{}, resourceID domain.ResourceID) {
+	responseChans := make([]chan interface{}, len(statements))
+	for i := range responseChans {
+		responseChans[i] = make(chan interface{}, 1)
+	}
+
+	var wg sync.WaitGroup
+
+	wg.Add(len(statements))
+	for i, stmt := range statements {
+		i, stmt := i, stmt
+		ch := responseChans[i]
+
+		switch stmt := stmt.(type) {
+		case domain.Statement:
+			rw.runStatement(stmt, resourceID, func(r result) {
+				ch <- r.Response
+				wg.Done()
+			})
+		case []interface{}:
+			rw.runMultiplexedStatement(stmt, resourceID)
+		}
+	}
+
+	wg.Wait()
+	responses := make(restql.DoneResources, len(statements))
+	for i, ch := range responseChans {
+		responses[i] = <-ch
+	}
+
+	writeResult(rw.ctx, rw.resultCh, result{ResourceIdentifier: resourceID, Response: responses})
+}
+
+func (rw *requestWorker) runStatement(statement domain.Statement, resourceID domain.ResourceID, cb func(result)) {
+	go func() {
+		response := rw.executor.DoStatement(rw.ctx, statement, rw.queryCtx)
+		cb(result{ResourceIdentifier: resourceID, Response: response})
+	}()
 }
 
 func writeResult(ctx context.Context, out chan result, r result) {
