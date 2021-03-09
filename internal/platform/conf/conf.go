@@ -43,8 +43,11 @@ type requestCancellationConf struct {
 type Config struct {
 	HTTP struct {
 		ForwardPrefix        string        `yaml:"forwardPrefix" env:"RESTQL_FORWARD_PREFIX"`
-		GlobalQueryTimeout   time.Duration `env:"RESTQL_QUERY_GLOBAL_TIMEOUT" envDefault:"30s"`
 		QueryResourceTimeout time.Duration `env:"RESTQL_QUERY_RESOURCE_TIMEOUT" envDefault:"5s"`
+
+		GlobalQueryTimeout      time.Duration `env:"RESTQL_QUERY_GLOBAL_TIMEOUT" envDefault:"30s"`
+		MaxConcurrentQueries    int           `yaml:"maxConcurrentQueries" env:"RESTQL_MAX_CONCURRENT_QUERIES"`
+		MaxConcurrentGoroutines int           `yaml:"maxConcurrentGoroutines" env:"RESTQL_MAX_CONCURRENT_GOROUTINES"`
 
 		Server struct {
 			APIAddr         string `env:"RESTQL_PORT,required"`
