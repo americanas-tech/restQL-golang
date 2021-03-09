@@ -122,7 +122,7 @@ func (e Evaluator) evaluateQuery(ctx context.Context, queryTxt string, queryOpts
 		return nil, err
 	}
 
-	resources = ApplyAggregators(nil, query, resources)
+	resources = ApplyAggregators(log, query, resources)
 
 	e.lifecycle.AfterQuery(queryCtx, queryTxt, resources)
 
