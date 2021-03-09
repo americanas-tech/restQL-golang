@@ -41,7 +41,11 @@ func API(log restql.Logger, cfg *conf.Config) (fasthttp.RequestHandler, error) {
 
 	client := httpclient.New(log, lifecycle, cfg)
 	executor := runner.NewExecutor(log, client, cfg.HTTP.QueryResourceTimeout, cfg.HTTP.ForwardPrefix)
-	r := runner.NewRunner(log, executor, cfg.HTTP.GlobalQueryTimeout)
+	r := runner.NewRunner(log, executor, runner.Options{
+		GlobalQueryTimeout:      cfg.HTTP.GlobalQueryTimeout,
+		MaxConcurrentQueries:    cfg.HTTP.MaxConcurrentQueries,
+		MaxConcurrentGoroutines: cfg.HTTP.MaxConcurrentGoroutines,
+	})
 
 	mappingReader := persistence.NewMappingReader(log, cfg.Env, cfg.TenantMappings, db)
 	tenantCache := cache.New(log, cfg.Cache.Mappings.MaxSize,

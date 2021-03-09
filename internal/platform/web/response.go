@@ -8,8 +8,8 @@ import (
 	"github.com/b2wdigital/restQL-golang/v5/internal/eval"
 	"github.com/b2wdigital/restQL-golang/v5/internal/parser"
 	"github.com/b2wdigital/restQL-golang/v5/internal/platform/persistence"
+	"github.com/b2wdigital/restQL-golang/v5/internal/runner"
 	"github.com/b2wdigital/restQL-golang/v5/pkg/restql"
-	"net/http"
 	"strconv"
 
 	"github.com/valyala/fasthttp"
@@ -26,13 +26,15 @@ var errToStatusCode = map[error]int{
 	eval.ErrParser:                              fasthttp.StatusInternalServerError,
 	eval.ErrTimeout:                             fasthttp.StatusRequestTimeout,
 	eval.ErrMapping:                             fasthttp.StatusInternalServerError,
+	runner.ErrMaxQueryDenied:                    fasthttp.StatusInsufficientStorage,
+	runner.ErrMaxGoroutineDenied:                fasthttp.StatusInsufficientStorage,
 	parser.ErrInvalidQuery:                      fasthttp.StatusUnprocessableEntity,
 	persistence.ErrSetResourceMappingNotAllowed: fasthttp.StatusUnauthorized,
 	persistence.ErrCreateRevisionNotAllowed:     fasthttp.StatusUnauthorized,
 	errPathParamNotFound:                        fasthttp.StatusUnprocessableEntity,
 	errInvalidTenant:                            fasthttp.StatusBadRequest,
 	errInvalidRevisionType:                      fasthttp.StatusBadRequest,
-	errFailedToReadRequestBody:                  http.StatusBadRequest,
+	errFailedToReadRequestBody:                  fasthttp.StatusBadRequest,
 }
 
 // ErrorResponse is the form used for API responses from failures in the API.

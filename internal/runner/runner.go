@@ -3,6 +3,7 @@ package runner
 import (
 	"context"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/b2wdigital/restQL-golang/v5/internal/domain"
@@ -10,32 +11,59 @@ import (
 	"github.com/pkg/errors"
 )
 
-// ErrQueryTimedOut represents the event of a query that
-// exceed the maximum execution time for it.
-var ErrQueryTimedOut = errors.New("query timed out")
+var (
+	// ErrQueryTimedOut represents the event of a query that
+	// exceed the maximum execution time for it.
+	ErrQueryTimedOut = errors.New("query timed out")
+
+	// ErrMaxQueryDenied represents the event when restQL reaches the maximum
+	// number of concurrent queries and cannot process anymore.
+	ErrMaxQueryDenied = errors.New("max concurrent query reached: query execution denied")
+
+	// ErrMaxGoroutineDenied represents the event when restQL reaches the maximum
+	// number of concurrent goroutines and cannot process anymore.
+	ErrMaxGoroutineDenied = errors.New("max concurrent goroutine reached: statement execution denied")
+)
+
+// Options wraps all configuration parameters for the Runner
+type Options struct {
+	GlobalQueryTimeout      time.Duration
+	MaxConcurrentQueries    int
+	MaxConcurrentGoroutines int
+}
 
 // Runner process a query into a Resource collection
 // with the results in the most efficient way.
 // All statements that can be executed in parallel,
 // hence not having co-dependency, are done so.
 type Runner struct {
-	log                restql.Logger
-	executor           Executor
-	globalQueryTimeout time.Duration
+	log              restql.Logger
+	executor         Executor
+	queryLimiter     *limiter
+	goroutineLimiter *limiter
+	options          Options
 }
 
 // NewRunner returns a Runner instance.
-func NewRunner(log restql.Logger, executor Executor, globalQueryTimeout time.Duration) Runner {
+func NewRunner(log restql.Logger, executor Executor, options Options) Runner {
 	return Runner{
-		log:                log,
-		executor:           executor,
-		globalQueryTimeout: globalQueryTimeout,
+		log:              log,
+		executor:         executor,
+		queryLimiter:     newLimiter(int32(options.MaxConcurrentQueries)),
+		goroutineLimiter: newLimiter(int32(options.MaxConcurrentGoroutines)),
+		options:          options,
 	}
 }
 
 // ExecuteQuery process a query into a Resource collection.
 func (r Runner) ExecuteQuery(ctx context.Context, query domain.Query, queryCtx restql.QueryContext) (domain.Resources, error) {
 	log := restql.GetLogger(ctx)
+
+	success := r.queryLimiter.Acquire()
+	if !success {
+		return nil, ErrMaxQueryDenied
+	}
+	defer r.queryLimiter.Release()
 
 	var cancel context.CancelFunc
 	queryTimeout, ok := r.parseQueryTimeout(query)
@@ -59,21 +87,24 @@ func (r Runner) ExecuteQuery(ctx context.Context, query domain.Query, queryCtx r
 	errorCh := make(chan error)
 
 	stateWorker := &stateWorker{
-		log:       log,
-		requestCh: requestCh,
-		resultCh:  resultCh,
-		outputCh:  outputCh,
-		state:     state,
-		ctx:       ctx,
+		log:              log,
+		requestCh:        requestCh,
+		resultCh:         resultCh,
+		outputCh:         outputCh,
+		errorCh:          errorCh,
+		state:            state,
+		ctx:              ctx,
+		goroutineLimiter: r.goroutineLimiter,
 	}
 
 	requestWorker := &requestWorker{
-		requestCh: requestCh,
-		resultCh:  resultCh,
-		errorCh:   errorCh,
-		executor:  r.executor,
-		queryCtx:  queryCtx,
-		ctx:       ctx,
+		requestCh:        requestCh,
+		resultCh:         resultCh,
+		errorCh:          errorCh,
+		executor:         r.executor,
+		queryCtx:         queryCtx,
+		ctx:              ctx,
+		goroutineLimiter: r.goroutineLimiter,
 	}
 
 	go stateWorker.Run()
@@ -94,12 +125,12 @@ func (r Runner) ExecuteQuery(ctx context.Context, query domain.Query, queryCtx r
 func (r Runner) parseQueryTimeout(query domain.Query) (time.Duration, bool) {
 	timeout, found := query.Use["timeout"]
 	if !found {
-		return r.globalQueryTimeout, false
+		return r.options.GlobalQueryTimeout, false
 	}
 
 	duration, ok := timeout.(int)
 	if !ok {
-		return r.globalQueryTimeout, false
+		return r.options.GlobalQueryTimeout, false
 	}
 
 	return time.Millisecond * time.Duration(duration), true
@@ -136,12 +167,14 @@ type result struct {
 }
 
 type stateWorker struct {
-	log       restql.Logger
-	requestCh chan request
-	resultCh  chan result
-	outputCh  chan domain.Resources
-	state     *State
-	ctx       context.Context
+	log              restql.Logger
+	requestCh        chan request
+	resultCh         chan result
+	outputCh         chan domain.Resources
+	errorCh          chan error
+	state            *State
+	ctx              context.Context
+	goroutineLimiter *limiter
 }
 
 func (sw *stateWorker) Run() {
@@ -159,11 +192,23 @@ func (sw *stateWorker) Run() {
 
 		for resourceID, stmt := range availableResources {
 			resourceID, stmt := resourceID, stmt
+			success := sw.goroutineLimiter.Acquire()
+			if !success {
+				select {
+				case sw.errorCh <- ErrMaxGoroutineDenied:
+				case <-sw.ctx.Done():
+				}
+
+				return
+			}
+
 			go func() {
 				select {
 				case sw.requestCh <- request{ResourceIdentifier: resourceID, Statement: stmt}:
 				case <-sw.ctx.Done():
 				}
+
+				sw.goroutineLimiter.Release()
 			}()
 		}
 
@@ -182,12 +227,13 @@ func (sw *stateWorker) Run() {
 }
 
 type requestWorker struct {
-	requestCh chan request
-	resultCh  chan result
-	errorCh   chan error
-	executor  Executor
-	queryCtx  restql.QueryContext
-	ctx       context.Context
+	requestCh        chan request
+	resultCh         chan result
+	errorCh          chan error
+	executor         Executor
+	queryCtx         restql.QueryContext
+	ctx              context.Context
+	goroutineLimiter *limiter
 }
 
 func (rw *requestWorker) Run() {
@@ -203,7 +249,7 @@ func (rw *requestWorker) Run() {
 					writeResult(rw.ctx, rw.resultCh, r)
 				})
 			case []interface{}:
-				rw.runMultiplexedStatement(statement, resourceID)
+				go rw.runMultiplexedStatement(statement, resourceID)
 			}
 		case <-rw.ctx.Done():
 			return
@@ -221,6 +267,12 @@ func (rw *requestWorker) runMultiplexedStatement(statements []interface{}, resou
 
 	wg.Add(len(statements))
 	for i, stmt := range statements {
+		select {
+		case <-rw.ctx.Done():
+			return
+		default:
+		}
+
 		i, stmt := i, stmt
 		ch := responseChans[i]
 
@@ -245,9 +297,22 @@ func (rw *requestWorker) runMultiplexedStatement(statements []interface{}, resou
 }
 
 func (rw *requestWorker) runStatement(statement domain.Statement, resourceID domain.ResourceID, cb func(result)) {
+	success := rw.goroutineLimiter.Acquire()
+	if !success {
+		cb(result{})
+
+		select {
+		case rw.errorCh <- ErrMaxGoroutineDenied:
+		case <-rw.ctx.Done():
+		}
+
+		return
+	}
+
 	go func() {
 		response := rw.executor.DoStatement(rw.ctx, statement, rw.queryCtx)
 		cb(result{ResourceIdentifier: resourceID, Response: response})
+		rw.goroutineLimiter.Release()
 	}()
 }
 
@@ -256,4 +321,44 @@ func writeResult(ctx context.Context, out chan result, r result) {
 	case out <- r:
 	case <-ctx.Done():
 	}
+}
+
+type limiter struct {
+	limit  int32
+	bucket int32
+}
+
+func newLimiter(limit int32) *limiter {
+	return &limiter{limit: limit, bucket: limit}
+}
+
+// Acquire will try to reserve a token on limiter.
+// If the limiter bucket is full (default case on select), it will fail.
+func (l *limiter) Acquire() bool {
+	if l.limit <= 0 {
+		return true
+	}
+
+	if atomic.LoadInt32(&l.bucket) <= 0 {
+		atomic.StoreInt32(&l.bucket, 0)
+		return false
+	}
+
+	atomic.AddInt32(&l.bucket, -1)
+	return true
+}
+
+// Release will return a token to the bucket with a non-blocking read.
+func (l *limiter) Release() {
+	if l.limit <= 0 {
+		return
+	}
+
+	if atomic.LoadInt32(&l.bucket) >= l.limit {
+		atomic.StoreInt32(&l.bucket, l.limit)
+		return
+	}
+
+	atomic.AddInt32(&l.bucket, 1)
+	return
 }
