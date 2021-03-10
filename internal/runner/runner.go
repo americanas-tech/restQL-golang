@@ -3,7 +3,6 @@ package runner
 import (
 	"context"
 	"sync"
-	"sync/atomic"
 	"time"
 
 	"github.com/b2wdigital/restQL-golang/v5/internal/domain"
@@ -338,6 +337,8 @@ func writeResult(ctx context.Context, out chan result, r result) {
 }
 
 type limiter struct {
+	mu sync.Mutex
+
 	limit  int32
 	bucket int32
 }
@@ -353,12 +354,15 @@ func (l *limiter) Acquire() bool {
 		return true
 	}
 
-	if atomic.LoadInt32(&l.bucket) <= 0 {
-		atomic.StoreInt32(&l.bucket, 0)
+	l.mu.Lock()
+	defer l.mu.Unlock()
+
+	if l.bucket <= 0 {
+		l.bucket = 0
 		return false
 	}
 
-	atomic.AddInt32(&l.bucket, -1)
+	l.bucket = l.bucket - 1
 	return true
 }
 
@@ -368,11 +372,14 @@ func (l *limiter) Release() {
 		return
 	}
 
-	if atomic.LoadInt32(&l.bucket) >= l.limit {
-		atomic.StoreInt32(&l.bucket, l.limit)
+	l.mu.Lock()
+	defer l.mu.Unlock()
+
+	if l.bucket >= l.limit {
+		l.bucket = l.limit
 		return
 	}
 
-	atomic.AddInt32(&l.bucket, 1)
+	l.bucket = l.bucket + 1
 	return
 }
