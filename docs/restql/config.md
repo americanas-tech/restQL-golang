@@ -10,12 +10,12 @@ For configuration details of plugins, like database plugin or others, please ref
 
 ## Tenants
 
-If your are working with a database for storing mappings, then you will be able to scope then in tenants. The tenant that a query should use to resolve its statements can be defined in two ways:
+If you are working with a database for storing mappings, then you will be able to scope then in tenants. The tenant that a query should use to resolve its statements can be defined in two ways:
 
 1. Through a `tenant` query parameter, which allow for a same restQL deployment to run each query with a possibility different tenant.
 2. Through a `RESTQL_TENANT` environment variable, which will lock the tenant allowed to be used by that deployment, ignoring the `tenant` query parameter if present.
 
-When using tenants the second approach is recommend if you aim to provide isolation between the tenants and guarantee that a tenant cannot produce load in the APIs of other tenants.
+When using tenants the second approach is recommended if you aim to provide isolation between the tenants and guarantee that a tenant cannot produce load in the APIs of other tenants.
 
 ## HTTP layer
 
@@ -81,6 +81,20 @@ RestQL primary feature is performing optimized HTTP calls, but since each enviro
 - `http.client.maxConnectionsPerHost`: limits the size of the connection pool for each host.
 - `http.client.dnsRefreshInterval`: defines the time a DNS query result will be cached.
 
+
+#### Concurrency
+
+RestQL provides configuration parameters to limit the workload that it will accept.
+
+With these guardrails in place, once these thresholds are reach restQL will deny service with a *507 Insufficient Storage* status code. This was chosen because in practice these limits exists to avoid unbound growth of goroutines and memory usage that would lead to application restarts.
+
+It is best practice to always run production restQL deployments with these parameters set. The absence of those or defining it to `0` will disable the mechanisms that avoid linear resource consumption when workload increase.
+
+**Maximum concurrent queries**: this is the first limiter and will accept or reject a query entirely. It can be defined with the configuration field `http.client.maxConcurrentQueries` or through the environment variable `RESTQL_MAX_CONCURRENT_QUERIES`. This parameter should be more strict because it has more impact on reducing resource consumption and fails the execution faster.
+
+**Maximum concurrent goroutines**: this is the second limiter and will accept or reject a goroutine call when running a query. It can be defined with the configuration field `http.client.maxConcurrentGoroutines` or through the environment variable `RESTQL_MAX_CONCURRENT_GOROUTINES`. This parameter should be more loose since the numbers of goroutines can vary drastically depending on runtime data that define the number of multiplexed calls that should be made. Also, if during a query execution one goroutine fails to be accepted, the entire query will be discarted, and a *507 Insufficient Storage* status code will be returned.
+
+> P.S.: The goroutine limiter only applies to goroutines used to process and dispatch HTTP requests to upstream APIs. If measuring the total number of goroutines in your deployment, it will be greater than the maximum concurrent goroutine, since it does not impact the usage of goroutines to accept new connections and other tasks.
 
 *Deprecated on v4.2.0:*
 - `http.client.maxRequestTimeout`: although every the timeout for calling a resource can be defined by the client in the query you can set a upper limit to request time, for example, if you set it to `2s` even though a query specifies a timeout of `10s` restQL will drop the request when it reachs its maximum timeout. It accepts a duration string.
