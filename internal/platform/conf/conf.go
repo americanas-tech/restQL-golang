@@ -45,9 +45,7 @@ type Config struct {
 		ForwardPrefix        string        `yaml:"forwardPrefix" env:"RESTQL_FORWARD_PREFIX"`
 		QueryResourceTimeout time.Duration `env:"RESTQL_QUERY_RESOURCE_TIMEOUT" envDefault:"5s"`
 
-		GlobalQueryTimeout      time.Duration `env:"RESTQL_QUERY_GLOBAL_TIMEOUT" envDefault:"30s"`
-		MaxConcurrentQueries    int           `yaml:"maxConcurrentQueries" env:"RESTQL_MAX_CONCURRENT_QUERIES"`
-		MaxConcurrentGoroutines int           `yaml:"maxConcurrentGoroutines" env:"RESTQL_MAX_CONCURRENT_GOROUTINES"`
+		GlobalQueryTimeout time.Duration `env:"RESTQL_QUERY_GLOBAL_TIMEOUT" envDefault:"30s"`
 
 		Server struct {
 			APIAddr         string `env:"RESTQL_PORT,required"`
@@ -73,6 +71,9 @@ type Config struct {
 		} `yaml:"server"`
 
 		Client struct {
+			MaxConcurrentQueries    int `yaml:"maxConcurrentQueries" env:"RESTQL_MAX_CONCURRENT_QUERIES"`
+			MaxConcurrentGoroutines int `yaml:"maxConcurrentGoroutines" env:"RESTQL_MAX_CONCURRENT_GOROUTINES"`
+
 			DnsRefreshInterval  time.Duration `yaml:"dnsRefreshInterval"`
 			ConnTimeout         time.Duration `yaml:"connectionTimeout"`
 			MaxRequestTimeout   time.Duration `yaml:"maxRequestTimeout"`
