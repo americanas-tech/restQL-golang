@@ -249,7 +249,7 @@ func (rw *requestWorker) Run() {
 					writeResult(rw.ctx, rw.resultCh, r)
 				})
 			case []interface{}:
-				go rw.runMultiplexedStatement(statement, resourceID)
+				rw.runMultiplexedStatement(statement, resourceID)
 			}
 		case <-rw.ctx.Done():
 			return
@@ -258,42 +258,55 @@ func (rw *requestWorker) Run() {
 }
 
 func (rw *requestWorker) runMultiplexedStatement(statements []interface{}, resourceID domain.ResourceID) {
-	responseChans := make([]chan interface{}, len(statements))
-	for i := range responseChans {
-		responseChans[i] = make(chan interface{}, 1)
-	}
-
-	var wg sync.WaitGroup
-
-	wg.Add(len(statements))
-	for i, stmt := range statements {
+	success := rw.goroutineLimiter.Acquire()
+	if !success {
 		select {
+		case rw.errorCh <- ErrMaxGoroutineDenied:
 		case <-rw.ctx.Done():
-			return
-		default:
 		}
 
-		i, stmt := i, stmt
-		ch := responseChans[i]
+		return
+	}
 
-		switch stmt := stmt.(type) {
-		case domain.Statement:
-			rw.runStatement(stmt, resourceID, func(r result) {
-				ch <- r.Response
-				wg.Done()
-			})
-		case []interface{}:
-			rw.runMultiplexedStatement(stmt, resourceID)
+	go func() {
+		responseChans := make([]chan interface{}, len(statements))
+		for i := range responseChans {
+			responseChans[i] = make(chan interface{}, 1)
 		}
-	}
 
-	wg.Wait()
-	responses := make(restql.DoneResources, len(statements))
-	for i, ch := range responseChans {
-		responses[i] = <-ch
-	}
+		var wg sync.WaitGroup
 
-	writeResult(rw.ctx, rw.resultCh, result{ResourceIdentifier: resourceID, Response: responses})
+		wg.Add(len(statements))
+		for i, stmt := range statements {
+			select {
+			case <-rw.ctx.Done():
+				return
+			default:
+			}
+
+			i, stmt := i, stmt
+			ch := responseChans[i]
+
+			switch stmt := stmt.(type) {
+			case domain.Statement:
+				rw.runStatement(stmt, resourceID, func(r result) {
+					ch <- r.Response
+					wg.Done()
+				})
+			case []interface{}:
+				rw.runMultiplexedStatement(stmt, resourceID)
+			}
+		}
+
+		wg.Wait()
+		responses := make(restql.DoneResources, len(statements))
+		for i, ch := range responseChans {
+			responses[i] = <-ch
+		}
+
+		writeResult(rw.ctx, rw.resultCh, result{ResourceIdentifier: resourceID, Response: responses})
+		rw.goroutineLimiter.Release()
+	}()
 }
 
 func (rw *requestWorker) runStatement(statement domain.Statement, resourceID domain.ResourceID, cb func(result)) {
