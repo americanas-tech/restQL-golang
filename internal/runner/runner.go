@@ -269,6 +269,8 @@ func (rw *requestWorker) runMultiplexedStatement(statements []interface{}, resou
 	}
 
 	go func() {
+		defer rw.goroutineLimiter.Release()
+
 		responseChans := make([]chan interface{}, len(statements))
 		for i := range responseChans {
 			responseChans[i] = make(chan interface{}, 1)
@@ -305,7 +307,6 @@ func (rw *requestWorker) runMultiplexedStatement(statements []interface{}, resou
 		}
 
 		writeResult(rw.ctx, rw.resultCh, result{ResourceIdentifier: resourceID, Response: responses})
-		rw.goroutineLimiter.Release()
 	}()
 }
 
