@@ -14,6 +14,8 @@ The restQL Manager depends on one environment variable, `REACT_APP_RESTQL_URL`. 
 REACT_APP_RESTQL_URL=http://my-restql.corp/ npm run build
 ```
 
-The statis files generate can then be served from a object storage like AWS S3 or, more traditionally, with an Nginx or Expresse server.
+The static files generate can then be served from a object storage like AWS S3 or, more traditionally, with an Nginx or Expresse server.
 
-![restQL manager screenshot](/assets/images/manager.png)
+<div style="display:flex; width: 100%; align-items: center; justifiy-content: stretch">
+  <img src="./assets/images/manager.png"/>
+</div>
