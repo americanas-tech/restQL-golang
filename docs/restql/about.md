@@ -4,7 +4,7 @@
 
 # What is restQL?
 
-**restQL** is a data plataform that makes it easy to fetch information from multiple services in the most efficient manner.
+**restQL** is a data platform that makes it easy to fetch information from multiple services in the most efficient manner.
 
 It is powered by a query language designed to take advantage of the REST architectural pattern, and a performant runtime built as an HTTP server.
 
@@ -17,7 +17,7 @@ from search
 
 from hero as heroList
     with
-        name = search.name
+        name = search.name
 
 from enemy as enemiList
     with
@@ -26,8 +26,9 @@ from enemy as enemiList
 
 ## Next steps
 
-1. Learn restQL [query language](/restql/query-language.md),
-2. Get involved :) We're looking for contributors, if you're interested open a Pull Request at our [GitHub Project](https://github.com/b2wdigital/restQL-golang).
+1. Setup with our [getting started](/restql/getting-started.md)
+2. Learn restQL [query language](/restql/query-language.md),
+3. Get involved :) We're looking for contributors, if you're interested open a Pull Request at our [GitHub Project](https://github.com/b2wdigital/restQL-golang).
 
 ## Help and community
 
