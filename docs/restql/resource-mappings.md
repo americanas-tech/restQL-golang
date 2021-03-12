@@ -8,7 +8,7 @@ RestQL provides three ways to map resources
 
 ### Environment variables
 
-RestQL will detect that an environment variable is a mapping if it starts with `RESTQL_MAPPING_` followed by the tenant (that will be used as is) name, another underline and then resource name (that will be lowercased) and the value should be the target url, for example, `RESTQL_MAPPING_MYTENANT_HERO=http://hero.api/` will create a mapping with name `hero` and target `http://hero.api/`.
+RestQL will detect that an environment variable is a mapping if it follows the pattern `RESTQL_MAPPING_MYTENANT_RESOURCENAME`, for example `RESTQL_MAPPING_UNIVERSE_HERO=http://hero.api/` will create a mapping with name `hero` and target `http://hero.api/` under the tenant `UNIVERSE`.
 
 These mappings overwrite any mapping with the same name present in database or configuration file.
 
