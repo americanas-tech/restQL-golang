@@ -242,13 +242,32 @@ func (rw *requestWorker) Run() {
 			resourceID := req.ResourceIdentifier
 			statement := req.Statement
 
+			success := rw.goroutineLimiter.Acquire()
+			if !success {
+				select {
+				case rw.errorCh <- ErrMaxGoroutineDenied:
+				case <-rw.ctx.Done():
+				}
+
+				return
+			}
+
 			switch statement := statement.(type) {
 			case domain.Statement:
-				rw.runStatement(statement, resourceID, func(r result) {
-					writeResult(rw.ctx, rw.resultCh, r)
-				})
+				go func() {
+					response := rw.executor.DoStatement(rw.ctx, statement, rw.queryCtx)
+					writeResult(rw.ctx, rw.resultCh, result{ResourceIdentifier: resourceID, Response: response})
+					rw.goroutineLimiter.Release()
+				}()
 			case []interface{}:
-				rw.runMultiplexedStatement(statement, resourceID)
+				go func() {
+					result := rw.runMultiplexedStatement(statement, resourceID)
+					writeResult(rw.ctx, rw.resultCh, result)
+					rw.goroutineLimiter.Release()
+				}()
+			default:
+				// Should never reach this point
+				rw.goroutineLimiter.Release()
 			}
 		case <-rw.ctx.Done():
 			return
@@ -256,77 +275,60 @@ func (rw *requestWorker) Run() {
 	}
 }
 
-func (rw *requestWorker) runMultiplexedStatement(statements []interface{}, resourceID domain.ResourceID) {
-	success := rw.goroutineLimiter.Acquire()
-	if !success {
-		select {
-		case rw.errorCh <- ErrMaxGoroutineDenied:
-		case <-rw.ctx.Done():
-		}
-
-		return
+func (rw *requestWorker) runMultiplexedStatement(statements []interface{}, resourceID domain.ResourceID) result {
+	responseChans := make([]chan interface{}, len(statements))
+	for i := range responseChans {
+		responseChans[i] = make(chan interface{}, 1)
 	}
 
-	go func() {
-		defer rw.goroutineLimiter.Release()
+	var wg sync.WaitGroup
 
-		responseChans := make([]chan interface{}, len(statements))
-		for i := range responseChans {
-			responseChans[i] = make(chan interface{}, 1)
+	wg.Add(len(statements))
+	for i, stmt := range statements {
+		select {
+		case <-rw.ctx.Done():
+			return result{}
+		default:
 		}
 
-		var wg sync.WaitGroup
+		i, stmt := i, stmt
+		ch := responseChans[i]
 
-		wg.Add(len(statements))
-		for i, stmt := range statements {
+		success := rw.goroutineLimiter.Acquire()
+		if !success {
 			select {
+			case rw.errorCh <- ErrMaxGoroutineDenied:
 			case <-rw.ctx.Done():
-				return
-			default:
 			}
 
-			i, stmt := i, stmt
-			ch := responseChans[i]
-
-			switch stmt := stmt.(type) {
-			case domain.Statement:
-				rw.runStatement(stmt, resourceID, func(r result) {
-					ch <- r.Response
-					wg.Done()
-				})
-			case []interface{}:
-				rw.runMultiplexedStatement(stmt, resourceID)
-			}
+			return result{}
 		}
 
-		wg.Wait()
-		responses := make(restql.DoneResources, len(statements))
-		for i, ch := range responseChans {
-			responses[i] = <-ch
+		switch stmt := stmt.(type) {
+		case domain.Statement:
+			go func() {
+				response := rw.executor.DoStatement(rw.ctx, stmt, rw.queryCtx)
+				ch <- response
+				wg.Done()
+				rw.goroutineLimiter.Release()
+			}()
+		case []interface{}:
+			go func() {
+				subResult := rw.runMultiplexedStatement(stmt, resourceID)
+				ch <- subResult.Response
+				wg.Done()
+				rw.goroutineLimiter.Release()
+			}()
 		}
-
-		writeResult(rw.ctx, rw.resultCh, result{ResourceIdentifier: resourceID, Response: responses})
-	}()
-}
-
-func (rw *requestWorker) runStatement(statement domain.Statement, resourceID domain.ResourceID, cb func(result)) {
-	success := rw.goroutineLimiter.Acquire()
-	if !success {
-		cb(result{})
-
-		select {
-		case rw.errorCh <- ErrMaxGoroutineDenied:
-		case <-rw.ctx.Done():
-		}
-
-		return
 	}
 
-	go func() {
-		response := rw.executor.DoStatement(rw.ctx, statement, rw.queryCtx)
-		cb(result{ResourceIdentifier: resourceID, Response: response})
-		rw.goroutineLimiter.Release()
-	}()
+	wg.Wait()
+	responses := make(restql.DoneResources, len(statements))
+	for i, ch := range responseChans {
+		responses[i] = <-ch
+	}
+
+	return result{ResourceIdentifier: resourceID, Response: responses}
 }
 
 func writeResult(ctx context.Context, out chan result, r result) {
