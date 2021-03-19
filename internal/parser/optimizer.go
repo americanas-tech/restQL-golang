@@ -188,9 +188,38 @@ func applyFunctionToFilter(field, fn interface{}) (interface{}, error) {
 	switch fn := fn.(type) {
 	case ast.Match:
 		return makeMatchFunction(field, fn)
+	case ast.FilterByRegex:
+		return makeFilterByRegexFunction(field, fn)
 	default:
 		return field, nil
 	}
+}
+
+func makeFilterByRegexFunction(target interface{}, filterByRegexFn ast.FilterByRegex) (domain.Function, error) {
+	var fr domain.Function = domain.FilterByRegex{Value: target}
+
+	switch {
+	case filterByRegexFn.PathVariable != nil:
+		path := domain.Variable{Target: *filterByRegexFn.PathVariable}
+		fr = fr.SetArgument(domain.FilterByRegexArgPath, path)
+	case filterByRegexFn.PathString != nil:
+		fr = fr.SetArgument(domain.FilterByRegexArgPath, *filterByRegexFn.PathString)
+	}
+
+	switch {
+	case filterByRegexFn.RegexVariable != nil:
+		regexVariable := domain.Variable{Target: *filterByRegexFn.RegexVariable}
+		fr = fr.SetArgument(domain.FilterByRegexArgRegex, regexVariable)
+	case filterByRegexFn.RegexString != nil:
+		reg, err := regexp.Compile(*filterByRegexFn.RegexString)
+		if err != nil {
+			return domain.FilterByRegex{}, err
+		}
+
+		fr = fr.SetArgument(domain.FilterByRegexArgRegex, reg)
+	}
+
+	return fr, nil
 }
 
 func makeMatchFunction(target interface{}, matchFn ast.Match) (domain.Match, error) {

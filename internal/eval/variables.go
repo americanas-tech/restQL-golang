@@ -261,18 +261,32 @@ func resolveOnly(only []interface{}, input restql.QueryInput) []interface{} {
 	result := make([]interface{}, len(only))
 	for i, filter := range only {
 		switch filter := filter.(type) {
-		case domain.Match:
-			match, ok := resolveMatch(filter, input)
-			if !ok {
-				continue
-			}
-			result[i] = match
+		case domain.Function:
+			result[i] = resolveFunction(filter, input)
 		default:
 			result[i] = filter
 		}
 	}
 
 	return result
+}
+
+func resolveFunction(fn domain.Function, input restql.QueryInput) domain.Function {
+	args := fn.Arguments()
+	resolvedFn := fn
+
+	for _, arg := range args {
+		if argValue, ok := arg.Value.(domain.Variable); ok {
+			resolvedArg, found := getUniqueParamValue(argValue.Target, input)
+			if !found {
+				continue
+			}
+
+			resolvedFn = resolvedFn.SetArgument(arg.Name, resolvedArg)
+		}
+	}
+
+	return resolvedFn
 }
 
 func resolveMatch(match domain.Match, input restql.QueryInput) (interface{}, bool) {

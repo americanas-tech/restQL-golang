@@ -264,6 +264,54 @@ func TestQueryParser(t *testing.T) {
 						depends-on hero
 			`,
 		},
+		{
+			"Unique from statement and only filters with filterByRegex function",
+			domain.Query{Statements: []domain.Statement{{
+				Method:   "from",
+				Resource: "hero",
+				Only: []interface{}{
+					domain.FilterByRegex{Value: []string{"information"}, Args: []domain.Arg{{Name: domain.FilterByRegexArgPath, Value: "profile.name"}, {Name: domain.FilterByRegexArgRegex, Value: regexp.MustCompile("^Super")}}},
+					[]string{"weapons"},
+				}},
+			}},
+			`from hero only information -> filterByRegex("profile.name", "^Super"), weapons`,
+		},
+		{
+			"Unique from statement and only filters with filterByRegex function using path as variable",
+			domain.Query{Statements: []domain.Statement{{
+				Method:   "from",
+				Resource: "hero",
+				Only: []interface{}{
+					domain.FilterByRegex{Value: []string{"information"}, Args: []domain.Arg{{Name: domain.FilterByRegexArgPath, Value: domain.Variable{"nameField"}}, {Name: domain.FilterByRegexArgRegex, Value: regexp.MustCompile("^Super")}}},
+					[]string{"weapons"},
+				}},
+			}},
+			`from hero only information -> filterByRegex($nameField, "^Super"), weapons`,
+		},
+		{
+			"Unique from statement and only filters with filterByRegex function using regex as variable",
+			domain.Query{Statements: []domain.Statement{{
+				Method:   "from",
+				Resource: "hero",
+				Only: []interface{}{
+					domain.FilterByRegex{Value: []string{"information"}, Args: []domain.Arg{{Name: domain.FilterByRegexArgPath, Value: "profile.name"}, {Name: domain.FilterByRegexArgRegex, Value: domain.Variable{"namePattern"}}}},
+					[]string{"weapons"},
+				}},
+			}},
+			`from hero only information -> filterByRegex("profile.name", $namePattern), weapons`,
+		},
+		{
+			"Unique from statement and only filters with filterByRegex function using path and regex as variable",
+			domain.Query{Statements: []domain.Statement{{
+				Method:   "from",
+				Resource: "hero",
+				Only: []interface{}{
+					domain.FilterByRegex{Value: []string{"information"}, Args: []domain.Arg{{Name: domain.FilterByRegexArgPath, Value: domain.Variable{"nameField"}}, {Name: domain.FilterByRegexArgRegex, Value: domain.Variable{"namePattern"}}}},
+					[]string{"weapons"},
+				}},
+			}},
+			`from hero only information -> filterByRegex($nameField, $namePattern), weapons`,
+		},
 	}
 
 	queryParser, err := parser.New()
