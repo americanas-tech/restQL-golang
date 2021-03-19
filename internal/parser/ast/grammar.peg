@@ -120,16 +120,24 @@ ONLY_RULE <- WS_MAND "only" WS_MAND f:(FILTER) fs:(WS !(FLAGS_RULE / BS BLOCK) (
 	return newOnly(f, fs)
 }
 
-FILTER <- f:(FILTER_VALUE) fn:(MATCHES_FN?) {
-	return newFilter(f, fn)
+FILTER <- f:(FILTER_VALUE) fns:(APPLY_FILTER_FN)* {
+	return newFilter(f, fns)
 }
 
 FILTER_VALUE <- fv:(IDENT_WITH_DOT / '*') {
 	return newFilterValue(fv)
 }
 
-MATCHES_FN <- WS "->" WS "matches" "(" arg:(VARIABLE / String) ")" {
-	return arg, nil
+APPLY_FILTER_FN <- WS "->" WS? fn:(FILTER_FUNCTION) {
+	return fn, nil
+}
+
+FILTER_FUNCTION <- f:(MATCHES) {
+	return f, nil
+}
+
+MATCHES <- "matches" "(" arg:(VARIABLE / String) ")" {
+	return newMatchFilter(arg)
 }
 
 HEADERS <- WS_MAND "headers" WS_MAND h:(HEADER) hs:(WS LS WS HEADER)* {

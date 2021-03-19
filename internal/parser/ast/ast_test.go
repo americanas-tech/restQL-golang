@@ -563,7 +563,7 @@ func TestAstGenerator(t *testing.T) {
 				Resource: "hero",
 				Qualifiers: []ast.Qualifier{
 					{Only: []ast.Filter{
-						{Field: []string{"name"}, Match: &ast.Match{String: String("^Super")}},
+						{Field: []string{"name"}, Functions: []interface{}{ast.Match{String: String("^Super")}}},
 						{Field: []string{"weapons"}},
 					}},
 				},
@@ -580,7 +580,7 @@ func TestAstGenerator(t *testing.T) {
 				Resource: "hero",
 				Qualifiers: []ast.Qualifier{
 					{Only: []ast.Filter{
-						{Field: []string{"name"}, Match: &ast.Match{Variable: String("heroName")}},
+						{Field: []string{"name"}, Functions: []interface{}{ast.Match{Variable: String("heroName")}}},
 						{Field: []string{"weapons"}},
 					}},
 				},

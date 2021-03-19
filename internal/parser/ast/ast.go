@@ -15,6 +15,7 @@ const (
 	MaxAgeKeyword       = "max-age"
 	SmaxAgeKeyword      = "s-max-age"
 	IgnoreErrorsKeyword = "ignore-errors"
+	Matches             = "matches"
 	NoMultiplex         = "no-multiplex"
 	Base64              = "base64"
 	JSON                = "json"
@@ -69,8 +70,8 @@ type Qualifier struct {
 // Filter is the syntax node representing entries
 // in the `only` clause.
 type Filter struct {
-	Field []string
-	Match *Match
+	Field     []string
+	Functions []interface{}
 }
 
 // Match is the syntax node representing the
