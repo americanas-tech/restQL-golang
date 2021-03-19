@@ -158,32 +158,53 @@ func makeOnlyFilter(onlyQualifier ast.Qualifier) ([]interface{}, error) {
 
 	result := make([]interface{}, len(filters))
 	for i, f := range filters {
-		if f.Match != nil {
-			match, err := makeMatchFunction(f)
+		//if f.Match != nil {
+		//	match, err := makeMatchFunction(f)
+		//	if err != nil {
+		//		return nil, err
+		//	}
+		//	result[i] = match
+		//} else {
+		//	result[i] = f.Field
+		//}
+
+		var filter interface{} = f.Field
+		for _, fn := range f.Functions {
+			filterWithFunc, err := applyFunctionToFilter(filter, fn)
 			if err != nil {
 				return nil, err
 			}
-			result[i] = match
-		} else {
-			result[i] = f.Field
+
+			filter = filterWithFunc
 		}
+
+		result[i] = filter
 	}
 
 	return result, nil
 }
 
-func makeMatchFunction(f ast.Filter) (domain.Match, error) {
-	if f.Match.String != nil {
-		arg := *f.Match.String
+func applyFunctionToFilter(field, fn interface{}) (interface{}, error) {
+	switch fn := fn.(type) {
+	case ast.Match:
+		return makeMatchFunction(field, fn)
+	default:
+		return field, nil
+	}
+}
+
+func makeMatchFunction(target interface{}, matchFn ast.Match) (domain.Match, error) {
+	if matchFn.String != nil {
+		arg := *matchFn.String
 		regex, err := regexp.Compile(arg)
 		if err != nil {
 			return domain.Match{}, errors.Wrap(err, "matches function regex argument is invalid")
 		}
-		return domain.Match{Value: f.Field, Arg: regex}, nil
+		return domain.Match{Value: target, Arg: regex}, nil
 	}
 
-	if f.Match.Variable != nil {
-		return domain.Match{Value: f.Field, Arg: domain.Variable{Target: *f.Match.Variable}}, nil
+	if matchFn.Variable != nil {
+		return domain.Match{Value: target, Arg: domain.Variable{Target: *matchFn.Variable}}, nil
 	}
 
 	return domain.Match{}, errors.New("no argument provided to matches functions")

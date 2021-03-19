@@ -419,18 +419,17 @@ func newOnly(first, others interface{}) ([]Filter, error) {
 	return filters, nil
 }
 
-func newFilter(identifier, matchArg interface{}) (Filter, error) {
+func newFilter(identifier, fns interface{}) (Filter, error) {
 	ident := identifier.(string)
 	fields := strings.Split(ident, ".")
 	filter := Filter{Field: fields}
 
-	if matchArg != nil {
-		switch m := matchArg.(type) {
-		case string:
-			filter.Match = &Match{String: &m}
-		case variable:
-			matchVar := string(m)
-			filter.Match = &Match{Variable: &matchVar}
+	//TODO: extract to own function and avoid panic on cast
+	functions := fns.([]interface{})
+	for _, f := range functions {
+		switch f := f.(type) {
+		case Match:
+			filter.Functions = append(filter.Functions, f)
 		}
 	}
 
@@ -445,6 +444,18 @@ func newFilterValue(value interface{}) (string, error) {
 		return stringify(value)
 	default:
 		return "", fmt.Errorf("got an unknown type : %T", value)
+	}
+}
+
+func newMatchFilter(arg interface{}) (Match, error) {
+	switch arg := arg.(type) {
+	case string:
+		return Match{String: &arg}, nil
+	case variable:
+		matchVar := string(arg)
+		return Match{Variable: &matchVar}, nil
+	default:
+		return Match{}, errors.New("unexpected matches argument")
 	}
 }
 
