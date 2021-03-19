@@ -1,13 +1,18 @@
 package eval
 
 import (
+	"encoding/json"
 	"fmt"
 	"regexp"
+	"strconv"
+	"strings"
 
 	"github.com/b2wdigital/restQL-golang/v5/internal/domain"
 	"github.com/b2wdigital/restQL-golang/v5/pkg/restql"
 	"github.com/pkg/errors"
 )
+
+const eot = "end-of-tree"
 
 // ApplyFilters returns a version of the already resolved Resources
 // only with the fields defined by the `only` clause.
@@ -38,7 +43,7 @@ func applyOnlyFilters(filters []interface{}, resourceResult interface{}) (interf
 	switch resourceResult := resourceResult.(type) {
 	case restql.DoneResource:
 		body := resourceResult.ResponseBody.Unmarshal()
-		result, err := extractWithFilters(buildFilterTree(filters), body)
+		result, err := extractUsingFilters(buildFilterTree(filters), body)
 		if err != nil {
 			return nil, err
 		}
@@ -56,17 +61,12 @@ func applyOnlyFilters(filters []interface{}, resourceResult interface{}) (interf
 	}
 }
 
-func extractWithFilters(filters map[string]interface{}, resourceResult interface{}) (interface{}, error) {
-	filters, hasSelectAll := extractSelectAllFilter(filters)
+func extractUsingFilters(filters map[string]interface{}, resourceResult interface{}) (interface{}, error) {
+	filters, hasSelectAll := removeSelectAllFilter(filters)
 
 	switch resourceResult := resourceResult.(type) {
 	case map[string]interface{}:
-		var node map[string]interface{}
-		if hasSelectAll {
-			node = resourceResult
-		} else {
-			node = make(map[string]interface{})
-		}
+		node := makeMapNode(hasSelectAll, resourceResult)
 
 		for key, subFilter := range filters {
 			value, found := resourceResult[key]
@@ -74,16 +74,24 @@ func extractWithFilters(filters map[string]interface{}, resourceResult interface
 				continue
 			}
 
-			if matchFilter, ok := subFilter.(domain.Match); ok {
-				err := applyMatchFilter(matchFilter, key, value, node)
+			if subFilter == eot {
+				node[key] = value
+				continue
+			}
+
+			switch subFilter := subFilter.(type) {
+			case domain.Match:
+				err := applyMatchFilter(subFilter, key, value, node)
 				if err != nil {
 					return nil, err
 				}
-			} else if subFilter == nil {
-				node[key] = value
-			} else {
-				subFilter, _ := subFilter.(map[string]interface{})
-				f, err := extractWithFilters(subFilter, value)
+			case domain.FilterByRegex:
+				err := applyFilterByRegex(subFilter, key, value, node)
+				if err != nil {
+					return nil, err
+				}
+			case map[string]interface{}:
+				f, err := extractUsingFilters(subFilter, value)
 				if err != nil {
 					return nil, err
 				}
@@ -94,15 +102,10 @@ func extractWithFilters(filters map[string]interface{}, resourceResult interface
 
 		return node, nil
 	case []interface{}:
-		var node []interface{}
-		if hasSelectAll {
-			node = resourceResult
-		} else {
-			node = make([]interface{}, len(resourceResult))
-		}
+		node := makeListNode(hasSelectAll, resourceResult)
 
 		for i, r := range resourceResult {
-			f, err := extractWithFilters(filters, r)
+			f, err := extractUsingFilters(filters, r)
 			if err != nil {
 				return nil, err
 			}
@@ -115,7 +118,27 @@ func extractWithFilters(filters map[string]interface{}, resourceResult interface
 	}
 }
 
-func extractSelectAllFilter(filters map[string]interface{}) (map[string]interface{}, bool) {
+func makeMapNode(hasSelectAll bool, resourceResult map[string]interface{}) map[string]interface{} {
+	var node map[string]interface{}
+	if hasSelectAll {
+		node = resourceResult
+	} else {
+		node = make(map[string]interface{})
+	}
+	return node
+}
+
+func makeListNode(hasSelectAll bool, resourceResult []interface{}) []interface{} {
+	var node []interface{}
+	if hasSelectAll {
+		node = resourceResult
+	} else {
+		node = make([]interface{}, len(resourceResult))
+	}
+	return node
+}
+
+func removeSelectAllFilter(filters map[string]interface{}) (map[string]interface{}, bool) {
 	m := make(map[string]interface{})
 	has := false
 
@@ -130,8 +153,81 @@ func extractSelectAllFilter(filters map[string]interface{}) (map[string]interfac
 	return m, has
 }
 
+func applyFilterByRegex(fn domain.FilterByRegex, key string, value interface{}, node map[string]interface{}) error {
+	var listValue []interface{}
+	if valueAsList, ok := value.([]interface{}); ok {
+		listValue = valueAsList
+	} else {
+		node[key] = value
+		return nil
+	}
+
+	regex, err := parseRegex(fn.Argument(domain.FilterByRegexArgRegex).Value)
+	switch {
+	case err == errUnknownRegexType:
+		node[key] = value
+		return nil
+	case err != nil:
+		return err
+	}
+
+	rawPath, ok := fn.Argument(domain.FilterByRegexArgPath).Value.(string)
+	if !ok {
+		node[key] = value
+		return nil
+	}
+
+	path := strings.Split(rawPath, ".")
+
+	var result []interface{}
+	for _, v := range listValue {
+		target, found := extractValueOnPath(v, path)
+		if !found {
+			continue
+		}
+
+		str, err := stringify(target)
+		if err != nil {
+			continue
+		}
+
+		if !regex.MatchString(str) {
+			continue
+		}
+
+		result = append(result, v)
+	}
+
+	if len(result) == 0 {
+		node[key] = []interface{}{}
+	} else {
+		node[key] = result
+	}
+
+	return nil
+}
+
+func extractValueOnPath(value interface{}, path []string) (interface{}, bool) {
+	if value == nil {
+		return nil, false
+	}
+
+	if len(path) == 0 {
+		return value, true
+	}
+
+	key := path[0]
+
+	switch value := value.(type) {
+	case map[string]interface{}:
+		return extractValueOnPath(value[key], path[1:])
+	default:
+		return nil, false
+	}
+}
+
 func applyMatchFilter(filter domain.Match, key string, value interface{}, node map[string]interface{}) error {
-	matchRegex, err := parseMatchArg(filter.Arg)
+	matchRegex, err := parseRegex(filter.Arg)
 	if err != nil {
 		return err
 	}
@@ -141,7 +237,10 @@ func applyMatchFilter(filter domain.Match, key string, value interface{}, node m
 		var list []interface{}
 
 		for _, v := range value {
-			strVal := fmt.Sprintf("%v", v)
+			strVal, err := stringify(v)
+			if err != nil {
+				strVal = fmt.Sprintf("%v", v)
+			}
 			match := matchRegex.MatchString(strVal)
 			if match {
 				list = append(list, v)
@@ -154,7 +253,10 @@ func applyMatchFilter(filter domain.Match, key string, value interface{}, node m
 
 		return nil
 	default:
-		strVal := fmt.Sprintf("%v", value)
+		strVal, err := stringify(value)
+		if err != nil {
+			strVal = fmt.Sprintf("%v", value)
+		}
 		match := matchRegex.MatchString(strVal)
 
 		if match {
@@ -167,14 +269,16 @@ func applyMatchFilter(filter domain.Match, key string, value interface{}, node m
 	}
 }
 
-func parseMatchArg(arg interface{}) (*regexp.Regexp, error) {
-	switch arg := arg.(type) {
+var errUnknownRegexType = errors.New("failed to parse match argument : unknown regex argument type")
+
+func parseRegex(regex interface{}) (*regexp.Regexp, error) {
+	switch arg := regex.(type) {
 	case *regexp.Regexp:
 		return arg, nil
 	case string:
 		return regexp.Compile(arg)
 	default:
-		return nil, errors.New("failed to parse match argument : unknown match argument type")
+		return nil, errUnknownRegexType
 	}
 }
 
@@ -200,8 +304,8 @@ func buildPathInTree(path []interface{}, tree map[string]interface{}) {
 	switch f := path[0].(type) {
 	case string:
 		field = f
-		leaf = nil
-	case domain.Match:
+		leaf = eot
+	case domain.Function:
 		fields, ok := f.Target().([]string)
 		if !ok {
 			return
@@ -242,7 +346,7 @@ func parsePath(s interface{}) []interface{} {
 			result[i] = item
 		}
 		return result
-	case domain.Match:
+	case domain.Function:
 		items, ok := s.Target().([]string)
 		if !ok {
 			return nil
@@ -251,7 +355,9 @@ func parsePath(s interface{}) []interface{} {
 		result := make([]interface{}, len(items))
 		for i, item := range items {
 			if i == len(items)-1 {
-				result[i] = domain.Match{Value: []string{item}, Arg: s.Arg}
+				result[i] = s.Map(func(_ interface{}) interface{} {
+					return []string{item}
+				})
 			} else {
 				result[i] = item
 			}
@@ -259,6 +365,27 @@ func parsePath(s interface{}) []interface{} {
 		return result
 	default:
 		return nil
+	}
+}
+
+func stringify(value interface{}) (string, error) {
+	switch value := value.(type) {
+	case string:
+		return value, nil
+	case int:
+		return strconv.Itoa(value), nil
+	case float64:
+		return fmt.Sprintf("%.2f", value), nil
+	case bool:
+		return strconv.FormatBool(value), nil
+	case map[string]interface{}:
+		b, err := json.Marshal(value)
+		return string(b), err
+	case []interface{}:
+		b, err := json.Marshal(value)
+		return string(b), err
+	default:
+		return fmt.Sprintf("%v", value), nil
 	}
 }
 

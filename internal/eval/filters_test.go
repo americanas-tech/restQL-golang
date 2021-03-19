@@ -404,6 +404,136 @@ func TestOnlyFilters(t *testing.T) {
 				},
 			},
 		},
+		{
+			"should bring only the given list items that pass filterByRegex",
+			domain.Query{Statements: []domain.Statement{{
+				Resource: "hero",
+				Only: []interface{}{
+					domain.NewFilterByRegex([]string{"weapons"}, "profile.type", regexp.MustCompile("attack|buff")),
+					[]string{"id"},
+				},
+			}}},
+			domain.Resources{
+				"hero": restql.DoneResource{
+					ResponseBody: restql.NewResponseBodyFromValue(
+						test.NoOpLogger,
+						test.Unmarshal(`{ "id": "12345", "weapons": [{"id": 1, "profile": {"type": "attack"}, "stats": {"damage": 2}},{"id": 2, "profile": {"type": "defense"}, "stats": {"damage": 2}}, {"id": 3, "profile": {"type": "buff"}, "stats": {"damage": 2}}] }`),
+					),
+				},
+			},
+			domain.Resources{
+				"hero": restql.DoneResource{
+					ResponseBody: restql.NewResponseBodyFromValue(
+						test.NoOpLogger,
+						test.Unmarshal(`{ "id": "12345", "weapons": [{"id": 1, "profile": {"type": "attack"}, "stats": {"damage": 2}}, {"id": 3, "profile": {"type": "buff"}, "stats": {"damage": 2}}] }`),
+					),
+				},
+			},
+		},
+		{
+			"should bring only the given list items that pass filterByRegex",
+			domain.Query{Statements: []domain.Statement{{
+				Resource: "hero",
+				Only: []interface{}{
+					domain.NewFilterByRegex([]string{"weapons"}, "profile.type", "attack|buff"),
+					[]string{"id"},
+				},
+			}}},
+			domain.Resources{
+				"hero": restql.DoneResource{
+					ResponseBody: restql.NewResponseBodyFromValue(
+						test.NoOpLogger,
+						test.Unmarshal(`{ "id": "12345", "weapons": [{"id": 1, "profile": {"type": "attack"}, "stats": {"damage": 2}},{"id": 2, "profile": {"type": "defense"}, "stats": {"damage": 2}}, {"id": 3, "profile": {"type": "buff"}, "stats": {"damage": 2}}] }`),
+					),
+				},
+			},
+			domain.Resources{
+				"hero": restql.DoneResource{
+					ResponseBody: restql.NewResponseBodyFromValue(
+						test.NoOpLogger,
+						test.Unmarshal(`{ "id": "12345", "weapons": [{"id": 1, "profile": {"type": "attack"}, "stats": {"damage": 2}}, {"id": 3, "profile": {"type": "buff"}, "stats": {"damage": 2}}] }`),
+					),
+				},
+			},
+		},
+		{
+			"should not apply filterByRegex if target value is not a list",
+			domain.Query{Statements: []domain.Statement{{
+				Resource: "hero",
+				Only: []interface{}{
+					domain.NewFilterByRegex([]string{"stats"}, "profile.type", "attack|buff"),
+					[]string{"id"},
+				},
+			}}},
+			domain.Resources{
+				"hero": restql.DoneResource{
+					ResponseBody: restql.NewResponseBodyFromValue(
+						test.NoOpLogger,
+						test.Unmarshal(`{ "id": "12345", "stats": {"profile": {"name": "connan", "type": "warrior"}}, "weapons": [{"id": 1, "profile": {"type": "attack"}, "stats": {"damage": 2}},{"id": 2, "profile": {"type": "defense"}, "stats": {"damage": 2}}, {"id": 3, "profile": {"type": "buff"}, "stats": {"damage": 2}}] }`),
+					),
+				},
+			},
+			domain.Resources{
+				"hero": restql.DoneResource{
+					ResponseBody: restql.NewResponseBodyFromValue(
+						test.NoOpLogger,
+						test.Unmarshal(`{ "id": "12345", "stats": {"profile": {"name": "connan", "type": "warrior"}}}`),
+					),
+				},
+			},
+		},
+		{
+			"should not apply filterByRegex if arguments are not resolved",
+			domain.Query{Statements: []domain.Statement{{
+				Resource: "hero",
+				Only: []interface{}{
+					domain.NewFilterByRegex([]string{"weapons"}, domain.Variable{"profile.type"}, "attack|buff"),
+					[]string{"id"},
+				},
+			}}},
+			domain.Resources{
+				"hero": restql.DoneResource{
+					ResponseBody: restql.NewResponseBodyFromValue(
+						test.NoOpLogger,
+						test.Unmarshal(`{ "id": "12345", "weapons": [{"id": 1, "profile": {"type": "attack"}, "stats": {"damage": 2}},{"id": 2, "profile": {"type": "defense"}, "stats": {"damage": 2}}, {"id": 3, "profile": {"type": "buff"}, "stats": {"damage": 2}}] }`),
+					),
+				},
+			},
+			domain.Resources{
+				"hero": restql.DoneResource{
+					ResponseBody: restql.NewResponseBodyFromValue(
+						test.NoOpLogger,
+						test.Unmarshal(`{ "id": "12345", "weapons": [{"id": 1, "profile": {"type": "attack"}, "stats": {"damage": 2}},{"id": 2, "profile": {"type": "defense"}, "stats": {"damage": 2}}, {"id": 3, "profile": {"type": "buff"}, "stats": {"damage": 2}}] }`),
+					),
+				},
+			},
+		},
+		{
+			"should not apply filterByRegex if arguments are not resolved",
+			domain.Query{Statements: []domain.Statement{{
+				Resource: "hero",
+				Only: []interface{}{
+					domain.NewFilterByRegex([]string{"weapons"}, "profile.type", domain.Variable{"typePattern"}),
+					[]string{"id"},
+				},
+			}}},
+			domain.Resources{
+				"hero": restql.DoneResource{
+					ResponseBody: restql.NewResponseBodyFromValue(
+						test.NoOpLogger,
+						test.Unmarshal(`{ "id": "12345", "weapons": [{"id": 1, "profile": {"type": "attack"}, "stats": {"damage": 2}},{"id": 2, "profile": {"type": "defense"}, "stats": {"damage": 2}}, {"id": 3, "profile": {"type": "buff"}, "stats": {"damage": 2}}] }`),
+					),
+				},
+			},
+			domain.Resources{
+				"hero": restql.DoneResource{
+					ResponseBody: restql.NewResponseBodyFromValue(
+						test.NoOpLogger,
+						test.Unmarshal(`{ "id": "12345", "weapons": [{"id": 1, "profile": {"type": "attack"}, "stats": {"damage": 2}},{"id": 2, "profile": {"type": "defense"}, "stats": {"damage": 2}}, {"id": 3, "profile": {"type": "buff"}, "stats": {"damage": 2}}] }`),
+					),
+				},
+			},
+		},
 	}
 
 	for _, tt := range tests {

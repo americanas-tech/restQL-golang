@@ -422,18 +422,31 @@ func newOnly(first, others interface{}) ([]Filter, error) {
 func newFilter(identifier, fns interface{}) (Filter, error) {
 	ident := identifier.(string)
 	fields := strings.Split(ident, ".")
-	filter := Filter{Field: fields}
-
-	//TODO: extract to own function and avoid panic on cast
-	functions := fns.([]interface{})
-	for _, f := range functions {
-		switch f := f.(type) {
-		case Match:
-			filter.Functions = append(filter.Functions, f)
-		}
+	filter := Filter{
+		Field:     fields,
+		Functions: makeFunctionList(fns),
 	}
 
 	return filter, nil
+}
+
+func makeFunctionList(fns interface{}) []interface{} {
+	functions, ok := fns.([]interface{})
+	if !ok {
+		return nil
+	}
+
+	var result []interface{}
+	for _, f := range functions {
+		switch f := f.(type) {
+		case Match:
+			result = append(result, f)
+		case FilterByRegex:
+			result = append(result, f)
+		}
+	}
+
+	return result
 }
 
 func newFilterValue(value interface{}) (string, error) {
@@ -457,6 +470,28 @@ func newMatchFilter(arg interface{}) (Match, error) {
 	default:
 		return Match{}, errors.New("unexpected matches argument")
 	}
+}
+
+func newFilterByRegex(path, regex interface{}) (FilterByRegex, error) {
+	var fr FilterByRegex
+
+	switch path := path.(type) {
+	case string:
+		fr.PathString = &path
+	case variable:
+		pathVar := string(path)
+		fr.PathVariable = &pathVar
+	}
+
+	switch regex := regex.(type) {
+	case string:
+		fr.RegexString = &regex
+	case variable:
+		regexVar := string(regex)
+		fr.RegexVariable = &regexVar
+	}
+
+	return fr, nil
 }
 
 type hidden bool

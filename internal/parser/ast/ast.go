@@ -81,6 +81,16 @@ type Match struct {
 	Variable *string
 }
 
+// FilterByRegex is the syntax node representing the
+// `filterByRegex` function.
+type FilterByRegex struct {
+	PathString   *string
+	PathVariable *string
+
+	RegexString   *string
+	RegexVariable *string
+}
+
 // Parameters is the syntax node representing
 // the `with` clause.
 type Parameters struct {

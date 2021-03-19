@@ -132,12 +132,16 @@ APPLY_FILTER_FN <- WS "->" WS? fn:(FILTER_FUNCTION) {
 	return fn, nil
 }
 
-FILTER_FUNCTION <- f:(MATCHES) {
+FILTER_FUNCTION <- f:(MATCHES / FILTER_BY_REGEX) {
 	return f, nil
 }
 
 MATCHES <- "matches" "(" arg:(VARIABLE / String) ")" {
 	return newMatchFilter(arg)
+}
+
+FILTER_BY_REGEX <- "filterByRegex" "(" WS? path:(VARIABLE / String) WS? "," WS? regex:(VARIABLE / String) WS?  ")" {
+	return newFilterByRegex(path, regex)
 }
 
 HEADERS <- WS_MAND "headers" WS_MAND h:(HEADER) hs:(WS LS WS HEADER)* {

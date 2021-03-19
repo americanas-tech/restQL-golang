@@ -564,7 +564,7 @@ func TestAstGenerator(t *testing.T) {
 				Qualifiers: []ast.Qualifier{
 					{Only: []ast.Filter{
 						{Field: []string{"name"}, Functions: []interface{}{ast.Match{String: String("^Super")}}},
-						{Field: []string{"weapons"}},
+						{Field: []string{"weapons"}},h
 					}},
 				},
 			}}},
@@ -886,6 +886,74 @@ func TestAstGenerator(t *testing.T) {
 					},
 				},
 			}},
+		},
+		{
+			"Get query with select filters and filterByRegex function",
+			`from hero
+								only
+										name -> filterByRegex("profile.name", "^Super")
+										weapons`,
+			ast.Query{Blocks: []ast.Block{{
+				Method:   ast.FromMethod,
+				Resource: "hero",
+				Qualifiers: []ast.Qualifier{
+					{Only: []ast.Filter{
+						{Field: []string{"name"}, Functions: []interface{}{ast.FilterByRegex{PathString: String("profile.name"), RegexString: String("^Super")}}},
+						{Field: []string{"weapons"}},
+					}},
+				},
+			}}},
+		},
+		{
+			"Get query with select filters and filterByRegex function with path as variable",
+			`from hero
+								only
+										name -> filterByRegex($nameField, "^Super")
+										weapons`,
+			ast.Query{Blocks: []ast.Block{{
+				Method:   ast.FromMethod,
+				Resource: "hero",
+				Qualifiers: []ast.Qualifier{
+					{Only: []ast.Filter{
+						{Field: []string{"name"}, Functions: []interface{}{ast.FilterByRegex{PathVariable: String("nameField"), RegexString: String("^Super")}}},
+						{Field: []string{"weapons"}},
+					}},
+				},
+			}}},
+		},
+		{
+			"Get query with select filters and filterByRegex function with regex as variable",
+			`from hero
+								only
+										name -> filterByRegex("profile.name", $heroNamePattern)
+										weapons`,
+			ast.Query{Blocks: []ast.Block{{
+				Method:   ast.FromMethod,
+				Resource: "hero",
+				Qualifiers: []ast.Qualifier{
+					{Only: []ast.Filter{
+						{Field: []string{"name"}, Functions: []interface{}{ast.FilterByRegex{PathString: String("profile.name"), RegexVariable: String("heroNamePattern")}}},
+						{Field: []string{"weapons"}},
+					}},
+				},
+			}}},
+		},
+		{
+			"Get query with select filters and filterByRegex function using variables as argument",
+			`from hero
+								only
+										name -> filterByRegex($nameField, $heroNamePattern)
+										weapons`,
+			ast.Query{Blocks: []ast.Block{{
+				Method:   ast.FromMethod,
+				Resource: "hero",
+				Qualifiers: []ast.Qualifier{
+					{Only: []ast.Filter{
+						{Field: []string{"name"}, Functions: []interface{}{ast.FilterByRegex{PathVariable: String("nameField"), RegexVariable: String("heroNamePattern")}}},
+						{Field: []string{"weapons"}},
+					}},
+				},
+			}}},
 		},
 	}
 
