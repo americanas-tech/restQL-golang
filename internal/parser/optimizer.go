@@ -222,18 +222,25 @@ func makeFilterByRegexFunction(target interface{}, filterByRegexFn ast.FilterByR
 	return fr, nil
 }
 
-func makeMatchFunction(target interface{}, matchFn ast.Match) (domain.Match, error) {
+func makeMatchFunction(target interface{}, matchFn ast.Match) (domain.Function, error) {
+	var match domain.Function = domain.Match{Value: target}
+
 	if matchFn.String != nil {
 		arg := *matchFn.String
 		regex, err := regexp.Compile(arg)
 		if err != nil {
 			return domain.Match{}, errors.Wrap(err, "matches function regex argument is invalid")
 		}
-		return domain.Match{Value: target, Arg: regex}, nil
+
+		match = match.SetArgument(domain.MatchArgRegex, regex)
+
+		return match, nil
 	}
 
 	if matchFn.Variable != nil {
-		return domain.Match{Value: target, Arg: domain.Variable{Target: *matchFn.Variable}}, nil
+		match = match.SetArgument(domain.MatchArgRegex, domain.Variable{Target: *matchFn.Variable})
+
+		return match, nil
 	}
 
 	return domain.Match{}, errors.New("no argument provided to matches functions")

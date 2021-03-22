@@ -289,16 +289,6 @@ func resolveFunction(fn domain.Function, input restql.QueryInput) domain.Functio
 	return resolvedFn
 }
 
-func resolveMatch(match domain.Match, input restql.QueryInput) (interface{}, bool) {
-	switch matchArg := match.Arg.(type) {
-	case domain.Variable:
-		arg, ok := getUniqueParamValue(matchArg.Target, input)
-		return domain.Match{Value: match.Value, Arg: arg}, ok
-	default:
-		return match, true
-	}
-}
-
 func castToInt(value interface{}) (int, bool) {
 	switch value := value.(type) {
 	case string:
