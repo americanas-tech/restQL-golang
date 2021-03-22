@@ -391,6 +391,7 @@ Sometimes you may need to perform computations a value before sending or returni
 - **json**: stringify the value using the JSON syntax. For any key/value structure in a `from` statement it is used by default.
 - **flatten**: take a list value, usually nested, and return a plain list.
 - **matches**: conditionally filter the result of a statement by a regex. If the field contains a string, it only returns the field if it matches the regex. If the field contains a list, it applies the matching to each element, returning a filtered list with the successful matches.
+- **filterByRegex**: conditionally filter a list of objects on the result of a statement by a regex. This function accepts two argument, path and regex: `filterByRegex("path.to.object.field", "^myregex")`, they can be a literal string or a restQL variable. The regex is applied to the object field defined on the path argument and if it matches, the object is kept on the list, otherwise it is removed.
 
 ```restql
 from hero
