@@ -98,7 +98,7 @@ This is especially useful as the same resource can target an entity by its ID or
 
 ### Query parameters
 
-When using the `from` method every parameter in the `with` clause will be mapped to a query parameter, for example:
+When using the `from` or `delete` method every parameter in the `with` clause will be mapped to a query parameter, for example:
 
 ```restql
 from hero as batman
@@ -113,19 +113,38 @@ Will map to the following request:
 GET http://some.api/hero?name=Batman&universe=DC
 ```
 
-You can also specify query parameters in resource mappings like the path parameters above. For example, if we define a resource `hero` with URL `http://some.api/hero/:id?:universe`, we can send the `id` path parameter and the `universe` query parameter using the following query:
+However, if you like to send query parameters when using other methods, like `to`, you can use the `as-query` function that tags a `with` key/value to be used as a query parameter. For example:
 
 ```restql
 to hero as batman
     with
-        id = 1
+        name = "Batman"
         universe = "DC"
+        context = "justice-league" -> as-query
 ```
 
 Will map to the following request:
 
 ```shell
-POST http://some.api/hero/1?universe=DC
+POST http://some.api/hero?context=justice-league
+BODY {"name": "Batman", "universe": "DC"}
+```
+
+You can also specify query parameters in resource mappings like the path parameters above. For example, if we define a resource `hero` with URL `http://some.api/hero?:context`, we can send the `id` path parameter and the `universe` query parameter using the following query:
+
+```restql
+to hero as batman
+    with
+        name = "Batman"
+        universe = "DC"
+        context = "justice-league"
+```
+
+Will map to the following request:
+
+```shell
+POST http://some.api/hero?context=justice-league
+BODY {"name": "Batman", "universe": "DC"}
 ```
 
 This is specially useful for sending obligatory query parameters in statements with `to`, `into`, `patch` and `delete` methods. 
