@@ -5,8 +5,10 @@ package domain
 // the apply operator.
 //
 // Target returns the value upon which the function will be applied.
-// Map uses a function to transform the target value preserving the
-// current Function type wrapping it.
+// Arguments return the arguments provided to the Function
+// Argument fetches a Function argument by name
+// SetArgument immutably updates the value of an argument by name
+// Map uses a function to transform the target value preserving the current Function type wrapping it.
 type Function interface {
 	Target() interface{}
 	Arguments() []Arg
@@ -26,10 +28,12 @@ type NoMultiplex struct {
 	Value interface{}
 }
 
+// Argument fetches a NoMultiplex argument by name
 func (nm NoMultiplex) Argument(name string) Arg {
 	return Arg{}
 }
 
+// SetArgument immutably updates the value of an argument by name
 func (nm NoMultiplex) SetArgument(name string, value interface{}) Function {
 	return nm
 }
@@ -39,7 +43,7 @@ func (nm NoMultiplex) Target() interface{} {
 	return nm.Value
 }
 
-// Args return the arguments provided to NoMultiplex function
+// Arguments return the arguments provided to NoMultiplex function
 func (nm NoMultiplex) Arguments() []Arg {
 	return nil
 }
@@ -55,10 +59,12 @@ type JSON struct {
 	Value interface{}
 }
 
+// Argument fetches a JSON argument by name
 func (j JSON) Argument(name string) Arg {
 	return Arg{}
 }
 
+// SetArgument immutably updates the value of an argument by name
 func (j JSON) SetArgument(name string, value interface{}) Function {
 	return j
 }
@@ -68,7 +74,7 @@ func (j JSON) Target() interface{} {
 	return j.Value
 }
 
-// Args return the arguments provided to JSON function
+// Argumetns return the arguments provided to JSON function
 func (j JSON) Arguments() []Arg {
 	return nil
 }
@@ -84,10 +90,12 @@ type Base64 struct {
 	Value interface{}
 }
 
+// Argument fetches a Base64 argument by name
 func (b Base64) Argument(name string) Arg {
 	return Arg{}
 }
 
+// SetArgument immutably updates the value of an argument by name
 func (b Base64) SetArgument(name string, value interface{}) Function {
 	return b
 }
@@ -97,7 +105,7 @@ func (b Base64) Target() interface{} {
 	return b.Value
 }
 
-// Args return the arguments provided to Base64 function
+// Arguments return the arguments provided to Base64 function
 func (b Base64) Arguments() []Arg {
 	return nil
 }
@@ -113,19 +121,24 @@ func (b Base64) Map(fn func(target interface{}) interface{}) Function {
 type Match struct {
 	Value interface{}
 	Arg   interface{}
+	Args  []Arg
 }
 
+const MatchArgRegex = "regex"
+
+// Argument fetches a Match argument by name
 func (m Match) Argument(name string) Arg {
-	if name == "regex" {
-		return Arg{Name: "regex", Value: m.Arg}
+	if name == MatchArgRegex {
+		return m.Args[0]
 	}
 
 	return Arg{}
 }
 
+// SetArgument immutably updates the value of an argument by name
 func (m Match) SetArgument(name string, argValue interface{}) Function {
-	if name == "regex" {
-		return Match{Value: m.Value, Arg: argValue}
+	if name == MatchArgRegex {
+		return Match{Value: m.Value, Args: []Arg{{Name: MatchArgRegex, Value: argValue}}}
 	}
 
 	return m
@@ -136,15 +149,15 @@ func (m Match) Target() interface{} {
 	return m.Value
 }
 
-// Args return the arguments provided to Match function
+// Arguments return the arguments provided to Match function
 func (m Match) Arguments() []Arg {
-	return []Arg{{Name: "regex", Value: m.Arg}}
+	return m.Args
 }
 
 // Map apply the given function to the Target value
 // preserving the Match as a wrapper.
 func (m Match) Map(fn func(target interface{}) interface{}) Function {
-	return Match{Value: fn(m.Value), Arg: m.Arg}
+	return Match{Value: fn(m.Value), Args: m.Args}
 }
 
 // AsBody is a Function that define a `with`
@@ -154,10 +167,12 @@ type AsBody struct {
 	Value interface{}
 }
 
+// Argument fetches a AsBody argument by name
 func (ab AsBody) Argument(name string) Arg {
 	return Arg{}
 }
 
+// SetArgument immutably updates the value of an argument by name
 func (ab AsBody) SetArgument(name string, value interface{}) Function {
 	return ab
 }
@@ -167,7 +182,7 @@ func (ab AsBody) Target() interface{} {
 	return ab.Value
 }
 
-// Args return the arguments provided to AsBody function
+// Arguments return the arguments provided to AsBody function
 func (ab AsBody) Arguments() []Arg {
 	return nil
 }
@@ -184,10 +199,12 @@ type Flatten struct {
 	Value interface{}
 }
 
+// Argument fetches a Flatten argument by name
 func (f Flatten) Argument(name string) Arg {
 	return Arg{}
 }
 
+// SetArgument immutably updates the value of an argument by name
 func (f Flatten) SetArgument(name string, value interface{}) Function {
 	return f
 }
@@ -197,7 +214,7 @@ func (f Flatten) Target() interface{} {
 	return f.Value
 }
 
-// Args return the arguments provided to Flatten function
+// Arguments return the arguments provided to Flatten function
 func (f Flatten) Arguments() []Arg {
 	return nil
 }
@@ -214,10 +231,12 @@ type NoExplode struct {
 	Value interface{}
 }
 
+// Argument fetches a NoExplode argument by name
 func (f NoExplode) Argument(name string) Arg {
 	return Arg{}
 }
 
+// SetArgument immutably updates the value of an argument by name
 func (f NoExplode) SetArgument(name string, value interface{}) Function {
 	return f
 }
@@ -227,7 +246,7 @@ func (f NoExplode) Target() interface{} {
 	return f.Value
 }
 
-// Args return the arguments provided to NoExplode function
+// Arguments return the arguments provided to NoExplode function
 func (f NoExplode) Arguments() []Arg {
 	return nil
 }
@@ -265,11 +284,12 @@ func (f FilterByRegex) Target() interface{} {
 	return f.Value
 }
 
-// Args return the arguments provided to FilterByRegex function
+// Arguments return the arguments provided to FilterByRegex function
 func (f FilterByRegex) Arguments() []Arg {
 	return f.Args
 }
 
+// Argument fetches a FilterByRegex argument by name
 func (f FilterByRegex) Argument(name string) Arg {
 	for _, arg := range f.Args {
 		if arg.Name == name {
@@ -280,6 +300,7 @@ func (f FilterByRegex) Argument(name string) Arg {
 	return Arg{}
 }
 
+// SetArgument immutably updates the value of an argument by name
 func (f FilterByRegex) SetArgument(name string, value interface{}) Function {
 	newArg := Arg{Name: name, Value: value}
 	args := f.Args

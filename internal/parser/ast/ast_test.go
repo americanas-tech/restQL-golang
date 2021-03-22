@@ -564,7 +564,7 @@ func TestAstGenerator(t *testing.T) {
 				Qualifiers: []ast.Qualifier{
 					{Only: []ast.Filter{
 						{Field: []string{"name"}, Functions: []interface{}{ast.Match{String: String("^Super")}}},
-						{Field: []string{"weapons"}},h
+						{Field: []string{"weapons"}},
 					}},
 				},
 			}}},

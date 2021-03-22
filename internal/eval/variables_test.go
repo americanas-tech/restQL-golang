@@ -240,36 +240,36 @@ func TestResolveVariables(t *testing.T) {
 			"resolve variable in function on only clause from params",
 			domain.Query{Statements: []domain.Statement{{Method: "from", Resource: "hero", Only: []interface{}{
 				domain.NewFilterByRegex("name", domain.Variable{Target: "nameField"}, domain.Variable{Target: "namePattern"}),
-				domain.Match{Value: "name", Arg: domain.Variable{Target: "heroName"}},
+				domain.Match{Value: "name", Args: []domain.Arg{{Name: domain.MatchArgRegex, Value: domain.Variable{Target: "heroName"}}}},
 			}}}},
 			restql.QueryInput{Params: map[string]interface{}{"nameField": "profile.name", "namePattern": "^Super", "heroName": "^Super"}},
 			domain.Query{Statements: []domain.Statement{{Method: "from", Resource: "hero", Only: []interface{}{
 				domain.NewFilterByRegex("name", "profile.name", "^Super"),
-				domain.Match{Value: "name", Arg: "^Super"},
+				domain.Match{Value: "name", Args: []domain.Arg{{Name: domain.MatchArgRegex, Value: "^Super"}}},
 			}}}},
 		},
 		{
 			"resolve variable in function on only clause from header",
 			domain.Query{Statements: []domain.Statement{{Method: "from", Resource: "hero", Only: []interface{}{
 				domain.NewFilterByRegex("name", domain.Variable{Target: "nameField"}, domain.Variable{Target: "namePattern"}),
-				domain.Match{Value: "name", Arg: domain.Variable{Target: "heroName"}},
+				domain.Match{Value: "name", Args: []domain.Arg{{Name: domain.MatchArgRegex, Value: domain.Variable{Target: "heroName"}}}},
 			}}}},
 			restql.QueryInput{Headers: map[string]string{"nameField": "profile.name", "namePattern": "^Super", "heroName": "^Super"}},
 			domain.Query{Statements: []domain.Statement{{Method: "from", Resource: "hero", Only: []interface{}{
 				domain.NewFilterByRegex("name", "profile.name", "^Super"),
-				domain.Match{Value: "name", Arg: "^Super"},
+				domain.Match{Value: "name", Args: []domain.Arg{{Name: domain.MatchArgRegex, Value: "^Super"}}},
 			}}}},
 		},
 		{
 			"resolve variable in function on only clause from body",
 			domain.Query{Statements: []domain.Statement{{Method: "from", Resource: "hero", Only: []interface{}{
 				domain.NewFilterByRegex("name", domain.Variable{Target: "nameField"}, domain.Variable{Target: "namePattern"}),
-				domain.Match{Value: "name", Arg: domain.Variable{Target: "heroName"}},
+				domain.Match{Value: "name", Args: []domain.Arg{{Name: domain.MatchArgRegex, Value: domain.Variable{Target: "heroName"}}}},
 			}}}},
 			restql.QueryInput{Body: map[string]interface{}{"nameField": "profile.name", "namePattern": "^Super", "heroName": "^Super"}},
 			domain.Query{Statements: []domain.Statement{{Method: "from", Resource: "hero", Only: []interface{}{
 				domain.NewFilterByRegex("name", "profile.name", "^Super"),
-				domain.Match{Value: "name", Arg: "^Super"},
+				domain.Match{Value: "name", Args: []domain.Arg{{Name: domain.MatchArgRegex, Value: "^Super"}}},
 			}}}},
 		},
 	}

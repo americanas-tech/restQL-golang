@@ -227,7 +227,7 @@ func extractValueOnPath(value interface{}, path []string) (interface{}, bool) {
 }
 
 func applyMatchFilter(filter domain.Match, key string, value interface{}, node map[string]interface{}) error {
-	matchRegex, err := parseRegex(filter.Arg)
+	matchRegex, err := parseRegex(filter.Argument(domain.MatchArgRegex).Value)
 	if err != nil {
 		return err
 	}

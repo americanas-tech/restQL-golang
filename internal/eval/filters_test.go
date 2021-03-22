@@ -289,9 +289,9 @@ func TestOnlyFilters(t *testing.T) {
 			domain.Query{Statements: []domain.Statement{{
 				Resource: "hero",
 				Only: []interface{}{
-					domain.Match{Value: []string{"id"}, Arg: regexp.MustCompile("56789")},
-					domain.Match{Value: []string{"name"}, Arg: regexp.MustCompile("batman")},
-					domain.Match{Value: []string{"city"}, Arg: "Gotham"},
+					domain.Match{Value: []string{"id"}, Args: []domain.Arg{{Name: domain.MatchArgRegex, Value: regexp.MustCompile("56789")}}},
+					domain.Match{Value: []string{"name"}, Args: []domain.Arg{{Name: domain.MatchArgRegex, Value: regexp.MustCompile("batman")}}},
+					domain.Match{Value: []string{"city"}, Args: []domain.Arg{{Name: domain.MatchArgRegex, Value: "Gotham"}}},
 					[]string{"age"},
 				},
 			}}},
@@ -316,7 +316,11 @@ func TestOnlyFilters(t *testing.T) {
 			"should bring only the given fields that matches regex arg",
 			domain.Query{Statements: []domain.Statement{{
 				Resource: "hero",
-				Only:     []interface{}{domain.Match{Value: []string{"id"}, Arg: regexp.MustCompile("9$")}, domain.Match{Value: []string{"name"}, Arg: regexp.MustCompile("^b")}, domain.Match{Value: []string{"age"}, Arg: regexp.MustCompile("42")}},
+				Only: []interface{}{
+					domain.Match{Value: []string{"id"}, Args: []domain.Arg{{Name: domain.MatchArgRegex, Value: regexp.MustCompile("9$")}}},
+					domain.Match{Value: []string{"name"}, Args: []domain.Arg{{Name: domain.MatchArgRegex, Value: regexp.MustCompile("^b")}}},
+					domain.Match{Value: []string{"age"}, Args: []domain.Arg{{Name: domain.MatchArgRegex, Value: regexp.MustCompile("42")}}},
+				},
 			}}},
 			domain.Resources{
 				"hero": restql.DoneResource{
@@ -339,7 +343,7 @@ func TestOnlyFilters(t *testing.T) {
 			"should bring only the list elements that matches arg",
 			domain.Query{Statements: []domain.Statement{{
 				Resource: "hero",
-				Only:     []interface{}{domain.Match{Value: []string{"weapons"}, Arg: regexp.MustCompile("^b")}},
+				Only:     []interface{}{domain.Match{Value: []string{"weapons"}, Args: []domain.Arg{{Name: domain.MatchArgRegex, Value: regexp.MustCompile("^b")}}}},
 			}}},
 			domain.Resources{
 				"hero": restql.DoneResource{
@@ -385,7 +389,10 @@ func TestOnlyFilters(t *testing.T) {
 			"should bring everything except non matching field",
 			domain.Query{Statements: []domain.Statement{{
 				Resource: "hero",
-				Only:     []interface{}{[]string{"*"}, domain.Match{Value: []string{"name"}, Arg: regexp.MustCompile("^c")}},
+				Only: []interface{}{
+					[]string{"*"},
+					domain.Match{Value: []string{"name"}, Args: []domain.Arg{{Name: domain.MatchArgRegex, Value: regexp.MustCompile("^c")}}},
+				},
 			}}},
 			domain.Resources{
 				"hero": restql.DoneResource{
