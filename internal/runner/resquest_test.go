@@ -48,6 +48,12 @@ func TestMakeRequest(t *testing.T) {
 			restql.HTTPRequest{Method: http.MethodDelete, Schema: "http", Host: "hero.io", Path: "/api", Query: map[string]interface{}{}, Headers: map[string]string{"Content-Type": "application/json"}},
 		},
 		{
+			"should make post request with body using only resolved values",
+			domain.Statement{Method: domain.ToMethod, Resource: "hero", With: domain.Params{Values: map[string]interface{}{"id": 1, "name": domain.Variable{Target: "name"}}}},
+			restql.QueryContext{Mappings: map[string]restql.Mapping{"hero": mapping(t, "http://hero.io/api")}},
+			restql.HTTPRequest{Method: http.MethodPost, Schema: "http", Host: "hero.io", Path: "/api", Query: map[string]interface{}{}, Body: map[string]interface{}{"id": 1}, Headers: map[string]string{"Content-Type": "application/json"}},
+		},
+		{
 			"should make request with url and query params from statement",
 			domain.Statement{Method: domain.FromMethod, Resource: "hero", With: domain.Params{Values: map[string]interface{}{"id": "123456"}}},
 			restql.QueryContext{Mappings: map[string]restql.Mapping{"hero": mapping(t, "http://hero.io/api")}},
@@ -115,6 +121,12 @@ func TestMakeRequest(t *testing.T) {
 			domain.Statement{Method: domain.FromMethod, Resource: "hero", With: domain.Params{Values: map[string]interface{}{"id": "123456", "name": domain.Chain{"failed-resource", "name"}}}},
 			restql.QueryContext{Mappings: map[string]restql.Mapping{"hero": mapping(t, "http://hero.io/api")}},
 			restql.HTTPRequest{Method: http.MethodGet, Schema: "http", Host: "hero.io", Path: "/api", Query: map[string]interface{}{"id": "123456"}, Headers: map[string]string{"Content-Type": "application/json"}},
+		},
+		{
+			"should make post request with parameter as query param",
+			domain.Statement{Method: domain.ToMethod, Resource: "hero", With: domain.Params{Values: map[string]interface{}{"id": 1, "context": domain.AsQuery{Value: "something"}}}},
+			restql.QueryContext{Mappings: map[string]restql.Mapping{"hero": mapping(t, "http://hero.io/api")}},
+			restql.HTTPRequest{Method: http.MethodPost, Schema: "http", Host: "hero.io", Path: "/api", Query: map[string]interface{}{"context": "something"}, Body: map[string]interface{}{"id": 1}, Headers: map[string]string{"Content-Type": "application/json"}},
 		},
 	}
 

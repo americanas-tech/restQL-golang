@@ -1516,6 +1516,138 @@ to people with
 	test.Equal(t, body, test.Unmarshal(expectedResponse))
 }
 
+func TestToStatementWithQueryParameters(t *testing.T) {
+	query := `
+to planets
+	with 
+		id = 1
+		name = "Yavin"
+		context = "something" -> as-query
+		starSystem = $star -> as-query
+
+to people with 
+	planet = planets.name -> as-query
+	name = $name
+	age = 32
+
+from planets
+	with
+		id = 2
+		name = "Yavin"
+		context = "something" -> as-query
+		starSystem = $star -> as-query
+`
+
+	planetResponse := `
+{
+	"id": 1,
+	"name": "Yavin",
+	"rotation_period": 24.5,
+	"orbital_period": "4818",
+	"diameter": "10200",
+	"climate": "temperate, tropical",
+	"gravity": "1 standard",
+	"terrain": { "north": "jungle", "south": "rainforests" },
+	"surface_water": "8",
+	"population": "1000",
+	"leader": "Yavin King",
+	"residents": ["john", "janne"],
+	"films": [1]
+}
+`
+
+	people := `
+{
+	"inserted": 1
+}
+`
+
+	expectedResponse := fmt.Sprintf(`
+	{
+		"planets": {
+			"details": {
+				"success": true,
+				"status": 200,
+				"metadata": {}
+			},
+			"result": %s 
+		},
+		"people": {
+			"details": {
+				"success": true,
+				"status": 200,
+				"metadata": {}
+			},
+			"result": %s
+		}
+	}`, planetResponse, people)
+
+	mockServer := test.NewMockServer(mockPort)
+	defer mockServer.Teardown()
+
+	mockServer.Mux().HandleFunc("/api/planets/1", func(w http.ResponseWriter, r *http.Request) {
+		test.Equal(t, r.Method, http.MethodPost)
+
+		params := r.URL.Query()
+		test.Equal(t, params["context"][0], "something")
+		test.Equal(t, params["starSystem"][0], "solar")
+
+		expectedBody := map[string]interface{}{"name": "Yavin"}
+		var body map[string]interface{}
+		err := json.NewDecoder(r.Body).Decode(&body)
+		test.VerifyError(t, err)
+
+		test.Equal(t, body, expectedBody)
+
+		w.WriteHeader(200)
+		io.WriteString(w, planetResponse)
+	})
+	mockServer.Mux().HandleFunc("/api/planets/2", func(w http.ResponseWriter, r *http.Request) {
+		test.Equal(t, r.Method, http.MethodGet)
+
+		params := r.URL.Query()
+		test.Equal(t, params["name"][0], "Yavin")
+		test.Equal(t, params["context"][0], "something")
+		test.Equal(t, params["starSystem"][0], "solar")
+
+		w.WriteHeader(200)
+		io.WriteString(w, planetResponse)
+	})
+	mockServer.Mux().HandleFunc("/api/people/", func(w http.ResponseWriter, r *http.Request) {
+		test.Equal(t, r.Method, http.MethodPost)
+
+		params := r.URL.Query()
+		test.Equal(t, params["planet"][0], "Yavin")
+
+		expectedBody := map[string]interface{}{
+			"name": "janne",
+			"age":  float64(32),
+		}
+
+		var body map[string]interface{}
+		err := json.NewDecoder(r.Body).Decode(&body)
+		test.VerifyError(t, err)
+
+		test.Equal(t, body, expectedBody)
+
+		io.WriteString(w, people)
+	})
+	mockServer.Start()
+
+	target := fmt.Sprintf("%s&star=%s&name=%s", adHocQueryUrl, "solar", "janne")
+	response, err := httpClient.Post(target, "text/plain", strings.NewReader(query))
+	test.VerifyError(t, err)
+	defer response.Body.Close()
+
+	test.Equal(t, response.StatusCode, 200)
+
+	var body map[string]interface{}
+	err = json.NewDecoder(response.Body).Decode(&body)
+	test.VerifyError(t, err)
+
+	test.Equal(t, body, test.Unmarshal(expectedResponse))
+}
+
 func removeWhitespaces(s string) string {
 	return strings.Join(strings.Fields(s), "")
 }

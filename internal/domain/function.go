@@ -321,3 +321,35 @@ func (f FilterByRegex) SetArgument(name string, value interface{}) Function {
 func (f FilterByRegex) Map(fn func(target interface{}) interface{}) Function {
 	return FilterByRegex{Value: fn(f.Value), Args: f.Args}
 }
+
+// NoExplode is a Function that disable object explosion
+// when resolving with values.
+type AsQuery struct {
+	Value interface{}
+}
+
+// Argument fetches a AsQuery argument by name
+func (f AsQuery) Argument(name string) Arg {
+	return Arg{}
+}
+
+// SetArgument immutably updates the value of an argument by name
+func (f AsQuery) SetArgument(name string, value interface{}) Function {
+	return f
+}
+
+// Target return the value upon which AsQuery will be applied.
+func (f AsQuery) Target() interface{} {
+	return f.Value
+}
+
+// Arguments return the arguments provided to AsQuery function
+func (f AsQuery) Arguments() []Arg {
+	return nil
+}
+
+// Map apply the given function to the Target value
+// preserving the AsQuery as a wrapper.
+func (f AsQuery) Map(fn func(target interface{}) interface{}) Function {
+	return AsQuery{Value: fn(f.Value)}
+}
