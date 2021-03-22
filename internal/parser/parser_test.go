@@ -312,6 +312,11 @@ func TestQueryParser(t *testing.T) {
 			}},
 			`from hero only information -> filterByRegex($nameField, $namePattern), weapons`,
 		},
+		{
+			"Unique from statement and parameter defined as query",
+			domain.Query{Statements: []domain.Statement{{Method: "to", Resource: "hero", With: domain.Params{Values: map[string]interface{}{"id": 1, "context": domain.AsQuery{Value: "crossover"}}}}}},
+			`to hero with id = 1, context = "crossover" -> as-query`,
+		},
 	}
 
 	queryParser, err := parser.New()

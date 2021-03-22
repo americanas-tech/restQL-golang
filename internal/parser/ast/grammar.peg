@@ -74,7 +74,7 @@ APPLY_FN <- WS "->" WS? fn:(FUNCTION) {
 	return fn, nil
 }
 
-FUNCTION <- ("no-multiplex" / "no-explode" / "base64" / "json"/ "as-body" / "flatten") {
+FUNCTION <- ("no-multiplex" / "no-explode" / "base64" / "json"/ "as-body" / "as-query" / "flatten") {
 	return stringify(c.text)
 }
 

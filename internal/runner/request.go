@@ -33,8 +33,9 @@ func MakeRequest(defaultResourceTimeout time.Duration, forwardPrefix string, sta
 	method := queryMethodToHTTPMethod[statement.Method]
 	headers := makeHeaders(statement, queryCtx)
 	path := mapping.PathWithParams(statement.With.Values)
-	queryParams := makeQueryParams(forwardPrefix, statement, mapping, queryCtx)
 	timeout := parseTimeout(defaultResourceTimeout, statement)
+
+	queryParams := makeQueryParams(forwardPrefix, statement, mapping, queryCtx)
 
 	req := restql.HTTPRequest{
 		Method:  method,
@@ -59,18 +60,38 @@ func makeBody(statement domain.Statement, mapping restql.Mapping) restql.Body {
 	}
 
 	result := make(map[string]interface{})
-	for key, value := range statement.With.Values {
-		if mapping.IsPathParam(key) || mapping.IsQueryParam(key) {
-			continue
-		}
-
+	for key, value := range getValueForBody(statement, mapping) {
 		if value, ok := value.(domain.AsBody); ok {
 			return parseBodyValue(value.Target())
+		}
+
+		//todo: filter non primitive values
+		//todo: add test
+		if !isPrimitiveValue(value) {
+			continue
 		}
 
 		result[key] = parseBodyValue(value)
 	}
 	return result
+}
+
+func getValueForBody(statement domain.Statement, mapping restql.Mapping) map[string]interface{} {
+	values := make(map[string]interface{})
+
+	for key, value := range statement.With.Values {
+		if mapping.IsPathParam(key) || mapping.IsQueryParam(key) {
+			continue
+		}
+
+		if _, ok := value.(domain.AsQuery); ok {
+			continue
+		}
+
+		values[key] = value
+	}
+
+	return values
 }
 
 func parseBodyValue(value interface{}) interface{} {
@@ -87,6 +108,84 @@ func parseBodyValue(value interface{}) interface{} {
 	default:
 		return value
 	}
+}
+
+func makeQueryParams(forwardPrefix string, statement domain.Statement, mapping restql.Mapping, queryCtx restql.QueryContext) map[string]interface{} {
+	queryArgs := getForwardParams(forwardPrefix, queryCtx)
+
+	for key, value := range mapping.QueryWithParams(statement.With.Values) {
+		queryArgs[key] = value
+	}
+
+	for key, value := range getValueForQueryParams(statement, mapping) {
+		if !isPrimitiveValue(value) {
+			continue
+		}
+
+		queryArgs[key] = value
+	}
+
+	return queryArgs
+}
+
+func getValueForQueryParams(statement domain.Statement, mapping restql.Mapping) map[string]interface{} {
+	values := make(map[string]interface{})
+
+	for key, value := range statement.With.Values {
+		if mapping.IsPathParam(key) {
+			continue
+		}
+
+		if value, ok := value.(domain.AsQuery); ok {
+			values[key] = value.Target()
+			continue
+		}
+
+		if statement.Method == domain.FromMethod || statement.Method == domain.DeleteMethod {
+			values[key] = value
+			continue
+		}
+	}
+
+	return values
+}
+
+func isPrimitiveValue(value interface{}) bool {
+	if value == nil {
+		return false
+	}
+
+	switch value.(type) {
+	case string:
+		return true
+	case bool:
+		return true
+	case int:
+		return true
+	case float64:
+		return true
+	case map[string]interface{}:
+		return true
+	case []interface{}:
+		return true
+	default:
+		return false
+	}
+}
+
+func getForwardParams(forwardPrefix string, queryCtx restql.QueryContext) map[string]interface{} {
+	r := make(map[string]interface{})
+	if forwardPrefix == "" {
+		return r
+	}
+
+	for k, v := range queryCtx.Input.Params {
+		if strings.HasPrefix(k, forwardPrefix) {
+			r[k] = v
+		}
+	}
+
+	return r
 }
 
 func makeHeaders(statement domain.Statement, queryCtx restql.QueryContext) map[string]string {
@@ -125,68 +224,6 @@ func getForwardHeaders(queryCtx restql.QueryContext) map[string]string {
 			r[k] = v
 		}
 	}
-	return r
-}
-
-func makeQueryParams(forwardPrefix string, statement domain.Statement, mapping restql.Mapping, queryCtx restql.QueryContext) map[string]interface{} {
-	queryArgs := getForwardParams(forwardPrefix, queryCtx)
-
-	for key, value := range mapping.QueryWithParams(statement.With.Values) {
-		queryArgs[key] = value
-	}
-
-	if statement.Method == domain.FromMethod || statement.Method == domain.DeleteMethod {
-		for key, value := range statement.With.Values {
-			if mapping.IsPathParam(key) {
-				continue
-			}
-
-			if !isPrimitiveValue(value) {
-				continue
-			}
-
-			queryArgs[key] = value
-		}
-	}
-
-	return queryArgs
-}
-
-func isPrimitiveValue(value interface{}) bool {
-	if value == nil {
-		return false
-	}
-
-	switch value.(type) {
-	case string:
-		return true
-	case bool:
-		return true
-	case int:
-		return true
-	case float64:
-		return true
-	case map[string]interface{}:
-		return true
-	case []interface{}:
-		return true
-	default:
-		return false
-	}
-}
-
-func getForwardParams(forwardPrefix string, queryCtx restql.QueryContext) map[string]interface{} {
-	r := make(map[string]interface{})
-	if forwardPrefix == "" {
-		return r
-	}
-
-	for k, v := range queryCtx.Input.Params {
-		if strings.HasPrefix(k, forwardPrefix) {
-			r[k] = v
-		}
-	}
-
 	return r
 }
 

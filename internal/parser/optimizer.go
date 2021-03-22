@@ -147,6 +147,8 @@ func applyFunctions(v interface{}, functions []string) interface{} {
 			v = domain.Flatten{Value: v}
 		case ast.NoExplode:
 			v = domain.NoExplode{Value: v}
+		case ast.AsQuery:
+			v = domain.AsQuery{Value: v}
 		}
 	}
 
@@ -158,16 +160,6 @@ func makeOnlyFilter(onlyQualifier ast.Qualifier) ([]interface{}, error) {
 
 	result := make([]interface{}, len(filters))
 	for i, f := range filters {
-		//if f.Match != nil {
-		//	match, err := makeMatchFunction(f)
-		//	if err != nil {
-		//		return nil, err
-		//	}
-		//	result[i] = match
-		//} else {
-		//	result[i] = f.Field
-		//}
-
 		var filter interface{} = f.Field
 		for _, fn := range f.Functions {
 			filterWithFunc, err := applyFunctionToFilter(filter, fn)

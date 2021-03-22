@@ -955,6 +955,29 @@ func TestAstGenerator(t *testing.T) {
 				},
 			}}},
 		},
+		{
+			"Get query with as-body function applied to parameter",
+			`to hero with id = 1, context = "crossover" -> as-query`,
+			ast.Query{Blocks: []ast.Block{{
+				Method:   ast.ToMethod,
+				Resource: "hero",
+				Qualifiers: []ast.Qualifier{{
+					With: &ast.Parameters{
+						KeyValues: []ast.KeyValue{
+							{
+								Key:   "id",
+								Value: ast.Value{Primitive: &ast.Primitive{Int: Int(1)}},
+							},
+							{
+								Key:       "context",
+								Value:     ast.Value{Primitive: &ast.Primitive{String: String("crossover")}},
+								Functions: []string{"as-query"},
+							},
+						},
+					},
+				}},
+			}}},
+		},
 	}
 
 	generator, err := ast.New()
