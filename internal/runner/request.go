@@ -65,8 +65,6 @@ func makeBody(statement domain.Statement, mapping restql.Mapping) restql.Body {
 			return parseBodyValue(value.Target())
 		}
 
-		//todo: filter non primitive values
-		//todo: add test
 		if !isPrimitiveValue(value) {
 			continue
 		}
