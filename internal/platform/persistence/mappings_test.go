@@ -141,7 +141,7 @@ var noOpLogger = logger.New(ioutil.Discard, logger.LogOptions{})
 
 type stubDatabase struct {
 	findMappingsForTenant []restql.Mapping
-	findQuery             restql.SavedQuery
+	findQuery             restql.SavedQueryRevision
 }
 
 func (s stubDatabase) Name() string {
@@ -152,11 +152,11 @@ func (s stubDatabase) FindAllNamespaces(ctx context.Context) ([]string, error) {
 	panic("implement me")
 }
 
-func (s stubDatabase) FindQueriesForNamespace(ctx context.Context, namespace string) (map[string][]restql.SavedQuery, error) {
+func (s stubDatabase) FindQueriesForNamespace(ctx context.Context, namespace string) (map[string][]restql.SavedQueryRevision, error) {
 	panic("implement me")
 }
 
-func (s stubDatabase) FindQueryWithAllRevisions(ctx context.Context, namespace string, queryName string) ([]restql.SavedQuery, error) {
+func (s stubDatabase) FindQueryWithAllRevisions(ctx context.Context, namespace string, queryName string) ([]restql.SavedQueryRevision, error) {
 	panic("implement me")
 }
 
@@ -176,7 +176,7 @@ func (s stubDatabase) FindMappingsForTenant(ctx context.Context, tenantID string
 	return s.findMappingsForTenant, nil
 }
 
-func (s stubDatabase) FindQuery(ctx context.Context, namespace string, name string, revision int) (restql.SavedQuery, error) {
+func (s stubDatabase) FindQuery(ctx context.Context, namespace string, name string, revision int) (restql.SavedQueryRevision, error) {
 	return s.findQuery, nil
 }
 

@@ -10,7 +10,7 @@ import (
 // or a database instance.
 type QueryReader struct {
 	log   restql.Logger
-	local map[string]map[string][]restql.SavedQuery
+	local map[string][]restql.SavedQuery
 	db    Database
 }
 
@@ -22,7 +22,7 @@ func NewQueryReader(log restql.Logger, local map[string]map[string][]string, db 
 
 // Get retrieves a query by its identity (namespace, id and revision),
 // it first search the database and, if not found, in the configuration file.
-func (qr QueryReader) Get(ctx context.Context, namespace, id string, revision int) (restql.SavedQuery, error) {
+func (qr QueryReader) Get(ctx context.Context, namespace, id string, revision int) (restql.SavedQueryRevision, error) {
 	log := restql.GetLogger(ctx)
 
 	localQuery, err := qr.getQueryFromLocal(namespace, id, revision)
@@ -37,14 +37,14 @@ func (qr QueryReader) Get(ctx context.Context, namespace, id string, revision in
 			return localQuery, nil
 		}
 
-		return restql.SavedQuery{}, restql.ErrQueryNotFound
+		return restql.SavedQueryRevision{}, restql.ErrQueryNotFound
 	case err != nil:
 		log.Error("database error when fetching query", err, "namespace", namespace, "name", id, "revision", revision)
 		if localQuery.Text != "" {
 			return localQuery, nil
 		}
 
-		return restql.SavedQuery{}, err
+		return restql.SavedQueryRevision{}, err
 	}
 
 	if dbQuery.Text != "" {
@@ -56,25 +56,33 @@ func (qr QueryReader) Get(ctx context.Context, namespace, id string, revision in
 		return localQuery, nil
 	}
 
-	return restql.SavedQuery{}, restql.ErrQueryNotFound
+	return restql.SavedQueryRevision{}, restql.ErrQueryNotFound
 }
 
-func (qr QueryReader) getQueryFromLocal(namespace string, id string, revision int) (restql.SavedQuery, error) {
+func (qr QueryReader) getQueryFromLocal(namespace string, id string, revision int) (restql.SavedQueryRevision, error) {
 	queriesInNamespace, ok := qr.local[namespace]
 	if !ok {
-		return restql.SavedQuery{}, errors.Errorf("namespace not found in local: %s", namespace)
+		return restql.SavedQueryRevision{}, errors.Errorf("namespace not found in local: %s", namespace)
 	}
 
-	queriesByRevision, ok := queriesInNamespace[id]
-	if !ok {
-		return restql.SavedQuery{}, errors.Errorf("query not found in local: %s", id)
+	var query restql.SavedQuery
+	found := false
+	for _, q := range queriesInNamespace {
+		if q.Name == id {
+			query = q
+			found = true
+		}
 	}
 
-	if len(queriesByRevision) < revision {
-		return restql.SavedQuery{}, errors.Errorf("revision not found in local: %d", revision)
+	if !found {
+		return restql.SavedQueryRevision{}, errors.Errorf("query not found in local: %s", id)
 	}
 
-	savedQuery := queriesByRevision[revision-1]
+	if len(query.Revisions) < revision {
+		return restql.SavedQueryRevision{}, errors.Errorf("revision not found in local: %d", revision)
+	}
+
+	savedQuery := query.Revisions[revision-1]
 	return savedQuery, nil
 }
 
@@ -108,26 +116,28 @@ func (qr QueryReader) ListNamespaces(ctx context.Context) ([]string, error) {
 
 // ListQueriesForNamespace fetches the queries under the given namespace,
 // stored on config file, env or database.
-func (qr QueryReader) ListQueriesForNamespace(ctx context.Context, namespace string) (map[string][]restql.SavedQuery, error) {
-	queries := make(map[string][]restql.SavedQuery)
-	for queryName, revisions := range qr.local[namespace] {
-		queries[queryName] = revisions
-	}
+func (qr QueryReader) ListQueriesForNamespace(ctx context.Context, namespace string) ([]restql.SavedQuery, error) {
+	queries := qr.local[namespace]
 
 	dbQueries, err := qr.db.FindQueriesForNamespace(ctx, namespace)
-	if err != nil {
+	if err != nil && err != restql.ErrNamespaceNotFound {
 		log := restql.GetLogger(ctx)
 		log.Error("fail to find queries for namespace on database", err)
 	}
 
-	if len(dbQueries) == 0 && len(queries) == 0 {
+	if err == restql.ErrNamespaceNotFound && len(queries) == 0 {
 		return nil, restql.ErrNamespaceNotFound
 	}
 
-	for queryName, dbRevisions := range dbQueries {
-		dbRevisions = setDatabaseSource(dbRevisions)
-		localRevisions := queries[queryName]
-		queries[queryName] = unionLists(localRevisions, dbRevisions)
+	for _, dbQuery := range dbQueries {
+		query := dbQuery
+		query.Revisions = setDatabaseSource(dbQuery.Revisions)
+		localQuery, found := findQueryByName(queries, query.Name)
+		if found {
+			query.Revisions = unionLists(localQuery.Revisions, query.Revisions)
+		}
+
+		queries = append(queries, query)
 	}
 
 	return queries, nil
@@ -135,38 +145,36 @@ func (qr QueryReader) ListQueriesForNamespace(ctx context.Context, namespace str
 
 // ListQueryRevisions fetch revisions for a query on the given namespace,
 // stored on the config file, env or database.
-func (qr QueryReader) ListQueryRevisions(ctx context.Context, namespace string, queryName string) ([]restql.SavedQuery, error) {
-	var localRevisions []restql.SavedQuery
-
-	namespaceQueries, found := qr.local[namespace]
+func (qr QueryReader) ListQueryRevisions(ctx context.Context, namespace string, queryName string) (restql.SavedQuery, error) {
+	var localQuery restql.SavedQuery
+	q, found := findQueryByName(qr.local[namespace], queryName)
 	if found {
-		revisions, found := namespaceQueries[queryName]
-		if found {
-			localRevisions = revisions
-		}
+		localQuery = q
 	}
 
-	dbRevisions, err := qr.db.FindQueryWithAllRevisions(ctx, namespace, queryName)
-	if err != nil {
+	dbQuery, err := qr.db.FindQueryWithAllRevisions(ctx, namespace, queryName)
+	if err != nil && err != restql.ErrQueryNotFoundInDatabase {
 		log := restql.GetLogger(ctx)
 		log.Error("fail to find query revisions from database", err)
 	}
 
-	dbRevisions = setDatabaseSource(dbRevisions)
-
-	if len(localRevisions) == 0 && len(dbRevisions) == 0 {
-		return nil, restql.ErrQueryNotFound
+	if err == restql.ErrQueryNotFoundInDatabase && len(localQuery.Revisions) == 0 {
+		return restql.SavedQuery{}, restql.ErrQueryNotFound
 	}
 
-	return unionLists(localRevisions, dbRevisions), nil
+	query := dbQuery
+	query.Revisions = setDatabaseSource(query.Revisions)
+	query.Revisions = unionLists(localQuery.Revisions, query.Revisions)
+
+	return query, nil
 }
 
-func unionLists(a, b []restql.SavedQuery) []restql.SavedQuery {
+func unionLists(a, b []restql.SavedQueryRevision) []restql.SavedQueryRevision {
 	if len(b) > len(a) {
 		return b
 	}
 
-	result := make([]restql.SavedQuery, len(a))
+	result := make([]restql.SavedQueryRevision, len(a))
 	copy(result, a)
 
 	for i, v := range b {
@@ -176,7 +184,7 @@ func unionLists(a, b []restql.SavedQuery) []restql.SavedQuery {
 	return result
 }
 
-func setDatabaseSource(r []restql.SavedQuery) []restql.SavedQuery {
+func setDatabaseSource(r []restql.SavedQueryRevision) []restql.SavedQueryRevision {
 	for i, savedQuery := range r {
 		savedQuery.Source = restql.DatabaseSource
 		r[i] = savedQuery
@@ -193,7 +201,7 @@ var ErrCreateRevisionNotAllowed = errors.New("a local query cannot be updated wi
 // when it is stored on the database.
 type QueryWriter struct {
 	log   restql.Logger
-	local map[string]map[string][]restql.SavedQuery
+	local map[string][]restql.SavedQuery
 	db    Database
 }
 
@@ -208,40 +216,52 @@ func NewQueryWriter(log restql.Logger, local map[string]map[string][]string, db 
 
 // Write creates a new query revision
 func (qw QueryWriter) Write(ctx context.Context, namespace, name, content string) error {
-	if !qw.allowWrite(ctx, namespace, name) {
+	if !qw.allowWrite(namespace, name) {
 		return ErrCreateRevisionNotAllowed
 	}
 
 	return qw.db.CreateQueryRevision(ctx, namespace, name, content)
 }
 
-func (qw QueryWriter) allowWrite(ctx context.Context, namespace string, name string) bool {
+func (qw QueryWriter) allowWrite(namespace string, name string) bool {
 	namespaceQueries, found := qw.local[namespace]
 	if !found {
 		return true
 	}
 
-	queryRevisions, found := namespaceQueries[name]
+	_, found = findQueryByName(namespaceQueries, name)
 	if !found {
 		return true
 	}
 
-	dbRevisions, err := qw.db.FindQueryWithAllRevisions(ctx, namespace, name)
-	if err != nil && err != restql.ErrQueryNotFoundInDatabase {
-		return false
-	}
-
-	return len(dbRevisions) > 0 || len(queryRevisions) == 0
+	return false
 }
 
-func parseLocalQueries(local map[string]map[string][]string) map[string]map[string][]restql.SavedQuery {
-	l := make(map[string]map[string][]restql.SavedQuery)
+func findQueryByName(queries []restql.SavedQuery, name string) (restql.SavedQuery, bool) {
+	for _, query := range queries {
+		if query.Name == name {
+			return query, true
+		}
+	}
+
+	return restql.SavedQuery{}, false
+}
+
+func parseLocalQueries(local map[string]map[string][]string) map[string][]restql.SavedQuery {
+	l := make(map[string][]restql.SavedQuery)
 	for namespace, queries := range local {
-		parsedQueries := make(map[string][]restql.SavedQuery)
+		namespacedQueries := make([]restql.SavedQuery, len(queries))
+
+		j := 0
 		for queryName, revisions := range queries {
-			parsedRevisions := make([]restql.SavedQuery, len(revisions))
+			q := restql.SavedQuery{
+				Namespace: namespace,
+				Name:      queryName,
+				Revisions: make([]restql.SavedQueryRevision, len(revisions)),
+			}
+
 			for i, text := range revisions {
-				parsedRevisions[i] = restql.SavedQuery{
+				q.Revisions[i] = restql.SavedQueryRevision{
 					Name:     queryName,
 					Text:     text,
 					Revision: i + 1,
@@ -249,10 +269,11 @@ func parseLocalQueries(local map[string]map[string][]string) map[string]map[stri
 				}
 			}
 
-			parsedQueries[queryName] = parsedRevisions
+			namespacedQueries[j] = q
+			j++
 		}
 
-		l[namespace] = parsedQueries
+		l[namespace] = namespacedQueries
 	}
 	return l
 }

@@ -53,12 +53,12 @@ func (n noOpDatabase) FindAllNamespaces(ctx context.Context) ([]string, error) {
 	return nil, errNoDatabase
 }
 
-func (n noOpDatabase) FindQueriesForNamespace(ctx context.Context, namespace string) (map[string][]restql.SavedQuery, error) {
+func (n noOpDatabase) FindQueriesForNamespace(ctx context.Context, namespace string) ([]restql.SavedQuery, error) {
 	return nil, errNoDatabase
 }
 
-func (n noOpDatabase) FindQueryWithAllRevisions(ctx context.Context, namespace string, queryName string) ([]restql.SavedQuery, error) {
-	return nil, errNoDatabase
+func (n noOpDatabase) FindQueryWithAllRevisions(ctx context.Context, namespace string, queryName string) (restql.SavedQuery, error) {
+	return restql.SavedQuery{}, errNoDatabase
 }
 
 func (n noOpDatabase) CreateQueryRevision(ctx context.Context, namespace string, queryName string, content string) error {
@@ -77,6 +77,6 @@ func (n noOpDatabase) FindMappingsForTenant(ctx context.Context, tenantID string
 	return nil, errNoDatabase
 }
 
-func (n noOpDatabase) FindQuery(ctx context.Context, namespace string, name string, revision int) (restql.SavedQuery, error) {
-	return restql.SavedQuery{}, errNoDatabase
+func (n noOpDatabase) FindQuery(ctx context.Context, namespace string, name string, revision int) (restql.SavedQueryRevision, error) {
+	return restql.SavedQueryRevision{}, errNoDatabase
 }

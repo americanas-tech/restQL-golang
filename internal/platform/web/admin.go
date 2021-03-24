@@ -11,7 +11,6 @@ import (
 )
 
 type queryRevision struct {
-	Name     string `json:"name,omitempty"`
 	Text     string `json:"text,omitempty"`
 	Revision int    `json:"revision,omitempty"`
 	Source   string `json:"source,omitempty"`
@@ -117,21 +116,22 @@ func (adm administrator) NamespaceQueries(reqCtx *fasthttp.RequestCtx) error {
 	}
 
 	queries := make([]query, len(queriesForNamespace))
-	i := 0
-	for queryName, savedQueries := range queriesForNamespace {
-		savedQueries = filterQueriesBySource(savedQueries, sourceFilter)
+	for i, savedQuery := range queriesForNamespace {
+		filteredRevisions := filterRevisionsBySource(savedQuery, sourceFilter)
+		if len(filteredRevisions) == 0 {
+			continue
+		}
 
-		rs := make([]queryRevision, len(savedQueries))
-		for j, savedQuery := range savedQueries {
+		rs := make([]queryRevision, len(filteredRevisions))
+		for j, rev := range filteredRevisions {
 			rs[j] = queryRevision{
-				Text:     savedQuery.Text,
-				Revision: savedQuery.Revision,
-				Source:   string(savedQuery.Source),
+				Text:     rev.Text,
+				Revision: rev.Revision,
+				Source:   string(rev.Source),
 			}
 		}
 
-		queries[i] = query{Name: queryName, Namespace: namespace, Revisions: rs}
-		i++
+		queries[i] = query{Name: savedQuery.Name, Namespace: savedQuery.Namespace, Revisions: rs}
 	}
 
 	data := map[string]interface{}{"namespace": namespace, "queries": queries}
@@ -156,15 +156,15 @@ func (adm *administrator) QueryRevisions(reqCtx *fasthttp.RequestCtx) error {
 
 	sourceFilter := restql.Source(reqCtx.QueryArgs().Peek("source"))
 
-	rs, err := adm.qr.ListQueryRevisions(ctx, namespace, queryName)
+	savedQuery, err := adm.qr.ListQueryRevisions(ctx, namespace, queryName)
 	if err != nil {
 		return RespondError(reqCtx, err, errToStatusCode)
 	}
 
-	rs = filterQueriesBySource(rs, sourceFilter)
+	filteredRevisions := filterRevisionsBySource(savedQuery, sourceFilter)
 
-	queryRevisions := make([]queryRevision, len(rs))
-	for i, r := range rs {
+	queryRevisions := make([]queryRevision, len(filteredRevisions))
+	for i, r := range filteredRevisions {
 		queryRevisions[i] = toQueryRevision(r)
 	}
 
@@ -209,16 +209,9 @@ func (adm *administrator) Query(reqCtx *fasthttp.RequestCtx) error {
 		return RespondError(reqCtx, err, errToStatusCode)
 	}
 
-	data := map[string]interface{}{
-		"namespace": namespace,
-		"name":      savedQuery.Name,
-		"source":    savedQuery.Source,
-		"revision": map[string]string{
-			"text": savedQuery.Text,
-		},
-	}
+	qr := toQueryRevision(savedQuery)
 
-	return Respond(reqCtx, data, fasthttp.StatusOK, nil)
+	return Respond(reqCtx, qr, fasthttp.StatusOK, nil)
 }
 
 type mapResourceBody struct {
@@ -322,20 +315,24 @@ func (adm *administrator) CreateQueryRevision(reqCtx *fasthttp.RequestCtx) error
 	return Respond(reqCtx, nil, fasthttp.StatusCreated, nil)
 }
 
-func filterQueriesBySource(queryRevisions []restql.SavedQuery, source restql.Source) []restql.SavedQuery {
+func filterRevisionsBySource(query restql.SavedQuery, source restql.Source) []restql.SavedQueryRevision {
 	if source == "" {
-		return queryRevisions
+		return query.Revisions
 	}
 
-	var result []restql.SavedQuery
+	var revs []restql.SavedQueryRevision
 
-	for _, qr := range queryRevisions {
-		if qr.Source == source {
-			result = append(result, qr)
+	for _, r := range query.Revisions {
+		if r.Source == source {
+			revs = append(revs, r)
 		}
 	}
 
-	return result
+	if len(revs) > 0 {
+		return revs
+	}
+
+	return nil
 }
 
 func filterMappingsBySource(mappings map[string]restql.Mapping, source restql.Source) map[string]restql.Mapping {
@@ -354,9 +351,8 @@ func filterMappingsBySource(mappings map[string]restql.Mapping, source restql.So
 	return result
 }
 
-func toQueryRevision(sq restql.SavedQuery) queryRevision {
+func toQueryRevision(sq restql.SavedQueryRevision) queryRevision {
 	return queryRevision{
-		Name:     sq.Name,
 		Text:     sq.Text,
 		Revision: sq.Revision,
 		Source:   string(sq.Source),

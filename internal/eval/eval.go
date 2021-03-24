@@ -15,7 +15,7 @@ type MappingsReader interface {
 // QueryReader is an interface implemented by types that
 // can fetch a query for the given identification (namespace, id, revision).
 type QueryReader interface {
-	Get(ctx context.Context, namespace, id string, revision int) (restql.SavedQuery, error)
+	Get(ctx context.Context, namespace, id string, revision int) (restql.SavedQueryRevision, error)
 }
 
 // ErrValidation is returned by Evaluator when
