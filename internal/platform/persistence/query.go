@@ -116,10 +116,13 @@ func (qr QueryReader) ListNamespaces(ctx context.Context) ([]string, error) {
 
 // ListQueriesForNamespace fetches the queries under the given namespace,
 // stored on config file, env or database.
-func (qr QueryReader) ListQueriesForNamespace(ctx context.Context, namespace string) ([]restql.SavedQuery, error) {
-	queries := qr.local[namespace]
+func (qr QueryReader) ListQueriesForNamespace(ctx context.Context, namespace string, archived bool) ([]restql.SavedQuery, error) {
+	var queries []restql.SavedQuery
+	if !archived {
+		queries = qr.local[namespace]
+	}
 
-	dbQueries, err := qr.db.FindQueriesForNamespace(ctx, namespace)
+	dbQueries, err := qr.db.FindQueriesForNamespace(ctx, namespace, archived)
 	if err != nil && err != restql.ErrNamespaceNotFound {
 		log := restql.GetLogger(ctx)
 		log.Error("fail to find queries for namespace on database", err)
@@ -134,25 +137,27 @@ func (qr QueryReader) ListQueriesForNamespace(ctx context.Context, namespace str
 		query.Revisions = setDatabaseSource(dbQuery.Revisions)
 		localQuery, found := findQueryByName(queries, query.Name)
 		if found {
-			query.Revisions = unionLists(localQuery.Revisions, query.Revisions)
+			query.Revisions = revisionsUnion(localQuery.Revisions, query.Revisions)
 		}
 
 		queries = append(queries, query)
 	}
+
+	qr.log.Debug("query reader namespace", "queries", queries)
 
 	return queries, nil
 }
 
 // ListQueryRevisions fetch revisions for a query on the given namespace,
 // stored on the config file, env or database.
-func (qr QueryReader) ListQueryRevisions(ctx context.Context, namespace string, queryName string) (restql.SavedQuery, error) {
+func (qr QueryReader) ListQueryRevisions(ctx context.Context, namespace string, queryName string, archived bool) (restql.SavedQuery, error) {
 	var localQuery restql.SavedQuery
 	q, found := findQueryByName(qr.local[namespace], queryName)
-	if found {
+	if found && !archived {
 		localQuery = q
 	}
 
-	dbQuery, err := qr.db.FindQueryWithAllRevisions(ctx, namespace, queryName)
+	dbQuery, err := qr.db.FindQueryWithAllRevisions(ctx, namespace, queryName, archived)
 	if err != nil && err != restql.ErrQueryNotFoundInDatabase {
 		log := restql.GetLogger(ctx)
 		log.Error("fail to find query revisions from database", err)
@@ -164,12 +169,12 @@ func (qr QueryReader) ListQueryRevisions(ctx context.Context, namespace string, 
 
 	query := dbQuery
 	query.Revisions = setDatabaseSource(query.Revisions)
-	query.Revisions = unionLists(localQuery.Revisions, query.Revisions)
+	query.Revisions = revisionsUnion(localQuery.Revisions, query.Revisions)
 
 	return query, nil
 }
 
-func unionLists(a, b []restql.SavedQueryRevision) []restql.SavedQueryRevision {
+func revisionsUnion(a, b []restql.SavedQueryRevision) []restql.SavedQueryRevision {
 	if len(b) > len(a) {
 		return b
 	}
@@ -193,9 +198,9 @@ func setDatabaseSource(r []restql.SavedQueryRevision) []restql.SavedQueryRevisio
 	return r
 }
 
-// ErrCreateRevisionNotAllowed is returned when trying to write a query revision
+// ErrUpdateQueryNotAllowed is returned when trying to write a query revision
 // on a query stored on local or env.
-var ErrCreateRevisionNotAllowed = errors.New("a local query cannot be updated with a new revision : remove it from the local configuration or migrate it to the database")
+var ErrUpdateQueryNotAllowed = errors.New("a local query cannot be updated : remove it from the local configuration or migrate it to the database")
 
 // QueryWriter is the entity that create a new query revision
 // when it is stored on the database.
@@ -217,10 +222,36 @@ func NewQueryWriter(log restql.Logger, local map[string]map[string][]string, db 
 // Write creates a new query revision
 func (qw QueryWriter) Write(ctx context.Context, namespace, name, content string) error {
 	if !qw.allowWrite(namespace, name) {
-		return ErrCreateRevisionNotAllowed
+		return ErrUpdateQueryNotAllowed
 	}
 
 	return qw.db.CreateQueryRevision(ctx, namespace, name, content)
+}
+
+func (qw QueryWriter) UpdateQueryArchiving(ctx context.Context, namespace string, name string, archived bool) error {
+	if !qw.allowWrite(namespace, name) {
+		return ErrUpdateQueryNotAllowed
+	}
+
+	err := qw.db.UpdateQueryArchiving(ctx, namespace, name, archived)
+	if err != nil {
+		qw.log.Error("failed to update query archiving", err)
+	}
+
+	return err
+}
+
+func (qw QueryWriter) UpdateRevisionArchiving(ctx context.Context, namespace string, name string, revision int, archived bool) error {
+	if !qw.allowWrite(namespace, name) {
+		return ErrUpdateQueryNotAllowed
+	}
+
+	err := qw.db.UpdateRevisionArchiving(ctx, namespace, name, revision, archived)
+	if err != nil {
+		qw.log.Error("failed to update revision archiving", err)
+	}
+
+	return err
 }
 
 func (qw QueryWriter) allowWrite(namespace string, name string) bool {

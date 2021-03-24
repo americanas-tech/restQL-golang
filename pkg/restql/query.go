@@ -12,6 +12,7 @@ var (
 type SavedQuery struct {
 	Namespace string
 	Name      string
+	Archived  bool
 	Revisions []SavedQueryRevision
 }
 
@@ -20,6 +21,7 @@ type SavedQueryRevision struct {
 	Name     string
 	Text     string
 	Revision int
+	Archived bool
 	Source   Source
 }
 

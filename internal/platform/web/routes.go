@@ -93,6 +93,8 @@ func registerAdminEndpoints(adm *administrator, apiApp app) app {
 	apiApp.Handle(http.MethodGet, "/admin/namespace/{namespace}/query", adm.NamespaceQueries)
 	apiApp.Handle(http.MethodGet, "/admin/namespace/{namespace}/query/{queryId}", adm.QueryRevisions)
 	apiApp.Handle(http.MethodGet, "/admin/namespace/{namespace}/query/{queryId}/revision/{revision}", adm.Query)
+	apiApp.Handle(http.MethodPatch, "/admin/namespace/{namespace}/query/{queryId}/revision/{revision}", adm.UpdateRevisionArchiving)
+	apiApp.Handle(http.MethodPatch, "/admin/namespace/{namespace}/query/{queryId}", adm.UpdateQueryArchiving)
 	apiApp.Handle(http.MethodPost, "/admin/namespace/{namespace}/query/{queryId}", adm.CreateQueryRevision)
 
 	return apiApp

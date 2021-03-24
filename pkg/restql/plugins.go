@@ -134,10 +134,12 @@ type DatabasePlugin interface {
 	Plugin
 
 	FindAllNamespaces(ctx context.Context) ([]string, error)
-	FindQueriesForNamespace(ctx context.Context, namespace string) ([]SavedQuery, error)
-	FindQueryWithAllRevisions(ctx context.Context, namespace string, queryName string) (SavedQuery, error)
+	FindQueriesForNamespace(ctx context.Context, namespace string, archived bool) ([]SavedQuery, error)
+	FindQueryWithAllRevisions(ctx context.Context, namespace string, queryName string, archived bool) (SavedQuery, error)
 	FindQuery(ctx context.Context, namespace string, name string, revision int) (SavedQueryRevision, error)
 	CreateQueryRevision(ctx context.Context, namespace string, queryName string, content string) error
+	UpdateQueryArchiving(ctx context.Context, namespace string, queryName string, archived bool) error
+	UpdateRevisionArchiving(ctx context.Context, namespace string, name string, revision int, archived bool) error
 
 	FindAllTenants(ctx context.Context) ([]string, error)
 	FindMappingsForTenant(ctx context.Context, tenantID string) ([]Mapping, error)
