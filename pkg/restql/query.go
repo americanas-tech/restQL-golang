@@ -10,6 +10,13 @@ var (
 
 // SavedQuery represents a query stored in database.
 type SavedQuery struct {
+	Namespace string
+	Name      string
+	Revisions []SavedQueryRevision
+}
+
+// SavedQueryRevision represents a query revision stored in database.
+type SavedQueryRevision struct {
 	Name     string
 	Text     string
 	Revision int

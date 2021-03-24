@@ -76,20 +76,20 @@ func NewQueryReaderCache(log restql.Logger, c *Cache) *QueryReaderCache {
 }
 
 // Get returns a cached saved query if present, fetching it otherwise.
-func (c *QueryReaderCache) Get(ctx context.Context, namespace, id string, revision int) (restql.SavedQuery, error) {
+func (c *QueryReaderCache) Get(ctx context.Context, namespace, id string, revision int) (restql.SavedQueryRevision, error) {
 	cacheKey := cacheQueryKey{namespace: namespace, id: id, revision: revision}
 	result, err := c.cache.Get(ctx, cacheKey)
 	if err != nil {
-		return restql.SavedQuery{}, err
+		return restql.SavedQueryRevision{}, err
 	}
 
-	query, ok := result.(restql.SavedQuery)
+	query, ok := result.(restql.SavedQueryRevision)
 	if !ok {
 		log := restql.GetLogger(ctx)
 		err := errors.Errorf("invalid query cache content type: %T", result)
 
 		log.Error("failed to convert cache content", err)
-		return restql.SavedQuery{}, err
+		return restql.SavedQueryRevision{}, err
 	}
 
 	return query, nil
