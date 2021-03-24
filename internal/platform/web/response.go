@@ -30,7 +30,7 @@ var errToStatusCode = map[error]int{
 	runner.ErrMaxGoroutineDenied:                fasthttp.StatusInsufficientStorage,
 	parser.ErrInvalidQuery:                      fasthttp.StatusUnprocessableEntity,
 	persistence.ErrSetResourceMappingNotAllowed: fasthttp.StatusUnauthorized,
-	persistence.ErrCreateRevisionNotAllowed:     fasthttp.StatusUnauthorized,
+	persistence.ErrUpdateQueryNotAllowed:        fasthttp.StatusUnauthorized,
 	errPathParamNotFound:                        fasthttp.StatusUnprocessableEntity,
 	errInvalidTenant:                            fasthttp.StatusBadRequest,
 	errInvalidRevisionType:                      fasthttp.StatusBadRequest,

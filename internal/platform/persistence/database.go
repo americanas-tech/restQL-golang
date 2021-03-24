@@ -45,6 +45,14 @@ var errNoDatabase = errors.New("no op database")
 
 type noOpDatabase struct{}
 
+func (n noOpDatabase) UpdateQueryArchiving(ctx context.Context, namespace string, queryName string, archived bool) error {
+	return nil
+}
+
+func (n noOpDatabase) UpdateRevisionArchiving(ctx context.Context, namespace string, name string, revision int, archived bool) error {
+	return nil
+}
+
 func (n noOpDatabase) Name() string {
 	return "noopdatabase"
 }
@@ -53,11 +61,11 @@ func (n noOpDatabase) FindAllNamespaces(ctx context.Context) ([]string, error) {
 	return nil, errNoDatabase
 }
 
-func (n noOpDatabase) FindQueriesForNamespace(ctx context.Context, namespace string) ([]restql.SavedQuery, error) {
+func (n noOpDatabase) FindQueriesForNamespace(ctx context.Context, namespace string, archived bool) ([]restql.SavedQuery, error) {
 	return nil, errNoDatabase
 }
 
-func (n noOpDatabase) FindQueryWithAllRevisions(ctx context.Context, namespace string, queryName string) (restql.SavedQuery, error) {
+func (n noOpDatabase) FindQueryWithAllRevisions(ctx context.Context, namespace string, queryName string, archived bool) (restql.SavedQuery, error) {
 	return restql.SavedQuery{}, errNoDatabase
 }
 

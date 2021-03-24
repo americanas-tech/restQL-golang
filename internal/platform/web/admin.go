@@ -13,6 +13,7 @@ import (
 type queryRevision struct {
 	Text     string `json:"text,omitempty"`
 	Revision int    `json:"revision,omitempty"`
+	Archived bool   `json:"archived"`
 	Source   string `json:"source,omitempty"`
 }
 
@@ -20,6 +21,7 @@ type query struct {
 	Namespace string          `json:"namespace"`
 	Name      string          `json:"name"`
 	Revisions []queryRevision `json:"revisions"`
+	Archived  bool            `json:"archived"`
 	Source    string          `json:"source,omitempty"`
 }
 
@@ -109,16 +111,21 @@ func (adm administrator) NamespaceQueries(reqCtx *fasthttp.RequestCtx) error {
 	}
 
 	sourceFilter := restql.Source(reqCtx.QueryArgs().Peek("source"))
+	archivedFilter, err := strconv.ParseBool(string(reqCtx.QueryArgs().Peek("archived")))
+	if err != nil {
+		archivedFilter = false
+	}
 
-	queriesForNamespace, err := adm.qr.ListQueriesForNamespace(ctx, namespace)
+	queriesForNamespace, err := adm.qr.ListQueriesForNamespace(ctx, namespace, archivedFilter)
 	if err != nil {
 		return RespondError(reqCtx, err, errToStatusCode)
 	}
 
-	queries := make([]query, len(queriesForNamespace))
-	for i, savedQuery := range queriesForNamespace {
+	//queries := make([]query, len(queriesForNamespace))
+	queries := []query{}
+	for _, savedQuery := range queriesForNamespace {
 		filteredRevisions := filterRevisionsBySource(savedQuery, sourceFilter)
-		if len(filteredRevisions) == 0 {
+		if len(filteredRevisions) == 0 && len(savedQuery.Revisions) != 0 {
 			continue
 		}
 
@@ -127,12 +134,16 @@ func (adm administrator) NamespaceQueries(reqCtx *fasthttp.RequestCtx) error {
 			rs[j] = queryRevision{
 				Text:     rev.Text,
 				Revision: rev.Revision,
+				Archived: rev.Archived,
 				Source:   string(rev.Source),
 			}
 		}
 
-		queries[i] = query{Name: savedQuery.Name, Namespace: savedQuery.Namespace, Revisions: rs}
+		adm.log.Debug("saved query", "value", savedQuery)
+		queries = append(queries, query{Name: savedQuery.Name, Namespace: savedQuery.Namespace, Archived: savedQuery.Archived, Revisions: rs})
 	}
+
+	adm.log.Debug("namespace queries", "value", queries)
 
 	data := map[string]interface{}{"namespace": namespace, "queries": queries}
 	return Respond(reqCtx, data, fasthttp.StatusOK, nil)
@@ -155,8 +166,12 @@ func (adm *administrator) QueryRevisions(reqCtx *fasthttp.RequestCtx) error {
 	}
 
 	sourceFilter := restql.Source(reqCtx.QueryArgs().Peek("source"))
+	archivedFilter, err := strconv.ParseBool(string(reqCtx.QueryArgs().Peek("archived")))
+	if err != nil {
+		archivedFilter = false
+	}
 
-	savedQuery, err := adm.qr.ListQueryRevisions(ctx, namespace, queryName)
+	savedQuery, err := adm.qr.ListQueryRevisions(ctx, namespace, queryName, archivedFilter)
 	if err != nil {
 		return RespondError(reqCtx, err, errToStatusCode)
 	}
@@ -169,8 +184,9 @@ func (adm *administrator) QueryRevisions(reqCtx *fasthttp.RequestCtx) error {
 	}
 
 	data := query{
-		Namespace: namespace,
-		Name:      queryName,
+		Namespace: savedQuery.Namespace,
+		Name:      savedQuery.Name,
+		Archived:  savedQuery.Archived,
 		Revisions: queryRevisions,
 	}
 	return Respond(reqCtx, data, fasthttp.StatusOK, nil)
@@ -287,6 +303,12 @@ func (adm *administrator) CreateQueryRevision(reqCtx *fasthttp.RequestCtx) error
 	ctx := middleware.GetNativeContext(reqCtx)
 	ctx = restql.WithLogger(ctx, adm.log)
 
+	var crb createRevisionBody
+	err := json.Unmarshal(reqCtx.PostBody(), &crb)
+	if err != nil {
+		return err
+	}
+
 	namespace, err := pathParamString(reqCtx, "namespace")
 	if err != nil {
 		adm.log.Error("failed to load namespace path param", err)
@@ -299,14 +321,6 @@ func (adm *administrator) CreateQueryRevision(reqCtx *fasthttp.RequestCtx) error
 		return err
 	}
 
-	var crb createRevisionBody
-
-	bytesBody := reqCtx.PostBody()
-	err = json.Unmarshal(bytesBody, &crb)
-	if err != nil {
-		return err
-	}
-
 	err = adm.queryWriter.Write(ctx, namespace, queryName, crb.Text)
 	if err != nil {
 		return RespondError(reqCtx, err, errToStatusCode)
@@ -315,12 +329,92 @@ func (adm *administrator) CreateQueryRevision(reqCtx *fasthttp.RequestCtx) error
 	return Respond(reqCtx, nil, fasthttp.StatusCreated, nil)
 }
 
+type updateArchivingBody struct {
+	Archived bool `json:"archived"`
+}
+
+func (adm *administrator) UpdateQueryArchiving(reqCtx *fasthttp.RequestCtx) error {
+	ctx := middleware.GetNativeContext(reqCtx)
+	ctx = restql.WithLogger(ctx, adm.log)
+
+	namespace, err := pathParamString(reqCtx, "namespace")
+	if err != nil {
+		adm.log.Error("failed to load namespace path param", err)
+		return err
+	}
+
+	queryName, err := pathParamString(reqCtx, "queryId")
+	if err != nil {
+		adm.log.Error("failed to load query name path param", err)
+		return err
+	}
+
+	var body updateArchivingBody
+
+	bytesBody := reqCtx.PostBody()
+	err = json.Unmarshal(bytesBody, &body)
+	if err != nil {
+		return err
+	}
+
+	err = adm.queryWriter.UpdateQueryArchiving(ctx, namespace, queryName, body.Archived)
+	if err != nil {
+		return RespondError(reqCtx, err, errToStatusCode)
+	}
+
+	return Respond(reqCtx, nil, fasthttp.StatusNoContent, nil)
+}
+
+func (adm *administrator) UpdateRevisionArchiving(reqCtx *fasthttp.RequestCtx) error {
+	ctx := middleware.GetNativeContext(reqCtx)
+	ctx = restql.WithLogger(ctx, adm.log)
+
+	namespace, err := pathParamString(reqCtx, "namespace")
+	if err != nil {
+		adm.log.Error("failed to load namespace path param", err)
+		return err
+	}
+
+	queryName, err := pathParamString(reqCtx, "queryId")
+	if err != nil {
+		adm.log.Error("failed to load query name path param", err)
+		return err
+	}
+
+	revisionStr, err := pathParamString(reqCtx, "revision")
+	if err != nil {
+		adm.log.Error("failed to load revision path param", err)
+		return err
+	}
+
+	revision, err := strconv.Atoi(revisionStr)
+	if err != nil {
+		adm.log.Error("failed to parse revision path param", err)
+		return err
+	}
+
+	var body updateArchivingBody
+
+	bytesBody := reqCtx.PostBody()
+	err = json.Unmarshal(bytesBody, &body)
+	if err != nil {
+		return err
+	}
+
+	err = adm.queryWriter.UpdateRevisionArchiving(ctx, namespace, queryName, revision, body.Archived)
+	if err != nil {
+		return RespondError(reqCtx, err, errToStatusCode)
+	}
+
+	return Respond(reqCtx, nil, fasthttp.StatusNoContent, nil)
+}
+
 func filterRevisionsBySource(query restql.SavedQuery, source restql.Source) []restql.SavedQueryRevision {
 	if source == "" {
 		return query.Revisions
 	}
 
-	var revs []restql.SavedQueryRevision
+	revs := []restql.SavedQueryRevision{}
 
 	for _, r := range query.Revisions {
 		if r.Source == source {
@@ -328,11 +422,7 @@ func filterRevisionsBySource(query restql.SavedQuery, source restql.Source) []re
 		}
 	}
 
-	if len(revs) > 0 {
-		return revs
-	}
-
-	return nil
+	return revs
 }
 
 func filterMappingsBySource(mappings map[string]restql.Mapping, source restql.Source) map[string]restql.Mapping {
@@ -355,6 +445,7 @@ func toQueryRevision(sq restql.SavedQueryRevision) queryRevision {
 	return queryRevision{
 		Text:     sq.Text,
 		Revision: sq.Revision,
+		Archived: sq.Archived,
 		Source:   string(sq.Source),
 	}
 }
