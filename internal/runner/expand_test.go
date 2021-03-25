@@ -179,7 +179,7 @@ func TestMultiplexStatements(t *testing.T) {
 			},
 		},
 		{
-			"should not make a new statement if list is flattened",
+			"should not make a new statement if list is not multiplexed",
 			domain.Resources{
 				"hero":    domain.Statement{Method: "from", Resource: "hero", With: domain.Params{Values: map[string]interface{}{"id": domain.NoMultiplex{[]interface{}{"12345", "67890"}}}}},
 				"villain": domain.Statement{Method: "from", Resource: "villain", With: domain.Params{Values: map[string]interface{}{"id": []interface{}{"abcdef", "ghijkl"}}}},
@@ -288,6 +288,22 @@ func TestMultiplexStatements(t *testing.T) {
 					domain.Statement{Method: "to", Resource: "hero", With: domain.Params{Body: "12345"}},
 					domain.Statement{Method: "to", Resource: "hero", With: domain.Params{Body: "67890"}},
 					domain.Statement{Method: "to", Resource: "hero", With: domain.Params{Body: "19283"}},
+				},
+			},
+		},
+		{
+			"should make a new statement for each list value on as-query function and keep other params",
+			domain.Resources{
+				"hero": domain.Statement{
+					Method:   "from",
+					Resource: "hero",
+					With:     domain.Params{Values: map[string]interface{}{"id": domain.AsQuery{Value: []interface{}{"12345", "67890"}}, "name": "batman", "age": 45}},
+				},
+			},
+			domain.Resources{
+				"hero": []interface{}{
+					domain.Statement{Method: "from", Resource: "hero", With: domain.Params{Values: map[string]interface{}{"id": domain.AsQuery{Value: "12345"}, "name": "batman", "age": 45}}},
+					domain.Statement{Method: "from", Resource: "hero", With: domain.Params{Values: map[string]interface{}{"id": domain.AsQuery{Value: "67890"}, "name": "batman", "age": 45}}},
 				},
 			},
 		},

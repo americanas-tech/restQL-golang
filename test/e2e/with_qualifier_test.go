@@ -1522,11 +1522,13 @@ to planets
 	with 
 		id = 1
 		name = "Yavin"
+		foo = [1, 2, 3] -> no-multiplex -> as-query
 		context = "something" -> as-query
 		starSystem = $star -> as-query
 
 to people with 
 	planet = planets.name -> as-query
+	foo = [1, 2, 3] -> as-query
 	name = $name
 	age = 32
 
@@ -1573,14 +1575,26 @@ from planets
 			"result": %s 
 		},
 		"people": {
-			"details": {
-				"success": true,
-				"status": 200,
-				"metadata": {}
-			},
-			"result": %s
+			"details": [
+				{
+					"success": true,
+					"status": 200,
+					"metadata": {}
+				},
+				{
+					"success": true,
+					"status": 200,
+					"metadata": {}
+				},
+				{
+					"success": true,
+					"status": 200,
+					"metadata": {}
+				}
+			],
+			"result": [%s, %s, %s]
 		}
-	}`, planetResponse, people)
+	}`, planetResponse, people, people, people)
 
 	mockServer := test.NewMockServer(mockPort)
 	defer mockServer.Teardown()
@@ -1591,6 +1605,14 @@ from planets
 		params := r.URL.Query()
 		test.Equal(t, params["context"][0], "something")
 		test.Equal(t, params["starSystem"][0], "solar")
+
+		if len(params["foo"]) != 3 {
+			t.Errorf("expect three query param, got = %+#v", params["foo"])
+		}
+
+		test.Equal(t, params["foo"][0], "1")
+		test.Equal(t, params["foo"][1], "2")
+		test.Equal(t, params["foo"][2], "3")
 
 		expectedBody := map[string]interface{}{"name": "Yavin"}
 		var body map[string]interface{}
@@ -1618,6 +1640,15 @@ from planets
 
 		params := r.URL.Query()
 		test.Equal(t, params["planet"][0], "Yavin")
+
+		if len(params["foo"]) > 1 {
+			t.Errorf("expect one query param, got = %+#v", params["foo"])
+		}
+
+		foo := params["foo"][0]
+		if foo != "1" && foo != "2" && foo != "3" {
+			t.Errorf("got = %+#v, want = %+#v\n", foo, []string{"1", "2", "3"})
+		}
 
 		expectedBody := map[string]interface{}{
 			"name": "janne",
