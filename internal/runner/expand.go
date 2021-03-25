@@ -20,7 +20,7 @@ type parameter struct {
 type listParameters struct {
 	paramType string
 	path      []string
-	value     []interface{}
+	value     interface{}
 }
 
 // MultiplexStatements creates a statement for each value in a
@@ -117,6 +117,19 @@ func findListParameters(path []string, val interface{}) []listParameters {
 	switch val := val.(type) {
 	case domain.NoMultiplex:
 		return []listParameters{}
+	case domain.AsQuery:
+		parameters := findListParameters(path, val.Target())
+		if len(parameters) == 0 {
+			return []listParameters{}
+		}
+
+		result := make([]listParameters, len(parameters))
+		for i, lp := range parameters {
+			fn := val.Map(func(_ interface{}) interface{} { return lp.value })
+			result[i] = listParameters{path: lp.path, paramType: lp.paramType, value: fn}
+		}
+
+		return result
 	case map[string]interface{}:
 		var result []listParameters
 		for k, v := range val {
@@ -139,7 +152,19 @@ func zipListParams(listParams []listParameters) [][]parameter {
 	for i = 0; i < statementCount; i++ {
 		statementParameters := make([]parameter, len(listParams))
 		for j, lp := range listParams {
-			statementParameters[j] = parameter{path: lp.path, paramType: lp.paramType, value: lp.value[i]}
+			v := lp.value
+
+			switch v := v.(type) {
+			case domain.AsQuery:
+				fn := v.Map(func(target interface{}) interface{} {
+					l := target.([]interface{})
+					return l[i]
+				})
+
+				statementParameters[j] = parameter{path: lp.path, paramType: lp.paramType, value: fn}
+			case []interface{}:
+				statementParameters[j] = parameter{path: lp.path, paramType: lp.paramType, value: v[i]}
+			}
 		}
 
 		result[i] = statementParameters
@@ -151,13 +176,25 @@ func zipListParams(listParams []listParameters) [][]parameter {
 func minimumListParamLength(listParams []listParameters) uint64 {
 	var result uint64 = math.MaxUint64
 	for _, lp := range listParams {
-		length := uint64(len(lp.value))
+		length := valueLength(lp)
 		if length < result {
 			result = length
 		}
 	}
 
 	return result
+}
+
+func valueLength(lp listParameters) uint64 {
+	switch v := lp.value.(type) {
+	case []interface{}:
+		return uint64(len(v))
+	case domain.AsQuery:
+		target := v.Target().([]interface{})
+		return uint64(len(target))
+	default:
+		return math.MaxUint64
+	}
 }
 
 func copyStatement(statement domain.Statement) domain.Statement {
