@@ -144,19 +144,27 @@ type stubDatabase struct {
 	findQuery             restql.SavedQueryRevision
 }
 
+func (s stubDatabase) FindQueriesForNamespace(ctx context.Context, namespace string, archived bool) ([]restql.SavedQuery, error) {
+	panic("implement me")
+}
+
+func (s stubDatabase) FindQueryWithAllRevisions(ctx context.Context, namespace string, queryName string, archived bool) (restql.SavedQuery, error) {
+	panic("implement me")
+}
+
+func (s stubDatabase) UpdateQueryArchiving(ctx context.Context, namespace string, queryName string, archived bool) error {
+	panic("implement me")
+}
+
+func (s stubDatabase) UpdateRevisionArchiving(ctx context.Context, namespace string, name string, revision int, archived bool) error {
+	panic("implement me")
+}
+
 func (s stubDatabase) Name() string {
 	panic("implement me")
 }
 
 func (s stubDatabase) FindAllNamespaces(ctx context.Context) ([]string, error) {
-	panic("implement me")
-}
-
-func (s stubDatabase) FindQueriesForNamespace(ctx context.Context, namespace string) (map[string][]restql.SavedQueryRevision, error) {
-	panic("implement me")
-}
-
-func (s stubDatabase) FindQueryWithAllRevisions(ctx context.Context, namespace string, queryName string) ([]restql.SavedQueryRevision, error) {
 	panic("implement me")
 }
 
