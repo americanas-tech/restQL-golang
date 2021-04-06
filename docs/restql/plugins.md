@@ -7,8 +7,20 @@ This is done by leveraging Go Modules with the help of the [restQL-cli](https://
 ## Plugin types
 
 Currently, restQL supports following types of plugins:
-- Lifecycle plugin: defined by the interface `restql.LifecyclePlugin`, it allows you to execute code at various points of the query execution, like before and after an HTTP request is made. This plugin type is specially useful for monitoring purposes, since it allows you to derive countless metrics from the given data. 
-- Database plugin: defined by the interface `restql.DatabasePlugin`, it allows you to use any an external database to store mappings and queries. 
+
+### Lifecycle 
+
+Defined by the interface `restql.LifecyclePlugin`, it allows you to execute code at various points of the query execution, like before and after an HTTP request is made.
+
+This plugin type is specially useful for monitoring purposes, since it allows you to derive countless metrics from the given data. 
+
+### Database
+
+Defined by the interface `restql.DatabasePlugin`, it allows you to use any an external database to store mappings and queries.
+
+The methods on this interface that support the archiving feature on the Administrative API have some assumptions upon its implementation:
+- `UpdateQueryArchiving`: when a query is archived through this method, all its revisions must be also marked as archived. Also, when a query is unarchived its revisions must remain archived.
+- `UpdateRevisionArchiving`: when a revision is unarchived its query must also be marked as unarchived.
 
 ## Developing plugins
 
