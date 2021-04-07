@@ -3,7 +3,7 @@ package eval
 import (
 	"context"
 	"errors"
-	"github.com/b2wdigital/restQL-golang/v5/pkg/restql"
+	"github.com/b2wdigital/restQL-golang/v6/pkg/restql"
 )
 
 // MappingsReader is an interface implemented by types that

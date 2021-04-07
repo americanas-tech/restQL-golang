@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/b2wdigital/restQL-golang/v5/test"
+	"github.com/b2wdigital/restQL-golang/v6/test"
 
 	//"strings"
 	"testing"

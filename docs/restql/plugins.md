@@ -33,7 +33,7 @@ For example, if you are developing a Lifecycle plugin, the recommended entrypoin
 ```go
 package main
 
-import "github.com/b2wdigital/restQL-golang/v5/pkg/restql"
+import "github.com/b2wdigital/restQL-golang/v6/pkg/restql"
 
 func init() {
     restql.RegisterPlugin(restql.PluginInfo{

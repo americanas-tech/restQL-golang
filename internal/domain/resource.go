@@ -1,6 +1,6 @@
 package domain
 
-import "github.com/b2wdigital/restQL-golang/v5/pkg/restql"
+import "github.com/b2wdigital/restQL-golang/v6/pkg/restql"
 
 // ResourceID is an unique identifier used by a statement.
 // If an alias is present, it is used. Otherwise, the resource

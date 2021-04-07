@@ -3,12 +3,12 @@ package persistence
 import (
 	"context"
 	"fmt"
-	"github.com/b2wdigital/restQL-golang/v5/pkg/restql"
+	"github.com/b2wdigital/restQL-golang/v6/pkg/restql"
 	"io/ioutil"
 	"testing"
 
-	"github.com/b2wdigital/restQL-golang/v5/internal/platform/logger"
-	"github.com/b2wdigital/restQL-golang/v5/test"
+	"github.com/b2wdigital/restQL-golang/v6/internal/platform/logger"
+	"github.com/b2wdigital/restQL-golang/v6/test"
 )
 
 const mytenant = "mytenant"

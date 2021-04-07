@@ -2,8 +2,8 @@ package eval
 
 import (
 	"fmt"
-	"github.com/b2wdigital/restQL-golang/v5/internal/domain"
-	"github.com/b2wdigital/restQL-golang/v5/pkg/restql"
+	"github.com/b2wdigital/restQL-golang/v6/internal/domain"
+	"github.com/b2wdigital/restQL-golang/v6/pkg/restql"
 	"github.com/imdario/mergo"
 	"github.com/pkg/errors"
 )

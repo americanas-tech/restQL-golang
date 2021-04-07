@@ -3,7 +3,7 @@ package e2e
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/b2wdigital/restQL-golang/v5/test"
+	"github.com/b2wdigital/restQL-golang/v6/test"
 	"io"
 	"net/http"
 	"strings"

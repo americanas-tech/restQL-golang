@@ -1,7 +1,7 @@
 package httpclient
 
 import (
-	"github.com/b2wdigital/restQL-golang/v5/pkg/restql"
+	"github.com/b2wdigital/restQL-golang/v6/pkg/restql"
 	"github.com/valyala/fasthttp"
 	"time"
 )

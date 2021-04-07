@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/b2wdigital/restQL-golang/v5/test"
+	"github.com/b2wdigital/restQL-golang/v6/test"
 )
 
 func TestOnlyQualifierOnFromStatement(t *testing.T) {

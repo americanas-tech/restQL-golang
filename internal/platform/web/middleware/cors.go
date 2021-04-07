@@ -2,7 +2,7 @@ package middleware
 
 import (
 	"bytes"
-	"github.com/b2wdigital/restQL-golang/v5/pkg/restql"
+	"github.com/b2wdigital/restQL-golang/v6/pkg/restql"
 	"net/http"
 	"strconv"
 	"strings"

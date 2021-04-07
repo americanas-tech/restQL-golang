@@ -3,8 +3,8 @@ package cache
 import (
 	"context"
 
-	"github.com/b2wdigital/restQL-golang/v5/internal/platform/persistence"
-	"github.com/b2wdigital/restQL-golang/v5/pkg/restql"
+	"github.com/b2wdigital/restQL-golang/v6/internal/platform/persistence"
+	"github.com/b2wdigital/restQL-golang/v6/pkg/restql"
 	"github.com/pkg/errors"
 )
 

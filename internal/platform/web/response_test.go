@@ -2,12 +2,12 @@ package web_test
 
 import (
 	"encoding/json"
-	"github.com/b2wdigital/restQL-golang/v5/internal/domain"
-	"github.com/b2wdigital/restQL-golang/v5/pkg/restql"
+	"github.com/b2wdigital/restQL-golang/v6/internal/domain"
+	"github.com/b2wdigital/restQL-golang/v6/pkg/restql"
 	"testing"
 
-	"github.com/b2wdigital/restQL-golang/v5/internal/platform/web"
-	"github.com/b2wdigital/restQL-golang/v5/test"
+	"github.com/b2wdigital/restQL-golang/v6/internal/platform/web"
+	"github.com/b2wdigital/restQL-golang/v6/test"
 )
 
 func TestMakeQueryResponse(t *testing.T) {
