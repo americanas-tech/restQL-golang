@@ -1,6 +1,6 @@
 module github.com/b2wdigital/restQL-golang/v6
 
-go 1.15
+go 1.16
 
 require (
 	github.com/bluele/gcache v0.0.0-20190518031135-bc40bd653833
