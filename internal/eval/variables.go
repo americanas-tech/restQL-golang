@@ -3,6 +3,7 @@ package eval
 import (
 	"encoding/json"
 	"github.com/b2wdigital/restQL-golang/v6/pkg/restql"
+	"net/http"
 	"strconv"
 
 	"github.com/b2wdigital/restQL-golang/v6/internal/domain"
@@ -315,7 +316,8 @@ func getUniqueParamValue(name string, input restql.QueryInput) (interface{}, boo
 		return value, true
 	}
 
-	headerValue, found := input.Headers[name]
+	headerKey := http.CanonicalHeaderKey(name)
+	headerValue, found := input.Headers[headerKey]
 	return headerValue, found
 }
 
