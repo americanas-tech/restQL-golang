@@ -3,6 +3,12 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"os"
+	"os/signal"
+	"runtime"
+	"syscall"
+	"time"
+
 	"github.com/b2wdigital/restQL-golang/v6/internal/platform/conf"
 	"github.com/b2wdigital/restQL-golang/v6/internal/platform/logger"
 	"github.com/b2wdigital/restQL-golang/v6/internal/platform/web"
@@ -11,11 +17,6 @@ import (
 	"github.com/valyala/fasthttp"
 	_ "go.uber.org/automaxprocs"
 	"golang.org/x/sync/errgroup"
-	"os"
-	"os/signal"
-	"runtime"
-	"syscall"
-	"time"
 )
 
 var build string
@@ -68,7 +69,7 @@ func startServer() error {
 		TCPKeepalive:                  true,
 		IdleTimeout:                   serverCfg.IdleTimeout,
 		ReadTimeout:                   serverCfg.ReadTimeout,
-		DisableHeaderNamesNormalizing: true,
+		DisableHeaderNamesNormalizing: false,
 	}
 	health := &fasthttp.Server{
 		Name:                          "health",
@@ -76,7 +77,7 @@ func startServer() error {
 		TCPKeepalive:                  true,
 		IdleTimeout:                   serverCfg.IdleTimeout,
 		ReadTimeout:                   serverCfg.ReadTimeout,
-		DisableHeaderNamesNormalizing: true,
+		DisableHeaderNamesNormalizing: false,
 	}
 
 	serverErrors := make(chan error, 1)
