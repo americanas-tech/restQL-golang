@@ -3,10 +3,10 @@ package domain
 // Methods available to be used in query statements.
 const (
 	FromMethod   string = "from"
-	ToMethod            = "to"
-	IntoMethod          = "into"
-	UpdateMethod        = "update"
-	DeleteMethod        = "delete"
+	ToMethod     string = "to"
+	IntoMethod   string = "into"
+	UpdateMethod string = "update"
+	DeleteMethod string = "delete"
 )
 
 // Query is the internal representation of the restQL language.

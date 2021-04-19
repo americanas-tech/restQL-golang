@@ -2,6 +2,7 @@ package persistence
 
 import (
 	"context"
+
 	"github.com/b2wdigital/restQL-golang/v6/pkg/restql"
 	"github.com/pkg/errors"
 )
@@ -181,11 +182,7 @@ func revisionsUnion(a, b []restql.SavedQueryRevision) []restql.SavedQueryRevisio
 
 	result := make([]restql.SavedQueryRevision, len(a))
 	copy(result, a)
-
-	for i, v := range b {
-		result[i] = v
-	}
-
+	copy(result, b)
 	return result
 }
 
@@ -261,11 +258,7 @@ func (qw QueryWriter) allowWrite(namespace string, name string) bool {
 	}
 
 	_, found = findQueryByName(namespaceQueries, name)
-	if !found {
-		return true
-	}
-
-	return false
+	return !found
 }
 
 func findQueryByName(queries []restql.SavedQuery, name string) (restql.SavedQuery, bool) {

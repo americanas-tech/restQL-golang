@@ -383,5 +383,4 @@ func (l *limiter) Release() {
 	}
 
 	l.bucket = l.bucket + 1
-	return
 }

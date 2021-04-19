@@ -48,8 +48,7 @@ func (r restQl) ValidateQuery(ctx *fasthttp.RequestCtx) error {
 }
 
 func (r restQl) RunAdHocQuery(reqCtx *fasthttp.RequestCtx) error {
-	ctx := middleware.GetNativeContext(reqCtx)
-	ctx = restql.WithLogger(reqCtx, r.log)
+	ctx := restql.WithLogger(reqCtx, r.log)
 
 	tenant, err := makeTenant(reqCtx, r.config.Tenant)
 	if err != nil {

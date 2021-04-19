@@ -2,8 +2,9 @@ package cache
 
 import (
 	"context"
-	"github.com/b2wdigital/restQL-golang/v6/pkg/restql"
 	"time"
+
+	"github.com/b2wdigital/restQL-golang/v6/pkg/restql"
 
 	"github.com/bluele/gcache"
 	"github.com/pkg/errors"
@@ -167,24 +168,20 @@ func (c *Cache) setupRefreshWorker() *refreshWorker {
 type refreshWorker struct {
 	log           restql.Logger
 	cache         *Cache
-	refreshFn     Loader
 	refreshWorkCh chan interface{}
 	ticker        *time.Ticker
 }
 
 func (rw *refreshWorker) Run() {
-	for {
-		select {
-		case <-rw.ticker.C:
-			for key := range rw.refreshWorkCh {
-				key := key
-				go func() {
-					_, err := rw.cache.populate(context.Background(), key)
-					if err != nil {
-						rw.log.Error("failed to refresh cache item in background", err)
-					}
-				}()
-			}
+	for range rw.ticker.C {
+		for key := range rw.refreshWorkCh {
+			key := key
+			go func() {
+				_, err := rw.cache.populate(context.Background(), key)
+				if err != nil {
+					rw.log.Error("failed to refresh cache item in background", err)
+				}
+			}()
 		}
 	}
 }

@@ -8,7 +8,7 @@ import (
 
 const (
 	valuesParamType string = "values"
-	bodyParamType          = "body"
+	bodyParamType   string = "body"
 )
 
 type parameter struct {

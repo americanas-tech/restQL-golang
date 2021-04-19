@@ -300,7 +300,7 @@ func TestDeleteResource(t *testing.T) {
 delete planets
 `
 
-	expectedResponse := fmt.Sprintf(`
+	expectedResponse := `
 	{
 		"planets": {
 			"details": {
@@ -310,7 +310,7 @@ delete planets
 			},
 			"result": {}
 		}
-	}`)
+	}`
 
 	mockServer := test.NewMockServer(mockPort)
 	defer mockServer.Teardown()

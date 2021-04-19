@@ -2,12 +2,13 @@ package middleware
 
 import (
 	"context"
-	"github.com/b2wdigital/restQL-golang/v6/pkg/restql"
 	"io"
 	"net"
 	"sync"
 	"syscall"
 	"time"
+
+	"github.com/b2wdigital/restQL-golang/v6/pkg/restql"
 )
 
 // ConnManager keeps track of active TCP connections
@@ -86,19 +87,16 @@ func (cm *ConnManager) watchConn(conn net.Conn, callback func()) {
 	ticker := time.NewTicker(cm.watchInterval)
 	defer ticker.Stop()
 
-	for {
-		select {
-		case <-ticker.C:
-			err = rc.Read(fdReader)
-			if err != nil {
-				callback()
-				return
-			}
+	for range ticker.C {
+		err = rc.Read(fdReader)
+		if err != nil {
+			callback()
+			return
+		}
 
-			if sysErr != nil {
-				callback()
-				return
-			}
+		if sysErr != nil {
+			callback()
+			return
 		}
 	}
 }
