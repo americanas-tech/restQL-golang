@@ -11,7 +11,7 @@ import (
 	"github.com/b2wdigital/restQL-golang/v6/pkg/restql"
 )
 
-var envMappingWithTenantRegex = regexp.MustCompile("^RESTQL_MAPPING_(\\w+)_(\\w+)$")
+var envMappingWithTenantRegex = regexp.MustCompile(`^RESTQL_MAPPING_(\w+)_(\w+)$`)
 
 // MappingsReader fetch indexed mappings from database,
 // configuration file and environment variable.

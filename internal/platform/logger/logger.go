@@ -3,13 +3,10 @@ package logger
 import (
 	"fmt"
 	"io"
-	"io/ioutil"
 
 	"github.com/b2wdigital/restQL-golang/v6/pkg/restql"
 	"github.com/rs/zerolog"
 )
-
-var noOpLogger = New(ioutil.Discard, LogOptions{})
 
 // LogOptions represents available logging configurations
 type LogOptions struct {

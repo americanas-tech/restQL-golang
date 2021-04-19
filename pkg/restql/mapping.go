@@ -2,13 +2,14 @@ package restql
 
 import (
 	"fmt"
-	"github.com/pkg/errors"
 	"regexp"
 	"strings"
+
+	"github.com/pkg/errors"
 )
 
 var pathParamRegex = regexp.MustCompile(":([^/]+)/?")
-var urlRegex = regexp.MustCompile("(https?)://([^/]+)([^?]*)\\??(.*)")
+var urlRegex = regexp.MustCompile(`(https?)://([^/]+)([^?]*)\??(.*)`)
 
 // Mapping represents the association of a name to a REST resource url.
 // It support special syntax in the URL to provide dynamic value substitution, like:

@@ -2,10 +2,11 @@ package middleware
 
 import (
 	"bytes"
-	"github.com/b2wdigital/restQL-golang/v6/pkg/restql"
 	"net/http"
 	"strconv"
 	"strings"
+
+	"github.com/b2wdigital/restQL-golang/v6/pkg/restql"
 
 	"github.com/valyala/fasthttp"
 )
@@ -302,9 +303,5 @@ func (w wildcard) match(s []byte) bool {
 	}
 
 	ss := s[len(s)-len(w.suffix):]
-	if !bytes.EqualFold(ss, w.suffix) {
-		return false
-	}
-
-	return true
+	return bytes.EqualFold(ss, w.suffix)
 }

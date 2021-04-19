@@ -26,6 +26,8 @@ jobs:
       - name: Run unit tests
         shell: bash
         run: |
+          export PATH=$PATH:$(go env GOPATH)/bin
+          (cd $(mktemp -d); GO111MODULE=on go get honnef.co/go/tools/cmd/staticcheck@v0.1.3) 
           make unit | tee unit-test.log
 
       - name: Upload unit test logs

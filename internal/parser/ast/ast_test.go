@@ -1,7 +1,6 @@
 package ast_test
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/b2wdigital/restQL-golang/v6/internal/parser/ast"
@@ -199,7 +198,7 @@ func TestAstGenerator(t *testing.T) {
 		},
 		{
 			"Get query with list query parameters delimited by new line",
-			fmt.Sprintf("from hero with weapons = [\"sword\"\n\"shield\"]"),
+			"from hero with weapons = [\"sword\"\n\"shield\"]",
 			ast.Query{Blocks: []ast.Block{{Method: ast.FromMethod, Resource: "hero", Qualifiers: []ast.Qualifier{{With: &ast.Parameters{
 				KeyValues: []ast.KeyValue{{Key: "weapons", Value: ast.Value{List: []ast.Value{{Primitive: &ast.Primitive{String: String("sword")}}, {Primitive: &ast.Primitive{String: String("shield")}}}}}},
 			}}}}}},
@@ -249,7 +248,7 @@ func TestAstGenerator(t *testing.T) {
 		},
 		{
 			"Get query with object query parameters with multiple key/values delimited by new line",
-			fmt.Sprintf("from hero with id = { \"id\": \"1\",\n\"name\": \"batman\" }"),
+			"from hero with id = { \"id\": \"1\",\n\"name\": \"batman\" }",
 			ast.Query{Blocks: []ast.Block{{Method: ast.FromMethod, Resource: "hero", Qualifiers: []ast.Qualifier{{With: &ast.Parameters{
 				KeyValues: []ast.KeyValue{{Key: "id", Value: ast.Value{Object: []ast.ObjectEntry{{Key: "id", Value: ast.Value{Primitive: &ast.Primitive{String: String("1")}}}, {Key: "name", Value: ast.Value{Primitive: &ast.Primitive{String: String("batman")}}}}}}},
 			}}}}}},
@@ -307,7 +306,7 @@ func TestAstGenerator(t *testing.T) {
 		},
 		{
 			"Get query with multiple parameters delimited by new line and using keys with dots",
-			fmt.Sprintf("from hero with hero.id = 1\nhero.name = \"batman\""),
+			"from hero with hero.id = 1\nhero.name = \"batman\"",
 			ast.Query{Blocks: []ast.Block{{Method: ast.FromMethod, Resource: "hero", Qualifiers: []ast.Qualifier{{With: &ast.Parameters{KeyValues: []ast.KeyValue{
 				{Key: "hero.id", Value: ast.Value{Primitive: &ast.Primitive{Int: Int(1)}}},
 				{Key: "hero.name", Value: ast.Value{Primitive: &ast.Primitive{String: String("batman")}}},
@@ -536,7 +535,7 @@ func TestAstGenerator(t *testing.T) {
 		},
 		{
 			"Get query with select filter delimited by new line",
-			fmt.Sprintf("from hero only name\nweapons"),
+			"from hero only name\nweapons",
 			ast.Query{Blocks: []ast.Block{{Method: ast.FromMethod, Resource: "hero", Qualifiers: []ast.Qualifier{{Only: []ast.Filter{{Field: []string{"name"}}, {Field: []string{"weapons"}}}}}}}},
 		},
 		{
