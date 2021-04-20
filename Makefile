@@ -15,8 +15,8 @@ unit:
 e2e:
 	make e2e-up &
 	sleep 10
-	make e2e-run
-
+	make e2e-run && fuser -k 9000/tcp && exit 0 || fuser -k 9000/tcp && exit 1
+	
 e2e-up:
 	RESTQL_CONFIG=./test/e2e/restql.yml make dev
 
