@@ -37,7 +37,7 @@ You can use the `pprof` tool to investigate restQL performance. To enable it set
 - Health port: set through `RESTQL_HEALTH_PORT` environment variable.
 - Profiler port: set through `RESTQL_PPROF_PORT` environment variable.
 
-**Enable Administrative API**: restQL exposes a set of endpoints to configure queries and mappings stored on the database. One can enable it through the `http.server.admin.enable` field or the `RESTQL_ADMIN_ENABLE` environment variable. To find more about it go to [Administrative API](/restql/admin.md). 
+**Enable Administrative API**: restQL exposes a set of endpoints to configure queries and mappings stored on the database. One can enable it through the `http.server.admin.enable` field or the `RESTQL_ADMIN_ENABLE` environment variable. To find more about it go to [Administrative API](/restql/admin.md).
 
 **Graceful shutdown**: when restQL receives a `SIGTERM` signal it starts the shutdown, avoiding accepting new requests and waiting for the ongoing ones to finish before exiting. You can define a timeout for this process using `http.server.gracefulShutdownTimeout` field in the YAML configuration, after which restQL will break all running requests and exit.
 
@@ -45,9 +45,11 @@ You can use the `pprof` tool to investigate restQL performance. To enable it set
 
 **Middlewares**: currently restQL support 3 built-in middlewares, setting any of the fields automatically enable the given middleware.
 
+> From version 6.0.0 all middlewares have an `enable` field that must be set to `true` in order for them to be activated.
+
 - Request ID: this middleware generates a unique id for each request restQL API receives. The `http.server.middlewares.requestId.header` field define the header name use to return the generated id. The `http.server.middlewares.requestId.strategy` defines how the id will be generated and can be either `base64` or `uuid`.
 - Timeout: this middleware limits the maximum time any request can take. The `http.server.middlewares.timeout.duration` field accept a time duration value.
-- Request Cancellation: this middleware stops query execution when the client drops the connection. This improves fault response as it avoids unnecessary computation and reduces traffic on downstream APIs. By default, this middleware is disable but can be activated with the configuration field `http.server.middlewares.requestCancellation.enable`. You can also manage the connection watching interval with the field `http.server.middlewares.requestCancellation.watchingInterval`, which accepts a duration string.
+- Request Cancellation: this middleware stops query execution when the client drops the connection. This improves fault response as it avoids unnecessary computation and reduces traffic on downstream APIs. You can also manage the connection watching interval with the field `http.server.middlewares.requestCancellation.watchingInterval`, which accepts a duration string.
 - CORS: Cross-Origin Resource Sharing is a specification that enables truly open access across domain-boundaries.
   You can configure your own CORS headers either via the configuration file:
   ```yaml
@@ -81,22 +83,22 @@ RestQL primary feature is performing optimized HTTP calls, but since each enviro
 - `http.client.maxConnectionsPerHost`: limits the size of the connection pool for each host.
 - `http.client.dnsRefreshInterval`: defines the time a DNS query result will be cached.
 
-
 #### Concurrency
 
 RestQL provides configuration parameters to limit the workload that it will accept.
 
-With these guardrails in place, once these thresholds are reach restQL will deny service with a *507 Insufficient Storage* status code. This was chosen because in practice these limits exists to avoid unbound growth of goroutines and memory usage that would lead to application restarts.
+With these guardrails in place, once these thresholds are reach restQL will deny service with a _507 Insufficient Storage_ status code. This was chosen because in practice these limits exists to avoid unbound growth of goroutines and memory usage that would lead to application restarts.
 
 It is best practice to always run production restQL deployments with these parameters set. The absence of those or defining it to `0` will disable the mechanisms that avoid linear resource consumption when workload increase.
 
 **Maximum concurrent queries**: this is the first limiter and will accept or reject a query entirely. It can be defined with the configuration field `http.client.maxConcurrentQueries` or through the environment variable `RESTQL_MAX_CONCURRENT_QUERIES`. This parameter should be more strict because it has more impact on reducing resource consumption and fails the execution faster.
 
-**Maximum concurrent goroutines**: this is the second limiter and will accept or reject a goroutine call when running a query. It can be defined with the configuration field `http.client.maxConcurrentGoroutines` or through the environment variable `RESTQL_MAX_CONCURRENT_GOROUTINES`. This parameter should be more loose since the numbers of goroutines can vary drastically depending on runtime data that define the number of multiplexed calls that should be made. Also, if during a query execution one goroutine fails to be accepted, the entire query will be discarted, and a *507 Insufficient Storage* status code will be returned.
+**Maximum concurrent goroutines**: this is the second limiter and will accept or reject a goroutine call when running a query. It can be defined with the configuration field `http.client.maxConcurrentGoroutines` or through the environment variable `RESTQL_MAX_CONCURRENT_GOROUTINES`. This parameter should be more loose since the numbers of goroutines can vary drastically depending on runtime data that define the number of multiplexed calls that should be made. Also, if during a query execution one goroutine fails to be accepted, the entire query will be discarted, and a _507 Insufficient Storage_ status code will be returned.
 
 > P.S.: The goroutine limiter only applies to goroutines used to process and dispatch HTTP requests to upstream APIs. If measuring the total number of goroutines in your deployment, it will be greater than the maximum concurrent goroutine, since it does not impact the usage of goroutines to accept new connections and other tasks.
 
-*Deprecated on v4.2.0:*
+_Deprecated on v4.2.0:_
+
 - `http.client.maxRequestTimeout`: although every the timeout for calling a resource can be defined by the client in the query you can set a upper limit to request time, for example, if you set it to `2s` even though a query specifies a timeout of `10s` restQL will drop the request when it reachs its maximum timeout. It accepts a duration string.
 - `http.client.maxIdleConnections`: limits the size of the global idle connection pool.
 - `http.client.maxIdleConnectionsPerHost`: limits the size of the idle connection pool for each host.
