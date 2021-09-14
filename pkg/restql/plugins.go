@@ -143,14 +143,16 @@ type DatabasePlugin interface {
 
 	FindAllTenants(ctx context.Context) ([]string, error)
 	FindMappingsForTenant(ctx context.Context, tenantID string) ([]Mapping, error)
+	CreateMapping(ctx context.Context, tenantID string, mappingsName string, url string) error
 	SetMapping(ctx context.Context, tenantID string, mappingsName string, url string) error
 }
 
 // Errors returned by Database plugin
 var (
-	ErrMappingsNotFoundInDatabase  = errors.New("mappings not found in database")
-	ErrQueryNotFoundInDatabase     = errors.New("query not found in database")
-	ErrDatabaseCommunicationFailed = errors.New("failed to communicate with the database")
+	ErrMappingsNotFoundInDatabase     = errors.New("mappings not found in database")
+	ErrQueryNotFoundInDatabase        = errors.New("query not found in database")
+	ErrDatabaseCommunicationFailed    = errors.New("failed to communicate with the database")
+	ErrMappingAlreadyExistsInDatabase = errors.New("mapping already exist in database, create operation not allowed")
 )
 
 // ErrMappingsNotFound is the error returned when

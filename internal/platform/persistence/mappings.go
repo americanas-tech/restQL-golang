@@ -144,8 +144,13 @@ func NewMappingWriter(log restql.Logger, env domain.EnvSource, local map[string]
 	return MappingsWriter{log: log, env: envMappings, local: localMappings, db: db}
 }
 
-// Write sets a URL to a resource name under the given tenant
-func (mw *MappingsWriter) Write(ctx context.Context, tenant string, resource string, url string) error {
+// Create makes a new mapping from the name to the URL on the given tenant
+func (mw *MappingsWriter) Create(ctx context.Context, tenant string, resource string, url string) error {
+	return mw.db.CreateMapping(ctx, tenant, resource, url)
+}
+
+// Update sets a URL to a resource name under the given tenant
+func (mw *MappingsWriter) Update(ctx context.Context, tenant string, resource string, url string) error {
 	if !mw.allowWrite(tenant, resource) {
 		log := restql.GetLogger(ctx)
 		log.Error("write operation on resource mapping not allowed", ErrSetResourceMappingNotAllowed, "tenant", tenant, "resource", resource)

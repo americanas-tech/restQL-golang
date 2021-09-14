@@ -176,6 +176,10 @@ func (s stubDatabase) FindAllTenants(ctx context.Context) ([]string, error) {
 	panic("implement me")
 }
 
+func (s stubDatabase) CreateMapping(ctx context.Context, tenantID string, mappingsName string, url string) error {
+	panic("implement me")
+}
+
 func (s stubDatabase) SetMapping(ctx context.Context, tenantID string, mappingsName string, url string) error {
 	panic("implement me")
 }

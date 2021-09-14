@@ -77,6 +77,10 @@ func (n noOpDatabase) FindAllTenants(ctx context.Context) ([]string, error) {
 	return nil, errNoDatabase
 }
 
+func (n noOpDatabase) CreateMapping(ctx context.Context, tenantID string, mappingsName string, url string) error {
+	return errNoDatabase
+}
+
 func (n noOpDatabase) SetMapping(ctx context.Context, tenantID string, mappingsName string, url string) error {
 	return errNoDatabase
 }
