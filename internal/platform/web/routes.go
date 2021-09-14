@@ -87,7 +87,8 @@ func API(log restql.Logger, cfg *conf.Config) (fasthttp.RequestHandler, error) {
 func registerAdminEndpoints(adm *administrator, apiApp app) app {
 	apiApp.Handle(http.MethodGet, "/admin/tenant", adm.AllTenants)
 	apiApp.Handle(http.MethodGet, "/admin/tenant/{tenantName}/mapping", adm.TenantMappings)
-	apiApp.Handle(http.MethodPost, "/admin/tenant/{tenantName}/mapping/{resource}", adm.MapResource)
+	apiApp.Handle(http.MethodPost, "/admin/tenant/{tenantName}/mapping/{resource}", adm.CreateResource)
+	apiApp.Handle(http.MethodPut, "/admin/tenant/{tenantName}/mapping/{resource}", adm.UpdateResource)
 
 	apiApp.Handle(http.MethodGet, "/admin/namespace", adm.AllNamespaces)
 	apiApp.Handle(http.MethodGet, "/admin/namespace/{namespace}/query", adm.NamespaceQueries)

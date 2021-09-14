@@ -21,6 +21,7 @@ var errToStatusCode = map[error]int{
 	restql.ErrNamespaceNotFound:                 fasthttp.StatusNotFound,
 	restql.ErrQueryNotFoundInDatabase:           fasthttp.StatusNotFound,
 	restql.ErrMappingsNotFoundInDatabase:        fasthttp.StatusNotFound,
+	restql.ErrMappingAlreadyExistsInDatabase:    fasthttp.StatusBadRequest,
 	restql.ErrDatabaseCommunicationFailed:       fasthttp.StatusInsufficientStorage,
 	eval.ErrValidation:                          fasthttp.StatusUnprocessableEntity,
 	eval.ErrParser:                              fasthttp.StatusInternalServerError,

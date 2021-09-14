@@ -234,7 +234,39 @@ type mapResourceBody struct {
 	Url string `json:"url"`
 }
 
-func (adm *administrator) MapResource(reqCtx *fasthttp.RequestCtx) error {
+func (adm *administrator) CreateResource(reqCtx *fasthttp.RequestCtx) error {
+	ctx := middleware.GetNativeContext(reqCtx)
+	ctx = restql.WithLogger(ctx, adm.log)
+
+	tenantName, err := pathParamString(reqCtx, "tenantName")
+	if err != nil {
+		adm.log.Error("failed to load tenant name path param", err)
+		return err
+	}
+
+	resourceName, err := pathParamString(reqCtx, "resource")
+	if err != nil {
+		adm.log.Error("failed to load resource name path param", err)
+		return err
+	}
+
+	var mrb mapResourceBody
+
+	bytesBody := reqCtx.PostBody()
+	err = json.Unmarshal(bytesBody, &mrb)
+	if err != nil {
+		return err
+	}
+
+	err = adm.mw.Create(ctx, tenantName, resourceName, mrb.Url)
+	if err != nil {
+		return RespondError(reqCtx, err, errToStatusCode)
+	}
+
+	return Respond(reqCtx, nil, fasthttp.StatusCreated, nil)
+}
+
+func (adm *administrator) UpdateResource(reqCtx *fasthttp.RequestCtx) error {
 	ctx := middleware.GetNativeContext(reqCtx)
 	ctx = restql.WithLogger(ctx, adm.log)
 
@@ -263,12 +295,12 @@ func (adm *administrator) MapResource(reqCtx *fasthttp.RequestCtx) error {
 		return err
 	}
 
-	err = adm.mw.Write(ctx, tenantName, resourceName, mrb.Url)
+	err = adm.mw.Update(ctx, tenantName, resourceName, mrb.Url)
 	if err != nil {
 		return RespondError(reqCtx, err, errToStatusCode)
 	}
 
-	return Respond(reqCtx, nil, fasthttp.StatusCreated, nil)
+	return Respond(reqCtx, nil, fasthttp.StatusNoContent, nil)
 }
 
 func isAuthorized(ctx *fasthttp.RequestCtx, authorizationCode []byte) bool {
