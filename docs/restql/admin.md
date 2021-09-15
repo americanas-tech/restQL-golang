@@ -49,12 +49,22 @@ Optionally the client can send an `source` query parameter to filter mappings by
 ```
 
 ### `POST  /tenant/:name/mapping/:name`
-Update the URL associated with the mapping `:name` under the tenant `:tenant`
+Create an association from the mapping `:name` to the URL under the tenant `:tenant`
 
 **Body**: 
 ```json
 { 
-  "url": "http://some.api/resource/:id",
+  "url": "http://some.api/resource/:id"
+}
+```
+
+### `PUT  /tenant/:name/mapping/:name`
+Update an association from the mapping `:name` to the URL under the tenant `:tenant`
+
+**Body**:
+```json
+{ 
+  "url": "http://some.api/resource/:id"
 }
 ```
 
