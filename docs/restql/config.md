@@ -109,7 +109,7 @@ RestQL uses cache to avoid excessive database calls and grammar parsing. The cac
 
 For fetching mappings from the database restQL uses a stale-cache strategy, which runs an update task in background when the TTL for an entry expire and only replace the cached value if the fetching is successful. This allows restQL to stay updated but not break if the database goes offline.
 
-You can customize each cache maximum size and, for the mappings cache, other parameters.
+You can customize each cache maximum size and, for the mappings cache, other parameters. You can also disable all caching using `cache.disable: true` or `RESTQL_CACHE_DISABLE=true`.
 
 **Queries and Parser**
 

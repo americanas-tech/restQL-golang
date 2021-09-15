@@ -48,17 +48,10 @@ func API(log restql.Logger, cfg *conf.Config) (fasthttp.RequestHandler, error) {
 	})
 
 	mappingReader := persistence.NewMappingReader(log, cfg.Env, cfg.TenantMappings, db)
-	tenantCache := cache.New(log, cfg.Cache.Mappings.MaxSize,
-		cache.TenantCacheLoader(mappingReader),
-		cache.WithExpiration(cfg.Cache.Mappings.Expiration),
-		cache.WithRefreshInterval(cfg.Cache.Mappings.RefreshInterval),
-		cache.WithRefreshQueueLength(cfg.Cache.Mappings.RefreshQueueLength),
-	)
-	cacheMr := cache.NewMappingsReaderCache(log, tenantCache)
+	cacheMr := addMappingsReaderCache(log, cfg, mappingReader)
 
 	queryReader := persistence.NewQueryReader(log, cfg.Queries, db)
-	queryCache := cache.New(log, cfg.Cache.Query.MaxSize, cache.QueryCacheLoader(queryReader))
-	cacheQr := cache.NewQueryReaderCache(log, queryCache)
+	cacheQr := addQueryReaderCache(log, cfg, queryReader)
 
 	e := eval.NewEvaluator(log, cacheMr, cacheQr, r, parserCache, lifecycle)
 
@@ -81,6 +74,35 @@ func API(log restql.Logger, cfg *conf.Config) (fasthttp.RequestHandler, error) {
 	}
 
 	return app.RequestHandler(), nil
+}
+
+func addMappingsReaderCache(log restql.Logger, cfg *conf.Config, mappingReader persistence.MappingsReader) eval.MappingsReader {
+	if cfg.Cache.Disable {
+		return mappingReader
+	}
+
+	log.Info("mappings cache enabled")
+
+	tenantCache := cache.New(log, cfg.Cache.Mappings.MaxSize,
+		cache.TenantCacheLoader(mappingReader),
+		cache.WithExpiration(cfg.Cache.Mappings.Expiration),
+		cache.WithRefreshInterval(cfg.Cache.Mappings.RefreshInterval),
+		cache.WithRefreshQueueLength(cfg.Cache.Mappings.RefreshQueueLength),
+	)
+	cacheMr := cache.NewMappingsReaderCache(log, tenantCache)
+	return cacheMr
+}
+
+func addQueryReaderCache(log restql.Logger, cfg *conf.Config, queryReader persistence.QueryReader) eval.QueryReader {
+	if cfg.Cache.Disable {
+		return queryReader
+	}
+
+	log.Info("queries cache enabled")
+
+	queryCache := cache.New(log, cfg.Cache.Query.MaxSize, cache.QueryCacheLoader(queryReader))
+	cacheQr := cache.NewQueryReaderCache(log, queryCache)
+	return cacheQr
 }
 
 // registerAdminEndpoints adds handlers for administrative operations

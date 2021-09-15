@@ -93,6 +93,8 @@ type Config struct {
 	} `yaml:"logging"`
 
 	Cache struct {
+		Disable bool `yaml:"disable" env:"RESTQL_CACHE_DISABLE"`
+
 		Mappings struct {
 			MaxSize            int           `yaml:"maxSize" env:"RESTQL_CACHE_MAPPINGS_MAX_SIZE"`
 			Expiration         time.Duration `yaml:"expiration" env:"RESTQL_CACHE_MAPPINGS_EXPIRATION"`
