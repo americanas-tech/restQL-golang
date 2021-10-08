@@ -233,36 +233,46 @@ const debugHeaderName = "X-Restql-Debug"
 
 func isDebugEnabled(cfg *conf.Config, queryInput restql.QueryInput) bool {
 	switch {
+	case cfg.Debugging.Header && cfg.Debugging.QueryParam:
+		return extractDebugFromHeader(queryInput) || extractDebugFromQuery(queryInput)
 	case cfg.Debugging.Header:
-		header, found := queryInput.Headers[debugHeaderName]
-		if !found {
-			return false
-		}
-
-		d, err := strconv.ParseBool(header)
-		if err != nil {
-			return false
-		}
-
-		return d
+		return extractDebugFromHeader(queryInput)
 	case cfg.Debugging.QueryParam:
-		param, found := queryInput.Params[debugParamName]
-		if !found {
-			return false
-		}
-
-		debug, ok := param.(string)
-		if !ok {
-			return false
-		}
-
-		d, err := strconv.ParseBool(debug)
-		if err != nil {
-			return false
-		}
-
-		return d
+		return extractDebugFromQuery(queryInput)
 	default: // Both flags disabled, hence debugging is disabled
 		return false
 	}
+}
+
+func extractDebugFromHeader(queryInput restql.QueryInput) bool {
+	header, found := queryInput.Headers[debugHeaderName]
+	if !found {
+		return false
+	}
+
+	d, err := strconv.ParseBool(header)
+	if err != nil {
+		return false
+	}
+
+	return d
+}
+
+func extractDebugFromQuery(queryInput restql.QueryInput) bool {
+	param, found := queryInput.Params[debugParamName]
+	if !found {
+		return false
+	}
+
+	debug, ok := param.(string)
+	if !ok {
+		return false
+	}
+
+	d, err := strconv.ParseBool(debug)
+	if err != nil {
+		return false
+	}
+
+	return d
 }
