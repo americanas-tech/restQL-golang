@@ -23,6 +23,9 @@ http:
     maxIdleConnectionsPerHost: 512
     maxIdleConnectionDuration: 10s
 
+debugging:
+  queryParam: true
+
 logging:
   enable: true
   timestampFieldName: timestamp

@@ -78,7 +78,7 @@ func (r restQl) RunAdHocQuery(reqCtx *fasthttp.RequestCtx) error {
 		return RespondError(reqCtx, err, adhocErrToStatusCode)
 	}
 
-	debugEnabled := isDebugEnabled(input)
+	debugEnabled := isDebugEnabled(r.config, input)
 	response, err := MakeQueryResponse(result, debugEnabled)
 	if err != nil {
 		return RespondError(reqCtx, err, errToStatusCode)
@@ -113,7 +113,7 @@ func (r restQl) RunSavedQuery(reqCtx *fasthttp.RequestCtx) error {
 		return RespondError(reqCtx, err, errToStatusCode)
 	}
 
-	debugEnabled := isDebugEnabled(input)
+	debugEnabled := isDebugEnabled(r.config, input)
 	response, err := MakeQueryResponse(result, debugEnabled)
 	if err != nil {
 		return RespondError(reqCtx, err, errToStatusCode)
@@ -229,22 +229,40 @@ func makeQueryInput(ctx *fasthttp.RequestCtx, log restql.Logger) (restql.QueryIn
 }
 
 const debugParamName = "_debug"
+const debugHeaderName = "X-Restql-Debug"
 
-func isDebugEnabled(queryInput restql.QueryInput) bool {
-	param, found := queryInput.Params[debugParamName]
-	if !found {
+func isDebugEnabled(cfg *conf.Config, queryInput restql.QueryInput) bool {
+	switch {
+	case cfg.Debugging.Header:
+		header, found := queryInput.Headers[debugHeaderName]
+		if !found {
+			return false
+		}
+
+		d, err := strconv.ParseBool(header)
+		if err != nil {
+			return false
+		}
+
+		return d
+	case cfg.Debugging.QueryParam:
+		param, found := queryInput.Params[debugParamName]
+		if !found {
+			return false
+		}
+
+		debug, ok := param.(string)
+		if !ok {
+			return false
+		}
+
+		d, err := strconv.ParseBool(debug)
+		if err != nil {
+			return false
+		}
+
+		return d
+	default: // Both flags disabled, hence debugging is disabled
 		return false
 	}
-
-	debug, ok := param.(string)
-	if !ok {
-		return false
-	}
-
-	d, err := strconv.ParseBool(debug)
-	if err != nil {
-		return false
-	}
-
-	return d
 }

@@ -84,6 +84,11 @@ type Config struct {
 		} `yaml:"client"`
 	} `yaml:"http"`
 
+	Debugging struct {
+		QueryParam bool `yaml:"queryParam" env:"RESTQL_DEBUGGING_QUERY_PARAM"`
+		Header     bool `yaml:"header" env:"RESTQL_DEBUGGING_HEADER"`
+	} `yaml:"debugging"`
+
 	Logging struct {
 		Enable               bool   `yaml:"enable" env:"RESTQL_LOGGING_ENABLE"`
 		TimestampFieldName   string `yaml:"timestampFieldName"`
