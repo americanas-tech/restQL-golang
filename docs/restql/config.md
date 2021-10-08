@@ -139,6 +139,13 @@ Due to the traffic restQL is designed to handle it takes a conservative approach
 - `logging.timestamp`: boolean value that indicate with a timestamp field should be added to the log entry.
 - `logging.level`: the minimum log level required for a log entry to be output. You can see the list of available levels on the [zerolog documentation](https://github.com/rs/zerolog#leveled-logging).
 
+## Debugging
+
+RestQL supports a debug mode where its response verbosity is increased to include details about the HTTP request made to the upstream API resource. Currently, restQL support debug activation through a query parameter or header. By default, debugging with a query parameter is enabled. You can customize this with the following parameters in the configuration file or environment variables:
+
+- `debugging.queryParam` or `RESTQL_DEBUGGING_QUERY_PARAM`: enables debugging using the `_debug` query param, `true` by default.
+- `debugging.header` or `RESTQL_DEBUGGING_HEADER`: enables debugging using the `X-Restql-Debug` header, `false` by default.
+
 ## Alternative storage for mappings and queries
 
 To understand others stores besides a database for mappings and queries please refer to [Resource Mappings](/restql/resource-mappings.md) and [Running Queries](/restql/running-queries.md) pages.
