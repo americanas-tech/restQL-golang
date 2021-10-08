@@ -141,7 +141,7 @@ Due to the traffic restQL is designed to handle it takes a conservative approach
 
 ## Debugging
 
-RestQL supports a debug mode where its response verbosity is increased to include details about the HTTP request made to the upstream API resource. Currently, restQL support debug activation through a query parameter or header. By default, debugging with a query parameter is enabled. You can customize this with the following parameters in the configuration file or environment variables:
+RestQL supports a debug mode where its response verbosity is increased to include details about the HTTP request made to the upstream API resource. Currently, it supports debug activation through a query parameter and/or header. By default, debugging with a query parameter is enabled. You can customize this with the following parameters in the configuration file or environment variables:
 
 - `debugging.queryParam` or `RESTQL_DEBUGGING_QUERY_PARAM`: enables debugging using the `_debug` query param, `true` by default.
 - `debugging.header` or `RESTQL_DEBUGGING_HEADER`: enables debugging using the `X-Restql-Debug` header, `false` by default.
