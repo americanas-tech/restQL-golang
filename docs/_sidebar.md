@@ -7,6 +7,7 @@
   - [Resource Mappings](/restql/resource-mappings.md)
   - [Running Queries](/restql/running-queries.md)
   - [Cache Control](/restql/cache.md)
+  - [Administrative API](/restql/admin.md)
   - [Configurations](/restql/config.md)
   - [Manager](/restql/manager.md)
   - [Plugins](/restql/plugins.md)
