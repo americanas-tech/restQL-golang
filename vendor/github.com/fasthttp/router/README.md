@@ -1,6 +1,6 @@
 # Router
 
-[![Build Status](https://travis-ci.org/fasthttp/router.svg?branch=master)](https://travis-ci.org/fasthttp/router)
+[![Test status](https://github.com/fasthttp/router/actions/workflows/test.yml/badge.svg?branch=master)](https://github.com/fasthttp/router/actions?workflow=test)
 [![Coverage Status](https://coveralls.io/repos/fasthttp/router/badge.svg?branch=master&service=github)](https://coveralls.io/github/fasthttp/router?branch=master)
 [![Go Report Card](https://goreportcard.com/badge/github.com/fasthttp/router)](https://goreportcard.com/report/github.com/fasthttp/router)
 [![GoDev](https://img.shields.io/badge/go.dev-reference-007d9c?logo=go&logoColor=white)](https://pkg.go.dev/github.com/fasthttp/router)
@@ -132,7 +132,7 @@ If you need define an optional parameters, add `?` at the end of param name. `{n
 
 If you need define a validation, you could use a custom regex for the paramater value, add `:<regex>` after the name. For example: `{name:[a-zA-Z]{5}}`.
 
-**_Optional paramters and regex validation are compatibles, only add `?` between the name and the regex. For example: `{name?:[a-zA-Z]{5}}`._**
+**_Optional parameters and regex validation are compatibles, only add `?` between the name and the regex. For example: `{name?:[a-zA-Z]{5}}`._**
 
 ### Catch-All parameters
 

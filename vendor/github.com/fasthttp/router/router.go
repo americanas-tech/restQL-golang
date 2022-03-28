@@ -5,7 +5,8 @@ import (
 	"strings"
 
 	"github.com/fasthttp/router/radix"
-	"github.com/savsgio/gotils"
+	"github.com/savsgio/gotils/bytes"
+	"github.com/savsgio/gotils/strconv"
 	"github.com/valyala/bytebufferpool"
 	"github.com/valyala/fasthttp"
 )
@@ -19,7 +20,7 @@ var (
 
 	// MatchedRoutePathParam is the param name under which the path of the matched
 	// route is stored, if Router.SaveMatchedRoutePath is set.
-	MatchedRoutePathParam = fmt.Sprintf("__matchedRoutePath::%s__", gotils.RandBytes(make([]byte, 15)))
+	MatchedRoutePathParam = fmt.Sprintf("__matchedRoutePath::%s__", bytes.Rand(make([]byte, 15)))
 )
 
 // New returns a new router.
@@ -258,8 +259,8 @@ func (r *Router) Handle(method, path string, handler fasthttp.RequestHandler) {
 
 // Lookup allows the manual lookup of a method + path combo.
 // This is e.g. useful to build a framework around this router.
-// If the path was found, it returns the handler function and the path parameter
-// values. Otherwise the third return value indicates whether a redirection to
+// If the path was found, it returns the handler function.
+// Otherwise the second return value indicates whether a redirection to
 // the same path with an extra / without the trailing slash should be performed.
 func (r *Router) Lookup(method, path string, ctx *fasthttp.RequestCtx) (fasthttp.RequestHandler, bool) {
 	methodIndex := r.methodIndexOf(method)
@@ -370,7 +371,7 @@ func (r *Router) tryRedirect(ctx *fasthttp.RequestCtx, tree *radix.Tree, tsr boo
 
 	// Try to fix the request path
 	if r.RedirectFixedPath {
-		path := gotils.B2S(ctx.Request.URI().Path())
+		path := strconv.B2S(ctx.Request.URI().Path())
 
 		uri := bytebufferpool.Get()
 		found := tree.FindCaseInsensitivePath(
@@ -403,8 +404,8 @@ func (r *Router) Handler(ctx *fasthttp.RequestCtx) {
 		defer r.recv(ctx)
 	}
 
-	path := gotils.B2S(ctx.Request.URI().PathOriginal())
-	method := gotils.B2S(ctx.Request.Header.Method())
+	path := strconv.B2S(ctx.Request.URI().PathOriginal())
+	method := strconv.B2S(ctx.Request.Header.Method())
 	methodIndex := r.methodIndexOf(method)
 
 	if methodIndex > -1 {

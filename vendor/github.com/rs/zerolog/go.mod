@@ -1,8 +1,11 @@
 module github.com/rs/zerolog
 
+go 1.15
+
 require (
-	github.com/coreos/go-systemd v0.0.0-20190321100706-95778dfbb74e
-	github.com/pkg/errors v0.8.1
-	github.com/rs/xid v1.2.1
-	golang.org/x/tools v0.0.0-20190828213141-aed303cbaa74
+	github.com/coreos/go-systemd/v22 v22.3.2
+	github.com/pkg/errors v0.9.1
+	github.com/rs/xid v1.3.0
+	golang.org/x/crypto v0.0.0-20211215165025-cf75a172585e // indirect
+	golang.org/x/tools v0.1.7
 )
