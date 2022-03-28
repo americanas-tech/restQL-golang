@@ -1,33 +1,31 @@
-# github.com/BurntSushi/toml v0.3.1
-github.com/BurntSushi/toml
-# github.com/andybalholm/brotli v1.0.1
+# github.com/andybalholm/brotli v1.0.4
 github.com/andybalholm/brotli
-# github.com/bluele/gcache v0.0.0-20190518031135-bc40bd653833
+# github.com/bluele/gcache v0.0.2
 ## explicit
 github.com/bluele/gcache
-# github.com/caarlos0/env/v6 v6.3.0
+# github.com/caarlos0/env/v6 v6.9.1
 ## explicit
 github.com/caarlos0/env/v6
 # github.com/davecgh/go-spew v1.1.1
 ## explicit
-# github.com/fasthttp/router v1.3.2
+# github.com/fasthttp/router v1.4.7
 ## explicit
 github.com/fasthttp/router
 github.com/fasthttp/router/radix
-# github.com/google/go-cmp v0.5.2
+# github.com/google/go-cmp v0.5.7
 ## explicit
 github.com/google/go-cmp/cmp
 github.com/google/go-cmp/cmp/internal/diff
 github.com/google/go-cmp/cmp/internal/flags
 github.com/google/go-cmp/cmp/internal/function
 github.com/google/go-cmp/cmp/internal/value
-# github.com/google/uuid v1.1.2
+# github.com/google/uuid v1.3.0
 ## explicit
 github.com/google/uuid
-# github.com/imdario/mergo v0.3.11
+# github.com/imdario/mergo v0.3.12
 ## explicit
 github.com/imdario/mergo
-# github.com/klauspost/compress v1.11.9
+# github.com/klauspost/compress v1.15.1
 ## explicit
 github.com/klauspost/compress/flate
 github.com/klauspost/compress/gzip
@@ -35,99 +33,39 @@ github.com/klauspost/compress/zlib
 # github.com/pkg/errors v0.9.1
 ## explicit
 github.com/pkg/errors
-# github.com/rs/dnscache v0.0.0-20190621150935-06bb5526f76b
+# github.com/rs/dnscache v0.0.0-20211102005908-e0241e321417
 ## explicit
 github.com/rs/dnscache
-# github.com/rs/zerolog v1.20.0
+# github.com/rs/zerolog v1.26.1
 ## explicit
 github.com/rs/zerolog
 github.com/rs/zerolog/internal/cbor
 github.com/rs/zerolog/internal/json
 github.com/rs/zerolog/log
-# github.com/savsgio/gotils v0.0.0-20200616100644-13ff1fd2c28c
-github.com/savsgio/gotils
+# github.com/savsgio/gotils v0.0.0-20220323135742-7576ce6963fd
+github.com/savsgio/gotils/bytes
+github.com/savsgio/gotils/strconv
+github.com/savsgio/gotils/strings
+# github.com/stretchr/testify v1.5.1
+## explicit
 # github.com/valyala/bytebufferpool v1.0.0
 github.com/valyala/bytebufferpool
-# github.com/valyala/fasthttp v1.22.0
+# github.com/valyala/fasthttp v1.34.0
 ## explicit
 github.com/valyala/fasthttp
 github.com/valyala/fasthttp/fasthttpadaptor
 github.com/valyala/fasthttp/fasthttputil
 github.com/valyala/fasthttp/stackless
-# go.uber.org/automaxprocs v1.3.0
+# go.uber.org/automaxprocs v1.4.0
 ## explicit
 go.uber.org/automaxprocs
 go.uber.org/automaxprocs/internal/cgroups
 go.uber.org/automaxprocs/internal/runtime
 go.uber.org/automaxprocs/maxprocs
-# golang.org/x/lint v0.0.0-20200302205851-738671d3881b
-## explicit
-golang.org/x/lint
-golang.org/x/lint/golint
-# golang.org/x/mod v0.3.0
-golang.org/x/mod/semver
-# golang.org/x/sync v0.0.0-20200625203802-6e8e738ad208
+# golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 ## explicit
 golang.org/x/sync/errgroup
 golang.org/x/sync/singleflight
-# golang.org/x/tools v0.0.0-20200923182640-463111b69878
-## explicit
-golang.org/x/tools/go/analysis
-golang.org/x/tools/go/analysis/passes/inspect
-golang.org/x/tools/go/ast/astutil
-golang.org/x/tools/go/ast/inspector
-golang.org/x/tools/go/buildutil
-golang.org/x/tools/go/gcexportdata
-golang.org/x/tools/go/internal/cgo
-golang.org/x/tools/go/internal/gcimporter
-golang.org/x/tools/go/internal/packagesdriver
-golang.org/x/tools/go/loader
-golang.org/x/tools/go/packages
-golang.org/x/tools/go/types/objectpath
-golang.org/x/tools/go/types/typeutil
-golang.org/x/tools/internal/analysisinternal
-golang.org/x/tools/internal/event
-golang.org/x/tools/internal/event/core
-golang.org/x/tools/internal/event/keys
-golang.org/x/tools/internal/event/label
-golang.org/x/tools/internal/gocommand
-golang.org/x/tools/internal/lsp/fuzzy
-golang.org/x/tools/internal/packagesinternal
-golang.org/x/tools/internal/typesinternal
-# golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1
-golang.org/x/xerrors
-golang.org/x/xerrors/internal
-# gopkg.in/yaml.v2 v2.3.0
+# gopkg.in/yaml.v2 v2.4.0
 ## explicit
 gopkg.in/yaml.v2
-# honnef.co/go/tools v0.0.1-2020.1.5
-## explicit
-honnef.co/go/tools/arg
-honnef.co/go/tools/cmd/staticcheck
-honnef.co/go/tools/code
-honnef.co/go/tools/config
-honnef.co/go/tools/deprecated
-honnef.co/go/tools/edit
-honnef.co/go/tools/facts
-honnef.co/go/tools/functions
-honnef.co/go/tools/go/types/typeutil
-honnef.co/go/tools/internal/cache
-honnef.co/go/tools/internal/passes/buildir
-honnef.co/go/tools/internal/renameio
-honnef.co/go/tools/internal/robustio
-honnef.co/go/tools/internal/sharedcheck
-honnef.co/go/tools/ir
-honnef.co/go/tools/ir/irutil
-honnef.co/go/tools/lint
-honnef.co/go/tools/lint/lintdsl
-honnef.co/go/tools/lint/lintutil
-honnef.co/go/tools/lint/lintutil/format
-honnef.co/go/tools/loader
-honnef.co/go/tools/pattern
-honnef.co/go/tools/printf
-honnef.co/go/tools/report
-honnef.co/go/tools/simple
-honnef.co/go/tools/staticcheck
-honnef.co/go/tools/stylecheck
-honnef.co/go/tools/unused
-honnef.co/go/tools/version
