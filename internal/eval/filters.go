@@ -91,6 +91,9 @@ func extractUsingFilters(filters map[string]interface{}, resourceResult interfac
 					return nil, err
 				}
 			case map[string]interface{}:
+				if hasSelectAll {
+					subFilter["*"] = eot
+				}
 				f, err := extractUsingFilters(subFilter, value)
 				if err != nil {
 					return nil, err
@@ -105,6 +108,9 @@ func extractUsingFilters(filters map[string]interface{}, resourceResult interfac
 		node := makeListNode(hasSelectAll, resourceResult)
 
 		for i, r := range resourceResult {
+			if hasSelectAll {
+				filters["*"] = eot
+			}
 			f, err := extractUsingFilters(filters, r)
 			if err != nil {
 				return nil, err
