@@ -1,12 +1,12 @@
 package eval_test
 
 import (
-	"github.com/b2wdigital/restQL-golang/v6/pkg/restql"
 	"regexp"
 	"testing"
 
 	"github.com/b2wdigital/restQL-golang/v6/internal/domain"
 	"github.com/b2wdigital/restQL-golang/v6/internal/eval"
+	"github.com/b2wdigital/restQL-golang/v6/pkg/restql"
 	"github.com/b2wdigital/restQL-golang/v6/test"
 )
 
@@ -459,6 +459,32 @@ func TestOnlyFilters(t *testing.T) {
 					ResponseBody: restql.NewResponseBodyFromValue(
 						test.NoOpLogger,
 						test.Unmarshal(`{ "id": "12345", "weapons": [{"id": 1, "profile": {"type": "attack"}, "stats": {"damage": 2}}, {"id": 3, "profile": {"type": "buff"}, "stats": {"damage": 2}}] }`),
+					),
+				},
+			},
+		},
+		{
+			"should bring all elements and filter a nested list of objects using filterByRegex",
+			domain.Query{Statements: []domain.Statement{{
+				Resource: "hero",
+				Only: []interface{}{
+					domain.NewFilterByRegex([]string{"weapons", "bases"}, "name", "^two-handed-axe$"),
+					[]string{"*"},
+				},
+			}}},
+			domain.Resources{
+				"hero": restql.DoneResource{
+					ResponseBody: restql.NewResponseBodyFromValue(
+						test.NoOpLogger,
+						test.Unmarshal(`{ "id": "12345", "weapons": [{"id": 1, "profile": {"type": "attack"}, "bases": [{"name":"one-handed-axe","damage":2},{"name":"two-handed-axe","damage":5}]},{"id": 2, "profile": {"type": "defense"}, "stats": {"damage": 2}}, {"id": 3, "profile": {"type": "buff"}, "stats": {"damage": 2}}] }`),
+					),
+				},
+			},
+			domain.Resources{
+				"hero": restql.DoneResource{
+					ResponseBody: restql.NewResponseBodyFromValue(
+						test.NoOpLogger,
+						test.Unmarshal(`{ "id": "12345", "weapons": [{"id": 1, "profile": {"type": "attack"}, "bases": [{"name":"two-handed-axe","damage":5}]},{"id": 2, "profile": {"type": "defense"}, "stats": {"damage": 2}}, {"id": 3, "profile": {"type": "buff"}, "stats": {"damage": 2}}] }`),
 					),
 				},
 			},
