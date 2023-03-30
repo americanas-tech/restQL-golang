@@ -77,6 +77,17 @@ func applyEncoderToValue(log restql.Logger, value interface{}) interface{} {
 		}
 
 		return applyFlattenEncoder(log, applyEncoderToValue(log, value.Target()))
+	case domain.NoDuplicate:
+		target := value.Target()
+		switch t := target.(type) {
+		case domain.Chain:
+			return value
+		case []interface{}:
+			return applyNoDuplicateEncoder(t)
+		default:
+			return value
+		}
+
 	case domain.Function:
 		return value.Map(func(target interface{}) interface{} {
 			return applyEncoderToValue(log, target)
@@ -136,4 +147,33 @@ func flatten(ii []interface{}) []interface{} {
 	}
 
 	return res
+}
+
+func applyNoDuplicateEncoder(values []interface{}) interface{} {
+	if len(values) == 0 {
+		return values
+	}
+
+	first := values[0]
+	switch first.(type) {
+	case int, string:
+		return removeDuplicates(values)
+	default:
+		return values
+	}
+}
+
+func removeDuplicates(values []interface{}) interface{} {
+	set := make(map[interface{}]struct{})
+	idx := 0
+
+	for _, v := range values {
+		if _, ok := set[v]; !ok {
+			set[v] = struct{}{}
+			values[idx] = v
+			idx++
+		}
+	}
+
+	return values[:idx]
 }

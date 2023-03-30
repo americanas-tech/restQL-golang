@@ -149,6 +149,8 @@ func applyFunctions(v interface{}, functions []string) interface{} {
 			v = domain.NoExplode{Value: v}
 		case ast.AsQuery:
 			v = domain.AsQuery{Value: v}
+		case ast.NoDuplicate:
+			v = domain.NoDuplicate{Value: v}
 		}
 	}
 

@@ -214,14 +214,16 @@ func TestApplyEncoders(t *testing.T) {
 				With: domain.Params{Values: map[string]interface{}{
 					"map": map[string]interface{}{
 						"nested": map[string]interface{}{
-							"json":   domain.JSON{Value: map[string]interface{}{"id": 1, "name": "sword"}},
-							"base64": domain.Base64{Value: "12345abcdef"},
+							"json":          domain.JSON{Value: map[string]interface{}{"id": 1, "name": "sword"}},
+							"base64":        domain.Base64{Value: "12345abcdef"},
+							"no-duplicates": domain.NoDuplicate{Value: []interface{}{1, 1, 2, 3, 4, 3}},
 						},
 					},
 					"list": []interface{}{
 						[]interface{}{
 							domain.JSON{Value: map[string]interface{}{"id": 1, "name": "sword"}},
 							domain.Base64{Value: "12345abcdef"},
+							domain.NoDuplicate{Value: []interface{}{"1", "1", "2", "3", "4", "3"}},
 						},
 					},
 				}},
@@ -232,14 +234,16 @@ func TestApplyEncoders(t *testing.T) {
 				With: domain.Params{Values: map[string]interface{}{
 					"map": map[string]interface{}{
 						"nested": map[string]interface{}{
-							"json":   `{"id":1,"name":"sword"}`,
-							"base64": "MTIzNDVhYmNkZWY=",
+							"json":          `{"id":1,"name":"sword"}`,
+							"base64":        "MTIzNDVhYmNkZWY=",
+							"no-duplicates": []interface{}{1, 2, 3, 4},
 						},
 					},
 					"list": []interface{}{
 						[]interface{}{
 							`{"id":1,"name":"sword"}`,
 							"MTIzNDVhYmNkZWY=",
+							[]interface{}{"1", "2", "3", "4"},
 						},
 					},
 				}},

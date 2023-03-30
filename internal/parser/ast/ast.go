@@ -23,6 +23,7 @@ const (
 	Flatten             = "flatten"
 	NoExplode           = "no-explode"
 	AsQuery             = "as-query"
+	NoDuplicate         = "no-duplicates"
 )
 
 // Query is the root of the restQL AST.

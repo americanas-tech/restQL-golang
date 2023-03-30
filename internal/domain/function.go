@@ -353,3 +353,34 @@ func (f AsQuery) Arguments() []Arg {
 func (f AsQuery) Map(fn func(target interface{}) interface{}) Function {
 	return AsQuery{Value: fn(f.Value)}
 }
+
+// NoDuplicate is a Function that removes duplicate elements from lists.
+type NoDuplicate struct {
+	Value interface{}
+}
+
+// Argument fetches a NoDuplicate argument by name
+func (b NoDuplicate) Argument(name string) Arg {
+	return Arg{}
+}
+
+// SetArgument immutably updates the value of an argument by name
+func (b NoDuplicate) SetArgument(name string, value interface{}) Function {
+	return b
+}
+
+// Target return the value upon which NoDuplicate will be applied.
+func (b NoDuplicate) Target() interface{} {
+	return b.Value
+}
+
+// Arguments return the arguments provided to NoDuplicate function
+func (b NoDuplicate) Arguments() []Arg {
+	return nil
+}
+
+// Map apply the given function to the Target value
+// preserving the NoDuplicate as a wrapper.
+func (b NoDuplicate) Map(fn func(target interface{}) interface{}) Function {
+	return NoDuplicate{Value: fn(b.Value)}
+}

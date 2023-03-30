@@ -375,6 +375,26 @@ func TestAstGenerator(t *testing.T) {
 			}}},
 		},
 		{
+			"Get query with parameters removing duplicate elements",
+			`from hero with ids = ["abcd1234", "abcd", "abcd"] -> no-duplicates`,
+			ast.Query{Blocks: []ast.Block{{
+				Method:   ast.FromMethod,
+				Resource: "hero",
+				Qualifiers: []ast.Qualifier{{
+					With: &ast.Parameters{
+						KeyValues: []ast.KeyValue{
+							{
+								Key:       "ids",
+								Value:     ast.Value{List: []ast.Value{{Primitive: &ast.Primitive{String: String("abcd1234")}}, {Primitive: &ast.Primitive{String: String("abcd")}}, {Primitive: &ast.Primitive{String: String("abcd")}}}},
+								Functions: []string{"no-duplicates"},
+							},
+						},
+					},
+				}},
+			}},
+			},
+		},
+		{
 			"Get query with as-body function applied to parameter",
 			`from hero with id = [{"registryNumber": "abcdefg12345"}] -> as-body`,
 			ast.Query{Blocks: []ast.Block{{

@@ -317,6 +317,16 @@ func TestQueryParser(t *testing.T) {
 			domain.Query{Statements: []domain.Statement{{Method: "to", Resource: "hero", With: domain.Params{Values: map[string]interface{}{"id": 1, "context": domain.AsQuery{Value: "crossover"}}}}}},
 			`to hero with id = 1, context = "crossover" -> as-query`,
 		},
+		{
+			"Filter list field by unique values",
+			domain.Query{Statements: []domain.Statement{{Method: "from", Resource: "hero", With: domain.Params{Values: map[string]interface{}{"ids": domain.NoDuplicate{Value: []any{"abcd1234", "abc", "abc1234"}}}}}}},
+			`from hero with ids = ["abcd1234", "abc", "abc1234"] -> no-duplicates`,
+		},
+		{
+			"Filter list field by unique values with multiple functions applied",
+			domain.Query{Statements: []domain.Statement{{Method: "from", Resource: "hero", With: domain.Params{Values: map[string]interface{}{"ids": domain.NoMultiplex{domain.NoDuplicate{Value: []any{"abcd1234", "abc", "abc1234"}}}}}}}},
+			`from hero with ids = ["abcd1234", "abc", "abc1234"] -> no-duplicates -> no-multiplex`,
+		},
 	}
 
 	queryParser, err := parser.New()
