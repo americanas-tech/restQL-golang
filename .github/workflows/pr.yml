@@ -20,7 +20,7 @@ jobs:
         shell: bash
         run: |
           export PATH=$PATH:$(go env GOPATH)/bin
-          (cd $(mktemp -d); go install honnef.co/go/tools/cmd/staticcheck@v0.4.3)        
+          (cd $(mktemp -d); go install honnef.co/go/tools/cmd/staticcheck@v0.3.3)        
           make unit
 
       - name: Run e2e tests
