@@ -1,14 +1,15 @@
 package conf
 
 import (
-	"github.com/caarlos0/env/v6"
-	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
+
+	"github.com/caarlos0/env/v6"
+	"gopkg.in/yaml.v2"
 )
 
 const configFileName = "restql.yml"
@@ -39,6 +40,10 @@ type requestCancellationConf struct {
 	WatchInterval time.Duration `yaml:"watchInterval"`
 }
 
+type urlTenantConf struct {
+	Enable bool `yaml:"enable" env:"RESTQL_URL_TENANTS_ENABLED"`
+}
+
 // Config represents all parameters allowed in restQL runtime.
 type Config struct {
 	HTTP struct {
@@ -67,6 +72,7 @@ type Config struct {
 				Timeout             timeoutConf             `yaml:"timeout"`
 				Cors                corsConf                `yaml:"cors"`
 				RequestCancellation requestCancellationConf `yaml:"requestCancellation"`
+				URLTenant           urlTenantConf           `yaml:"urlTenant"`
 			} `yaml:"middlewares"`
 		} `yaml:"server"`
 
