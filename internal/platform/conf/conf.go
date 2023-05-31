@@ -41,7 +41,9 @@ type requestCancellationConf struct {
 }
 
 type urlTenantConf struct {
-	Enable bool `yaml:"enable" env:"RESTQL_URL_TENANTS_ENABLED"`
+	Enable        bool              `yaml:"enable" env:"RESTQL_URL_TENANTS_ENABLED"`
+	DefaultTenant string            `yaml:"defaultTenant" env:"RESTQL_URL_TENANTS_DEFAULT_TENANT"`
+	TenantsByHost map[string]string `yaml:"tenantsByHost" env:"RESTQL_URL_TENANTS_TENANTS_BY_HOSTS"`
 }
 
 // Config represents all parameters allowed in restQL runtime.

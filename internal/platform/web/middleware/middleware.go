@@ -72,7 +72,7 @@ func (d *Decorator) fetchEnabled() []Middleware {
 
 	if mwCfg.URLTenant.Enable {
 		d.log.Info("url tenant middleware enabled")
-		mws = append(mws, newUrlTenant(d.log))
+		mws = append(mws, newUrlTenant(d.log, mwCfg.URLTenant.DefaultTenant, mwCfg.URLTenant.TenantsByHost))
 	}
 
 	if mwCfg.Cors.Enable {
