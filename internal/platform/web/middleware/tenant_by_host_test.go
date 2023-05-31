@@ -7,7 +7,7 @@ import (
 	"github.com/valyala/fasthttp"
 )
 
-func Test_urlTenant_setTenant(t *testing.T) {
+func Test_tenantByHost_setTenant(t *testing.T) {
 	type fields struct {
 		log            restql.Logger
 		tenantsByHosts map[string]string
@@ -60,17 +60,17 @@ func Test_urlTenant_setTenant(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			u := urlTenant{
-				log:            tt.fields.log,
-				tenantsByHosts: tt.fields.tenantsByHosts,
-				defaultTenant:  tt.fields.defaultTenant,
+			u := tenantByHost{
+				log:           tt.fields.log,
+				tenantsByHost: tt.fields.tenantsByHosts,
+				defaultTenant: tt.fields.defaultTenant,
 			}
 			ctx := &fasthttp.RequestCtx{}
 			ctx.Request.SetHost(tt.host)
 			ctx.QueryArgs().Add("tenant", tt.tenant)
 			u.setTenant(ctx)
 			if got := string(ctx.QueryArgs().Peek("tenant")); got != tt.wantTenant {
-				t.Errorf("urlTenant.setTenant() = %v, want %v", got, tt.wantTenant)
+				t.Errorf("tenantByHost.setTenant() = %v, want %v", got, tt.wantTenant)
 			}
 		})
 	}

@@ -8,34 +8,34 @@ import (
 	"github.com/valyala/fasthttp"
 )
 
-type urlTenant struct {
-	log            restql.Logger
-	tenantsByHosts map[string]string
-	defaultTenant  string
+type tenantByHost struct {
+	log           restql.Logger
+	tenantsByHost map[string]string
+	defaultTenant string
 }
 
-func newUrlTenant(log restql.Logger, defaultTenant string, tenantsByHost map[string]string) Middleware {
-	return urlTenant{
-		log:            log,
-		tenantsByHosts: tenantsByHost,
-		defaultTenant:  defaultTenant,
+func newTenantByHost(log restql.Logger, defaultTenant string, tenantsByHost map[string]string) Middleware {
+	return tenantByHost{
+		log:           log,
+		tenantsByHost: tenantsByHost,
+		defaultTenant: defaultTenant,
 	}
 }
 
-func (r urlTenant) Apply(h fasthttp.RequestHandler) fasthttp.RequestHandler {
+func (r tenantByHost) Apply(h fasthttp.RequestHandler) fasthttp.RequestHandler {
 	return func(ctx *fasthttp.RequestCtx) {
 		r.setTenant(ctx)
 		h(ctx)
 	}
 }
 
-func (u urlTenant) setTenant(ctx *fasthttp.RequestCtx) {
+func (u tenantByHost) setTenant(ctx *fasthttp.RequestCtx) {
 	if string(ctx.QueryArgs().Peek("tenant")) != "" {
 		u.log.Debug("tenant already set", "tenant", string(ctx.QueryArgs().Peek("tenant")))
 		return
 	}
 
-	for k, v := range u.tenantsByHosts {
+	for k, v := range u.tenantsByHost {
 		if strings.Contains(string(ctx.Request.Host()), k) {
 			u.log.Debug("setting tenant", "tenant", v, "host", string(ctx.Request.Host()))
 			ctx.QueryArgs().Set("tenant", v)

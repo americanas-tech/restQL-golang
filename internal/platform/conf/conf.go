@@ -40,10 +40,10 @@ type requestCancellationConf struct {
 	WatchInterval time.Duration `yaml:"watchInterval"`
 }
 
-type urlTenantConf struct {
-	Enable        bool              `yaml:"enable" env:"RESTQL_URL_TENANTS_ENABLED"`
-	DefaultTenant string            `yaml:"defaultTenant" env:"RESTQL_URL_TENANTS_DEFAULT_TENANT"`
-	TenantsByHost map[string]string `yaml:"tenantsByHost" env:"RESTQL_URL_TENANTS_TENANTS_BY_HOSTS"`
+type tenantByHostConf struct {
+	Enable        bool              `yaml:"enable" env:"RESTQL_TENANT_BY_HOST_ENABLED"`
+	DefaultTenant string            `yaml:"defaultTenant" env:"RESTQL_TENANT_BY_HOST_DEFAULT_TENANT"`
+	TenantsByHost map[string]string `yaml:"tenantsByHost" env:"RESTQL_TENANT_BY_HOST_MAP"`
 }
 
 // Config represents all parameters allowed in restQL runtime.
@@ -74,7 +74,7 @@ type Config struct {
 				Timeout             timeoutConf             `yaml:"timeout"`
 				Cors                corsConf                `yaml:"cors"`
 				RequestCancellation requestCancellationConf `yaml:"requestCancellation"`
-				URLTenant           urlTenantConf           `yaml:"urlTenant"`
+				TenantByHost        tenantByHostConf        `yaml:"tenantByHost"`
 			} `yaml:"middlewares"`
 		} `yaml:"server"`
 
