@@ -30,3 +30,4 @@ testdata/
 restql.yml
 
 .DS_Store
+.vscode/

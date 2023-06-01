@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"fmt"
+
 	"github.com/b2wdigital/restQL-golang/v6/internal/platform/conf"
 	"github.com/b2wdigital/restQL-golang/v6/internal/platform/plugins"
 	"github.com/b2wdigital/restQL-golang/v6/pkg/restql"
@@ -67,6 +68,11 @@ func (d *Decorator) fetchEnabled() []Middleware {
 
 	if mwCfg.RequestID.Enable {
 		mws = append(mws, newRequestID(mwCfg.RequestID.Header, mwCfg.RequestID.Strategy, d.log))
+	}
+
+	if mwCfg.TenantByHost.Enable {
+		d.log.Info("url tenant middleware enabled")
+		mws = append(mws, newTenantByHost(d.log, mwCfg.TenantByHost.DefaultTenant, mwCfg.TenantByHost.TenantsByHost))
 	}
 
 	if mwCfg.Cors.Enable {

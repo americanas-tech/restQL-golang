@@ -50,6 +50,25 @@ You can use the `pprof` tool to investigate restQL performance. To enable it set
 - Request ID: this middleware generates a unique id for each request restQL API receives. The `http.server.middlewares.requestId.header` field define the header name use to return the generated id. The `http.server.middlewares.requestId.strategy` defines how the id will be generated and can be either `base64` or `uuid`.
 - Timeout: this middleware limits the maximum time any request can take. The `http.server.middlewares.timeout.duration` field accept a time duration value.
 - Request Cancellation: this middleware stops query execution when the client drops the connection. This improves fault response as it avoids unnecessary computation and reduces traffic on downstream APIs. You can also manage the connection watching interval with the field `http.server.middlewares.requestCancellation.watchingInterval`, which accepts a duration string.
+- Tenant By Host (From version 6.7.0): this middleware allows to configure default tenants by host.
+  You can configure your own tenants via the configuration file:
+  ```yaml
+  http:
+    server:
+      middlewares:
+        tenantByHost:
+          enable: true
+          defaultTenant: acom-npf
+          tenantsByHost:
+            "americanas.teste": acom-npf
+            "localhost": dev
+  ```
+  Or via environment variables:
+  ```shell script
+  RESTQL_TENANT_BY_HOST_ENABLED=${enable}
+  RESTQL_TENANT_BY_HOST_DEFAULT_TENANT=${default_tenant}
+  RESTQL_TENANT_BY_HOST_MAP=${host_tenant_pairs}
+  ```
 - CORS: Cross-Origin Resource Sharing is a specification that enables truly open access across domain-boundaries.
   You can configure your own CORS headers either via the configuration file:
   ```yaml
