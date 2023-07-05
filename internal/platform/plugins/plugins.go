@@ -110,7 +110,8 @@ func (m manager) safeExecute(log restql.Logger, pluginName string, hook string, 
 }
 
 func (m manager) newTransactionRequest(log restql.Logger, ctx *fasthttp.RequestCtx) restql.TransactionRequest {
-	uri, err := url.ParseRequestURI(string(ctx.RequestURI()))
+	uriString := ctx.URI().String()
+	uri, err := url.ParseRequestURI(uriString)
 	if err != nil {
 		log.Error("failed to parse request uri for plugin", err)
 	}
