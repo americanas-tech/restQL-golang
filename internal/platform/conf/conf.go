@@ -1,7 +1,6 @@
 package conf
 
 import (
-	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
@@ -167,7 +166,7 @@ func readConfigFile() []byte {
 		return nil
 	}
 
-	data, err := ioutil.ReadFile(path)
+	data, err := os.ReadFile(path)
 	if err != nil {
 		log.Printf("[ERROR] could not load file at %s", path)
 		return nil
