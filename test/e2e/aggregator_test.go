@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"github.com/b2wdigital/restQL-golang/v6/test"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"strings"
 	"testing"
@@ -223,7 +222,7 @@ to planets as sats in planets.sats
 	mockServer.Mux().HandleFunc("/api/planets/Havoc", func(w http.ResponseWriter, r *http.Request) {
 		test.Equal(t, r.Method, http.MethodPost)
 
-		b, err := ioutil.ReadAll(r.Body)
+		b, err := io.ReadAll(r.Body)
 		test.VerifyError(t, err)
 
 		test.NotEqual(t, string(b), "")
@@ -347,7 +346,7 @@ into planets as sats in planets.sats
 	mockServer.Mux().HandleFunc("/api/planets/Havoc", func(w http.ResponseWriter, r *http.Request) {
 		test.Equal(t, r.Method, http.MethodPut)
 
-		b, err := ioutil.ReadAll(r.Body)
+		b, err := io.ReadAll(r.Body)
 		test.VerifyError(t, err)
 
 		test.NotEqual(t, string(b), "")
@@ -471,7 +470,7 @@ update planets as sats in planets.sats
 	mockServer.Mux().HandleFunc("/api/planets/Havoc", func(w http.ResponseWriter, r *http.Request) {
 		test.Equal(t, r.Method, http.MethodPatch)
 
-		b, err := ioutil.ReadAll(r.Body)
+		b, err := io.ReadAll(r.Body)
 		test.VerifyError(t, err)
 
 		test.NotEqual(t, string(b), "")

@@ -182,7 +182,7 @@ to planets
 	mockServer.Mux().HandleFunc("/api/planets/", func(w http.ResponseWriter, r *http.Request) {
 		test.Equal(t, r.Method, http.MethodPost)
 
-		b, err := ioutil.ReadAll(r.Body)
+		b, err := io.ReadAll(r.Body)
 		test.VerifyError(t, err)
 
 		body := string(b)
@@ -263,7 +263,7 @@ into planets
 	mockServer.Mux().HandleFunc("/api/planets/", func(w http.ResponseWriter, r *http.Request) {
 		test.Equal(t, r.Method, http.MethodPut)
 
-		b, err := ioutil.ReadAll(r.Body)
+		b, err := io.ReadAll(r.Body)
 		test.VerifyError(t, err)
 
 		body := string(b)
@@ -344,7 +344,7 @@ update planets
 	mockServer.Mux().HandleFunc("/api/planets/", func(w http.ResponseWriter, r *http.Request) {
 		test.Equal(t, r.Method, http.MethodPatch)
 
-		b, err := ioutil.ReadAll(r.Body)
+		b, err := io.ReadAll(r.Body)
 		test.VerifyError(t, err)
 
 		body := string(b)
@@ -742,7 +742,7 @@ to planets
 	mockServer.Mux().HandleFunc("/api/planets/", func(w http.ResponseWriter, r *http.Request) {
 		test.Equal(t, r.Method, http.MethodPost)
 
-		b, err := ioutil.ReadAll(r.Body)
+		b, err := io.ReadAll(r.Body)
 		test.VerifyError(t, err)
 
 		body := string(b)
@@ -829,7 +829,7 @@ to planets
 	mockServer.Mux().HandleFunc("/api/planets/", func(w http.ResponseWriter, r *http.Request) {
 		test.Equal(t, r.Method, http.MethodPost)
 
-		b, err := ioutil.ReadAll(r.Body)
+		b, err := io.ReadAll(r.Body)
 		test.VerifyError(t, err)
 
 		test.NotEqual(t, string(b), "")
@@ -919,7 +919,7 @@ to planets
 	mockServer.Mux().HandleFunc("/api/planets/", func(w http.ResponseWriter, r *http.Request) {
 		test.Equal(t, r.Method, http.MethodPost)
 
-		b, err := ioutil.ReadAll(r.Body)
+		b, err := io.ReadAll(r.Body)
 		test.VerifyError(t, err)
 
 		body := string(b)
@@ -990,7 +990,7 @@ to planets
 	mockServer.Mux().HandleFunc("/api/planets/", func(w http.ResponseWriter, r *http.Request) {
 		test.Equal(t, r.Method, http.MethodPost)
 
-		b, err := ioutil.ReadAll(r.Body)
+		b, err := io.ReadAll(r.Body)
 		test.VerifyError(t, err)
 
 		body := string(b)
@@ -1055,7 +1055,7 @@ to planets
 	mockServer.Mux().HandleFunc("/api/planets/", func(w http.ResponseWriter, r *http.Request) {
 		test.Equal(t, r.Method, http.MethodPost)
 
-		b, err := ioutil.ReadAll(r.Body)
+		b, err := io.ReadAll(r.Body)
 		test.VerifyError(t, err)
 
 		body := string(b)
@@ -1143,7 +1143,7 @@ to planets
 	mockServer.Mux().HandleFunc("/api/planets/Yavin", func(w http.ResponseWriter, r *http.Request) {
 		test.Equal(t, r.Method, http.MethodPost)
 
-		b, err := ioutil.ReadAll(r.Body)
+		b, err := io.ReadAll(r.Body)
 		test.VerifyError(t, err)
 
 		body := string(b)
@@ -1157,7 +1157,7 @@ to planets
 	mockServer.Mux().HandleFunc("/api/planets/Tatooine", func(w http.ResponseWriter, r *http.Request) {
 		test.Equal(t, r.Method, http.MethodPost)
 
-		b, err := ioutil.ReadAll(r.Body)
+		b, err := io.ReadAll(r.Body)
 		test.VerifyError(t, err)
 
 		body := string(b)
@@ -1294,7 +1294,7 @@ to planets
 	mockServer.Mux().HandleFunc("/api/planets/1", func(w http.ResponseWriter, r *http.Request) {
 		test.Equal(t, r.Method, http.MethodPost)
 
-		b, err := ioutil.ReadAll(r.Body)
+		b, err := io.ReadAll(r.Body)
 		test.VerifyError(t, err)
 
 		body := string(b)
