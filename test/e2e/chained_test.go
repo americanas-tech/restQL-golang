@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strings"
@@ -255,7 +254,7 @@ to people
 	mockServer.Mux().HandleFunc("/api/people/", func(w http.ResponseWriter, r *http.Request) {
 		test.Equal(t, r.Method, http.MethodPost)
 
-		b, err := ioutil.ReadAll(r.Body)
+		b, err := io.ReadAll(r.Body)
 		test.VerifyError(t, err)
 
 		test.NotEqual(t, string(b), "")
@@ -354,7 +353,7 @@ into people
 	mockServer.Mux().HandleFunc("/api/people/", func(w http.ResponseWriter, r *http.Request) {
 		test.Equal(t, r.Method, http.MethodPut)
 
-		b, err := ioutil.ReadAll(r.Body)
+		b, err := io.ReadAll(r.Body)
 		test.VerifyError(t, err)
 
 		test.NotEqual(t, string(b), "")
@@ -453,7 +452,7 @@ update people
 	mockServer.Mux().HandleFunc("/api/people/", func(w http.ResponseWriter, r *http.Request) {
 		test.Equal(t, r.Method, http.MethodPatch)
 
-		b, err := ioutil.ReadAll(r.Body)
+		b, err := io.ReadAll(r.Body)
 		test.VerifyError(t, err)
 
 		test.NotEqual(t, string(b), "")
@@ -944,7 +943,7 @@ from people
 	test.VerifyError(t, err)
 	defer response.Body.Close()
 
-	//bytes, err := ioutil.ReadAll(response.Body)
+	//bytes, err := io.ReadAll(response.Body)
 	//test.VerifyError(t, err)
 
 	//fmt.Printf("response : %s\n", string(bytes))

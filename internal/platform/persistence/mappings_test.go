@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/b2wdigital/restQL-golang/v6/pkg/restql"
-	"io/ioutil"
+	"io"
 	"testing"
 
 	"github.com/b2wdigital/restQL-golang/v6/internal/platform/logger"
@@ -137,7 +137,7 @@ func TestMappingsReader_ShouldOverwriteMappings(t *testing.T) {
 	test.Equal(t, mappings, expected)
 }
 
-var noOpLogger = logger.New(ioutil.Discard, logger.LogOptions{})
+var noOpLogger = logger.New(io.Discard, logger.LogOptions{})
 
 type stubDatabase struct {
 	findMappingsForTenant []restql.Mapping

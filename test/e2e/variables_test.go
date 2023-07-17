@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strings"
@@ -180,7 +179,7 @@ func TestVariableResolutionUsingHeadersOnFromStatement(t *testing.T) {
 	})
 	mockServer.Start()
 
-	request, err := http.NewRequest(http.MethodGet, savedQueryUrl, ioutil.NopCloser(strings.NewReader("")))
+	request, err := http.NewRequest(http.MethodGet, savedQueryUrl, io.NopCloser(strings.NewReader("")))
 	test.VerifyError(t, err)
 
 	request.Header["name"] = []string{"Yavin"}
@@ -233,7 +232,7 @@ func TestVariableResolutionUsingQueryParametersOnToStatement(t *testing.T) {
 	mockServer.Mux().HandleFunc("/api/planets/", func(w http.ResponseWriter, r *http.Request) {
 		test.Equal(t, r.Method, http.MethodPost)
 
-		b, err := ioutil.ReadAll(r.Body)
+		b, err := io.ReadAll(r.Body)
 		test.VerifyError(t, err)
 
 		body := string(b)
